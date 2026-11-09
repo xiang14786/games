@@ -1,0 +1,923 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="遊戲盒">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<title>投手轉生記</title>
+<style>
+  :root { --bg:#0f1318; --card:#1a2029; --card2:#242c38; --ink:#e8edf3; --muted:#93a0b2; --gold:#f2c14e; --red:#e5605a; --blue:#5fa8ff; --green:#6fcf8a; }
+  * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html,body { margin:0; background:var(--bg); color:var(--ink); font-family:-apple-system,"PingFang TC","Noto Sans TC","Microsoft JhengHei",sans-serif; font-size:17px;
+    user-select:none; -webkit-user-select:none; }
+  .wrap { max-width:540px; margin:0 auto; padding:12px 12px 40px; }
+  .hide { display:none !important; }
+  h1 { text-align:center; font-size:40px; margin:36px 0 4px; color:var(--gold); }
+  h2 { margin:6px 0 12px; color:var(--gold); font-size:24px; }
+  .sub { text-align:center; color:var(--muted); margin-bottom:26px; }
+  button { font-family:inherit; background:var(--gold); color:#221a05; border:0; border-radius:12px; padding:13px 16px; font-size:18px; font-weight:800; cursor:pointer; }
+  button.ghost { background:var(--card2); color:var(--ink); border:1px solid #33404f; }
+  button:disabled { opacity:.35; }
+  .col { display:flex; flex-direction:column; gap:10px; }
+  .row { display:flex; gap:8px; flex-wrap:wrap; }
+  .card { background:var(--card); border:1px solid #27303c; border-radius:14px; padding:14px; margin-bottom:12px; }
+  .muted { color:var(--muted); } .good { color:var(--green); } .bad { color:var(--red); } .gold { color:var(--gold); }
+  input { width:100%; font-family:inherit; font-size:20px; padding:12px; border-radius:10px; border:1px solid #33404f; background:#0b0e12; color:var(--ink); }
+  .lb { color:var(--muted); font-size:15px; margin:14px 0 6px; display:block; }
+  .opt { text-align:left; background:var(--card2); color:var(--ink); border:2px solid transparent; font-weight:600; font-size:17px; }
+  .opt.sel { border-color:var(--gold); }
+  .opt small { display:block; color:var(--muted); font-weight:400; font-size:14px; }
+  .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+  .grid2 button { text-align:left; padding:12px 10px; font-size:16px; line-height:1.3; }
+  .grid2 button small { display:block; font-size:13px; color:var(--muted); font-weight:400; }
+  .stat { display:flex; align-items:center; gap:8px; margin:5px 0; font-size:16px; }
+  .stat .l { width:64px; color:var(--muted); }
+  .bar { flex:1; height:10px; background:#0b0e12; border-radius:6px; overflow:hidden; }
+  .bar i { display:block; height:100%; border-radius:6px; }
+  .stat .v { width:44px; text-align:right; font-variant-numeric:tabular-nums; font-weight:700; }
+  .chips { display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; }
+  .chip { background:var(--card2); border-radius:8px; padding:5px 9px; font-size:15px; }
+  .hdr { display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:8px; }
+  .hdr .nm { font-size:24px; font-weight:800; }
+  .scene { position:fixed; inset:0; background:rgba(8,10,14,.95); z-index:10; overflow-y:auto; }
+  .scene .inner { max-width:540px; margin:0 auto; padding:22px 14px 40px; }
+  .story { font-size:18px; line-height:1.8; white-space:pre-wrap; margin-bottom:16px; }
+  .choice { text-align:left; background:var(--card2); color:var(--ink); border:1px solid #33404f; }
+  .choice small { display:block; color:var(--muted); font-weight:400; font-size:14px; margin-top:3px; }
+  table { width:100%; border-collapse:collapse; font-size:15px; }
+  td,th { padding:6px 4px; border-bottom:1px solid #27303c; text-align:center; }
+  th { color:var(--muted); font-weight:600; }
+  /* 比賽 */
+  #game { position:fixed; inset:0; background:var(--bg); z-index:8; overflow-y:auto; }
+  #game .inner { max-width:540px; margin:0 auto; padding:8px 10px 24px; }
+  .sb { display:flex; justify-content:space-between; align-items:center; background:var(--card); border-radius:12px; padding:8px 12px; font-size:16px; }
+  .sb .score { font-size:24px; font-weight:900; }
+  .bases { position:relative; width:46px; height:46px; }
+  .bases i { position:absolute; width:14px; height:14px; transform:rotate(45deg); border:2px solid #556274; }
+  .bases i.on { background:var(--gold); border-color:var(--gold); }
+  .dots span { display:inline-block; width:11px; height:11px; border-radius:50%; background:#2c3542; margin-right:3px; }
+  .dots .b.on { background:var(--green); } .dots .s.on { background:var(--gold); } .dots .o.on { background:var(--red); }
+  .batter { display:flex; justify-content:space-between; align-items:center; margin:8px 2px; }
+  .batter b { font-size:19px; }
+  .hint { background:#1d2733; border-left:4px solid var(--gold); border-radius:8px; padding:8px 10px; font-size:15px; margin:6px 0; }
+  #zone { width:100%; max-width:360px; aspect-ratio:1; display:block; margin:6px auto; touch-action:none; background:#0b0e12; border-radius:12px; }
+  .ptypes { display:flex; gap:6px; margin:6px 0; }
+  .ptypes button { flex:1; padding:9px 4px; font-size:15px; line-height:1.25; }
+  .ptypes button small { display:block; font-size:12px; font-weight:600; }
+  .ptypes button.on { background:var(--gold); color:#221a05; }
+  .meter { position:relative; height:22px; background:#0b0e12; border-radius:11px; overflow:hidden; margin:8px 0; }
+  .meter .z1 { position:absolute; top:0; bottom:0; background:rgba(111,207,138,.35); }
+  .meter .z2 { position:absolute; top:0; bottom:0; background:rgba(242,193,78,.85); }
+  .meter .cur { position:absolute; top:-2px; bottom:-2px; width:4px; background:#fff; border-radius:2px; }
+  #charge { width:100%; padding:18px; font-size:21px; touch-action:none; }
+  .res { text-align:center; font-size:22px; font-weight:900; min-height:30px; margin:4px 0; }
+  .plog { font-size:14px; color:var(--muted); line-height:1.6; max-height:90px; overflow-y:auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div id="sTitle">
+    <div id="tArt" style="margin-top:12px"></div>
+    <h1 style="margin-top:6px">⚾ 投手轉生記</h1>
+    <div class="sub">投不好，就再活一次</div>
+    <div class="col">
+      <button id="bNew">新的人生</button>
+      <button class="ghost" id="bCont">繼續</button>
+      <button class="ghost" id="bHall">歷代投手</button>
+    </div>
+    <div class="card muted" style="margin-top:20px;line-height:1.8;font-size:16px">
+      高中三年練球、打大賽，爭取職棒選秀。<br>進了職棒，從二軍一路投上一軍。<br>
+      退役或落選後轉生成下一位投手，前世的記憶會變成天賦。<br>
+      投球時選球種、點選進壘位置，<b class="gold">按住蓄力、在金色區放開</b>。
+    </div>
+  </div>
+
+  <div id="sCreate" class="hide">
+    <h2>新的投手</h2>
+    <div id="legacy"></div>
+    <label class="lb">姓名</label>
+    <div class="row" style="flex-wrap:nowrap"><input id="iName" maxlength="6"><button class="ghost" id="bRnd" style="white-space:nowrap">隨機</button></div>
+    <label class="lb">選兩種實戰變化球（直球必備）</label>
+    <div class="grid2" id="pPick"></div>
+    <label class="lb">再選一種「開發中」球種（練到 40 就能實戰）</label>
+    <div class="grid2" id="dPick"></div>
+    <button id="bStart" style="width:100%;margin-top:16px">入學</button>
+  </div>
+
+  <div id="sHub" class="hide">
+    <div id="hArt"></div>
+    <div class="hdr"><div style="display:flex;gap:10px;align-items:center"><div id="hAv"></div><div><div class="nm" id="hName"></div><div class="muted" id="hSub"></div></div></div><div style="text-align:right" id="hWhen"></div></div>
+    <div class="card" id="hStats"></div>
+    <div class="card" id="hNote" style="font-size:16px;line-height:1.6"></div>
+    <div class="grid2" id="hActs"></div>
+    <div class="card" id="hSeason" style="margin-top:12px"></div>
+  </div>
+
+  <div id="sHall" class="hide">
+    <h2>歷代投手</h2>
+    <div id="hallList"></div>
+    <button class="ghost" id="bHallBack" style="width:100%">返回</button>
+  </div>
+</div>
+
+<div class="scene hide" id="scene"><div class="inner" id="sceneIn"></div></div>
+
+<div id="game" class="hide"><div class="inner">
+  <div class="sb">
+    <div><div class="muted" style="font-size:13px" id="gTeams"></div><div class="score" id="gScore"></div></div>
+    <div style="text-align:center"><div id="gInning" style="font-weight:800"></div><div class="dots" id="gOuts"></div></div>
+    <div class="bases"><i id="b2" style="left:16px;top:2px"></i><i id="b3" style="left:2px;top:16px"></i><i id="b1" style="left:30px;top:16px"></i></div>
+    <div style="text-align:right"><div class="dots" id="gCount"></div><div class="muted" style="font-size:13px" id="gPC"></div></div>
+  </div>
+  <div class="batter"><div><b id="gBat"></b> <span class="muted" id="gBatInfo"></span></div><div class="muted" id="gLine" style="font-size:14px;text-align:right"></div></div>
+  <div class="hint" id="gHint"></div>
+  <canvas id="zone" width="600" height="600"></canvas>
+  <div class="res" id="gRes"></div>
+  <div class="ptypes" id="gTypes"></div>
+  <div class="meter"><div class="z1" id="mz1"></div><div class="z2" id="mz2"></div><div class="cur" id="mcur"></div></div>
+  <button id="charge">按住蓄力・放開投球</button>
+  <div class="row" style="margin-top:8px"><button class="ghost" id="gAuto" style="flex:1;font-size:15px">自動投完這局</button><button class="ghost" id="gSim" style="flex:1;font-size:15px">快速模擬整場</button><button class="ghost" id="gPull" style="flex:1;font-size:15px">請求換投</button></div>
+  <div class="plog" id="gLog"></div>
+</div></div>
+
+<script>
+// ===================== 基本資料 =====================
+const PITCHES = {
+  '直球':   { cat:'fast', spd:1.00, brk:[0, -0.15], d:'球速最快，靠球威壓制' },
+  '滑球':   { cat:'brk',  spd:0.87, brk:[1.0, 0.25], d:'橫向大幅滑開' },
+  '曲球':   { cat:'brk',  spd:0.77, brk:[0.35, 1.2], d:'大弧度下墜，慢速' },
+  '指叉球': { cat:'brk',  spd:0.86, brk:[0, 1.0], d:'看似直球，到本壘急墜' },
+  '變速球': { cat:'brk',  spd:0.82, brk:[-0.35, 0.55], d:'出手像直球，球速慢一截' },
+  '卡特球': { cat:'fast', spd:0.93, brk:[0.45, 0.1], d:'快速小幅切入' },
+  '伸卡球': { cat:'fast', spd:0.94, brk:[-0.55, 0.45], d:'下沉帶尾勁，製造滾地' },
+};
+const OFFSPEED = Object.keys(PITCHES).filter(p => p !== '直球');
+const TEAMS = ['港都海鷗','山城猛虎','北境雪狼','南灣巨鯨','中原雷鳴','東岸飛鷹'];
+const SCHOOLS = ['青嶺高中','海星高中','白楊工商','明德高中','鳳鳴實中','大成高中'];
+const SUR = ['林','陳','黃','張','李','王','吳','劉','蔡','楊','許','鄭','謝','郭','洪','曾','邱','廖','賴','周','金','朴','崔','姜','韓'];
+const GIV = ['承','宇','翔','哲','皓','睿','恩','昊','民','俊','浩','東','賢','成','勳','振','凱','佑','廷','晨','祐','澤','碩','鎮'];
+const rnd = (a,b) => a + Math.random()*(b-a), ri = (a,b) => Math.floor(rnd(a,b+1)), pick = a => a[Math.floor(Math.random()*a.length)];
+const clamp = (v,a,b) => Math.max(a, Math.min(b, v));
+const randName = () => pick(SUR) + pick(GIV) + pick(GIV);
+const gauss = () => { let u = 0, v = 0; while (!u) u = Math.random(); while (!v) v = Math.random(); return Math.sqrt(-2*Math.log(u)) * Math.cos(2*Math.PI*v); };
+const $ = id => document.getElementById(id);
+const fmt1 = v => (Math.round(v*100)/100).toFixed(2);
+
+const MEMORIES = {
+  HS_CHAMP:  { n:'盛夏的頂點', from:'高中大賽奪冠', t:'大賽心臟', d:'完美時機的判定區變寬' },
+  DRAFT1:    { n:'被唱名的那一刻', from:'選秀第一輪指名', t:'天生球威', d:'起始球速 +6' },
+  UNDRAFTED: { n:'落選的夏天', from:'選秀落選', t:'不屈', d:'受傷機率 -35%' },
+  SHUTOUT:   { n:'九局零封', from:'投出完封', t:'鐵臂', d:'體力成長 +25%' },
+  K10:       { n:'十次三振', from:'單場 10 次三振', t:'魔球', d:'變化球成長 +25%' },
+  W10:       { n:'十勝投手', from:'單季 10 勝', t:'精準', d:'控球成長 +25%' },
+  SV25:      { n:'守護神', from:'單季 25 次救援', t:'剛速', d:'球速成長 +25%' },
+  ERA_KING:  { n:'防禦率王', from:'奪得防禦率王', t:'精密機械', d:'起始控球 +6' },
+  RIVAL:     { n:'宿敵的背影', from:'一季內三度解決宿敵', t:'讀心', d:'捕手配球建議更準、打者更容易揮空' },
+  LONG:      { n:'十年選手', from:'職業生涯十年', t:'不老', d:'能力衰退延後兩年' },
+  K1000:     { n:'千次三振', from:'生涯 1000 次三振', t:'怪物', d:'所有能力起始 +3' },
+};
+
+// ===================== 存檔 =====================
+let C = null, LEG = { lives:[], talents:[], inherit:null };
+try { const l = JSON.parse(localStorage.getItem('pitcherLegacy')); if (l) LEG = Object.assign(LEG, l); } catch(e) {}
+const saveLeg = () => { try { localStorage.setItem('pitcherLegacy', JSON.stringify(LEG)); } catch(e) {} };
+const saveRun = () => { try { localStorage.setItem('pitcherRun', JSON.stringify(C)); } catch(e) {} };
+const loadRun = () => { try { return JSON.parse(localStorage.getItem('pitcherRun')); } catch(e) { return null; } };
+const has = t => LEG.talents.includes(t);
+
+// ===================== 插圖 =====================
+function bsr(seed) { let s = seed; return () => (s = (s * 9301 + 49297) % 233280) / 233280; }
+function bbArt(kind, color = '#f2c14e', seed = 5) {
+  const R = bsr(seed * 17 + kind.length); let g = '';
+  const crowd = (y0, rows) => { let s = ''; for (let r = 0; r < rows; r++) for (let i = 0; i < 46; i++) s += `<circle cx="${i * 9 + (r % 2) * 4}" cy="${y0 + r * 10}" r="3.2" fill="${pick([color, '#e8edf3', '#e5605a', '#5fa8ff', '#f2c14e', '#3a4350'])}" opacity="${0.35 + R() * 0.6}"/>`; return s; };
+  const light = x => `<line x1="${x}" y1="10" x2="${x}" y2="60" stroke="#3a4350" stroke-width="3"/><rect x="${x - 16}" y="4" width="32" height="12" rx="2" fill="#fffbe0"/><polygon points="${x - 16},16 ${x + 16},16 ${x + 70},170 ${x - 70},170" fill="#fffbe0" opacity=".05"/>`;
+  const pitcher = (x, y, s, c) => `<g transform="translate(${x},${y}) scale(${s})"><path d="M-6 0 L-10 -24 L10 -24 L6 0Z" fill="#e8edf3"/><path d="M-10 -24 L-8 -44 L8 -44 L10 -24Z" fill="${c}"/><path d="M8 -42 Q24 -60 18 -70" stroke="${c}" stroke-width="5" fill="none"/><circle cx="18" cy="-72" r="3" fill="#fff"/><path d="M-8 -40 Q-22 -30 -18 -20" stroke="${c}" stroke-width="5" fill="none"/><circle cx="0" cy="-50" r="7" fill="#e0ac7e"/><path d="M-8 -52 Q0 -62 8 -52 L12 -52 L12 -50 L-8 -50Z" fill="${c}"/></g>`;
+  if (kind === 'stadium' || kind === 'bullpen') {
+    g += `<rect width="400" height="170" fill="#0a0d14"/>` + crowd(20, kind === 'stadium' ? 5 : 2) + light(40) + light(360);
+    g += `<rect x="0" y="${kind === 'stadium' ? 72 : 52}" width="400" height="8" fill="#1f5a36"/><rect x="0" y="${kind === 'stadium' ? 80 : 60}" width="400" height="90" fill="#2d7a48"/>`;
+    for (let i = 0; i < 8; i++) g += `<rect x="${i * 50}" y="${kind === 'stadium' ? 80 : 60}" width="25" height="90" fill="#348a52" opacity=".5"/>`;
+    g += `<ellipse cx="200" cy="140" rx="70" ry="16" fill="#a86b3c"/><ellipse cx="200" cy="138" rx="18" ry="4" fill="#c28050"/><rect x="194" y="135" width="12" height="3" fill="#fff"/>` + pitcher(200, 138, 1.1, color);
+    if (kind === 'bullpen') g += `<rect x="290" y="90" width="80" height="60" fill="none" stroke="#9aa5b1" stroke-width="1.5"/>` + [...Array(8)].map((_, i) => `<line x1="${290 + i * 10}" y1="90" x2="${290 + i * 10}" y2="150" stroke="#9aa5b1" stroke-width=".6"/>`).join('') + `<rect x="30" y="120" width="40" height="22" fill="#5a3d24"/>` + [0,1,2,3].map(i => `<circle cx="${38 + i * 8}" cy="118" r="4" fill="#fff"/>`).join('');
+  } else if (kind === 'school') {
+    g += `<defs><linearGradient id="bs${seed}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2b1f3a"/><stop offset="1" stop-color="#d07a4a"/></linearGradient></defs><rect width="400" height="170" fill="url(#bs${seed})"/>`;
+    g += `<rect x="40" y="40" width="200" height="80" fill="#2a2f3a"/>`; for (let r = 0; r < 3; r++) for (let i = 0; i < 6; i++) g += `<rect x="${52 + i * 31}" y="${50 + r * 22}" width="18" height="13" fill="${R() < 0.4 ? '#ffd88a' : '#3c4454'}"/>`;
+    g += `<rect x="0" y="120" width="400" height="50" fill="#8a5a36"/><path d="M260 170 L330 120 L400 170Z" fill="#2d7a48"/><rect x="250" y="60" width="140" height="62" fill="none" stroke="#7a8796" stroke-width="1.2"/>` + [...Array(14)].map((_, i) => `<line x1="${250 + i * 10}" y1="60" x2="${250 + i * 10}" y2="122" stroke="#7a8796" stroke-width=".5"/>`).join('') + pitcher(180, 160, 0.9, color);
+  } else if (kind === 'draft') {
+    g += `<rect width="400" height="170" fill="#07080c"/>`; for (let i = 0; i < 14; i++) g += `<rect x="${i * 30}" y="0" width="22" height="120" fill="#0d1a3a" opacity=".9"/>`;
+    g += `<polygon points="185,0 215,0 290,170 110,170" fill="#ffe9b0" opacity=".18"/><rect x="0" y="120" width="400" height="50" fill="#141820"/><rect x="168" y="96" width="64" height="58" rx="4" fill="#242c3a"/><circle cx="200" cy="118" r="11" fill="#fff"/><path d="M193 110 Q197 118 193 126 M207 110 Q203 118 207 126" stroke="#e5605a" stroke-width="1.5" fill="none"/><text x="200" y="40" fill="#f2c14e" font-size="22" text-anchor="middle" font-weight="900">選秀會</text>`;
+  } else if (kind === 'trophy') {
+    g += `<rect width="400" height="170" fill="#120f08"/>`; for (let i = 0; i < 60; i++) g += `<rect x="${R() * 400}" y="${R() * 170}" width="5" height="9" fill="${pick(['#f2c14e','#5fa8ff','#e5605a','#6fcf8a','#fff'])}" opacity=".85"/>`;
+    g += `<path d="M170 40 H230 V70 Q230 100 200 104 Q170 100 170 70 Z" fill="#f2c14e"/><path d="M170 50 Q150 50 152 66 Q155 80 172 82 M230 50 Q250 50 248 66 Q245 80 228 82" stroke="#f2c14e" stroke-width="6" fill="none"/><rect x="194" y="104" width="12" height="20" fill="#d9a632"/><rect x="176" y="124" width="48" height="14" rx="2" fill="#8a6a1f"/>`;
+  } else if (kind === 'injury') {
+    g += `<rect width="400" height="170" fill="#151c22"/><rect x="0" y="120" width="400" height="50" fill="#1e262e"/><rect x="100" y="96" width="200" height="30" rx="6" fill="#d6dde4"/><rect x="100" y="86" width="40" height="18" rx="6" fill="#fff"/><rect x="300" y="20" width="44" height="44" rx="8" fill="#e5605a"/><rect x="316" y="28" width="12" height="28" fill="#fff"/><rect x="308" y="36" width="28" height="12" fill="#fff"/><path d="M170 80 Q200 60 230 80" stroke="#5fa8ff" stroke-width="8" fill="none" opacity=".7"/>`;
+  } else if (kind === 'night') {
+    g += `<rect width="400" height="170" fill="#05070a"/><polygon points="190,0 210,0 300,170 100,170" fill="#ffe9b0" opacity=".1"/><rect x="0" y="100" width="400" height="70" fill="#14301f"/><ellipse cx="200" cy="140" rx="70" ry="14" fill="#4a3220"/><rect x="194" y="135" width="12" height="3" fill="#ddd"/><circle cx="230" cy="142" r="5" fill="#eee"/><path d="M150 150 Q160 130 175 140" fill="#3a2a1a"/>`;
+  }
+  return `<svg viewBox="0 0 400 170" style="width:100%;display:block;border-radius:14px;margin-bottom:12px" xmlns="http://www.w3.org/2000/svg">${g}</svg>`;
+}
+function bbAvatar(color = '#f2c14e', num = 18, skin = 1) {
+  const S = ['#f1c9a5','#e0ac7e','#c68a5c','#8d5a3b'][skin % 4];
+  return `<svg viewBox="0 0 100 100" style="width:76px;height:76px;border-radius:14px;flex:none" xmlns="http://www.w3.org/2000/svg"><rect width="100" height="100" fill="#222a36"/>
+    <path d="M12 100 Q16 72 50 70 Q84 72 88 100Z" fill="#e8edf3"/><path d="M50 72 V100" stroke="${color}" stroke-width="2"/><text x="68" y="94" font-size="13" font-weight="900" fill="${color}" text-anchor="middle" font-family="sans-serif">${num}</text>
+    <rect x="44" y="56" width="12" height="16" fill="${S}"/><ellipse cx="50" cy="44" rx="18" ry="20" fill="${S}"/>
+    <path d="M30 40 Q30 18 50 18 Q70 18 70 40Z" fill="${color}"/><path d="M50 40 Q74 38 82 44 Q70 46 50 44Z" fill="${color}" opacity=".85"/><circle cx="50" cy="19" r="2.5" fill="#222"/>
+    <path d="M40 44 h6 M54 44 h6" stroke="#2a1a10" stroke-width="2" stroke-linecap="round"/><circle cx="43" cy="49" r="2" fill="#1a1a1a"/><circle cx="57" cy="49" r="2" fill="#1a1a1a"/>
+    <path d="M45 58 Q50 61 55 58" stroke="#6b3a2a" stroke-width="2" fill="none" stroke-linecap="round"/></svg>`;
+}
+
+const TCOL = { '港都海鷗':'#3fa7d6','山城猛虎':'#f29e4c','北境雪狼':'#9aa5b1','南灣巨鯨':'#2f6fb5','中原雷鳴':'#f1c40f','東岸飛鷹':'#e5605a' };
+const myCol = () => C && C.team ? TCOL[C.team] : '#5fa8ff';
+// ===================== 角色 =====================
+let picks = [], dev = null;
+function renderCreate() {
+  $('iName').value = randName(); picks = []; dev = null;
+  const last = LEG.lives[0];
+  $('legacy').innerHTML = LEG.lives.length ? `<div class="card" style="font-size:15px;line-height:1.7">第 <b class="gold">${LEG.lives.length + 1}</b> 世<br>
+    ${LEG.talents.length ? '天賦：' + LEG.talents.map(k => `<b class="gold">${MEMORIES[k].t}</b>（${MEMORIES[k].d}）`).join('、') : ''}
+    ${LEG.inherit ? `<br>傳承：${LEG.inherit.label} +${LEG.inherit.v}` : ''}<br><span class="muted">前世：${last.name}・${last.summary}</span></div>` : '';
+  drawPicks();
+}
+function drawPicks() {
+  $('pPick').innerHTML = ''; $('dPick').innerHTML = '';
+  for (const p of OFFSPEED) {
+    const b = document.createElement('button'); b.className = 'opt' + (picks.includes(p) ? ' sel' : ''); b.innerHTML = `${p}<small>${PITCHES[p].d}</small>`;
+    b.onclick = () => { if (picks.includes(p)) picks = picks.filter(x => x !== p); else if (picks.length < 2) { picks.push(p); if (dev === p) dev = null; } drawPicks(); };
+    $('pPick').appendChild(b);
+    const d = document.createElement('button'); d.className = 'opt' + (dev === p ? ' sel' : ''); d.innerHTML = `${p}<small>${PITCHES[p].d}</small>`;
+    d.disabled = picks.includes(p); d.onclick = () => { dev = p; drawPicks(); };
+    $('dPick').appendChild(d);
+  }
+  $('bStart').disabled = picks.length !== 2 || !dev;
+}
+$('bRnd').onclick = () => $('iName').value = randName();
+$('bStart').onclick = () => {
+  const inh = LEG.inherit || {};
+  const bonusAll = has('K1000') ? 3 : 0;
+  C = { name: ($('iName').value.trim() || randName()).slice(0, 6), life: LEG.lives.length + 1, school: pick(SCHOOLS),
+    phase:'HS', year:1, week:1, age:16, num: ri(1, 99), skin: ri(0, 3),
+    velo: ri(28, 36) + (has('DRAFT1') ? 6 : 0) + (inh.k === 'velo' ? inh.v : 0) + bonusAll,
+    ctrl: ri(28, 36) + (has('ERA_KING') ? 6 : 0) + (inh.k === 'ctrl' ? inh.v : 0) + bonusAll,
+    sta:  ri(28, 36) + (inh.k === 'sta' ? inh.v : 0) + bonusAll,
+    pitches: { '直球': 0 }, dev: { p: dev, lv: 5 }, fatigue: 0, injury: 0, bond: 20, trust: 20, money: 0,
+    team: null, level:'2軍', role:'先發', proYear:0, oneArmyYears:0, salary:0, round:0,
+    season: newSeason(), career: newLine(), seasons: [], tourney: [], memories: [], highlights: [], rival: null, peak: {}, note: '' };
+  for (const p of picks) C.pitches[p] = ri(18, 26) + (inh.k === 'pitch' ? inh.v : 0) + bonusAll;
+  newRival();
+  const coach = LEG.lives[0];
+  C.note = coach ? `你進了${C.school}棒球隊。總教練竟是 <b class="gold">${coach.name}</b>——前世的你。他看著你投了一球，點點頭：「比我當年好。」` : `你進了${C.school}棒球隊，成為一年級投手。`;
+  saveRun(); showHub();
+};
+function newLine() { return { g:0, outs:0, h:0, bb:0, k:0, r:0, w:0, l:0, sv:0 }; }
+function newSeason() { return newLine(); }
+function newRival() { C.rival = { name: randName(), faced: 0, won: 0, res: [] }; }
+
+// ===================== 能力 =====================
+const pitchLv = p => p === '直球' ? C.velo : C.pitches[p];
+function ovr() {
+  const lv = Object.entries(C.pitches).filter(([p]) => p !== '直球').map(([,v]) => v).sort((a,b) => b - a);
+  const top2 = ((lv[0] || 0) + (lv[1] || 0)) / 2;
+  return C.velo * 0.33 + C.ctrl * 0.3 + top2 * 0.27 + C.sta * 0.1;
+}
+const kmh = () => Math.round(125 + C.velo * 0.42);
+function growth(k) {
+  let g = C.phase === 'HS' ? 1 : C.age <= 27 ? 0.85 : C.age <= 31 ? 0.6 : 0.35;
+  if (k === 'sta' && has('SHUTOUT')) g *= 1.25;
+  if (k === 'pitch' && has('K10')) g *= 1.25;
+  if (k === 'ctrl' && has('W10')) g *= 1.25;
+  if (k === 'velo' && has('SV25')) g *= 1.25;
+  return g;
+}
+const era = l => l.outs ? l.r * 27 / l.outs : 0;
+const whip = l => l.outs ? (l.h + l.bb) * 3 / l.outs : 0;
+const ip = o => Math.floor(o/3) + (o % 3 ? '.' + (o % 3) : '');
+
+// ===================== 主畫面 =====================
+function showOnly(id) { ['sTitle','sCreate','sHub','sHall'].forEach(x => $(x).classList.toggle('hide', x !== id)); window.scrollTo(0,0); }
+function showHub() { showOnly('sHub'); renderHub(); }
+function sbar(l, v, col) { return `<div class="stat"><span class="l">${l}</span><div class="bar"><i style="width:${Math.min(100, v)}%;background:${col}"></i></div><span class="v">${Math.round(v)}</span></div>`; }
+function renderHub() {
+  $('hArt').innerHTML = bbArt(C.injury ? 'injury' : C.phase === 'HS' ? 'school' : 'bullpen', myCol(), C.week + C.year * 9 + C.proYear * 5);
+  $('hAv').innerHTML = bbAvatar(myCol(), C.num || 18, C.skin || 1);
+  $('hName').textContent = C.name;
+  $('hSub').textContent = C.phase === 'HS' ? `${C.school}・高${['一','二','三'][C.year-1]}` : `${C.team}・${C.level}・${C.role}`;
+  $('hWhen').innerHTML = C.phase === 'HS' ? `<b>第 ${C.week} 週</b><div class="muted" style="font-size:14px">夏季大賽前 ${9 - C.week} 週</div>` : `<b>職業第 ${C.proYear} 年・第 ${C.week} 週</b><div class="muted" style="font-size:14px">${C.age} 歲・年薪 ${C.salary} 萬</div>`;
+  let s = sbar(`球速`, C.velo, '#e5605a').replace('<span class="v">', `<span class="v" title="">`) + `<div class="muted" style="font-size:13px;margin:-2px 0 4px 72px">最快約 ${kmh()} km/h</div>`;
+  s += sbar('控球', C.ctrl, '#5fa8ff') + sbar('體力', C.sta, '#6fcf8a');
+  for (const [p, v] of Object.entries(C.pitches)) if (p !== '直球') s += sbar(p, v, '#c792ea');
+  if (C.dev) s += sbar(C.dev.p + '*', C.dev.lv, '#6b5a85');
+  s += `<div class="chips"><span class="chip">綜合 ${Math.round(ovr())}</span><span class="chip ${C.fatigue >= 70 ? 'bad' : ''}">疲勞 ${Math.round(C.fatigue)}</span>
+    ${C.injury ? `<span class="chip bad">傷停 ${C.injury} 週</span>` : ''}<span class="chip">捕手默契 ${C.bond}</span><span class="chip">教練信任 ${C.trust}</span>
+    ${C.phase === 'PRO' ? `<span class="chip">存款 ${C.money} 萬</span>` : ''}</div>${C.dev ? '<div class="muted" style="font-size:13px;margin-top:6px">* 開發中球種，練到 40 可以實戰</div>' : ''}`;
+  $('hStats').innerHTML = s;
+  $('hNote').innerHTML = C.note || '本週要怎麼練？';
+  $('hNote').classList.toggle('hide', !C.note);
+  const A = [];
+  if (C.injury) A.push(['復健', `還要 ${C.injury} 週`, () => turn('rehab')]);
+  else {
+    A.push(['球威訓練', '提升球速', () => turn('velo')], ['控球訓練', '提升控球', () => turn('ctrl')],
+      ['變化球練習', '選擇球種練習', () => pitchMenu()], ['體力跑步', '撐更多局數', () => turn('sta')],
+      ['與捕手研究配球', '默契 +、控球微幅', () => turn('bond')], ['休息', '疲勞大幅下降', () => turn('rest')]);
+  }
+  if (C.phase === 'PRO' && C.age >= 33) A.push(['宣布引退', '結束職業生涯', () => retireAsk()]);
+  $('hActs').innerHTML = '';
+  for (const [t, d, f] of A) { const b = document.createElement('button'); b.className = 'ghost'; b.innerHTML = `${t}<small>${d}</small>`; b.onclick = f; $('hActs').appendChild(b); }
+  const L = C.season;
+  $('hSeason').innerHTML = `<b>${C.phase === 'HS' ? '本學年' : '本季'}成績</b>
+    <table style="margin-top:6px"><tr><th>登板</th><th>勝</th><th>敗</th><th>救援</th><th>局數</th><th>三振</th><th>防禦率</th><th>WHIP</th></tr>
+    <tr><td>${L.g}</td><td>${L.w}</td><td>${L.l}</td><td>${L.sv}</td><td>${ip(L.outs)}</td><td>${L.k}</td><td>${fmt1(era(L))}</td><td>${fmt1(whip(L))}</td></tr></table>
+    ${C.rival ? `<div style="margin-top:8px;font-size:15px">宿敵打者 <b class="bad">${C.rival.name}</b>：本季對決 ${C.rival.faced}/3${C.rival.res.length ? '　' + C.rival.res.join('、') : ''}</div>` : ''}`;
+}
+function pitchMenu() {
+  const opts = Object.keys(C.pitches).filter(p => p !== '直球').map(p => ({ label: `${p}（${Math.round(C.pitches[p])}）`, fn: () => turn('pitch', p) }));
+  if (C.dev) opts.push({ label: `${C.dev.p}（開發中 ${Math.round(C.dev.lv)}/40）`, fn: () => turn('dev') });
+  opts.push({ label: '取消', fn: d => d() });
+  scene('變化球練習', '要練哪一種？', opts);
+}
+
+// ===================== 場景 =====================
+let afterScene = null;
+function scene(title, text, choices, kind) {
+  $('sceneIn').innerHTML = (kind ? bbArt(kind, myCol(), ri(1, 99)) : '') + `<h2>${title}</h2><div class="story">${text}</div><div class="col" id="chs"></div>`;
+  for (const c of choices) {
+    const b = document.createElement('button'); b.className = 'choice'; b.innerHTML = c.label + (c.note ? `<small>${c.note}</small>` : '');
+    b.onclick = () => c.fn(() => closeScene()); $('chs').appendChild(b);
+  }
+  $('scene').classList.remove('hide'); $('scene').scrollTop = 0;
+}
+function msg(title, text, next, kind) { scene(title, text, [{ label: '繼續', fn: () => { closeScene(); if (next) next(); } }], kind); }
+function closeScene() { $('scene').classList.add('hide'); if (!$('sHub').classList.contains('hide')) renderHub(); }
+
+// ===================== 每週行動 =====================
+function turn(k, p) {
+  closeScene();
+  let t = '';
+  const base = rnd(2.4, 4.2);
+  const injMul = has('UNDRAFTED') ? 0.65 : 1;
+  if (k === 'rehab') { C.injury--; C.fatigue = Math.max(0, C.fatigue - 30); t = '你在防護室做復健。'; }
+  else if (k === 'rest') { C.fatigue = Math.max(0, C.fatigue - 45); t = '你好好睡了幾天，手臂輕鬆多了。'; }
+  else if (k === 'bond') { C.bond = Math.min(100, C.bond + 8); const g = base * 0.35 * growth('ctrl'); C.ctrl += g; C.fatigue += 6; t = `你和捕手看了一整週的錄影。\n捕手默契 +8　控球 +${g.toFixed(1)}`; }
+  else {
+    const tired = C.fatigue >= 60 ? 0.6 : 1;
+    if (k === 'pitch') { const g = base * growth('pitch') * tired; C.pitches[p] += g; t = `${p} +${g.toFixed(1)}`; }
+    else if (k === 'dev') { const g = base * 1.1 * growth('pitch') * tired; C.dev.lv += g; t = `${C.dev.p}（開發中）+${g.toFixed(1)}`;
+      if (C.dev.lv >= 40) { if (Object.keys(C.pitches).length < 5) { C.pitches[C.dev.p] = 40; t += `\n\n<b class="gold">${C.dev.p}完成！可以在比賽中使用了。</b>`; C.dev = null; } } }
+    else { const g = base * growth(k) * tired; C[k] += g; t = `${{ velo:'球速', ctrl:'控球', sta:'體力' }[k]} +${g.toFixed(1)}`; }
+    C.fatigue += rnd(12, 17);
+    if (tired < 1) t += '\n<span class="muted">（太疲勞，練習效果打折）</span>';
+    // 受傷判定
+    if (C.fatigue > 70 && Math.random() < (C.fatigue - 65) * 0.012 * injMul) return injure('練習量過大');
+  }
+  for (const s of ['velo','ctrl','sta']) C[s] = Math.min(130, C[s]);
+  C.note = '';
+  afterTraining(t, k === 'rehab' ? 'injury' : 'bullpen');
+}
+function injure(why) {
+  const w = ri(2, 5), f0 = Math.round(C.fatigue);
+  C.injury = w; C.fatigue = 30;
+  const part = pick(['手肘', '肩膀', '背部', '手指起水泡']);
+  C.note = `<b class="bad">受傷了：${part}</b>　原因：${why}（疲勞累積到 ${f0}）。需要復健 ${w} 週。`;
+  afterTraining(`<span class="bad">練習時${part}一陣劇痛。</span>\n原因：${why}。\n需要休養 ${w} 週，這段期間只能復健，也不能登板。`, 'injury');
+}
+
+// 練完 → 本週比賽（職棒）→ 推進
+function afterTraining(text, kind = 'bullpen') {
+  saveRun();
+  if (C.phase === 'HS') {
+    msg('本週', text, () => { C.week++; if (C.week > 8) hsTournament(); else { hsEvent(); saveRun(); renderHub(); } }, kind);
+  } else {
+    msg('本週', text, () => proGame(), kind);
+  }
+}
+
+// 高中小事件
+function hsEvent() {
+  if (Math.random() < 0.3) {
+    const e = pick([
+      () => { C.trust += 5; return '教練在練習賽看了你的投球，在筆記本上寫了幾行字。（教練信任 +5）'; },
+      () => { C.bond += 5; return '捕手學長留下來陪你加練，接了一百球。（捕手默契 +5）'; },
+      () => { C.fatigue += 10; return '期中考週，熬夜讀書。（疲勞 +10）'; },
+      () => { C.velo += 1; return '球探出現在看台上，你多用了幾分力。（球速 +1）'; },
+      () => `聽說 <b class="bad">${C.rival.name}</b> 這週又敲了兩支全壘打。`,
+    ]);
+    C.note = e();
+  }
+}
+
+// ===================== 高中大賽 =====================
+function hsTournament() {
+  const lv = [[32, 38, 45], [40, 46, 53], [47, 54, 61]][C.year - 1];
+  const names = ['地區賽', '準決賽', '金鷹盃決賽'];
+  let r = 0;
+  const next = () => {
+    const opp = pick(SCHOOLS.filter(s => s !== C.school));
+    scene(`夏季大賽・${names[r]}`, `對手：${opp}${r === 2 ? '\n全國轉播，看台上坐滿了球探。' : ''}\n\n你是先發投手。`, [
+      { label: '上場投球', fn: () => { closeScene(); startGame({ level: lv[r], role:'先發', innings: 7, opp, hs: true, rival: r >= 1, onEnd: res => done(res) }); } },
+      { label: '快速模擬', note: '用目前能力自動模擬整場', fn: () => { closeScene(); startGame({ level: lv[r], role:'先發', innings: 7, opp, hs: true, rival: r >= 1, quick: true, onEnd: res => done(res) }); } },
+    ], 'stadium');
+  };
+  const done = res => {
+    C.tourney.push(`高${'一二三'[C.year-1]}${names[r]}${res.teamWin ? '勝' : '敗'}`);
+    if (res.teamWin && r < 2) { r++; msg('晉級！', `${res.summary}\n\n球隊晉級${names[r]}！`, next, 'stadium'); return; }
+    if (res.teamWin && r === 2) { C.memories.push('HS_CHAMP'); C.highlights.push(`高${'一二三'[C.year-1]}奪得金鷹盃冠軍`); C.trust += 15;
+      return msg('🏆 冠軍！', `${res.summary}\n\n<b class="gold">你們拿下金鷹盃冠軍！</b>`, endYear, 'trophy'); }
+    msg('夏天結束', `${res.summary}\n\n${names[r]}落敗，這個夏天結束了。`, endYear, 'night');
+  };
+  next();
+}
+function endYear() {
+  C.seasons.push({ label: `高${'一二三'[C.year-1]}`, ...C.season });
+  C.season = newSeason();
+  if (C.year === 3) return draft();
+  C.year++; C.age++; C.week = 1; C.fatigue = Math.max(0, C.fatigue - 30); newRival();
+  C.note = `升上高${'一二三'[C.year-1]}了。這一屆最可怕的打者是 <b class="bad">${C.rival.name}</b>。`;
+  saveRun(); showHub();
+}
+
+// ===================== 選秀 =====================
+function draft() {
+  const champ = C.memories.includes('HS_CHAMP') ? 6 : 0;
+  const tW = C.tourney.filter(t => t.endsWith('勝')).length;
+  const v = ovr() + champ + tW * 1.2 + rnd(-3, 3);
+  let round = v >= 55 ? 1 : v >= 49 ? 2 : v >= 43 ? ri(3, 5) : 0;
+  const lines = `選秀會當天，你和家人守在電視前。\n（球探評價 ${Math.round(v)}）\n\n`;
+  if (!round) {
+    C.memories.push('UNDRAFTED'); C.highlights.push('選秀會上沒有被唱名');
+    return scene('選秀會', lines + '一輪、兩輪……直到最後一個名字念完，都沒有你。\n\n<b class="bad">落選了。</b>', [{ label: '這一世到此為止', fn: () => endLife('選秀落選') }], 'draft');
+  }
+  C.team = pick(TEAMS); C.round = round;
+  if (round === 1) { C.memories.push('DRAFT1'); }
+  C.highlights.push(`第 ${round} 輪被${C.team}指名`);
+  const bonus = [0, 800, 400, 200, 150, 120][round];
+  C.money += bonus; C.salary = 60;
+  scene('選秀會', lines + `「第 ${round} 輪，${C.team}，選擇——${C.school}，投手，${C.name}！」\n\n簽約金 ${bonus} 萬，從二軍開始。`, [{ label: '加入職棒', fn: () => {
+    C.phase = 'PRO'; C.proYear = 1; C.week = 1; C.age = 19; C.level = '2軍'; C.role = '先發'; C.season = newSeason(); newRival();
+    C.note = `你穿上了${C.team}的球衣。二軍教練說：「先讓我看看你能吃幾局。」`;
+    saveRun(); closeScene(); showHub();
+  } }], 'draft');
+}
+
+// ===================== 職棒 =====================
+const WEEKS = 14;
+function assignRole() {
+  if (C.level === '2軍') { C.role = '先發'; return; }
+  const o = ovr();
+  if (C.sta >= 55 && o >= 64) C.role = '先發';
+  else if (C.velo >= 70 && C.trust >= 50) C.role = '終結者';
+  else C.role = '中繼';
+}
+function proLevel() { return C.level === '2軍' ? 48 + C.proYear * 1.2 : 62 + Math.min(C.proYear, 8) * 1.1; }
+function proGame() {
+  if (C.injury) return advanceWeek('（傷停中，本週沒有登板）');
+  const opp = pick(TEAMS.filter(t => t !== C.team));
+  const rivalWeek = [3, 8, 12].includes(C.week) && C.rival.faced < 3;
+  const lv = proLevel();
+  const cfg = { level: lv, role: C.role, innings: 9, opp, rival: rivalWeek, onEnd: res => afterGame(res) };
+  scene(`本週登板・${C.level}`, `對手：${opp}\n角色：${C.role}${C.role === '終結者' ? '（九局上，守住領先）' : C.role === '中繼' ? '（比賽中段接手）' : ''}${rivalWeek ? `\n\n<b class="bad">宿敵 ${C.rival.name} 在對方打線裡。</b>` : ''}`, [
+    { label: '上場投球', fn: () => { closeScene(); startGame(cfg); } },
+    { label: '快速模擬', fn: () => { closeScene(); startGame({ ...cfg, quick: true }); } },
+  ], 'stadium');
+}
+function afterGame(res) {
+  let t = res.summary;
+  // 升降
+  const L = C.season;
+  if (C.level === '2軍' && L.g >= 3 && (era(L) < 3.3 || ovr() >= 66) && C.trust >= 25) { C.level = '1軍'; assignRole(); C.trust += 5; C.season = newSeason(); t += `\n\n<b class="gold">接到通知：升上一軍！</b>擔任${C.role}。`; C.highlights.push(`職業第 ${C.proYear} 年升上一軍`); }
+  else if (C.level === '1軍' && L.g >= 5 && era(L) > 6.2) { C.level = '2軍'; C.role = '先發'; C.trust -= 8; t += `\n\n<span class="bad">表現不佳，被下放二軍。</span>`; }
+  else if (C.level === '1軍') { const old = C.role; assignRole(); if (old !== C.role) t += `\n\n教練把你調整為${C.role}。`; }
+  advanceWeek(t);
+}
+function advanceWeek(t) {
+  C.week++;
+  if (C.week > WEEKS) return msg('比賽結果', t, endSeason, 'stadium');
+  saveRun(); msg('比賽結果', t, () => showHub(), 'stadium');
+}
+function endSeason() {
+  const L = C.season;
+  const lines = [];
+  if (C.level === '1軍') C.oneArmyYears++;
+  if (L.w >= 10) { pushMem('W10'); lines.push('單季 10 勝！'); }
+  if (L.sv >= 25) { pushMem('SV25'); lines.push('單季 25 次救援！'); }
+  if (C.level === '1軍' && L.outs >= 150 && era(L) <= 2.6) { pushMem('ERA_KING'); lines.push(`<b class="gold">防禦率王（${fmt1(era(L))}）！</b>`); C.highlights.push(`職業第 ${C.proYear} 年奪得防禦率王`); }
+  if (C.rival.won >= 3) { pushMem('RIVAL'); lines.push(`本季三度解決宿敵 ${C.rival.name}！`); }
+  if (C.career.k >= 1000 && !C.memories.includes('K1000')) { pushMem('K1000'); lines.push('生涯 1000 次三振！'); C.highlights.push('生涯第 1000 次三振'); }
+  // 薪水
+  const perf = C.level === '1軍' ? Math.max(0, (5 - era(L))) * 60 + L.w * 25 + L.sv * 15 + L.k * 1.2 : 0;
+  let sal = Math.round(C.level === '1軍' ? 150 + ovr() * 4 + perf : 60 + ovr());
+  if (C.oneArmyYears >= 6) { sal = Math.round(sal * 1.8); if (C.oneArmyYears === 6) lines.push('<b class="gold">取得 FA 資格，簽下大約！</b>'); }
+  C.money += C.salary; const oldSal = C.salary; C.salary = sal;
+  C.seasons.push({ label: `職${C.proYear}・${C.level}`, ...L });
+  // 老化
+  C.age++; C.proYear++;
+  const dAge = has('LONG') ? 33 : 31;
+  if (C.age > dAge) { const d = C.age - dAge; C.velo -= 1.5 + d * 0.5; C.sta -= 2 + d * 0.4; C.ctrl -= 0.3; for (const p in C.pitches) if (p !== '直球') C.pitches[p] -= 0.8; }
+  if (C.proYear > 10) pushMem('LONG');
+  C.season = newSeason(); C.week = 1; C.fatigue = 10; C.injury = 0; newRival();
+  const forced = C.age >= 41 || (C.age >= 30 && ovr() < 50);
+  const text = `<b>第 ${C.proYear - 1} 季結束</b>\n${L.g} 場　${L.w} 勝 ${L.l} 敗 ${L.sv} 救援\n${ip(L.outs)} 局　${L.k} 三振　防禦率 ${fmt1(era(L))}\n\n${lines.join('\n')}${lines.length ? '\n\n' : ''}今年領了 ${oldSal} 萬，明年年薪 ${sal} 萬。`;
+  saveRun();
+  if (forced) return scene('季末', text + `\n\n<span class="bad">${C.age >= 41 ? '身體已經跟不上了。' : '球團沒有和你續約。'}</span>`, [{ label: '結束職業生涯', fn: () => endLife('引退') }], 'night');
+  C.note = `新球季開始。今年要注意的打者：<b class="bad">${C.rival.name}</b>。`;
+  msg('季末', text, () => showHub(), lines.length ? 'trophy' : 'bullpen');
+}
+function pushMem(k) { if (!C.memories.includes(k)) C.memories.push(k); }
+function retireAsk() { scene('引退', `你今年 ${C.age} 歲。要在這裡畫下句點嗎？`, [{ label: '宣布引退', fn: () => endLife('引退') }, { label: '再投一年', fn: d => d() }], 'night'); }
+
+// ===================== 轉生 =====================
+function endLife(how) {
+  closeScene();
+  const K = C.career;
+  const summary = C.phase === 'HS' ? `高中畢業後${how}` : `職業 ${C.proYear - 1} 年・${K.w} 勝 ${K.sv} 救援・${K.k} 三振・防禦率 ${fmt1(era(K))}`;
+  const mems = [...new Set(C.memories)];
+  const inh = [
+    { k:'velo', label:'球速', v: Math.max(2, Math.round(C.velo * 0.1)) },
+    { k:'ctrl', label:'控球', v: Math.max(2, Math.round(C.ctrl * 0.1)) },
+    { k:'sta', label:'體力', v: Math.max(2, Math.round(C.sta * 0.1)) },
+    { k:'pitch', label:'變化球', v: Math.max(2, Math.round(Math.max(...Object.entries(C.pitches).filter(([p]) => p !== '直球').map(([,v]) => v)) * 0.1)) },
+  ];
+  let selM = mems[0] || null, selI = inh[0];
+  const draw = () => {
+    $('sceneIn').innerHTML = bbArt('night', myCol(), 3) + `<div style="display:flex;gap:12px;align-items:center;margin-bottom:10px">${bbAvatar(myCol(), C.num || 18, C.skin || 1)}<h2 style="margin:0">${C.name} 的一生</h2></div>
+      <div class="story">${summary}\n\n${C.highlights.length ? '<b>名場面</b>\n' + C.highlights.join('\n') : ''}</div>
+      <div class="card"><table><tr><th>年度</th><th>登板</th><th>勝</th><th>救援</th><th>局</th><th>三振</th><th>防禦率</th></tr>
+      ${C.seasons.map(s => `<tr><td>${s.label}</td><td>${s.g}</td><td>${s.w}</td><td>${s.sv}</td><td>${ip(s.outs)}</td><td>${s.k}</td><td>${fmt1(era(s))}</td></tr>`).join('')}</table></div>
+      <h2>轉生</h2>
+      <div class="muted" style="margin-bottom:8px">選一段核心記憶，變成下一位投手的天賦</div>
+      <div class="col" id="mm"></div>
+      <div class="muted" style="margin:14px 0 8px">再選一項能力傳承下去</div>
+      <div class="grid2" id="ii"></div>
+      <button id="bReborn" style="width:100%;margin-top:16px">轉生</button>`;
+    for (const k of mems) { const m = MEMORIES[k], b = document.createElement('button'); b.className = 'opt' + (selM === k ? ' sel' : ''); b.innerHTML = `${m.n}<small>${m.from} → 天賦「${m.t}」：${m.d}${has(k) ? '（已擁有）' : ''}</small>`; b.onclick = () => { selM = k; draw(); }; $('mm').appendChild(b); }
+    if (!mems.length) $('mm').innerHTML = '<div class="muted">這一世沒有留下特別的記憶。</div>';
+    for (const x of inh) { const b = document.createElement('button'); b.className = 'opt' + (selI === x ? ' sel' : ''); b.innerHTML = `${x.label} +${x.v}`; b.onclick = () => { selI = x; draw(); }; $('ii').appendChild(b); }
+    $('bReborn').onclick = () => {
+      LEG.lives.unshift({ name: C.name, summary, highlights: C.highlights, school: C.school, team: C.team, seasons: C.seasons.length, career: C.career });
+      if (selM && !LEG.talents.includes(selM)) { LEG.talents.push(selM); if (LEG.talents.length > 4) LEG.talents.shift(); }
+      LEG.inherit = selI; saveLeg();
+      try { localStorage.removeItem('pitcherRun'); } catch(e) {}
+      $('scene').classList.add('hide'); renderCreate(); showOnly('sCreate');
+    };
+  };
+  $('scene').classList.remove('hide'); $('scene').scrollTop = 0; draw();
+}
+
+// ===================== 比賽引擎 =====================
+let GS = null;
+function makeBatter(level, slot, rivalName) {
+  const st = slot === 3 ? 8 : slot <= 4 ? 4 : slot >= 7 ? -6 : 0;
+  const b = { name: rivalName || randName(), slot, con: clamp(level + st + rnd(-9, 9), 15, 120), pow: clamp(level + st * 1.5 + rnd(-14, 14), 10, 125), eye: clamp(level + rnd(-10, 10), 15, 120),
+    wz: pick(['high','low','in','out']), wt: pick(['fast','brk']), rival: !!rivalName };
+  if (rivalName) { b.con += 10; b.pow += 14; b.eye += 6; }
+  return b;
+}
+const ZN = { high:'高', low:'低', in:'內角', out:'外角' };
+const grade = v => v >= 85 ? 'S' : v >= 72 ? 'A' : v >= 60 ? 'B' : v >= 48 ? 'C' : v >= 36 ? 'D' : 'E';
+
+function startGame(cfg) {
+  const inn = cfg.innings;
+  const lineup = []; for (let i = 0; i < 9; i++) lineup.push(makeBatter(cfg.level, i, cfg.rival && i === 3 ? C.rival.name : null));
+  GS = { cfg, inn, inning: 1, outs: 0, bases: [0,0,0], our: 0, opp: 0, pc: 0, lineup, bi: 0, b: 0, s: 0,
+    line: { outs:0, h:0, bb:0, k:0, r:0 }, types: {}, last: [], log: [], over: false, leadAtExit: null, myRunsAt: 0, entry: 1, sel: { p:'直球', x:0, y:0 }, rivalPA: [] };
+  const lam = 0.5;
+  const po = () => { let k = 0; const L = Math.exp(-lam); let p = 1; do { k++; p *= Math.random(); } while (p > L); return k - 1; };
+  GS.po = po;
+  if (cfg.role === '中繼') { GS.entry = Math.min(inn - 2, ri(5, 7)); }
+  if (cfg.role === '終結者') { GS.entry = inn; }
+  for (let i = 1; i < GS.entry; i++) { GS.opp += po(); GS.our += po(); }
+  if (cfg.role === '終結者') { GS.our = GS.opp + ri(1, 3); }
+  if (cfg.role === '中繼' && GS.our < GS.opp - 3) GS.our = GS.opp - ri(0, 2);
+  GS.inning = GS.entry; GS.bi = ri(0, 8);
+  GS.lead0 = GS.our - GS.opp;
+  if (cfg.quick) { while (!GS.over) autoHalf(); return; }
+  $('game').classList.remove('hide'); $('game').scrollTop = 0;
+  newBatter(); renderGame();
+}
+const curB = () => GS.lineup[GS.bi % 9];
+function quality(p) {
+  const lv = pitchLv(p);
+  return p === '直球' ? (C.velo * 0.75 + C.ctrl * 0.25) / 100 : (lv * 0.7 + C.velo * 0.3) / 100;
+}
+function staLimit() { return 35 + C.sta * 0.95; }
+function fatigueF() { return clamp(1 - Math.max(0, GS.pc - staLimit()) / 90, 0.55, 1) * (1 - C.fatigue / 400); }
+function rating() { const lv = Object.values(C.pitches).concat([C.velo]).sort((a,b) => b - a); return (C.velo * 0.35 + C.ctrl * 0.3 + (lv[0] + lv[1]) / 2 * 0.35) * fatigueF(); }
+
+function suggestion() {
+  const b = curB(), acc = Math.random() < 0.5 + C.bond / 200 + (has('RIVAL') ? 0.15 : 0);
+  const types = Object.keys(C.pitches);
+  const pool = acc ? types.filter(p => PITCHES[p].cat === b.wt) : types;
+  const p = (pool.length ? pool : types).sort((a,c) => pitchLv(c) - pitchLv(a))[Math.random() < 0.7 ? 0 : Math.min(1, (pool.length || types.length) - 1)];
+  const wz = acc ? b.wz : pick(['high','low','in','out']);
+  let x = 0, y = 0;
+  if (wz === 'high') { y = -1; x = pick([-1, 0, 1]); } if (wz === 'low') { y = 1; x = pick([-1, 0, 1]); }
+  if (wz === 'in') { x = -1; y = pick([-1, 0, 1]); } if (wz === 'out') { x = 1; y = pick([-1, 0, 1]); }
+  if (GS.s === 2 && PITCHES[p].cat === 'brk' && Math.random() < 0.6) { if (Math.abs(y) === 1) y *= 2; else x *= 2; }
+  const why = acc ? `這打者對${ZN[b.wz]}${b.wt === 'fast' ? '快速球' : '變化球'}比較沒辦法` : '先試試看他的反應';
+  return { p, x, y, why };
+}
+function newBatter() {
+  GS.b = 0; GS.s = 0; GS.last = [];
+  GS.sug = suggestion();
+  GS.sel = { p: GS.sug.p, x: GS.sug.x, y: GS.sug.y };
+}
+
+// ---- 投一球 ----
+function throwPitch(q) {
+  if (GS.over || GS.anim) return;
+  const p = GS.sel.p, b = curB();
+  GS.pc++; GS.types[p] = (GS.types[p] || 0) + 1;
+  const perfect = q >= 0.95;
+  const err = 0.14 + (1 - clamp(C.ctrl, 0, 110) / 110) * 0.55 + (1 - q) * 0.75 + C.fatigue / 300 + Math.max(0, GS.pc - staLimit()) / 150;
+  const x = GS.sel.x + gauss() * err * 0.6, y = GS.sel.y + gauss() * err * 0.6;
+  const inZ = Math.abs(x) <= 1.5 && Math.abs(y) <= 1.5;
+  const edge = inZ && (Math.abs(x) > 0.9 || Math.abs(y) > 0.9), mid = Math.abs(x) < 0.6 && Math.abs(y) < 0.6;
+  const dist = inZ ? 0 : Math.max(Math.abs(x) - 1.5, Math.abs(y) - 1.5, 0);
+  const rep = GS.last.length >= 2 && GS.last[GS.last.length - 1] === p && GS.last[GS.last.length - 2] === p ? 1.2 : 1;
+  const share = GS.pc > 12 ? (GS.types[p] / GS.pc) : 0;
+  const mono = share > 0.5 ? 1.12 : 1;
+  GS.last.push(p);
+  const zw = (b.wz === 'high' && y < -0.5) || (b.wz === 'low' && y > 0.5) || (b.wz === 'in' && x < -0.5) || (b.wz === 'out' && x > 0.5);
+  const tw = PITCHES[p].cat === b.wt;
+  let E = quality(p) * (0.55 + 0.45 * q) * fatigueF() + (has('RIVAL') && PITCHES[p].cat === 'brk' ? 0.05 : 0) + (perfect ? 0.06 : 0);
+  const speed = Math.round((125 + C.velo * 0.42) * PITCHES[p].spd * (0.95 + q * 0.05) * (1 - Math.max(0, GS.pc - staLimit()) / 600));
+  // 打者反應
+  let swingP = inZ ? 0.6 + (GS.s === 2 ? 0.22 : 0) : clamp(0.4 - b.eye / 260 + (dist < 0.6 ? 0.15 : 0) + (GS.s === 2 ? 0.12 : 0) + (PITCHES[p].cat === 'brk' ? 0.08 : 0), 0.05, 0.7);
+  if (GS.b === 3 && !inZ) swingP *= 0.6;
+  const swing = Math.random() < swingP;
+  let out = null, txt = '', cls = '';
+  if (!swing) {
+    if (inZ) { GS.s++; txt = edge ? '好球！漂亮的邊角' : '好球'; cls = 'gold'; }
+    else { GS.b++; txt = '壞球'; cls = 'muted'; }
+  } else {
+    const cP = clamp((b.con / 100) * (1.08 - E * 0.6) * (inZ ? 1 : 0.6) * (zw ? 0.75 : 1) * (tw ? 0.8 : 1) * (edge ? 0.85 : 1) * rep * mono, 0.12, 0.95);
+    if (Math.random() > cP) { GS.s++; txt = '揮棒落空！'; cls = 'gold'; }
+    else if (Math.random() < 0.4 + (edge ? 0.15 : 0) - (mid ? 0.15 : 0)) { if (GS.s < 2) GS.s++; txt = '界外球'; cls = 'muted'; }
+    else {
+      const hP = clamp(0.27 + (b.con - 60) / 260 + (mid ? 0.12 : 0) - (edge ? 0.08 : 0) - E * 0.13 + (rep > 1 ? 0.05 : 0), 0.08, 0.6);
+      if (Math.random() < hP) {
+        const hr = clamp((b.pow / 100) * 0.26 * (mid ? 1.6 : 1) * (1.2 - E * 0.5), 0.02, 0.6);
+        const r = Math.random();
+        out = r < hr ? 'HR' : r < hr + 0.2 ? '2B' : r < hr + 0.22 ? '3B' : '1B';
+      } else out = 'OUT';
+    }
+  }
+  if (GS.s >= 3) out = 'K';
+  if (GS.b >= 4) out = 'BB';
+  animate({ p, x, y, speed, perfect, q }, () => {
+    if (out) { const r = resolvePA(out); txt = r.t; cls = r.c; }
+    $('gRes').innerHTML = `<span class="${cls}">${txt}</span>　<span class="muted" style="font-size:15px">${p} ${speed} km/h${perfect ? ' ✦完美' : ''}</span>`;
+    if (mono > 1 && !out) GS.log.unshift('<span class="bad">打者開始鎖定你的' + p + '（配球太單調）</span>');
+    if (out) afterPA(); else renderGame();
+  });
+}
+
+// ---- 打席結果與跑壘 ----
+function adv(type) {
+  const B = GS.bases; let runs = 0;
+  if (type === 'BB') { if (B[0] && B[1] && B[2]) runs++; if (B[0] && B[1]) B[2] = 1; if (B[0]) B[1] = 1; B[0] = 1; }
+  else if (type === '1B') { runs += B[2]; const s2 = B[1] && Math.random() < 0.6; runs += s2 ? 1 : 0; B[2] = B[1] && !s2 ? 1 : 0; B[2] = B[2] || (B[0] && Math.random() < 0.25 ? 1 : 0); B[1] = B[0]; B[0] = 1; }
+  else if (type === '2B') { runs += B[2] + B[1]; const s1 = B[0] && Math.random() < 0.45; runs += s1 ? 1 : 0; B[2] = B[0] && !s1 ? 1 : 0; B[1] = 1; B[0] = 0; }
+  else if (type === '3B') { runs += B[0] + B[1] + B[2]; GS.bases = [0,0,1]; return runs; }
+  else if (type === 'HR') { runs += B[0] + B[1] + B[2] + 1; GS.bases = [0,0,0]; return runs; }
+  return runs;
+}
+function resolvePA(type) {
+  const b = curB(); let t = '', c = '', runs = 0;
+  if (type === 'K') { GS.outs++; GS.line.k++; GS.line.outs++; t = '三振！'; c = 'gold'; }
+  else if (type === 'OUT') {
+    GS.outs++; GS.line.outs++;
+    const k = pick(['滾地球出局', '飛球出局', '平飛球被接殺', '內野飛球']);
+    t = k; c = 'good';
+    if (GS.outs < 3 && GS.bases[2] && k === '飛球出局' && Math.random() < 0.55) { runs++; GS.bases[2] = 0; t += '，三壘跑者回本壘'; c = 'bad'; }
+    if (GS.outs < 3 && GS.bases[0] && k === '滾地球出局' && Math.random() < 0.3) { GS.outs++; GS.line.outs++; GS.bases[0] = 0; t = '滾地球，雙殺！'; c = 'gold'; }
+  }
+  else if (type === 'BB') { GS.line.bb++; runs = adv('BB'); t = '保送'; c = 'bad'; }
+  else { GS.line.h++; runs = adv(type); t = { '1B':'安打', '2B':'二壘安打', '3B':'三壘安打', 'HR':'全壘打！' }[type]; c = 'bad'; }
+  if (runs) { GS.opp += runs; GS.line.r += runs; t += `（失 ${runs} 分）`; }
+  if (b.rival) {
+    const good = type === 'K' || type === 'OUT';
+    GS.rivalPA.push(good ? '解決' : '被打');
+  }
+  GS.log.unshift(`${b.name}：${t}`);
+  return { t, c };
+}
+function afterPA() {
+  GS.bi++;
+  if (GS.outs >= 3) return setTimeout(endHalf, 650);
+  newBatter(); renderGame();
+}
+
+// ---- 自動 ----
+function autoPA() {
+  const b = curB(), R = rating(), Lb = (b.con + b.pow + b.eye) / 3;
+  const d = (R - Lb);
+  const pK = clamp(0.19 + d * 0.006, 0.05, 0.45), pBB = clamp(0.1 - (C.ctrl - 50) * 0.0011, 0.03, 0.16), pH = clamp(0.235 - d * 0.0042, 0.1, 0.4);
+  GS.pc += ri(3, 5);
+  const r = Math.random();
+  let type;
+  if (r < pK) type = 'K'; else if (r < pK + pBB) type = 'BB';
+  else if (r < pK + pBB + pH) { const hr = clamp(b.pow / 100 * 0.12, 0.03, 0.3), r2 = Math.random(); type = r2 < hr ? 'HR' : r2 < hr + 0.2 ? '2B' : r2 < hr + 0.22 ? '3B' : '1B'; }
+  else type = 'OUT';
+  resolvePA(type); GS.bi++;
+}
+function autoHalf() { while (GS.outs < 3) autoPA(); endHalf(true); }
+
+function shouldExit() {
+  const role = GS.cfg.role;
+  if (role === '終結者') return true;
+  if (role === '中繼') return GS.inning >= GS.entry + (Math.random() < 0.4 ? 1 : 0);
+  return GS.pc > staLimit() + 12 || (GS.line.r >= 5 && GS.inning >= 3) || (GS.line.r >= 7);
+}
+function endHalf(silent) {
+  GS.outs = 0; GS.bases = [0,0,0];
+  // 我方進攻
+  if (!(GS.inning >= GS.inn && GS.our > GS.opp)) GS.our += GS.po();
+  const last = GS.inning >= GS.inn;
+  if (last && GS.our !== GS.opp) return finish();
+  if (GS.pulled || shouldExit()) return exitPitcher(silent);
+  GS.inning++;
+  if (GS.inning > GS.inn + 3) return finish();
+  if (!silent && !GS.cfg.quick) { newBatter(); renderGame(); $('gRes').innerHTML = `<span class="muted">第 ${GS.inning} 局</span>`; }
+}
+function exitPitcher(silent) {
+  GS.leadAtExit = GS.our - GS.opp; GS.exitInning = GS.inning;
+  // 牛棚接手
+  for (let i = GS.inning + 1; i <= GS.inn || GS.our === GS.opp; i++) {
+    GS.opp += GS.po(); if (!(i >= GS.inn && GS.our > GS.opp)) GS.our += GS.po();
+    if (i > GS.inn + 3) { if (GS.our === GS.opp) GS.our++; break; }
+  }
+  finish(true);
+}
+function finish(exited) {
+  GS.over = true;
+  if (GS.our === GS.opp) GS.our++;
+  const L = GS.line, win = GS.our > GS.opp, role = GS.cfg.role;
+  const lead = exited ? GS.leadAtExit : GS.our - GS.opp;
+  let dec = '';
+  const cg = !exited && GS.entry === 1;
+  if (role === '終結者') { if (win && GS.lead0 > 0 && GS.lead0 <= 3) { dec = 'SV'; } else if (!win && lead <= 0) dec = 'L'; }
+  else if (role === '先發') { if (win && lead > 0 && L.outs >= (GS.inn === 7 ? 12 : 15)) dec = 'W'; else if (!win && lead < 0) dec = 'L'; }
+  else { if (win && lead > 0 && GS.lead0 <= 0) dec = 'W'; else if (!win && lead < 0 && GS.lead0 >= 0) dec = 'L'; }
+  const S = C.season, K = C.career;
+  for (const T of [S, K]) { T.g++; T.outs += L.outs; T.h += L.h; T.bb += L.bb; T.k += L.k; T.r += L.r; if (dec === 'W') T.w++; if (dec === 'L') T.l++; if (dec === 'SV') T.sv++; }
+  // 疲勞與信任
+  C.fatigue += role === '先發' ? 12 + GS.pc * 0.12 : 8;
+  const good = L.outs ? L.r * 27 / L.outs < 3 : true;
+  C.trust = clamp(C.trust + (good ? 4 : -3), 0, 100);
+  // 名場面
+  const extra = [];
+  if (L.k >= 10) { pushMem('K10'); extra.push(`單場 ${L.k} 次三振！`); C.highlights.push(`${C.phase === 'HS' ? '高中' : '職業第 ' + C.proYear + ' 年'}單場 ${L.k} 次三振`); }
+  if (cg && L.r === 0 && GS.inn === 9) { pushMem('SHUTOUT'); extra.push('完封勝！'); C.highlights.push(`職業第 ${C.proYear} 年投出完封`); }
+  for (const r of GS.rivalPA) { if (C.rival.faced < 3) { C.rival.faced++; C.rival.res.push(r); if (r === '解決') C.rival.won++; } }
+  // 受傷
+  if (C.fatigue > 75 && Math.random() < (C.fatigue - 70) * 0.01 * (has('UNDRAFTED') ? 0.65 : 1)) { C.injury = ri(2, 4); extra.push(`<span class="bad">賽後手臂不對勁，傷停 ${C.injury} 週（登板過度、疲勞累積）。</span>`); }
+  const decT = { W:'勝投', L:'敗投', SV:'救援成功' }[dec] || '無關勝敗';
+  const summary = `${win ? '球隊勝利' : '球隊落敗'}　${GS.our} : ${GS.opp}\n你的成績：${ip(L.outs)} 局　${L.h} 安　${L.bb} 四壞　${L.k} 三振　失 ${L.r} 分（${decT}）　用球數 ${GS.pc}${GS.rivalPA.length ? `\n對宿敵 ${C.rival.name}：${GS.rivalPA.join('、')}` : ''}${extra.length ? '\n\n' + extra.join('\n') : ''}`;
+  const res = { teamWin: win, summary };
+  $('game').classList.add('hide');
+  saveRun();
+  GS.cfg.onEnd(res);
+}
+
+// ===================== 比賽畫面 =====================
+const zone = $('zone'), zctx = zone.getContext ? zone.getContext('2d') : null;
+function renderGame() {
+  const b = curB();
+  $('gTeams').textContent = `${GS.cfg.opp} vs ${C.phase === 'HS' ? C.school : C.team}`;
+  $('gScore').textContent = `${GS.opp} : ${GS.our}`;
+  $('gInning').textContent = `${GS.inning} 局上`;
+  $('gOuts').innerHTML = [0,1,2].map(i => `<span class="o ${i < GS.outs ? 'on' : ''}"></span>`).join('');
+  $('gCount').innerHTML = [0,1,2,3].map(i => `<span class="b ${i < GS.b ? 'on' : ''}"></span>`).join('') + '<br>' + [0,1].map(i => `<span class="s ${i < GS.s ? 'on' : ''}"></span>`).join('');
+  ['b1','b2','b3'].forEach((id, i) => $(id).classList.toggle('on', !!GS.bases[i]));
+  $('gPC').textContent = `用球 ${GS.pc}`;
+  $('gBat').innerHTML = `${b.slot + 1}棒 ${b.rival ? '<span class="bad">' + b.name + '（宿敵）</span>' : b.name}`;
+  $('gBatInfo').textContent = `打擊 ${grade(b.con)}・力量 ${grade(b.pow)}・選球 ${grade(b.eye)}`;
+  $('gLine').textContent = `${ip(GS.line.outs)}局 ${GS.line.k}K 失${GS.line.r}`;
+  const sg = GS.sug;
+  $('gHint').innerHTML = `🧤 捕手建議：<b class="gold">${sg.p}</b>・${posName(sg.x, sg.y)}　<span class="muted">${sg.why}</span>${GS.pc > staLimit() ? '<br><span class="bad">體力下滑，球威和控球都在變差</span>' : ''}`;
+  $('gTypes').innerHTML = '';
+  for (const p of Object.keys(C.pitches)) {
+    const bt = document.createElement('button'); bt.className = 'ghost' + (GS.sel.p === p ? ' on' : '');
+    bt.innerHTML = `${p}<small>${Math.round(pitchLv(p))}</small>`; bt.onclick = () => { GS.sel.p = p; renderGame(); };
+    $('gTypes').appendChild(bt);
+  }
+  $('gLog').innerHTML = GS.log.slice(0, 8).join('<br>');
+  const pw = has('HS_CHAMP') ? 0.06 : 0.035;
+  $('mz2').style.left = (PERF - pw) * 100 + '%'; $('mz2').style.width = pw * 200 + '%';
+  $('mz1').style.left = '70%'; $('mz1').style.width = '30%';
+  drawZone();
+}
+function posName(x, y) {
+  const v = y < 0 ? '高' : y > 0 ? '低' : '', h = x < 0 ? '內角' : x > 0 ? '外角' : '';
+  const out = Math.abs(x) >= 2 || Math.abs(y) >= 2 ? '（壞球帶）' : '';
+  return (h + v || '正中') + out;
+}
+const CELL = 100, OX = 50, OY = 50; // 5x5 格，畫布 600
+function cellXY(x, y) { return [OX + (x + 2) * CELL + CELL/2, OY + (y + 2) * CELL + CELL/2]; }
+function drawZone(ball) {
+  if (!zctx) return;
+  const c = zctx; c.clearRect(0, 0, 600, 600);
+  // 背景
+  { const gr = c.createLinearGradient(0, 0, 0, 600); gr.addColorStop(0, '#0d1a12'); gr.addColorStop(0.5, '#1f4a2e'); gr.addColorStop(1, '#6b4a2e'); c.fillStyle = gr; c.fillRect(0, 0, 600, 600);
+    c.fillStyle = 'rgba(255,255,255,.05)'; for (let i = 0; i < 6; i++) c.fillRect(0, i * 40, 600, 20);
+    // 遠方投手
+    c.fillStyle = 'rgba(232,237,243,.35)'; c.beginPath(); c.arc(300, 112, 7, 0, 7); c.fill(); c.fillRect(294, 119, 12, 20);
+    // 本壘板
+    c.fillStyle = 'rgba(255,255,255,.75)'; c.beginPath(); c.moveTo(240, 572); c.lineTo(360, 572); c.lineTo(360, 584); c.lineTo(300, 600); c.lineTo(240, 584); c.fill();
+    // 打者剪影（右打，站在畫面左側）
+    if (GS) { c.save(); c.globalAlpha = 0.32; c.fillStyle = '#0b0e12';
+      c.beginPath(); c.arc(-6, 150, 34, 0, 7); c.fill(); c.fillRect(-40, 182, 70, 190); c.fillRect(-36, 372, 26, 200); c.fillRect(0, 372, 26, 200);
+      c.strokeStyle = '#0b0e12'; c.lineWidth = 16; c.lineCap = 'round'; c.beginPath(); c.moveTo(14, 200); c.lineTo(80, 60); c.stroke(); c.restore(); } }
+  c.fillStyle = 'rgba(26,36,48,.55)'; c.fillRect(OX + CELL, OY + CELL, CELL * 3, CELL * 3);
+  c.strokeStyle = 'rgba(255,255,255,.08)'; c.lineWidth = 2;
+  for (let i = 0; i <= 5; i++) { c.beginPath(); c.moveTo(OX + i*CELL, OY); c.lineTo(OX + i*CELL, OY + 5*CELL); c.stroke(); c.beginPath(); c.moveTo(OX, OY + i*CELL); c.lineTo(OX + 5*CELL, OY + i*CELL); c.stroke(); }
+  c.strokeStyle = '#e8edf3'; c.lineWidth = 4; c.strokeRect(OX + CELL, OY + CELL, CELL * 3, CELL * 3);
+  // 打者弱點不顯示；捕手建議（虛線金框）
+  if (GS && GS.sug) { const [sx, sy] = cellXY(GS.sug.x, GS.sug.y); c.setLineDash([10, 8]); c.strokeStyle = '#f2c14e'; c.lineWidth = 4; c.strokeRect(sx - CELL/2 + 6, sy - CELL/2 + 6, CELL - 12, CELL - 12); c.setLineDash([]); }
+  // 選定位置
+  if (GS) { const [tx, ty] = cellXY(GS.sel.x, GS.sel.y); c.strokeStyle = '#5fa8ff'; c.lineWidth = 5; c.beginPath(); c.arc(tx, ty, 30, 0, 7); c.stroke(); c.beginPath(); c.moveTo(tx - 12, ty); c.lineTo(tx + 12, ty); c.moveTo(tx, ty - 12); c.lineTo(tx, ty + 12); c.stroke(); }
+  if (ball) {
+    if (ball.trail) { c.strokeStyle = ball.perfect ? 'rgba(242,193,78,.9)' : 'rgba(255,255,255,.35)'; c.lineWidth = ball.perfect ? 8 : 4; c.beginPath(); ball.trail.forEach((p, i) => i ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1])); c.stroke(); }
+    c.fillStyle = '#fff'; c.beginPath(); c.arc(ball.x, ball.y, ball.r, 0, 7); c.fill();
+    c.strokeStyle = '#e5605a'; c.lineWidth = 2; c.beginPath(); c.arc(ball.x - ball.r * 0.4, ball.y, ball.r * 0.7, -0.9, 0.9); c.stroke();
+  }
+}
+function animate(pt, cb) {
+  GS.anim = true;
+  const [ex, ey] = cellXY(pt.x, pt.y);
+  const br = PITCHES[pt.p].brk;
+  const sx = 300 - br[0] * 40, sy = 120 - br[1] * 30;
+  const dur = 650 * 140 / pt.speed;
+  const t0 = performance.now(); const trail = [];
+  const step = now => {
+    let t = Math.min(1, (now - t0) / dur);
+    // 位置：先直線，後段加上變化
+    const lin = t, late = Math.pow(t, 2.6);
+    const x = sx + (ex - br[0] * CELL * 0.9 - sx) * lin + br[0] * CELL * 0.9 * late;
+    const y = sy + (ey - br[1] * CELL * 0.9 - sy) * lin + br[1] * CELL * 0.9 * late;
+    trail.push([x, y]);
+    drawZone({ x, y, r: 6 + 20 * t * t, trail, perfect: pt.perfect });
+    if (t < 1) requestAnimationFrame(step); else { setTimeout(() => { GS.anim = false; cb(); }, 350); }
+  };
+  if (!zctx || typeof requestAnimationFrame === 'undefined') { GS.anim = false; cb(); return; }
+  requestAnimationFrame(step);
+}
+// 點選進壘位置
+zone.addEventListener('pointerdown', e => {
+  if (!GS || GS.anim) return;
+  const r = zone.getBoundingClientRect();
+  const px = (e.clientX - r.left) / r.width * 600, py = (e.clientY - r.top) / r.height * 600;
+  const cx = Math.floor((px - OX) / CELL) - 2, cy = Math.floor((py - OY) / CELL) - 2;
+  if (cx < -2 || cx > 2 || cy < -2 || cy > 2) return;
+  GS.sel.x = cx; GS.sel.y = cy; drawZone();
+});
+// 蓄力計：按住時游標來回移動，放開判定
+const PERF = 0.9;
+let charging = false, cStart = 0, cVal = 0;
+function meterLoop(now) {
+  if (!charging) return;
+  const t = ((now - cStart) / 900) % 2;
+  cVal = t < 1 ? t : 2 - t;
+  $('mcur').style.left = (cVal * 100) + '%';
+  requestAnimationFrame(meterLoop);
+}
+function chargeStart(e) { e.preventDefault(); if (!GS || GS.anim || GS.over || charging) return; charging = true; cStart = performance.now(); requestAnimationFrame(meterLoop); }
+function chargeEnd(e) {
+  e.preventDefault(); if (!charging) return; charging = false;
+  const pw = has('HS_CHAMP') ? 0.06 : 0.035;
+  const d = Math.abs(cVal - PERF);
+  const q = d <= pw ? 1 : cVal >= 0.7 ? clamp(0.9 - d * 1.2, 0.6, 0.9) : clamp(0.3 + cVal * 0.5, 0.3, 0.65);
+  throwPitch(q);
+}
+$('charge').addEventListener('pointerdown', chargeStart);
+$('charge').addEventListener('pointerup', chargeEnd);
+$('charge').addEventListener('pointerleave', e => { if (charging) chargeEnd(e); });
+$('gAuto').onclick = () => { if (GS.anim || GS.over) return; while (GS.outs < 3) autoPA(); renderGame(); setTimeout(() => endHalf(), 300); };
+$('gSim').onclick = () => { if (GS.anim || GS.over) return; GS.cfg.quick = true; while (GS.outs < 3) autoPA(); endHalf(true); while (!GS.over) autoHalf(); };
+$('gPull').onclick = () => { if (GS.anim || GS.over) return; GS.pulled = true; GS.cfg.quick = true; while (GS.outs < 3) autoPA(); endHalf(true); };
+
+// ===================== 標題 =====================
+function title_() { showOnly('sTitle'); $('tArt').innerHTML = bbArt('stadium', '#f2c14e', 9); const r = loadRun(); $('bCont').classList.toggle('hide', !r); }
+$('bNew').onclick = () => {
+  const r = loadRun();
+  const go = () => { closeScene(); renderCreate(); showOnly('sCreate'); };
+  if (r) scene('新的人生', `你還有一位進行中的投手「${r.name}」。重新開始會放棄他（不會留下轉生記憶）。`, [{ label: '確定', fn: () => { try { localStorage.removeItem('pitcherRun'); } catch(e) {} go(); } }, { label: '算了', fn: d => d() }]);
+  else go();
+};
+$('bCont').onclick = () => { C = loadRun(); if (C) showHub(); };
+$('bHall').onclick = () => {
+  $('hallList').innerHTML = LEG.lives.length ? LEG.lives.map((l, i) => `<div class="card"><b style="font-size:19px">第 ${LEG.lives.length - i} 世　${l.name}</b><br><span class="muted">${l.school}${l.team ? '→' + l.team : ''}</span><br>${l.summary}
+    ${l.highlights && l.highlights.length ? `<div class="muted" style="font-size:14px;margin-top:6px;line-height:1.6">${l.highlights.join('<br>')}</div>` : ''}</div>`).join('')
+    + `<div class="card">目前天賦：${LEG.talents.length ? LEG.talents.map(k => MEMORIES[k].t).join('、') : '無'}</div>` : '<div class="card muted">還沒有前世。</div>';
+  showOnly('sHall');
+};
+$('bHallBack').onclick = title_;
+title_();
+</script>
+<a href="./" id="gbHome" style="position:fixed;top:calc(4px + env(safe-area-inset-top));left:50%;transform:translateX(-50%);z-index:9999;background:rgba(0,0,0,.45);color:#fff;text-decoration:none;font:600 13px -apple-system,sans-serif;padding:4px 12px;border-radius:12px;opacity:.6">⌂ 遊戲盒</a>
+<script>if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});</script>
+</body>
+</html>

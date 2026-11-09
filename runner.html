@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="遊戲盒">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<title>夜城跑酷</title>
+<style>
+  * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html,body { margin:0; height:100%; background:#0d1016; overflow:hidden; color:#e8eaf0;
+    font-family:-apple-system,"PingFang TC","Noto Sans TC","Microsoft JhengHei",sans-serif;
+    touch-action:none; user-select:none; -webkit-user-select:none; overscroll-behavior:none; }
+  #wrap { position:relative; width:100%; height:100%; max-width:560px; margin:0 auto; }
+  canvas { display:block; width:100%; height:100%; }
+  #hud { position:absolute; top:10px; left:14px; right:14px; display:flex; justify-content:space-between; align-items:flex-start;
+    font-size:22px; font-weight:800; pointer-events:none; text-shadow:0 2px 6px #000; }
+  #hud .r { text-align:right; }
+  #hud small { display:block; font-size:15px; color:#9aa3b5; font-weight:600; }
+  .ov { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:14px; background:rgba(9,11,16,.9); text-align:center; padding:20px; overflow-y:auto; touch-action:pan-y; }
+  .ov.hide { display:none; }
+  h1 { margin:0; font-size:44px; color:#5fd4ff; }
+  h2 { margin:0; font-size:32px; }
+  p { margin:0; font-size:18px; line-height:1.7; color:#b9bfcc; }
+  .gold { color:#f7c948; font-weight:800; }
+  button { background:#5fd4ff; color:#0b1a24; border:0; border-radius:14px; padding:14px 30px;
+    font-size:21px; font-weight:800; cursor:pointer; font-family:inherit; }
+  button.ghost { background:#262c38; color:#e8eaf0; }
+  button:disabled { opacity:.35; }
+  .row { display:flex; gap:10px; flex-wrap:wrap; justify-content:center; }
+  #shop { justify-content:flex-start; padding-top:24px; }
+  .wallet { font-size:24px; }
+  .item { width:100%; max-width:440px; background:#1b2029; border-radius:14px; padding:14px 16px;
+    display:flex; align-items:center; gap:12px; text-align:left; }
+  .item .ic { font-size:34px; width:44px; text-align:center; }
+  .item .tx { flex:1; }
+  .item .nm { font-size:20px; font-weight:800; }
+  .item .ds { font-size:15px; color:#9aa3b5; margin-top:2px; }
+  .pips { margin-top:6px; display:flex; gap:4px; }
+  .pip { width:18px; height:7px; border-radius:4px; background:#333a47; }
+  .pip.on { background:#5fd4ff; }
+  .item button { padding:10px 14px; font-size:17px; min-width:86px; }
+  #toast { position:absolute; left:50%; top:30%; transform:translateX(-50%); font-size:26px; font-weight:800;
+    color:#f7c948; text-shadow:0 2px 8px #000; pointer-events:none; opacity:0; transition:opacity .3s; white-space:nowrap; }
+</style>
+</head>
+<body>
+<div id="wrap">
+  <canvas id="c"></canvas>
+  <div id="hud" style="display:none">
+    <div><span id="hDist">0</span> 公尺<small id="hShield"></small></div>
+    <div class="r"><span class="gold">● <span id="hCoin">0</span></span><small id="hPow"></small></div>
+  </div>
+  <div id="toast"></div>
+
+  <div class="ov" id="menu">
+    <h1>夜城跑酷</h1>
+    <p>點<b>右半邊</b>跳躍（升級後可以連跳）<br>按住<b>左半邊</b>滑行，鑽過橫桿<br>收集 <span class="gold">金幣</span> 到商店升級能力</p>
+    <p class="wallet">金幣 <span class="gold" id="mCoin">0</span>　最遠 <b id="mBest">0</b> 公尺</p>
+    <div class="row"><button id="mStart">開跑</button><button class="ghost" id="mShop">商店升級</button></div>
+  </div>
+
+  <div class="ov hide" id="over">
+    <h2 style="color:#ff7b7b">撞到了！</h2>
+    <p id="oRes"></p>
+    <div class="row"><button id="oAgain">再跑一次</button><button class="ghost" id="oShop">商店升級</button></div>
+    <button class="ghost" id="oMenu" style="font-size:17px;padding:10px 22px">回主畫面</button>
+  </div>
+
+  <div class="ov hide" id="shop">
+    <h2>商店</h2>
+    <p class="wallet">金幣 <span class="gold" id="sCoin">0</span></p>
+    <div id="sList" style="display:flex;flex-direction:column;gap:10px;width:100%;align-items:center"></div>
+    <div class="row" style="margin-top:6px"><button id="sStart">開跑</button><button class="ghost" id="sBack">返回</button></div>
+  </div>
+</div>
+<script>
+// ====== 存檔 ======
+const DEF = { coins:0, best:0, up:{ jump:0, magnet:0, shield:0, value:0, dash:0, luck:0 } };
+let save = JSON.parse(JSON.stringify(DEF));
+try { const s = JSON.parse(localStorage.getItem('nightRunSave')); if (s) { save.coins = s.coins||0; save.best = s.best||0; Object.assign(save.up, s.up||{}); } } catch(e) {}
+function persist() { try { localStorage.setItem('nightRunSave', JSON.stringify(save)); } catch(e) {} }
+
+const UPS = [
+  { k:'jump',   ic:'🦘', nm:'多段跳',   max:2, cost:[150,700],              ds:l=>`空中可跳 ${l+1} 段` },
+  { k:'value',  ic:'💰', nm:'金幣加成', max:5, cost:[80,200,400,700,1200],  ds:l=>`每枚金幣 = ${l+1}` },
+  { k:'magnet', ic:'🧲', nm:'磁鐵',     max:5, cost:[60,150,300,500,800],   ds:l=>`吃到磁鐵持續 ${5+l*2} 秒` },
+  { k:'shield', ic:'🛡️', nm:'開局護盾', max:3, cost:[250,700,1500],         ds:l=>`開跑自帶 ${l} 層護盾（撞到不死）` },
+  { k:'dash',   ic:'🚀', nm:'起跑衝刺', max:3, cost:[200,500,1000],         ds:l=>l?`開局無敵衝刺 ${l*3} 秒`:'開局無敵衝刺（未解鎖）' },
+  { k:'luck',   ic:'🍀', nm:'道具運',   max:4, cost:[120,300,600,1000],     ds:l=>`磁鐵／護盾出現機率 +${l*25}%` },
+];
+
+// ====== 畫布 ======
+const cv = document.getElementById('c'), ctx = cv.getContext('2d');
+const W = 480; let H = 800, GY = 480, scale = 1;
+function resize() {
+  const r = cv.getBoundingClientRect(), dpr = window.devicePixelRatio || 1;
+  scale = r.width / W; H = r.height / scale; GY = Math.round(H * 0.62);
+  cv.width = r.width * dpr; cv.height = r.height * dpr;
+  ctx.setTransform(dpr*scale, 0, 0, dpr*scale, 0, 0);
+  if (!running) drawScene();
+}
+window.addEventListener('resize', resize);
+
+function rand(a,b){ return a + Math.random()*(b-a); }
+function rr(x,y,w,h,r){ ctx.beginPath(); if (ctx.roundRect) ctx.roundRect(x,y,w,h,r); else ctx.rect(x,y,w,h); }
+
+// ====== 遊戲狀態 ======
+let running = false, P, obs, coins, items, parts, speed, dist, runCoins, shield, magnetT, dashT, invT, spawnIn, coinIn, frame;
+let holdSlide = false;
+const PX = 90, G = 0.75, JV = -13.5;
+let bgA = [], bgB = [];
+function makeBg() {
+  bgA = []; bgB = [];
+  let x = 0; while (x < W + 200) { const w = rand(40,90); bgA.push({ x, w, h: rand(80,220), win: Math.random() }); x += w + rand(4,14); }
+  x = 0; while (x < W + 200) { const w = rand(50,110); bgB.push({ x, w, h: rand(40,130) }); x += w + rand(10,30); }
+}
+makeBg();
+
+function newRun() {
+  P = { y: GY, vy: 0, jumps: 0, slide: false, anim: 0 };
+  obs = []; coins = []; items = []; parts = [];
+  speed = 6.5; dist = 0; runCoins = 0; frame = 0;
+  shield = save.up.shield; magnetT = 0; invT = 0;
+  dashT = save.up.dash * 180;
+  spawnIn = 60; coinIn = 30;
+}
+
+const maxJumps = () => 1 + save.up.jump;
+function jump() {
+  if (!running) return;
+  if (P.jumps < maxJumps()) {
+    P.vy = P.jumps === 0 ? JV : JV * 0.9; P.jumps++; P.slide = false;
+    for (let i=0;i<6;i++) parts.push({ x:PX+17, y:P.y, vx:rand(-2,1), vy:rand(-1,1), t:20, c:'#5fd4ff' });
+  }
+}
+
+function playerBox() {
+  const h = P.slide ? 26 : 50, w = P.slide ? 44 : 32;
+  return { x: PX + (P.slide ? -6 : 0), y: P.y - h, w, h };
+}
+function hit(a, b, pad=4) { return a.x+pad < b.x+b.w && a.x+a.w-pad > b.x && a.y+pad < b.y+b.h && a.y+a.h-pad > b.y; }
+
+function spawn() {
+  const m = dist / 20;
+  const r = Math.random();
+  const x = W + 40;
+  let type = 'box';
+  if (m > 120 && r < 0.3) type = 'bar';
+  else if (m > 300 && r < 0.48) type = 'bird';
+  else if (m > 500 && r < 0.6) type = 'tall';
+  if (type === 'box') {
+    const w = rand(30, 46), h = rand(34, 52);
+    obs.push({ t:'box', x, y: GY - h, w, h });
+    if (Math.random() < 0.6) for (let i=0;i<5;i++) coins.push({ x: x + w/2 - 60 + i*30, y: GY - h - 40 - Math.sin(i/4*Math.PI)*45 });
+  } else if (type === 'tall') {
+    const w = 34, h = rand(86, 104); // 需要二段跳或剛好起跳
+    obs.push({ t:'box', x, y: GY - h, w, h });
+    for (let i=0;i<3;i++) coins.push({ x: x + w/2 - 30 + i*30, y: GY - h - 34 });
+  } else if (type === 'bar') {
+    const w = rand(60, 120);
+    obs.push({ t:'bar', x, y: -50, w, h: GY - 34 + 50 });
+    for (let i=0;i<Math.floor(w/28)+1;i++) coins.push({ x: x + 6 + i*28, y: GY - 14 });
+  } else {
+    obs.push({ t:'bird', x, y: GY - rand(78, 105), w: 36, h: 22, ph: Math.random()*6 });
+    for (let i=0;i<4;i++) coins.push({ x: x - 40 + i*30, y: GY - 20 });
+  }
+  // 道具
+  const luck = 1 + save.up.luck * 0.25;
+  if (Math.random() < 0.05 * luck) items.push({ t: Math.random()<0.5?'magnet':'shield', x: x + rand(150, 260), y: GY - rand(40, 120) });
+  // 下一個障礙的距離（速度越快，越給反應空間）
+  const minF = Math.max(42, 70 - m/40), maxF = Math.max(70, 115 - m/30);
+  spawnIn = rand(minF, maxF) * (type==='bar' ? 1.25 : 1) * (type==='tall' ? 1.2 : 1);
+}
+
+function coinLine() {
+  const y = GY - (Math.random() < 0.5 ? 20 : rand(60, 110)), n = Math.floor(rand(4,8)), x = W + 40;
+  for (let i=0;i<n;i++) coins.push({ x: x + i*28, y });
+}
+
+function toast(t) { const el = document.getElementById('toast'); el.textContent = t; el.style.opacity = 1; clearTimeout(toast.h); toast.h = setTimeout(()=>el.style.opacity=0, 900); }
+
+function update() {
+  frame++;
+  const m = dist / 20;
+  const base = Math.min(6.5 + m / 90, 15);
+  speed = dashT > 0 ? Math.max(base * 2.2, 16) : base;
+  dist += speed;
+
+  // 玩家物理
+  P.vy += G; P.y += P.vy;
+  if (P.y >= GY) { P.y = GY; P.vy = 0; P.jumps = 0; }
+  P.slide = holdSlide && P.y >= GY;
+  if (holdSlide && P.y < GY) P.vy += 0.9; // 空中按住滑行 = 快速落地
+  P.anim += speed * 0.04;
+
+  // 生成
+  if (dashT > 0) { dashT--; if (dashT === 0) { invT = 60; toast('衝刺結束！'); } }
+  spawnIn -= 1; if (spawnIn <= 0 && dashT <= 30) spawn();
+  coinIn -= 1; if (coinIn <= 0) { if (Math.random()<0.5) coinLine(); coinIn = rand(50, 120); }
+
+  for (const o of obs) { o.x -= speed; if (o.t==='bird') { o.x -= 1.5; o.ph += 0.25; } }
+  for (const c of coins) c.x -= speed;
+  for (const it of items) it.x -= speed;
+  obs = obs.filter(o => o.x + o.w > -60);
+  coins = coins.filter(c => c.x > -30 && !c.got);
+  items = items.filter(i => i.x > -30 && !i.got);
+
+  const pb = playerBox();
+  const pcx = pb.x + pb.w/2, pcy = pb.y + pb.h/2;
+
+  // 磁鐵
+  if (magnetT > 0) magnetT--;
+  const pull = magnetT > 0 || dashT > 0;
+  for (const c of coins) {
+    if (pull) { const dx = pcx - c.x, dy = pcy - c.y, d = Math.hypot(dx,dy); if (d < 240) { c.x += dx/d*14; c.y += dy/d*14; } }
+    if (Math.abs(c.x - pcx) < 24 && Math.abs(c.y - pcy) < 34) {
+      c.got = true; runCoins += 1 + save.up.value;
+      parts.push({ x:c.x, y:c.y, vx:0, vy:-1.5, t:18, c:'#f7c948' });
+    }
+  }
+  for (const it of items) {
+    if (Math.abs(it.x - pcx) < 28 && Math.abs(it.y - pcy) < 38) {
+      it.got = true;
+      if (it.t === 'magnet') { magnetT = (5 + save.up.magnet*2) * 60; toast('🧲 磁鐵！'); }
+      else { shield = Math.min(shield + 1, 5); toast('🛡️ 護盾 +1'); }
+    }
+  }
+
+  // 撞擊
+  if (invT > 0) invT--;
+  for (const o of obs) {
+    if (o.dead) continue;
+    if (hit(pb, o)) {
+      if (dashT > 0) { o.dead = true; boom(o); continue; }
+      if (invT > 0) continue;
+      if (shield > 0) { shield--; invT = 70; o.dead = true; boom(o); toast('護盾擋下了！'); continue; }
+      return gameOver();
+    }
+  }
+  obs = obs.filter(o => !o.dead);
+
+  for (const p of parts) { p.x += p.vx - speed*0.3; p.y += p.vy; p.t--; }
+  parts = parts.filter(p => p.t > 0);
+
+  // 背景
+  for (const b of bgA) b.x -= speed * 0.15;
+  for (const b of bgB) b.x -= speed * 0.4;
+  wrapBg(bgA, 4, 14, 40, 90, 80, 220); wrapBg(bgB, 10, 30, 50, 110, 40, 130);
+}
+function wrapBg(arr, g1, g2, w1, w2, h1, h2) {
+  while (arr.length && arr[0].x + arr[0].w < 0) arr.shift();
+  let last = arr[arr.length-1];
+  while (last.x + last.w < W + 200) { const w = rand(w1,w2); const n = { x: last.x + last.w + rand(g1,g2), w, h: rand(h1,h2), win: Math.random() }; arr.push(n); last = n; }
+}
+function boom(o) { for (let i=0;i<12;i++) parts.push({ x:o.x+o.w/2, y:Math.max(o.y, GY-60)+20, vx:rand(-3,5), vy:rand(-5,1), t:30, c:'#ff9a6b' }); }
+
+// ====== 繪圖 ======
+function drawScene() {
+  const g = ctx.createLinearGradient(0,0,0,GY);
+  g.addColorStop(0,'#0e1426'); g.addColorStop(1,'#1d2340');
+  ctx.fillStyle = g; ctx.fillRect(0,0,W,H);
+  ctx.fillStyle = '#f2e6b8'; ctx.beginPath(); ctx.arc(W-90, GY*0.25, 26, 0, 7); ctx.fill();
+  ctx.fillStyle = '#0e1426'; ctx.beginPath(); ctx.arc(W-80, GY*0.25-6, 24, 0, 7); ctx.fill();
+  for (const b of bgA) { ctx.fillStyle = '#1a2036'; ctx.fillRect(b.x, GY - b.h, b.w, b.h);
+    ctx.fillStyle = 'rgba(247,201,72,.18)'; for (let y = GY - b.h + 10; y < GY - 10; y += 18) for (let x = b.x + 8; x < b.x + b.w - 8; x += 14) if (((x*7+y*3+Math.floor(b.win*100))%5)===0) ctx.fillRect(x, y, 6, 8); }
+  for (const b of bgB) { ctx.fillStyle = '#141a2c'; ctx.fillRect(b.x, GY - b.h, b.w, b.h); }
+  // 地面
+  ctx.fillStyle = '#252c3d'; ctx.fillRect(0, GY, W, H - GY);
+  ctx.fillStyle = '#5fd4ff'; ctx.fillRect(0, GY, W, 3);
+  ctx.fillStyle = '#1c2231';
+  const off = (dist||0) % 40; for (let x = -off; x < W; x += 40) ctx.fillRect(x, GY + 14, 20, 4);
+  // 控制提示
+  ctx.fillStyle = 'rgba(255,255,255,.06)'; ctx.fillRect(W/2 - 1, GY + 40, 2, H - GY - 60);
+  ctx.fillStyle = 'rgba(232,234,240,.35)'; ctx.font = 'bold 24px sans-serif'; ctx.textAlign = 'center';
+  ctx.fillText('按住 ⬇ 滑行', W/4, GY + (H-GY)/2 + 8);
+  ctx.fillText('點 ⬆ 跳躍', W*3/4, GY + (H-GY)/2 + 8);
+  if (!P) return;
+
+  // 金幣
+  for (const c of coins) { ctx.fillStyle = '#f7c948'; ctx.beginPath(); ctx.ellipse(c.x, c.y, 8 * Math.abs(Math.cos(frame*0.08 + c.x*0.02))+2, 9, 0, 0, 7); ctx.fill(); }
+  // 道具
+  for (const it of items) {
+    ctx.fillStyle = it.t==='magnet' ? 'rgba(255,90,120,.25)' : 'rgba(95,212,255,.25)';
+    ctx.beginPath(); ctx.arc(it.x, it.y, 18 + Math.sin(frame*0.15)*2, 0, 7); ctx.fill();
+    ctx.font = '24px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(it.t==='magnet' ? '🧲' : '🛡️', it.x, it.y + 1); ctx.textBaseline = 'alphabetic';
+  }
+  // 障礙
+  for (const o of obs) {
+    if (o.t === 'box') {
+      ctx.fillStyle = '#c0573a'; rr(o.x, o.y, o.w, o.h, 4); ctx.fill();
+      ctx.strokeStyle = '#7e3524'; ctx.lineWidth = 3; ctx.strokeRect(o.x+5, o.y+5, o.w-10, o.h-10);
+      ctx.beginPath(); ctx.moveTo(o.x+5,o.y+5); ctx.lineTo(o.x+o.w-5,o.y+o.h-5); ctx.stroke();
+    } else if (o.t === 'bar') {
+      ctx.fillStyle = '#3a4258'; ctx.fillRect(o.x + 6, 0, 6, o.y + o.h); ctx.fillRect(o.x + o.w - 12, 0, 6, o.y + o.h);
+      const by = o.y + o.h;
+      ctx.fillStyle = '#e8c547'; ctx.fillRect(o.x, by - 26, o.w, 26);
+      ctx.fillStyle = '#222'; for (let x = o.x; x < o.x + o.w; x += 20) { ctx.beginPath(); ctx.moveTo(x, by); ctx.lineTo(x+10, by); ctx.lineTo(x+20, by-26); ctx.lineTo(x+10, by-26); ctx.fill(); }
+    } else {
+      const f = Math.sin(o.ph) * 8;
+      ctx.fillStyle = '#b07cff'; ctx.beginPath(); ctx.ellipse(o.x+18, o.y+12, 15, 10, 0, 0, 7); ctx.fill();
+      ctx.beginPath(); ctx.moveTo(o.x+10, o.y+10); ctx.lineTo(o.x+20, o.y+10 - 12 - f); ctx.lineTo(o.x+26, o.y+10); ctx.fill();
+      ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(o.x+9, o.y+9, 3, 0, 7); ctx.fill();
+      ctx.fillStyle = '#f7c948'; ctx.beginPath(); ctx.moveTo(o.x+4, o.y+12); ctx.lineTo(o.x-4, o.y+14); ctx.lineTo(o.x+4, o.y+16); ctx.fill();
+    }
+  }
+  drawPlayer();
+  for (const p of parts) { ctx.globalAlpha = Math.min(1, p.t/15); ctx.fillStyle = p.c; ctx.fillRect(p.x, p.y, 4, 4); }
+  ctx.globalAlpha = 1;
+  if (dashT > 0) { ctx.fillStyle = 'rgba(95,212,255,.12)'; for (let i=0;i<8;i++) ctx.fillRect(0, rand(0, GY), W, 2); }
+}
+
+function drawPlayer() {
+  const b = playerBox();
+  const blink = invT > 0 && Math.floor(invT/5)%2===0;
+  if (blink) return;
+  ctx.save();
+  if (dashT > 0) { ctx.shadowColor = '#5fd4ff'; ctx.shadowBlur = 20; }
+  if (P.slide) {
+    ctx.fillStyle = '#4ad1a0'; rr(b.x, b.y + 4, b.w, b.h - 4, 10); ctx.fill();
+    ctx.fillStyle = '#ff6b6b'; ctx.fillRect(b.x + 6, b.y + 6, b.w - 10, 5);
+    ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(b.x + b.w - 10, b.y + 15, 4, 0, 7); ctx.fill();
+    ctx.fillStyle = '#111'; ctx.beginPath(); ctx.arc(b.x + b.w - 9, b.y + 15, 2, 0, 7); ctx.fill();
+  } else {
+    const run = P.y >= GY ? Math.sin(P.anim*4) : 0.6;
+    ctx.strokeStyle = '#2f9b77'; ctx.lineWidth = 6; ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.moveTo(PX+11, P.y-12); ctx.lineTo(PX+11 + run*8, P.y-2);
+    ctx.moveTo(PX+21, P.y-12); ctx.lineTo(PX+21 - run*8, P.y-2); ctx.stroke();
+    ctx.fillStyle = '#4ad1a0'; rr(PX, P.y - 50, 32, 40, 12); ctx.fill();
+    ctx.fillStyle = '#ff6b6b'; ctx.fillRect(PX, P.y - 42, 32, 6);
+    ctx.beginPath(); ctx.moveTo(PX, P.y - 41); ctx.lineTo(PX - 12, P.y - 46 + Math.sin(frame*0.4)*3); ctx.lineTo(PX - 10, P.y - 36); ctx.fill();
+    ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(PX + 22, P.y - 28, 5, 0, 7); ctx.fill();
+    ctx.fillStyle = '#111'; ctx.beginPath(); ctx.arc(PX + 24, P.y - 28, 2.5, 0, 7); ctx.fill();
+  }
+  ctx.restore();
+  if (shield > 0) {
+    ctx.strokeStyle = 'rgba(95,212,255,.55)'; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.arc(b.x + b.w/2, b.y + b.h/2, Math.max(b.w, b.h)/2 + 10, 0, 7); ctx.stroke();
+  }
+}
+
+function updHud() {
+  document.getElementById('hDist').textContent = Math.floor(dist/20);
+  document.getElementById('hCoin').textContent = runCoins;
+  document.getElementById('hShield').textContent = shield > 0 ? '🛡️'.repeat(shield) : '';
+  let pw = [];
+  if (magnetT > 0) pw.push('🧲 ' + Math.ceil(magnetT/60) + 's');
+  if (dashT > 0) pw.push('🚀 ' + Math.ceil(dashT/60) + 's');
+  document.getElementById('hPow').textContent = pw.join('  ');
+}
+
+// ====== 主迴圈 ======
+let last = 0, acc = 0;
+function loop(t) {
+  if (!running) return;
+  acc += Math.min(t - last, 100); last = t;
+  while (acc >= 1000/60 && running) { update(); acc -= 1000/60; }
+  drawScene(); updHud();
+  if (running) requestAnimationFrame(loop);
+}
+
+const $ = id => document.getElementById(id);
+function show(id) { ['menu','over','shop'].forEach(x => $(x).classList.toggle('hide', x !== id)); $('hud').style.display = id ? 'none' : 'flex'; }
+
+function startRun() {
+  newRun(); show(null); holdSlide = false;
+  running = true; last = performance.now(); acc = 0;
+  if (dashT > 0) toast('🚀 起跑衝刺！');
+  requestAnimationFrame(loop);
+}
+
+function gameOver() {
+  running = false;
+  const m = Math.floor(dist/20);
+  const nb = m > save.best; if (nb) save.best = m;
+  save.coins += runCoins; persist();
+  drawScene();
+  $('oRes').innerHTML = `跑了 <b>${m}</b> 公尺${nb?'　<span class="gold">新紀錄！</span>':''}<br>這趟賺到 <span class="gold">${runCoins}</span> 金幣<br>錢包：<span class="gold">${save.coins}</span>`;
+  show('over');
+}
+
+function menu() { $('mCoin').textContent = save.coins; $('mBest').textContent = save.best; show('menu'); }
+
+function renderShop() {
+  $('sCoin').textContent = save.coins;
+  const list = $('sList'); list.innerHTML = '';
+  for (const u of UPS) {
+    const l = save.up[u.k], maxed = l >= u.max, cost = maxed ? 0 : u.cost[l];
+    const d = document.createElement('div'); d.className = 'item';
+    d.innerHTML = `<div class="ic">${u.ic}</div><div class="tx"><div class="nm">${u.nm}</div><div class="ds">${u.ds(l)}${maxed?'':'　→ '+u.ds(l+1).replace(/（.*）/,'')}</div>
+      <div class="pips">${Array.from({length:u.max},(_,i)=>`<div class="pip ${i<l?'on':''}"></div>`).join('')}</div></div>`;
+    const b = document.createElement('button');
+    b.innerHTML = maxed ? '已滿級' : `● ${cost}`;
+    b.disabled = maxed || save.coins < cost;
+    b.onclick = () => { if (save.coins >= cost && !maxed) { save.coins -= cost; save.up[u.k]++; persist(); renderShop(); } };
+    d.appendChild(b); list.appendChild(d);
+  }
+}
+function openShop() { renderShop(); show('shop'); }
+
+$('mStart').onclick = startRun; $('oAgain').onclick = startRun; $('sStart').onclick = startRun;
+$('mShop').onclick = openShop; $('oShop').onclick = openShop;
+$('sBack').onclick = menu; $('oMenu').onclick = menu;
+
+// ====== 操作 ======
+function zoneTouches(e) {
+  const r = cv.getBoundingClientRect(); let left = false;
+  for (const t of e.touches) if (t.clientX - r.left < r.width/2) left = true;
+  holdSlide = left;
+}
+cv.addEventListener('touchstart', e => {
+  e.preventDefault(); if (!running) return;
+  const r = cv.getBoundingClientRect();
+  for (const t of e.changedTouches) if (t.clientX - r.left >= r.width/2) jump();
+  zoneTouches(e);
+}, {passive:false});
+cv.addEventListener('touchmove', e => { e.preventDefault(); }, {passive:false});
+cv.addEventListener('touchend', e => { e.preventDefault(); zoneTouches(e); }, {passive:false});
+cv.addEventListener('touchcancel', () => { holdSlide = false; });
+cv.addEventListener('mousedown', e => { const r = cv.getBoundingClientRect(); if (e.clientX - r.left >= r.width/2) jump(); else holdSlide = true; });
+window.addEventListener('mouseup', () => holdSlide = false);
+window.addEventListener('keydown', e => {
+  if (['ArrowUp','w',' '].includes(e.key)) { e.preventDefault(); if (!e.repeat) jump(); }
+  if (['ArrowDown','s'].includes(e.key)) { e.preventDefault(); holdSlide = true; }
+});
+window.addEventListener('keyup', e => { if (['ArrowDown','s'].includes(e.key)) holdSlide = false; });
+
+resize(); menu();
+</script>
+<a href="./" id="gbHome" style="position:fixed;top:calc(4px + env(safe-area-inset-top));left:50%;transform:translateX(-50%);z-index:9999;background:rgba(0,0,0,.45);color:#fff;text-decoration:none;font:600 13px -apple-system,sans-serif;padding:4px 12px;border-radius:12px;opacity:.6">⌂ 遊戲盒</a>
+<script>if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});</script>
+</body>
+</html>

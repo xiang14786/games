@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="遊戲盒">
+<meta name="theme-color" content="#101218">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<title>遊戲盒</title>
+<style>
+  * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html,body { margin:0; background:#101218; color:#eaeef4; font-family:-apple-system,"PingFang TC","Noto Sans TC","Microsoft JhengHei",sans-serif; user-select:none; -webkit-user-select:none; overscroll-behavior:none; }
+  .wrap { max-width:560px; margin:0 auto; padding:calc(16px + env(safe-area-inset-top)) 14px calc(30px + env(safe-area-inset-bottom)); }
+  h1 { font-size:34px; margin:6px 2px 2px; }
+  .sub { color:#95a1b3; margin:0 2px 16px; font-size:16px; }
+  h2 { font-size:18px; color:#95a1b3; margin:18px 2px 8px; font-weight:600; }
+  .grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  a.g { display:block; text-decoration:none; color:#eaeef4; border-radius:18px; padding:14px; min-height:132px; position:relative; overflow:hidden; }
+  a.g:active { transform:scale(.97); }
+  a.g .ic { font-size:40px; line-height:1; }
+  a.g b { display:block; font-size:20px; margin-top:10px; }
+  a.g small { display:block; font-size:14px; opacity:.8; margin-top:3px; line-height:1.35; }
+  a.g.big { grid-column:span 2; min-height:120px; display:flex; gap:14px; align-items:center; }
+  a.g.big .ic { font-size:52px; }
+  a.g.big b { margin-top:0; font-size:22px; }
+  .tip { background:#1a1f29; border-radius:14px; padding:12px 14px; color:#95a1b3; font-size:15px; line-height:1.7; margin-top:18px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>🎮 遊戲盒</h1>
+  <div class="sub">隨時殺殺時間</div>
+
+  <h2>養成・冒險</h2>
+  <div class="grid">
+    <a class="g big" href="wuxia.html" style="background:linear-gradient(135deg,#3a2c14,#1f1b16)"><span class="ic">⚔️</span><span><b>江湖一世</b><small>闖五章打倒頭目，看穿對手意圖的回合制武俠</small></span></a>
+    <a class="g" href="baseball.html" style="background:linear-gradient(135deg,#1f4a2e,#13202a)"><span class="ic">⚾</span><b>投手轉生記</b><small>高中、選秀、職棒、轉生</small></a>
+    <a class="g" href="basketball.html" style="background:linear-gradient(135deg,#7a4a1f,#2a1a10)"><span class="ic">🏀</span><b>籃球轉生記</b><small>從板凳打到球隊核心</small></a>
+  </div>
+
+  <h2>動作・反應</h2>
+  <div class="grid">
+    <a class="g" href="army.html" style="background:linear-gradient(135deg,#1d3a6b,#121a2a)"><span class="ic">🏹</span><b>弓兵大進擊</b><small>選門加兵、射爆兵桶、打 BOSS</small></a>
+    <a class="g" href="runner.html" style="background:linear-gradient(135deg,#123a4a,#0e1426)"><span class="ic">🏃</span><b>夜城跑酷</b><small>跳躍滑行，用金幣升級</small></a>
+    <a class="g" href="jump.html" style="background:linear-gradient(135deg,#4a2238,#141a2a)"><span class="ic">🍮</span><b>跳跳果凍</b><small>一路往上跳</small></a>
+  </div>
+
+  <h2>益智</h2>
+  <div class="grid">
+    <a class="g" href="meow.html" style="background:linear-gradient(135deg,#4a3a1a,#1c2029)"><span class="ic">🐱</span><b>喵喵找位子</b><small>每日一題的邏輯謎題</small></a>
+    <a class="g" href="2048.html" style="background:linear-gradient(135deg,#4a3a10,#1e222b)"><span class="ic">🔢</span><b>2048</b><small>滑動合併數字</small></a>
+  </div>
+
+  <div class="tip" id="tip">📱 <b>變成 App：</b>用 iPhone 的 Safari 打開這頁 → 點下方「分享」→「加入主畫面」。之後從桌面圖示打開就是全螢幕，沒有網址列，沒網路也能玩。</div>
+</div>
+<script>
+  if (window.navigator.standalone || matchMedia('(display-mode: standalone)').matches) document.getElementById('tip').style.display = 'none';
+  if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
+</script>
+</body>
+</html>

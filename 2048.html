@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="遊戲盒">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<title>2048 殺時間</title>
+<style>
+  :root { --bg:#14161c; --panel:#1e222b; --cell:#2a2f3a; --text:#e8eaf0; --muted:#8a91a3; --accent:#f2b84b; }
+  * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html,body { margin:0; height:100%; background:var(--bg); color:var(--text);
+    font-family:-apple-system,"PingFang TC","Noto Sans TC","Microsoft JhengHei",sans-serif;
+    overscroll-behavior:none; touch-action:none; user-select:none; }
+  .wrap { max-width:480px; margin:0 auto; padding:18px 16px 24px; }
+  header { display:flex; align-items:center; justify-content:space-between; gap:10px; }
+  h1 { margin:0; font-size:44px; font-weight:800; color:var(--accent); letter-spacing:1px; }
+  .scores { display:flex; gap:8px; }
+  .score { background:var(--panel); border-radius:10px; padding:6px 12px; text-align:center; min-width:72px; }
+  .score small { display:block; font-size:13px; color:var(--muted); }
+  .score b { font-size:22px; }
+  .bar { display:flex; justify-content:space-between; align-items:center; margin:14px 0; gap:10px; }
+  .hint { color:var(--muted); font-size:15px; }
+  .btns { display:flex; gap:8px; }
+  button { background:var(--accent); color:#1a1a1a; border:0; border-radius:10px; padding:10px 16px;
+    font-size:17px; font-weight:700; cursor:pointer; }
+  button.ghost { background:var(--panel); color:var(--text); }
+  button:disabled { opacity:.4; }
+  .board { position:relative; background:var(--panel); border-radius:14px; padding:10px;
+    width:100%; aspect-ratio:1; }
+  .grid { display:grid; grid-template-columns:repeat(4,1fr); grid-template-rows:repeat(4,1fr); gap:10px; width:100%; height:100%; }
+  .cell { background:var(--cell); border-radius:9px; display:flex; align-items:center; justify-content:center;
+    font-weight:800; font-size:clamp(22px,8vw,38px); transition:background .12s; }
+  .cell.pop { animation:pop .16s ease; }
+  .cell.merge { animation:merge .18s ease; }
+  @keyframes pop { from{transform:scale(.4);opacity:.3} to{transform:scale(1);opacity:1} }
+  @keyframes merge { 50%{transform:scale(1.15)} }
+  .overlay { position:absolute; inset:0; background:rgba(10,12,16,.82); border-radius:14px;
+    display:none; flex-direction:column; align-items:center; justify-content:center; gap:16px; }
+  .overlay.show { display:flex; }
+  .overlay h2 { margin:0; font-size:34px; }
+  .overlay p { margin:0; font-size:18px; color:var(--muted); }
+  .overlay .row { display:flex; gap:10px; }
+  .rules { margin-top:16px; color:var(--muted); font-size:15px; line-height:1.6; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>2048</h1>
+    <div class="scores">
+      <div class="score"><small>分數</small><b id="score">0</b></div>
+      <div class="score"><small>最高</small><b id="best">0</b></div>
+    </div>
+  </header>
+  <div class="bar">
+    <span class="hint">手指滑動合併數字</span>
+    <div class="btns">
+      <button class="ghost" id="undo">↶ 上一步</button>
+      <button id="newBtn">重新開始</button>
+    </div>
+  </div>
+  <div class="board" id="board">
+    <div class="grid" id="grid"></div>
+    <div class="overlay" id="overlay">
+      <h2 id="ovTitle">沒步了！</h2>
+      <p id="ovText"></p>
+      <div class="row">
+        <button class="ghost" id="ovCont">繼續玩</button>
+        <button id="ovNew">再來一局</button>
+      </div>
+    </div>
+  </div>
+  <div class="rules">往上下左右滑，相同數字碰在一起會合併。拼出 <b style="color:var(--accent)">2048</b> 就贏了，但可以繼續挑戰更大的數字。手滑可以按「上一步」悔棋，但只能退回最近一步。</div>
+</div>
+<script>
+const N = 4;
+const COLORS = {
+  2:['#3a3f4c','#e8eaf0'], 4:['#475064','#e8eaf0'], 8:['#c7743a','#fff'], 16:['#d9622b','#fff'],
+  32:['#e04a3b','#fff'], 64:['#e8302a','#fff'], 128:['#d9b23c','#1a1a1a'], 256:['#e3be3a','#1a1a1a'],
+  512:['#ecc72f','#1a1a1a'], 1024:['#f2cf2a','#1a1a1a'], 2048:['#f7d81c','#1a1a1a']
+};
+let board, score, best = 0, prev = null, won = false, keepGoing = false;
+const $ = id => document.getElementById(id);
+const gridEl = $('grid');
+const cells = [];
+for (let i = 0; i < N*N; i++) { const d = document.createElement('div'); d.className = 'cell'; gridEl.appendChild(d); cells.push(d); }
+
+try { best = +localStorage.getItem('best2048') || 0; } catch(e) {}
+
+function empty() { const r=[]; for(let i=0;i<N*N;i++) if(!board[i]) r.push(i); return r; }
+function addTile() { const e = empty(); if(!e.length) return -1; const i = e[Math.floor(Math.random()*e.length)]; board[i] = Math.random()<0.9?2:4; return i; }
+
+function newGame() {
+  board = Array(N*N).fill(0); score = 0; prev = null; won = false; keepGoing = false;
+  const a = addTile(), b = addTile();
+  $('overlay').classList.remove('show');
+  render(new Set([a,b]), new Set());
+}
+
+function render(popped = new Set(), merged = new Set()) {
+  board.forEach((v,i) => {
+    const c = cells[i];
+    c.className = 'cell';
+    c.textContent = v || '';
+    const col = COLORS[v] || (v ? ['#9b5de5','#fff'] : null);
+    c.style.background = col ? col[0] : '';
+    c.style.color = col ? col[1] : '';
+    c.style.fontSize = v >= 1024 ? 'clamp(18px,6vw,30px)' : v >= 128 ? 'clamp(20px,7vw,34px)' : '';
+    if (v) { void c.offsetWidth; if (popped.has(i)) c.classList.add('pop'); else if (merged.has(i)) c.classList.add('merge'); }
+  });
+  if (score > best) { best = score; try { localStorage.setItem('best2048', best); } catch(e) {} }
+  $('score').textContent = score; $('best').textContent = best;
+  $('undo').disabled = !prev;
+}
+
+// dir: 0=左 1=右 2=上 3=下
+function move(dir) {
+  const before = board.slice(), beforeScore = score;
+  const merged = new Set(); let moved = false;
+  for (let k = 0; k < N; k++) {
+    const idx = [];
+    for (let j = 0; j < N; j++) {
+      let r, c;
+      if (dir < 2) { r = k; c = dir===0 ? j : N-1-j; } else { c = k; r = dir===2 ? j : N-1-j; }
+      idx.push(r*N+c);
+    }
+    const vals = idx.map(i => board[i]).filter(v => v);
+    const out = [], mergedPos = [];
+    for (let j = 0; j < vals.length; j++) {
+      if (vals[j] === vals[j+1]) { out.push(vals[j]*2); score += vals[j]*2; mergedPos.push(out.length-1); j++; }
+      else out.push(vals[j]);
+    }
+    while (out.length < N) out.push(0);
+    idx.forEach((i,j) => { if (board[i] !== out[j]) moved = true; board[i] = out[j]; });
+    mergedPos.forEach(j => merged.add(idx[j]));
+  }
+  if (!moved) return;
+  prev = { board: before, score: beforeScore, won };
+  const t = addTile();
+  render(new Set([t]), merged);
+  if (!won && board.includes(2048)) { won = true; if (!keepGoing) showOverlay(true); }
+  else if (!canMove()) showOverlay(false);
+}
+
+function canMove() {
+  if (empty().length) return true;
+  for (let r=0;r<N;r++) for (let c=0;c<N;c++) {
+    const v = board[r*N+c];
+    if (c<N-1 && v===board[r*N+c+1]) return true;
+    if (r<N-1 && v===board[(r+1)*N+c]) return true;
+  }
+  return false;
+}
+
+function showOverlay(win) {
+  $('ovTitle').textContent = win ? '🎉 拼出 2048！' : '沒步了！';
+  $('ovText').textContent = '這局得分 ' + score;
+  $('ovCont').textContent = win ? '繼續挑戰' : '上一步';
+  $('ovCont').style.display = (win || prev) ? '' : 'none';
+  $('overlay').classList.add('show');
+}
+
+function undo() {
+  if (!prev) return;
+  board = prev.board; score = prev.score; won = prev.won; prev = null;
+  $('overlay').classList.remove('show');
+  render();
+}
+
+$('newBtn').onclick = newGame;
+$('ovNew').onclick = newGame;
+$('undo').onclick = undo;
+$('ovCont').onclick = () => {
+  if (won && board.includes(2048) && canMove()) { keepGoing = true; $('overlay').classList.remove('show'); }
+  else undo();
+};
+
+// 觸控滑動
+let sx=0, sy=0, touching=false;
+document.addEventListener('touchstart', e => { const t=e.touches[0]; sx=t.clientX; sy=t.clientY; touching=true; }, {passive:true});
+document.addEventListener('touchmove', e => { if (e.target.tagName !== 'BUTTON') e.preventDefault(); }, {passive:false});
+document.addEventListener('touchend', e => {
+  if (!touching) return; touching=false;
+  if ($('overlay').classList.contains('show')) return;
+  const t=e.changedTouches[0], dx=t.clientX-sx, dy=t.clientY-sy;
+  if (Math.max(Math.abs(dx),Math.abs(dy)) < 25) return;
+  if (Math.abs(dx) > Math.abs(dy)) move(dx<0?0:1); else move(dy<0?2:3);
+});
+// 電腦鍵盤也能玩
+document.addEventListener('keydown', e => {
+  if ($('overlay').classList.contains('show')) return;
+  const m = {ArrowLeft:0,ArrowRight:1,ArrowUp:2,ArrowDown:3,a:0,d:1,w:2,s:3}[e.key];
+  if (m !== undefined) { e.preventDefault(); move(m); }
+});
+
+newGame();
+</script>
+<a href="./" id="gbHome" style="position:fixed;top:calc(4px + env(safe-area-inset-top));left:50%;transform:translateX(-50%);z-index:9999;background:rgba(0,0,0,.45);color:#fff;text-decoration:none;font:600 13px -apple-system,sans-serif;padding:4px 12px;border-radius:12px;opacity:.6">⌂ 遊戲盒</a>
+<script>if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});</script>
+</body>
+</html>

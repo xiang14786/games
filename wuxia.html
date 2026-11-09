@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#14120f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="遊戲盒">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<title>江湖一世</title>
+<style>
+  :root { --bg:#14120f; --card:#1f1b16; --card2:#2a241c; --ink:#ece3d2; --muted:#a39885; --gold:#d9b25f; --red:#d0584b; --blue:#6aa6d8; --green:#7fbf7a; --purple:#a77fd6; }
+  * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html,body { margin:0; background:var(--bg); color:var(--ink); font-family:"Noto Serif TC","Songti TC",-apple-system,"PingFang TC",serif; font-size:17px; user-select:none; -webkit-user-select:none; overscroll-behavior:none; }
+  .wrap { max-width:520px; margin:0 auto; padding:calc(10px + env(safe-area-inset-top)) 12px calc(30px + env(safe-area-inset-bottom)); }
+  .hide { display:none !important; }
+  h1 { font-size:46px; text-align:center; margin:8px 0 2px; color:var(--gold); letter-spacing:8px; }
+  h2 { color:var(--gold); margin:4px 0 10px; font-size:24px; }
+  button { font-family:inherit; background:var(--gold); color:#20180a; border:0; border-radius:12px; padding:13px 16px; font-size:18px; font-weight:700; cursor:pointer; }
+  button.ghost { background:var(--card2); color:var(--ink); border:1px solid #3d3428; }
+  button:disabled { opacity:.35; }
+  .col { display:flex; flex-direction:column; gap:10px; }
+  .card { background:var(--card); border:1px solid #2f281f; border-radius:14px; padding:12px; margin-bottom:10px; }
+  .muted { color:var(--muted); } .good { color:var(--green); } .bad { color:var(--red); } .gold { color:var(--gold); }
+  .top { display:flex; gap:10px; align-items:center; margin-bottom:8px; }
+  .bars { flex:1; }
+  .bar { height:12px; background:#0e0c0a; border-radius:7px; overflow:hidden; margin:3px 0; position:relative; }
+  .bar i { display:block; height:100%; border-radius:7px; transition:width .35s; }
+  .bar span { position:absolute; right:6px; top:-2px; font-size:12px; color:#fff; text-shadow:0 1px 2px #000; font-family:sans-serif; }
+  .chips { display:flex; gap:6px; flex-wrap:wrap; font-size:14px; }
+  .chip { background:var(--card2); border-radius:8px; padding:4px 8px; }
+  .goal { background:linear-gradient(90deg,#3a2c14,#1f1b16); border:1px solid #5a4422; border-radius:12px; padding:10px 12px; margin-bottom:10px; font-size:16px; }
+  .goal b { color:var(--gold); }
+  /* 地圖 */
+  .path { display:flex; flex-direction:column; gap:8px; }
+  .step { display:flex; align-items:center; gap:10px; }
+  .step .no { width:28px; text-align:center; color:var(--muted); font-size:14px; }
+  .step .opts { flex:1; display:flex; gap:8px; }
+  .node { flex:1; background:var(--card2); border:2px solid #3d3428; border-radius:12px; padding:10px 6px; text-align:center; font-size:15px; color:var(--ink); }
+  .node .ic { font-size:26px; display:block; }
+  .node.done { opacity:.35; }
+  .node.taken { border-color:var(--gold); opacity:.55; }
+  .node.now { border-color:var(--gold); background:#3a2c14; animation:glow 1.4s infinite; }
+  @keyframes glow { 50% { box-shadow:0 0 14px #d9b25f88; } }
+  /* 戰鬥 */
+  #battle { position:fixed; inset:0; background:var(--bg); z-index:8; overflow-y:auto; }
+  #battle .inner { max-width:520px; margin:0 auto; padding:calc(8px + env(safe-area-inset-top)) 10px calc(20px + env(safe-area-inset-bottom)); }
+  .stage { position:relative; height:250px; border-radius:14px; overflow:hidden; }
+  .stage .bg { position:absolute; inset:0; }
+  .stage .bg svg { margin:0 !important; height:100%; width:100%; border-radius:0 !important; }
+  .stage .shade { position:absolute; inset:0; background:linear-gradient(180deg,rgba(0,0,0,.15),rgba(0,0,0,.55)); }
+  .fighter { position:absolute; bottom:12px; width:120px; height:160px; transition:transform .15s; }
+  .fighter svg { width:100%; height:100%; overflow:visible; }
+  #pF { left:30px; } #eF { right:30px; }
+  .hpbox { position:absolute; top:8px; width:46%; font-size:14px; }
+  .hpbox .nm { font-weight:800; text-shadow:0 1px 3px #000; }
+  #pHP { left:8px; } #eHP { right:8px; text-align:right; }
+  .intent { position:absolute; right:12px; top:62px; background:rgba(20,16,12,.88); border:2px solid #5a4422; border-radius:10px; padding:5px 9px; font-size:15px; font-weight:800; max-width:62%; text-align:right; }
+  .intent.danger { border-color:var(--red); color:#ffb0a6; animation:pulse .8s infinite; }
+  @keyframes pulse { 50% { transform:scale(1.05); } }
+  .status { font-size:13px; margin-top:2px; }
+  .float { position:absolute; font-weight:900; font-size:30px; pointer-events:none; text-shadow:0 2px 4px #000; animation:fl 1s forwards; font-family:sans-serif; }
+  @keyframes fl { 0% { opacity:0; transform:translateY(10px) scale(.6); } 15% { opacity:1; transform:translateY(0) scale(1.2); } 100% { opacity:0; transform:translateY(-50px) scale(1); } }
+  .lungeR { animation:lr .35s; } .lungeL { animation:ll .35s; }
+  @keyframes lr { 50% { transform:translateX(150px); } } @keyframes ll { 50% { transform:translateX(-150px); } }
+  .hurt { animation:hurt .4s; } @keyframes hurt { 20%,60% { transform:translateX(-8px); filter:brightness(2) saturate(0); } 40%,80% { transform:translateX(8px); } }
+  .guarding svg { filter:drop-shadow(0 0 10px #6aa6d8); }
+  .charging svg { filter:drop-shadow(0 0 14px #ff5040); animation:pulse .6s infinite; }
+  .slash { position:absolute; pointer-events:none; animation:sl .4s forwards; }
+  @keyframes sl { 0% { opacity:0; transform:scale(.4) rotate(-20deg); } 30% { opacity:1; } 100% { opacity:0; transform:scale(1.3) rotate(10deg); } }
+  .blog { min-height:46px; font-size:16px; line-height:1.5; margin:8px 2px; }
+  .mp { display:flex; align-items:center; gap:8px; }
+  .moves { display:grid; grid-template-columns:repeat(3,1fr); gap:7px; margin-top:8px; }
+  .mv { padding:9px 5px; font-size:15px; line-height:1.25; text-align:center; background:var(--card2); color:var(--ink); border:1px solid #4a3e2c; }
+  .mv b { display:block; font-size:16px; }
+  .mv small { display:block; font-size:12px; color:var(--muted); font-weight:400; }
+  .mv .c { color:var(--blue); font-size:12px; font-weight:700; }
+  .mv.ult { border-color:var(--gold); }
+  .tip { background:#2a2214; border:1px dashed #6a5530; border-radius:10px; padding:8px 10px; font-size:15px; margin-top:8px; color:#e8d6ac; }
+  /* 場景 */
+  .scene { position:fixed; inset:0; background:rgba(10,8,6,.96); z-index:10; overflow-y:auto; }
+  .scene .inner { max-width:520px; margin:0 auto; padding:calc(16px + env(safe-area-inset-top)) 14px 40px; }
+  .story { font-size:18px; line-height:1.8; white-space:pre-wrap; margin-bottom:14px; }
+  .choice { text-align:left; background:var(--card2); color:var(--ink); border:1px solid #4a3e2c; font-weight:700; }
+  .choice small { display:block; color:var(--muted); font-weight:400; font-size:14px; margin-top:3px; }
+  .reward { text-align:left; background:var(--card2); color:var(--ink); border:2px solid #4a3e2c; }
+  .reward .t { font-size:13px; color:var(--muted); }
+  .reward b { font-size:19px; color:var(--gold); }
+  .reward small { display:block; font-weight:400; color:#cfc4ad; font-size:15px; margin-top:2px; }
+  .lvup { text-align:center; font-size:30px; color:var(--gold); font-weight:900; animation:pulse 1s infinite; margin:6px 0; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div id="sTitle">
+    <div id="tArt" style="margin-top:6px"></div>
+    <h1>江湖一世</h1>
+    <div style="text-align:center;color:var(--muted);margin-bottom:18px">從青石鎮的無名小子，打到華山之巔</div>
+    <div class="col">
+      <button id="bNew">出山</button>
+      <button class="ghost hide" id="bCont">繼續闖蕩</button>
+      <button class="ghost" id="bLegacy">轉世傳承</button>
+    </div>
+    <div class="card" style="margin-top:16px;line-height:1.8;font-size:16px">
+      <b class="gold">怎麼玩</b><br>
+      ① 在地圖上選路：⚔ 戰鬥、💀 強敵、❓ 奇遇、💰 商店、🍵 客棧。<br>
+      ② 每章盡頭有一個<b>頭目</b>，打倒他進入下一章，五章打完就是天下第一。<br>
+      ③ 戰鬥時<b>看對手頭上的意圖</b>：他要「蓄力」，就用<b>格擋</b>擋下，或用<b>點穴手</b>打斷。<br>
+      ④ 打贏可以三選一：學新招式、加能力或拿兵器。倒下了也會留下名望，讓下一世更強。
+    </div>
+  </div>
+
+  <div id="sMap" class="hide">
+    <div class="top">
+      <div id="mAv"></div>
+      <div class="bars">
+        <div style="display:flex;justify-content:space-between"><b id="mName"></b><span class="muted" id="mLv"></span></div>
+        <div class="bar"><i id="mHp" style="background:#c0503f"></i><span id="mHpT"></span></div>
+        <div class="bar"><i id="mExp" style="background:#d9b25f"></i><span id="mExpT"></span></div>
+      </div>
+    </div>
+    <div class="chips" id="mChips" style="margin-bottom:8px"></div>
+    <div id="mArt"></div>
+    <div class="goal" id="mGoal"></div>
+    <div class="path" id="mPath"></div>
+    <div class="card" style="margin-top:12px"><b>招式</b><div id="mMoves" class="muted" style="font-size:15px;line-height:1.7;margin-top:4px"></div></div>
+  </div>
+</div>
+
+<div id="battle" class="hide"><div class="inner">
+  <div class="stage" id="stage">
+    <div class="bg" id="stBg"></div><div class="shade"></div>
+    <div class="hpbox" id="pHP"><div class="nm" id="pName"></div><div class="bar"><i id="pHpBar" style="background:#c0503f"></i><span id="pHpT"></span></div><div class="status" id="pSt"></div></div>
+    <div class="hpbox" id="eHP"><div class="nm" id="eName"></div><div class="bar"><i id="eHpBar" style="background:#8a3a8a"></i><span id="eHpT"></span></div><div class="status" id="eSt"></div></div>
+    <div class="intent" id="intent"></div>
+    <div class="fighter" id="pF"></div>
+    <div class="fighter" id="eF"></div>
+  </div>
+  <div class="blog" id="blog"></div>
+  <div class="mp"><span class="muted" style="width:36px">內力</span><div class="bar" style="flex:1;height:14px"><i id="mpBar" style="background:#4f7fc0"></i><span id="mpT"></span></div><button class="ghost" id="bPot" style="padding:7px 10px;font-size:15px">💊 金創藥</button></div>
+  <div class="moves" id="moves"></div>
+  <div class="tip hide" id="tip"></div>
+</div></div>
+
+<div class="scene hide" id="scene"><div class="inner" id="sceneIn"></div></div>
+
+<script>
+const G = null; // 給插圖函式用
+// ================= 水墨插圖 =================
+function wsr(seed) { let s = seed; return () => (s = (s * 9301 + 49297) % 233280) / 233280; }
+let ART = 'gate';
+const TITLE_ART = { '出山':'gate','閉關':'cave','武林榜':'arena','鏢局':'road','歸隱':'moon','宿敵':'inn','路見不平':'village','山洞殘卷':'cave','老乞丐':'temple','酒館切磋':'inn','名醫':'village',
+  '師門差遣':'gate','師門傳功':'gate','邪派招攬':'night','懸崖靈芝':'cliff','書生求助':'road','賭坊':'inn','隱世高人':'hut','滅門血案':'night','擂台':'arena','魔功反噬':'cave',
+  '觀瀑悟劍':'waterfall','蒙冤':'inn','少年拜師':'hut','故人重逢':'river','武林大會':'arena','正邪大戰':'war','新的一生':'gate' };
+function wfig(x, y, s, robe, pose = 'stand', flip = 1) {
+  // 簡筆人物剪影：斗笠或髮髻、長袍、劍
+  const k = `transform="translate(${x},${y}) scale(${s * flip},${s})"`;
+  if (pose === 'sit') return `<g ${k}><ellipse cx="0" cy="-2" rx="16" ry="5" fill="${robe}" opacity=".9"/><path d="M-12 -2 Q-10 -26 0 -28 Q10 -26 12 -2Z" fill="${robe}"/><circle cx="0" cy="-34" r="6" fill="#1a1612"/><circle cx="0" cy="-41" r="3" fill="#1a1612"/></g>`;
+  if (pose === 'duel') return `<g ${k}><path d="M-8 0 L-4 -30 L6 -30 L10 0Z" fill="${robe}"/><path d="M-4 -26 Q-16 -14 -22 -6" stroke="${robe}" stroke-width="4" fill="none"/><line x1="4" y1="-24" x2="30" y2="-38" stroke="#d8d8d0" stroke-width="2"/><path d="M4 -26 L4 -26 L20 -30" stroke="${robe}" stroke-width="4"/><circle cx="1" cy="-36" r="6" fill="#1a1612"/><path d="M-12 -40 Q1 -48 14 -40Z" fill="#3a3226"/></g>`;
+  return `<g ${k}><path d="M-9 0 L-5 -30 L5 -30 L9 0Z" fill="${robe}"/><path d="M-5 -28 L-12 -10 M5 -28 L12 -12" stroke="${robe}" stroke-width="4"/><line x1="8" y1="-28" x2="12" y2="2" stroke="#9a9a90" stroke-width="2"/><circle cx="0" cy="-36" r="6" fill="#1a1612"/><path d="M-13 -39 Q0 -48 13 -39Z" fill="#3a3226"/></g>`;
+}
+function mountains(R, base, layers, cols) {
+  let g = '';
+  for (let l = 0; l < layers; l++) {
+    const y0 = base + l * 16; let pts = `0,170 0,${y0}`;
+    for (let x = 0; x <= 400; x += 25) pts += ` ${x},${y0 - R() * (60 - l * 12) - 10}`;
+    pts += ` 400,${y0} 400,170`;
+    g += `<polygon points="${pts}" fill="${cols[l]}" opacity="${0.9 - l * 0.05}"/>`;
+  }
+  return g;
+}
+function wxArt(kind, seed = 3, tint = '#d9b25f') {
+  const R = wsr(seed * 31 + kind.length * 7);
+  const autumn = G && G.age % 1 ? true : false;
+  const sky = { night:['#0b0d14','#1e2133'], war:['#2a0e0b','#6b2416'], moon:['#0d1020','#2b2f4a'], cave:['#0e0c0a','#1b1713'] }[kind] || (autumn ? ['#2a1d14','#7a5434'] : ['#1a2026','#4f5d5a']);
+  let g = `<defs><linearGradient id="sk${seed}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${sky[0]}"/><stop offset="1" stop-color="${sky[1]}"/></linearGradient>
+    <radialGradient id="gl${seed}"><stop offset="0" stop-color="#ffd27a" stop-opacity=".9"/><stop offset="1" stop-color="#ffd27a" stop-opacity="0"/></radialGradient></defs>
+    <rect width="400" height="170" fill="url(#sk${seed})"/>`;
+  const ink = ['#3a3f3c','#2b2f2d','#1f2221','#141614'];
+  const sun = (x, y, r, c) => `<circle cx="${x}" cy="${y}" r="${r}" fill="${c}" opacity=".85"/>`;
+  const pine = (x, y, s) => `<g transform="translate(${x},${y}) scale(${s})"><line x1="0" y1="0" x2="0" y2="-40" stroke="#1a1612" stroke-width="3"/>${[0,1,2,3].map(i => `<ellipse cx="${(i % 2 ? 8 : -8)}" cy="${-14 - i * 8}" rx="${14 - i * 2}" ry="4" fill="#1d2a22"/>`).join('')}</g>`;
+  const roof = (x, y, w, c = '#1a1612') => `<path d="M${x - 6} ${y} Q${x + w / 2} ${y - 16} ${x + w + 6} ${y} Z" fill="${c}"/>`;
+  const house = (x, y, w, h) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="#2b2620"/>${roof(x, y, w)}<rect x="${x + w / 2 - 5}" y="${y + h - 16}" width="10" height="16" fill="#140f0b"/>`;
+  const lantern = (x, y) => `<circle cx="${x}" cy="${y}" r="10" fill="url(#gl${seed})"/><ellipse cx="${x}" cy="${y}" rx="4" ry="5" fill="#c73a2c"/>`;
+  if (['gate','bamboo','waterfall','cliff','hut','road','river','village','temple','arena','meditate'].includes(kind)) g += sun(320, 40, 18, autumn ? '#e8a35a' : '#e9e2c8') + mountains(R, 95, 3, ink);
+  if (kind === 'gate') {
+    g += `<polygon points="160,170 240,170 214,110 186,110" fill="#57534a"/>`; for (let i = 0; i < 8; i++) g += `<line x1="${186 - i * 3}" y1="${112 + i * 7.5}" x2="${214 + i * 3}" y2="${112 + i * 7.5}" stroke="#3a372f" stroke-width="2"/>`;
+    g += `<rect x="168" y="70" width="6" height="42" fill="#2a221a"/><rect x="226" y="70" width="6" height="42" fill="#2a221a"/><path d="M156 72 Q200 56 244 72 L240 66 Q200 52 160 66Z" fill="#1a1612"/><rect x="186" y="74" width="28" height="12" fill="${tint}"/>`;
+    g += pine(60, 150, 1.2) + pine(350, 160, 1) + wfig(200, 160, 0.8, '#6a5a44');
+  } else if (kind === 'bamboo') {
+    for (let i = 0; i < 18; i++) { const x = R() * 400, w = 3 + R() * 3; g += `<rect x="${x}" y="0" width="${w}" height="170" fill="#2c3b2a" opacity="${0.5 + R() * 0.5}"/>`; for (let j = 0; j < 4; j++) g += `<path d="M${x} ${30 + j * 35} q14 -6 22 2 q-12 2 -22 -2" fill="#3f5a38"/>`; }
+    g += wfig(200, 162, 1.1, '#5a4a3a', 'duel');
+  } else if (kind === 'waterfall') {
+    g += `<polygon points="150,0 250,0 260,170 140,170" fill="#232825"/>`; for (let i = 0; i < 14; i++) g += `<rect x="${170 + i * 4.5}" y="0" width="2.5" height="150" fill="#dfe8e4" opacity="${0.3 + R() * 0.5}"/>`;
+    g += `<ellipse cx="200" cy="150" rx="80" ry="14" fill="#e9efe9" opacity=".35"/>` + wfig(110, 160, 0.9, '#4a4036', 'sit');
+  } else if (kind === 'cave' ) {
+    g += `<path d="M60 170 Q60 30 200 26 Q340 30 340 170Z" fill="#050403"/><circle cx="250" cy="120" r="50" fill="url(#gl${seed})"/><rect x="246" y="116" width="6" height="18" fill="#e8dcc0"/>` + wfig(190, 150, 1.1, '#4a3a2a', 'sit');
+    for (let i = 0; i < 6; i++) g += `<path d="M${80 + R() * 240} ${30 + R() * 20} l4 ${10 + R() * 14} l4 -${10 + R() * 14}Z" fill="#1a1612"/>`;
+  } else if (kind === 'inn' || kind === 'night') {
+    if (kind === 'night') g += sun(80, 36, 16, '#e9e2c8');
+    g += house(40, 90, 120, 60) + house(220, 80, 140, 70) + `<rect x="0" y="150" width="400" height="20" fill="#120f0c"/>`;
+    g += lantern(70, 104) + lantern(130, 104) + lantern(250, 96) + lantern(330, 96);
+    if (kind === 'inn') g += `<rect x="176" y="70" width="22" height="46" fill="#7a2a1f"/><text x="187" y="98" font-size="16" fill="#f0d9a0" text-anchor="middle" font-weight="900">酒</text>` + wfig(195, 160, 0.9, '#4a3a2a') + wfig(230, 160, 0.9, '#3a3a50', 'stand', -1);
+    else g += wfig(200, 150, 0.9, '#121212', 'duel') + wfig(300, 140, 0.8, '#121212', 'duel', -1);
+  } else if (kind === 'village') {
+    g += house(30, 110, 70, 40) + house(130, 104, 90, 46) + house(260, 112, 80, 38) + pine(360, 160, 0.9) + wfig(200, 165, 0.9, '#5a4a3a') + wfig(240, 165, 0.8, '#6a2a22', 'stand', -1);
+  } else if (kind === 'temple') {
+    g += `<rect x="130" y="96" width="140" height="60" fill="#2b2620"/>${roof(130, 96, 140)}<rect x="185" y="116" width="30" height="40" fill="#0e0b08"/>` + pine(80, 160, 1) + wfig(240, 162, 0.7, '#5c5246', 'sit');
+  } else if (kind === 'cliff') {
+    g += `<polygon points="0,170 0,60 120,70 170,170" fill="#1a1d1b"/><circle cx="118" cy="70" r="7" fill="#b23b2a"/><rect x="116" y="70" width="4" height="8" fill="#e8dcc0"/>` + wfig(150, 150, 0.9, '#4a3a2a');
+  } else if (kind === 'hut') {
+    g += `<rect x="180" y="110" width="90" height="46" fill="#3a3024"/><path d="M168 112 L225 78 L282 112Z" fill="#6b5a3a"/>` + pine(110, 160, 1.3) + pine(330, 162, 1) + wfig(150, 162, 0.9, '#cfc6b0');
+  } else if (kind === 'road') {
+    g += `<path d="M150 170 Q220 120 230 95 L250 95 Q250 130 260 170Z" fill="#4d4433"/><rect x="200" y="122" width="40" height="22" fill="#5a3d24"/><circle cx="208" cy="146" r="7" fill="#2a1d12"/><circle cx="234" cy="146" r="7" fill="#2a1d12"/>
+      <line x1="236" y1="122" x2="236" y2="92" stroke="#2a1d12" stroke-width="2"/><rect x="236" y="92" width="20" height="14" fill="#b23b2a"/><text x="246" y="103" font-size="10" fill="#f0d9a0" text-anchor="middle" font-weight="900">鏢</text>` + wfig(170, 160, 0.9, '#4a3a2a');
+  } else if (kind === 'river') {
+    g += `<rect x="0" y="120" width="400" height="50" fill="#26353a"/>`; for (let i = 0; i < 10; i++) g += `<line x1="${R() * 400}" y1="${128 + R() * 36}" x2="${R() * 400}" y2="${128 + R() * 36}" stroke="#4d6a70" stroke-width="1"/>`;
+    g += `<path d="M150 128 Q200 142 250 128 L242 138 Q200 148 158 138Z" fill="#2a1d12"/>` + wfig(185, 130, 0.7, '#4a3a2a') + wfig(215, 130, 0.7, '#3a3a50', 'stand', -1);
+  } else if (kind === 'arena') {
+    g += `<rect x="90" y="110" width="220" height="30" fill="#5a3d24"/><rect x="90" y="140" width="220" height="30" fill="#3a2716"/>`;
+    for (const x of [96, 304]) g += `<line x1="${x}" y1="110" x2="${x}" y2="50" stroke="#2a1d12" stroke-width="3"/><path d="M${x} 50 l30 8 l-30 8Z" fill="#b23b2a"/>`;
+    for (let i = 0; i < 40; i++) g += `<circle cx="${R() * 400}" cy="${150 + R() * 18}" r="4" fill="#1a1612"/>`;
+    g += wfig(170, 110, 0.9, '#4a5a7a', 'duel') + wfig(232, 110, 0.9, '#7a3a2a', 'duel', -1);
+  } else if (kind === 'war') {
+    g += mountains(R, 110, 2, ['#2a1410', '#1a0c08']);
+    for (let i = 0; i < 26; i++) { const x = R() * 400, y = 120 + R() * 40; g += `<line x1="${x}" y1="${y}" x2="${x}" y2="${y - 40}" stroke="#1a0c08" stroke-width="2"/><path d="M${x} ${y - 40} l16 5 l-16 5Z" fill="${R() < 0.5 ? '#b23b2a' : '#2a2a40'}"/>`; }
+    for (let i = 0; i < 5; i++) g += `<ellipse cx="${R() * 400}" cy="${60 + R() * 40}" rx="60" ry="14" fill="#3a2a24" opacity=".5"/>`;
+  } else if (kind === 'meditate') {
+    g += sun(320, 40, 18, '#e9e2c8') + mountains(R, 110, 2, ink) + `<polygon points="120,170 150,118 250,112 290,170" fill="#1a1d1b"/>` + wfig(205, 116, 1, '#4a3a2a', 'sit');
+  } else if (kind === 'moon') {
+    g += sun(260, 60, 40, '#efe8d0') + mountains(R, 120, 2, ['#1a1d2a', '#0e1018']) + `<polygon points="60,170 140,120 220,170" fill="#0a0b10"/>` + wfig(140, 122, 0.7, '#0a0b10', 'sit');
+  } else if (kind === 'duel') {
+    g += sun(200, 50, 32, '#efe8d0') + `<rect x="0" y="120" width="400" height="50" fill="#141210"/>${roof(30, 120, 340, '#0e0c0a')}` + wfig(150, 118, 1.1, '#2a3a5a', 'duel') + wfig(250, 118, 1.1, '#5a2a22', 'duel', -1);
+  }
+  return `<svg viewBox="0 0 400 170" style="width:100%;display:block;border-radius:14px;margin-bottom:12px" xmlns="http://www.w3.org/2000/svg">${g}</svg>`;
+}
+
+
+// ================= 工具 =================
+const rnd = (a,b) => a + Math.random()*(b-a), ri = (a,b) => Math.floor(rnd(a,b+1)), pick = a => a[Math.floor(Math.random()*a.length)];
+const clamp = (v,a,b) => Math.max(a, Math.min(b, v));
+const $ = id => document.getElementById(id);
+const shuffle = a => a.map(v => [Math.random(), v]).sort((x,y) => x[0]-y[0]).map(v => v[1]);
+const SUR = ['李','王','張','趙','陳','林','楊','沈','蕭','段','葉','柳','顧','秦','韓','唐','慕容','上官','歐陽','謝','岳','莫'];
+const GIV = ['青','雲','風','寒','玄','無','鶴','嘯','天','霜','逸','塵','劍','月','行','遠','言','夜','歌','凌','驚','鴻','白','承'];
+const randName = () => pick(SUR) + pick(GIV) + (Math.random() < 0.6 ? pick(GIV) : '');
+
+// ================= 招式 =================
+const MOVES = {
+  basic:  { n:'拳腳', cost:0, d:'普通一擊', tag:'' },
+  guard:  { n:'格擋', cost:0, d:'受傷 -70%，回 12 內力', tag:'守' },
+  breathe:{ n:'調息', cost:0, d:'回 25 內力與少量生命', tag:'' },
+  fast:   { n:'松風快劍', cost:12, d:'連刺兩劍，各 0.7 倍', tag:'' },
+  smash:  { n:'劈山掌', cost:18, d:'1.7 倍，專破防守', tag:'破' },
+  stun:   { n:'點穴手', cost:14, d:'打斷蓄力與重擊，使對手停一回合', tag:'斷' },
+  shield: { n:'金鐘罩', cost:15, d:'獲得護體真氣，吸收傷害', tag:'守' },
+  drain:  { n:'吸星手', cost:16, d:'1.1 倍，吸回六成傷害', tag:'' },
+  poison: { n:'毒砂掌', cost:12, d:'0.5 倍並使對手中毒 3 回合', tag:'' },
+  ult:    { n:'天外飛仙', cost:45, d:'驚天一劍，3.2 倍', tag:'絕' },
+};
+const MOVE_POOL = ['fast','smash','stun','shield','drain','poison'];
+
+// ================= 章節 =================
+const CHAPTERS = [
+  { n:'第一章・青石鎮', art:'village', boss:{ name:'黑風寨主 雷天霸', look:'bandit', col:'#5a2a1a', hp:130, atk:10, def:2, traits:['charge'] }, story:'青石鎮外，黑風寨的山賊年年來搶糧。你決定替鎮民出頭。', foes:['山賊','黑風寨嘍囉','惡霸','野狼幫打手'], looks:['bandit'] },
+  { n:'第二章・官道風雲', art:'road', boss:{ name:'毒手書生 白無常', look:'scholar', col:'#3a5a3a', hp:230, atk:15, def:3, traits:['poison'] }, story:'你護送鏢車北上，一路上暗器與毒藥防不勝防。幕後黑手是個搖扇的書生。', foes:['劫鏢匪','萬毒谷弟子','刺客','黑店夥計'], looks:['bandit','scholar'] },
+  { n:'第三章・古剎之謎', art:'temple', boss:{ name:'鐵臂金剛 鐵無心', look:'monk', col:'#a8742a', hp:320, atk:17, def:6, traits:['guard'] }, story:'城外古寺夜夜傳出怪聲。被逐出寺的武僧盤據於此，一身橫練刀槍不入。', foes:['惡僧','守寺武僧','盜墓賊','金剛門徒'], looks:['monk','bandit'] },
+  { n:'第四章・落鷹谷', art:'war', boss:{ name:'血刀老祖', look:'blood', col:'#7a1a1a', hp:420, atk:21, def:5, traits:['drain','charge'] }, story:'正邪大戰在落鷹谷爆發。血刀門的老祖以人血練功，殺得正道節節敗退。', foes:['血刀門徒','魔教護法','亂兵','血衣刀客'], looks:['blood','bandit'] },
+  { n:'第五章・華山之巔', art:'duel', boss:{ name:'天魔教主', look:'demon', col:'#3a2244', hp:560, atk:25, def:7, traits:['charge','drain','phase'] }, story:'月圓之夜，天魔教主約戰天下英雄於華山之巔。勝者，便是武林至尊。', foes:['天魔衛','幽冥使者','魔教長老','暗影刺客'], looks:['demon','blood'] },
+];
+const NODE = { fight:{ ic:'⚔', n:'戰鬥' }, elite:{ ic:'💀', n:'強敵' }, event:{ ic:'❓', n:'奇遇' }, shop:{ ic:'💰', n:'商店' }, rest:{ ic:'🍵', n:'客棧' }, boss:{ ic:'👹', n:'頭目' } };
+
+// ================= 存檔 =================
+let S = null, L = { fame:0, up:{ hp:0, atk:0, mp:0, gold:0 }, runs:0, best:0, wins:0 };
+try { const x = JSON.parse(localStorage.getItem('jh2Legacy')); if (x) { L = Object.assign(L, x); L.up = Object.assign({ hp:0, atk:0, mp:0, gold:0 }, x.up || {}); } } catch(e) {}
+const saveL = () => { try { localStorage.setItem('jh2Legacy', JSON.stringify(L)); } catch(e) {} };
+const saveS = () => { try { localStorage.setItem('jh2Run', JSON.stringify(S)); } catch(e) {} };
+const loadS = () => { try { return JSON.parse(localStorage.getItem('jh2Run')); } catch(e) { return null; } };
+
+// ================= 人物圖 =================
+function fighterSVG(look, col, flip, weapon = 'sword', boss = false) {
+  const skin = look === 'demon' ? '#b9b0c8' : '#e8c9a0';
+  let head = `<circle cx="60" cy="38" r="15" fill="${skin}"/>`;
+  let hair = '', extra = '';
+  if (look === 'hero') hair = `<path d="M45 36 Q45 20 60 20 Q75 20 75 36 Q72 27 60 27 Q48 27 45 36Z" fill="#16120e"/><circle cx="60" cy="17" r="6" fill="#16120e"/><path d="M66 18 Q90 22 96 34" stroke="#c0503f" stroke-width="3" fill="none"/>`;
+  if (look === 'bandit') hair = `<path d="M44 36 Q46 22 60 22 Q74 22 76 36Z" fill="#2a1a10"/><rect x="44" y="28" width="32" height="6" fill="#8a2a1a"/><path d="M50 46 Q60 56 70 46" fill="#2a1a10"/>`;
+  if (look === 'scholar') hair = `<path d="M45 34 Q46 22 60 21 Q74 22 75 34Z" fill="#16120e"/><rect x="52" y="12" width="16" height="10" rx="2" fill="#2a3a2a"/>`;
+  if (look === 'monk') { hair = `<circle cx="54" cy="30" r="1.6" fill="#a8742a"/><circle cx="60" cy="28" r="1.6" fill="#a8742a"/><circle cx="66" cy="30" r="1.6" fill="#a8742a"/>`; }
+  if (look === 'blood') hair = `<path d="M44 38 Q42 18 60 18 Q78 18 76 38 L74 60 L70 34 Q60 26 50 34 L46 60Z" fill="#d8d8d8"/><path d="M48 48 Q60 64 72 48" fill="#d8d8d8"/>`;
+  if (look === 'demon') hair = `<path d="M43 40 Q40 14 60 14 Q80 14 77 40 L80 70 L72 36 Q60 28 48 36 L40 70Z" fill="#0e0a12"/><path d="M48 36 h24 v8 h-24Z" fill="#1a0e22"/><circle cx="54" cy="40" r="2.4" fill="#ff3040"/><circle cx="66" cy="40" r="2.4" fill="#ff3040"/><path d="M48 18 L42 2 L54 14 M72 18 L78 2 L66 14" fill="#2a1a33"/>`;
+  const eyes = look === 'demon' ? '' : `<path d="M53 37 h4 M63 37 h4" stroke="#1a1410" stroke-width="2.2" stroke-linecap="round"/>`;
+  const body = `<path d="M40 112 L44 58 Q60 52 76 58 L82 112 Q60 118 40 112Z" fill="${col}"/><path d="M52 56 L60 74 L68 56" fill="#e8dcc0"/><rect x="42" y="84" width="38" height="5" fill="#1a1410"/>
+    <path d="M44 112 L40 152 L52 152 L58 114 M64 114 L70 152 L82 152 L78 112" fill="#2a241c"/>`;
+  const arm = `<path d="M74 62 Q92 74 100 70" stroke="${col}" stroke-width="10" stroke-linecap="round" fill="none"/><circle cx="101" cy="70" r="5" fill="${skin}"/>`;
+  const arm2 = `<path d="M46 62 Q32 80 38 94" stroke="${col}" stroke-width="10" stroke-linecap="round" fill="none"/>`;
+  let wpn = '';
+  if (weapon === 'sword') wpn = `<line x1="100" y1="70" x2="138" y2="40" stroke="#dfe6ea" stroke-width="3"/><line x1="96" y1="66" x2="104" y2="76" stroke="#8a6a2a" stroke-width="4"/>`;
+  if (weapon === 'saber') wpn = `<path d="M100 70 L132 38 Q138 44 130 52 L104 76Z" fill="#cfd6da"/>`;
+  if (weapon === 'fan') wpn = `<path d="M100 70 L122 50 A30 30 0 0 1 128 76Z" fill="#e8dcc0" stroke="#3a5a3a"/>`;
+  if (weapon === 'fist') wpn = `<circle cx="104" cy="70" r="9" fill="${skin}"/>`;
+  if (weapon === 'claw') wpn = `<path d="M100 66 l18 -8 M102 70 l20 -2 M100 74 l18 6" stroke="#9a80b0" stroke-width="3"/>`;
+  const sc = boss ? 1.12 : 1;
+  return `<svg viewBox="0 0 140 160"><g transform="${flip ? 'translate(140,0) scale(-1,1)' : ''} translate(${70 - 70 * sc},${160 - 160 * sc}) scale(${sc})"><ellipse cx="60" cy="154" rx="34" ry="6" fill="rgba(0,0,0,.4)"/>${arm2}${body}${arm}${wpn}${head}${hair}${eyes}${extra}</g></svg>`;
+}
+const LOOK_WEAPON = { bandit:'saber', scholar:'fan', monk:'fist', blood:'saber', demon:'claw', hero:'sword' };
+function avatarSm() { return `<div style="width:64px;height:64px;border-radius:12px;background:#2a241c;overflow:hidden;flex:none">${fighterSVG('hero', S.robe, false, 'sword').replace('viewBox="0 0 140 160"', 'viewBox="30 4 70 70"')}</div>`; }
+
+// ================= 新遊戲 =================
+function newRun() {
+  S = { name: randName(), robe: pick(['#3d6b5a','#4a5a7a','#6a4a3a','#5a4a6a']), lv:1, exp:0, hpMax: 100 + L.up.hp * 10, atk: 10 + L.up.atk, def: 2, spd: 5, mpMax: 40 + L.up.mp * 5,
+    gold: 30 + L.up.gold * 25, pots: 2, moves: ['basic','guard','breathe','fast'], weapon:'木劍', ch:0, step:0, map:null, kills:0, picked:[], firstFight:true, log:[] };
+  S.hp = S.hpMax; S.mp = S.mpMax;
+  genMap(); saveS();
+}
+function genMap() {
+  const steps = [];
+  for (let i = 0; i < 6; i++) {
+    let pool = i === 0 ? ['fight','fight','event'] : i === 5 ? ['rest','shop','rest'] : ['fight','fight','elite','event','event','shop','rest'];
+    const a = pick(pool); let b = pick(pool); let t = 0; while (b === a && t++ < 10) b = pick(pool);
+    steps.push(shuffle([a, b]));
+  }
+  steps.push(['boss']);
+  S.map = steps; S.step = 0; S.picked = [];
+}
+const expNeed = () => 30 + S.lv * 25;
+
+// ================= 地圖畫面 =================
+function showOnly(id) { ['sTitle','sMap'].forEach(x => $(x).classList.toggle('hide', x !== id)); window.scrollTo(0,0); }
+function renderMap() {
+  showOnly('sMap');
+  const C = CHAPTERS[S.ch];
+  $('mAv').innerHTML = avatarSm();
+  $('mName').textContent = S.name; $('mLv').textContent = `等級 ${S.lv}`;
+  $('mHp').style.width = (S.hp / S.hpMax * 100) + '%'; $('mHpT').textContent = `生命 ${S.hp}/${S.hpMax}`;
+  $('mExp').style.width = (S.exp / expNeed() * 100) + '%'; $('mExpT').textContent = `經驗 ${S.exp}/${expNeed()}`;
+  $('mChips').innerHTML = `<span class="chip">⚔ 攻擊 ${S.atk}</span><span class="chip">🛡 防禦 ${S.def}</span><span class="chip">💨 身法 ${S.spd}</span><span class="chip">🔵 內力 ${S.mpMax}</span><span class="chip">🗡 ${S.weapon}</span><span class="chip">💰 ${S.gold} 兩</span><span class="chip">💊 ×${S.pots}</span>`;
+  $('mArt').innerHTML = wxArt(C.art, S.ch + 3);
+  $('mGoal').innerHTML = `<b>${C.n}</b>　<span class="muted">（${S.ch + 1}/5）</span><br>${C.story}<br>目標：打倒 <b class="bad">${C.boss.name}</b>`;
+  $('mPath').innerHTML = '';
+  S.map.forEach((opts, i) => {
+    const row = document.createElement('div'); row.className = 'step';
+    row.innerHTML = `<div class="no">${i === 6 ? '終' : i + 1}</div>`;
+    const box = document.createElement('div'); box.className = 'opts';
+    for (const t of opts) {
+      const b = document.createElement('button'); const N = NODE[t];
+      b.className = 'node' + (i < S.step ? (S.picked[i] === t ? ' taken' : ' done') : i === S.step ? ' now' : '');
+      b.innerHTML = `<span class="ic">${N.ic}</span>${t === 'boss' ? C.boss.name.split(' ').pop() : N.n}`;
+      b.disabled = i !== S.step;
+      b.onclick = () => enter(t);
+      box.appendChild(b);
+    }
+    row.appendChild(box); $('mPath').appendChild(row);
+  });
+  $('mMoves').innerHTML = S.moves.map(m => `<b class="gold">${MOVES[m].n}</b>${MOVES[m].cost ? `（${MOVES[m].cost}）` : ''}：${MOVES[m].d}`).join('<br>');
+  // 捲到目前這一步
+  setTimeout(() => { const n = document.querySelector('.node.now'); if (n && n.scrollIntoView) n.scrollIntoView({ block:'center', behavior:'smooth' }); }, 50);
+}
+function enter(t) {
+  S.picked[S.step] = t; saveS();
+  if (t === 'fight') battle(makeEnemy('normal'));
+  else if (t === 'elite') battle(makeEnemy('elite'));
+  else if (t === 'boss') battle(makeEnemy('boss'));
+  else if (t === 'event') doEvent();
+  else if (t === 'shop') shop();
+  else if (t === 'rest') rest();
+}
+function nextStep() {
+  S.step++;
+  if (S.step >= S.map.length) { // 章節結束
+    S.ch++;
+    if (S.ch >= CHAPTERS.length) return victory();
+    genMap(); S.hp = Math.min(S.hpMax, S.hp + Math.round(S.hpMax * 0.3));
+    saveS();
+    const C = CHAPTERS[S.ch];
+    return scene(C.n, C.story + `\n\n（休整後恢復三成生命）`, [{ label:'繼續', fn: () => { closeScene(); renderMap(); } }], C.art);
+  }
+  saveS(); renderMap();
+}
+
+// ================= 敵人 =================
+function makeEnemy(kind) {
+  const C = CHAPTERS[S.ch], c = S.ch + 1;
+  if (kind === 'boss') { const b = C.boss; const bh = Math.round(b.hp * (1 + S.ch * 0.2)); return { ...b, atk: b.atk + S.ch * 3, kind, max: bh, hp: bh, traits: [...b.traits], weapon: LOOK_WEAPON[b.look] }; }
+  const look = pick(C.looks);
+  const el = kind === 'elite';
+  const hp = Math.round((34 + c * 28 + c * c * 6 + S.step * 4) * (el ? 1.7 : 1) * rnd(0.9, 1.1));
+  const traits = [];
+  if (el) traits.push(pick(['charge','poison','guard','drain']));
+  if (!el && Math.random() < 0.3) traits.push(pick(['charge','guard']));
+  const name = (el ? pick(['頭領','好手','高手']) + '・' : '') + pick(C.foes);
+  return { name, look, col: pick(['#5a3a2a','#3a3a50','#4a4a3a','#5a2a3a','#2a4a4a']), kind, hp, max: hp, atk: Math.round((5 + c * 3 + c * c * 0.6) * (el ? 1.3 : 1)), def: Math.round(c * 1.2), traits, weapon: LOOK_WEAPON[look] };
+}
+
+// ================= 戰鬥 =================
+let B = null;
+function battle(e) {
+  B = { e, turn: 0, stunCD: 0, shield: 0, pPoison: 0, ePoison: 0, eStun: false, guard: false, busy: false, phase2: false };
+  e.charging = false;
+  $('battle').classList.remove('hide');
+  $('stBg').innerHTML = wxArt(CHAPTERS[S.ch].art, S.ch * 7 + S.step);
+  $('pF').innerHTML = fighterSVG('hero', S.robe, false, 'sword');
+  $('eF').innerHTML = fighterSVG(e.look, e.col, true, e.weapon, e.kind === 'boss');
+  $('pName').textContent = S.name; $('eName').innerHTML = (e.kind === 'boss' ? '👹 ' : e.kind === 'elite' ? '💀 ' : '') + e.name;
+  pickIntent();
+  say(e.kind === 'boss' ? `${e.name}擋在你面前：「就憑你？」` : `${e.name}攔住了去路！`);
+  if (S.firstFight) tip('先看右邊對手頭上的意圖！他要「蓄力」時，用格擋擋下或點穴打斷。內力不夠時記得調息。');
+  else $('tip').classList.add('hide');
+  renderBattle();
+}
+function tip(t) { $('tip').textContent = '💡 ' + t; $('tip').classList.remove('hide'); }
+function say(t) { $('blog').innerHTML = t; }
+function pickIntent() {
+  const e = B.e;
+  if (B.eStun) { e.intent = { t:'stunned' }; return; }
+  if (e.charging) { e.intent = { t:'heavy', v: Math.round(e.atk * 2.6) }; return; }
+  const w = { atk: 6, guard: 1, charge: 1.2 };
+  if (e.traits.includes('charge')) w.charge += 2;
+  if (e.traits.includes('guard')) w.guard += 2.5;
+  if (e.traits.includes('poison')) w.poison = 3;
+  if (e.traits.includes('drain')) w.drain = 2.5;
+  if (e.kind === 'boss' && e.hp < e.max * 0.5 && !e.healed) w.heal = 1.5;
+  if (B.phase2) { w.charge += 2; }
+  let tot = 0; for (const k in w) tot += w[k];
+  let r = Math.random() * tot, t = 'atk'; for (const k in w) { r -= w[k]; if (r <= 0) { t = k; break; } }
+  const a = e.atk * (B.phase2 ? 1.25 : 1);
+  e.intent = { t, v: Math.round(t === 'poison' ? a * 0.7 : t === 'drain' ? a * 1.1 : a) };
+}
+function intentText() {
+  const i = B.e.intent;
+  return { atk:`⚔ 攻擊 ${i.v}`, heavy:`💥 重擊 ${i.v}！快格擋或點穴`, charge:'⚡ 蓄力中……下回合重擊', guard:'🛡 防守：傷害減半（劈山掌可破）', poison:`☠ 毒招 ${i.v}＋中毒`, drain:`🩸 吸血攻擊 ${i.v}`, heal:'💚 運功療傷', stunned:'💫 被點住穴道，動彈不得' }[i.t];
+}
+function renderBattle() {
+  const e = B.e;
+  $('pHpBar').style.width = (S.hp / S.hpMax * 100) + '%'; $('pHpT').textContent = `${S.hp}/${S.hpMax}`;
+  $('eHpBar').style.width = (Math.max(0, e.hp) / e.max * 100) + '%'; $('eHpT').textContent = `${Math.max(0, e.hp)}/${e.max}`;
+  $('mpBar').style.width = (S.mp / S.mpMax * 100) + '%'; $('mpT').textContent = `${S.mp}/${S.mpMax}`;
+  $('pSt').innerHTML = [B.shield ? `<span style="color:#9cc8ff">🔰護體 ${B.shield}</span>` : '', B.pPoison ? `<span class="good">☠中毒 ${B.pPoison}</span>` : ''].join(' ');
+  $('eSt').innerHTML = [B.ePoison ? `<span class="good">☠中毒 ${B.ePoison}</span>` : '', B.phase2 ? '<span class="bad">🔥 狂暴</span>' : ''].join(' ');
+  const it = $('intent'); it.textContent = intentText();
+  it.className = 'intent' + (['heavy','charge'].includes(e.intent.t) ? ' danger' : '');
+  $('eF').classList.toggle('charging', e.intent.t === 'charge' || e.intent.t === 'heavy');
+  $('bPot').textContent = `💊 金創藥 ×${S.pots}`; $('bPot').disabled = !S.pots || B.busy || S.hp >= S.hpMax;
+  $('moves').innerHTML = '';
+  for (const m of S.moves) {
+    const M = MOVES[m], b = document.createElement('button');
+    b.className = 'mv' + (m === 'ult' ? ' ult' : '');
+    const hint = (m === 'stun' && ['charge','heavy'].includes(e.intent.t) && !(B.stunCD > 0 && e.kind !== 'normal')) || (m === 'guard' && e.intent.t === 'heavy') || (m === 'smash' && e.intent.t === 'guard');
+    b.innerHTML = `<b>${hint ? '⭐' : ''}${M.n}</b>${M.cost ? `<span class="c">內力 ${M.cost}</span>` : '<span class="c">免費</span>'}<small>${M.d}</small>`;
+    if (hint) b.style.borderColor = '#d9b25f';
+    b.disabled = B.busy || S.mp < M.cost;
+    b.onclick = () => playerAct(m);
+    $('moves').appendChild(b);
+  }
+}
+function floatNum(side, text, col) {
+  const el = document.createElement('div'); el.className = 'float'; el.textContent = text; el.style.color = col;
+  el.style.left = side === 'e' ? 'auto' : '60px'; el.style.right = side === 'e' ? '60px' : 'auto'; el.style.top = '90px';
+  $('stage').appendChild(el); setTimeout(() => el.remove(), 1000);
+}
+function slashFx(side, col = '#fff') {
+  const el = document.createElement('div'); el.className = 'slash';
+  el.innerHTML = `<svg width="120" height="120" viewBox="0 0 120 120"><path d="M10 100 Q60 10 110 20" stroke="${col}" stroke-width="7" fill="none" stroke-linecap="round" opacity=".9"/><path d="M20 108 Q66 30 112 34" stroke="${col}" stroke-width="3" fill="none" opacity=".6"/></svg>`;
+  el.style.top = '60px'; if (side === 'e') el.style.right = '40px'; else el.style.left = '40px';
+  $('stage').appendChild(el); setTimeout(() => el.remove(), 420);
+}
+function anim(id, cls) { const el = $(id); el.classList.remove(cls); void el.offsetWidth; el.classList.add(cls); setTimeout(() => el.classList.remove(cls), 450); }
+const wait = ms => new Promise(r => setTimeout(r, ms));
+
+function dmgTo(target, mult, opts = {}) {
+  // 我方打敵人
+  const e = B.e;
+  let d = S.atk * mult * rnd(0.9, 1.1);
+  let crit = Math.random() < S.spd / 100 + (opts.crit || 0);
+  if (crit) d *= 1.6;
+  if (e.intent.t === 'guard' && !B.eStun) d *= opts.breakGuard ? 1.5 : 0.5;
+  d = Math.max(1, Math.round(d - e.def));
+  e.hp -= d;
+  return { d, crit };
+}
+async function playerAct(m) {
+  if (B.busy) return; B.busy = true;
+  const e = B.e, M = MOVES[m]; S.mp -= M.cost; S.firstFight = false;
+  B.guard = false; let text = '';
+  const hit = async (mult, o = {}) => { anim('pF', 'lungeR'); await wait(170); const r = dmgTo(e, mult, o); slashFx('e', r.crit ? '#ffd27a' : '#fff'); anim('eF', 'hurt'); floatNum('e', (r.crit ? '暴擊 ' : '') + '-' + r.d, r.crit ? '#ffd27a' : '#fff'); renderBattle(); await wait(260); return r; };
+  if (m === 'basic') { const r = await hit(1); text = `你一掌拍出，造成 <b>${r.d}</b> 傷害。`; }
+  else if (m === 'guard') { B.guard = true; S.mp = Math.min(S.mpMax, S.mp + 12); $('pF').classList.add('guarding'); text = '你沉肩墜肘，嚴陣以待。'; }
+  else if (m === 'breathe') { S.mp = Math.min(S.mpMax, S.mp + 25); const h = Math.round(S.hpMax * 0.06); S.hp = Math.min(S.hpMax, S.hp + h); floatNum('p', '+' + h, '#7fbf7a'); text = '你調勻內息，內力 +25。'; }
+  else if (m === 'fast') { const a = await hit(0.7); const b = await hit(0.7); text = `松風快劍連刺兩劍：${a.d}＋${b.d}！`; }
+  else if (m === 'smash') { const r = await hit(1.7, { breakGuard: true }); text = e.intent.t === 'guard' ? `劈山掌震開了對方的防守！<b>${r.d}</b> 傷害！` : `劈山掌造成 <b>${r.d}</b> 傷害。`; }
+  else if (m === 'stun') { const r = await hit(0.6); const tough = e.kind !== 'normal';
+    if (tough && B.stunCD > 0) text = `${e.name}已有防備，點穴手被封住了！（還要 ${B.stunCD} 回合）`;
+    else if (['charge','heavy'].includes(e.intent.t) || (!tough && Math.random() < 0.45)) { B.eStun = true; e.charging = false; if (tough) B.stunCD = 3; text = `點中穴道！<b class="gold">${e.name}被定住了</b>，這回合無法出手。`; floatNum('e', '定！', '#ffd27a'); }
+    else text = `點穴手只造成 ${r.d} 傷害，沒點中要穴。${tough ? '（強敵只有在蓄力時才點得中）' : ''}`; }
+  else if (m === 'shield') { const s = 18 + S.def * 3 + S.lv * 2; B.shield += s; text = `金鐘罩護體，可吸收 ${s} 傷害。`; floatNum('p', '🔰' + s, '#9cc8ff'); }
+  else if (m === 'drain') { const r = await hit(1.1); const h = Math.round(r.d * 0.6); S.hp = Math.min(S.hpMax, S.hp + h); floatNum('p', '+' + h, '#7fbf7a'); text = `吸星手奪走 ${r.d} 生命，回復 ${h}。`; }
+  else if (m === 'poison') { const r = await hit(0.5); B.ePoison = 3; text = `毒砂掌命中，${e.name}中毒了！`; }
+  else if (m === 'ult') { $('stage').style.filter = 'brightness(1.6)'; await wait(150); $('stage').style.filter = ''; const r = await hit(3.2, { crit: 0.15 }); text = `<b class="gold">天外飛仙！</b>一劍造成 <b>${r.d}</b> 傷害！`; }
+  say(text); renderBattle();
+  await wait(350);
+  if (e.hp <= 0) return winBattle();
+  // 魔頭狂暴
+  if (e.traits.includes('phase') && !B.phase2 && e.hp < e.max * 0.5) { B.phase2 = true; say(text + `<br><b class="bad">${e.name}仰天長嘯，魔功暴漲！</b>`); await wait(700); }
+  await enemyAct();
+}
+async function enemyAct() {
+  const e = B.e, it = e.intent;
+  let text = '';
+  if (B.eStun || it.t === 'stunned') { text = `${e.name}動彈不得。`; B.eStun = false; }
+  else if (it.t === 'charge') { e.charging = true; text = `${e.name}正在運氣蓄力……`; }
+  else if (it.t === 'guard') { text = `${e.name}擺出守勢。`; }
+  else if (it.t === 'heal') { const h = Math.round(e.max * 0.12); e.hp = Math.min(e.max, e.hp + h); e.healed = true; floatNum('e', '+' + h, '#7fbf7a'); text = `${e.name}運功療傷，回復 ${h}。`; }
+  else {
+    e.charging = false;
+    anim('eF', 'lungeL'); await wait(170);
+    let d = it.v * rnd(0.9, 1.1);
+    const dodge = it.t !== 'heavy' && Math.random() < S.spd / 200;
+    if (dodge) { text = `你身形一晃，閃過了${e.name}的攻擊！`; floatNum('p', '閃', '#9cc8ff'); }
+    else {
+      if (B.guard) d *= 0.3;
+      d = Math.max(1, Math.round(d - S.def));
+      let absorbed = 0; if (B.shield) { absorbed = Math.min(B.shield, d); B.shield -= absorbed; d -= absorbed; }
+      S.hp -= d; anim('pF', 'hurt'); slashFx('p', '#ff8070'); floatNum('p', '-' + d, '#ff8070');
+      text = `${e.name}${it.t === 'heavy' ? '蓄滿的重擊' : it.t === 'poison' ? '的毒招' : it.t === 'drain' ? '的吸血功' : '出手'}打中你，<b class="bad">${d}</b> 傷害${B.guard ? '（格擋）' : ''}${absorbed ? `（護體吸收 ${absorbed}）` : ''}。`;
+      if (it.t === 'poison') { B.pPoison = 3; text += '你中毒了！'; }
+      if (it.t === 'drain') { const h = Math.round((d + absorbed) * 0.5); e.hp = Math.min(e.max, e.hp + h); text += `${e.name}回復 ${h}。`; }
+    }
+  }
+  $('pF').classList.remove('guarding');
+  // 回合結束：中毒、內力
+  if (B.ePoison) { const p = 5 + S.lv * 2; e.hp -= p; B.ePoison--; floatNum('e', '☠' + p, '#7fbf7a'); }
+  if (B.pPoison) { const p = 4 + S.ch * 2; S.hp -= p; B.pPoison--; text += `　毒發 -${p}`; }
+  S.mp = Math.min(S.mpMax, S.mp + 6);
+  if (B.stunCD > 0) B.stunCD--;
+  B.turn++;
+  say(text); pickIntent(); B.busy = false; renderBattle();
+  if (e.hp <= 0) return winBattle();
+  if (S.hp <= 0) return loseBattle();
+}
+$('bPot').onclick = () => { if (!S.pots || B.busy) return; S.pots--; const h = Math.round(S.hpMax * 0.4); S.hp = Math.min(S.hpMax, S.hp + h); floatNum('p', '+' + h, '#7fbf7a'); say(`你服下金創藥，回復 ${h} 生命。`); renderBattle(); saveS(); };
+
+async function winBattle() {
+  B.busy = true; const e = B.e;
+  $('eF').style.transition = 'opacity .6s, transform .6s'; $('eF').style.opacity = '0'; $('eF').style.transform = 'translateY(30px) rotate(20deg)';
+  await wait(700);
+  $('eF').style.opacity = ''; $('eF').style.transform = ''; $('eF').style.transition = '';
+  $('battle').classList.add('hide');
+  S.kills++; S.mp = S.mpMax;
+  const exp = Math.round((e.kind === 'boss' ? 60 : e.kind === 'elite' ? 34 : 18) * (1 + S.ch * 0.4));
+  const gold = Math.round((e.kind === 'boss' ? 80 : e.kind === 'elite' ? 40 : ri(12, 22)) * (1 + S.ch * 0.25));
+  S.gold += gold; S.exp += exp;
+  let ups = [];
+  while (S.exp >= expNeed()) { S.exp -= expNeed(); S.lv++; S.hpMax += 14; S.hp += 14; S.atk += 2; S.def += 1; S.spd += 1; S.mpMax += 4; ups.push(S.lv); }
+  if (e.kind === 'boss') S.hp = Math.min(S.hpMax, S.hp + Math.round(S.hpMax * 0.25));
+  rewardScreen(e, exp, gold, ups);
+}
+function rewardScreen(e, exp, gold, ups) {
+  const opts = [];
+  const unknown = MOVE_POOL.filter(m => !S.moves.includes(m));
+  if (e.kind === 'boss' && S.ch >= 2 && !S.moves.includes('ult')) opts.push({ k:'move', v:'ult' });
+  if (unknown.length) opts.push({ k:'move', v: pick(unknown) });
+  const stats = shuffle([{ k:'hp', v: 25 }, { k:'atk', v: 3 }, { k:'def', v: 2 }, { k:'spd', v: 4 }, { k:'mp', v: 15 }, { k:'pot', v: 2 }]);
+  while (opts.length < 3) opts.push(stats.pop());
+  if (e.kind !== 'normal' && Math.random() < 0.6) opts[2] = { k:'weapon', v: pick([['精鋼劍', 4], ['青鋒劍', 5], ['寒鐵劍', 6], ['倚天殘劍', 8]].filter(w => w[1] > (S.wAtk || 0))) || ['磨刀石', 2] };
+  const lab = o => o.k === 'move' ? ['新招式', MOVES[o.v].n, MOVES[o.v].d + `（內力 ${MOVES[o.v].cost}）`]
+    : o.k === 'weapon' ? ['兵器', o.v[0], `攻擊 +${o.v[1]}`]
+    : ['修為', { hp:'強身健體', atk:'力貫千鈞', def:'銅皮鐵骨', spd:'凌波微步', mp:'內息綿長', pot:'金創藥' }[o.k], { hp:`生命上限 +${o.v}`, atk:`攻擊 +${o.v}`, def:`防禦 +${o.v}`, spd:`身法 +${o.v}（暴擊與閃避）`, mp:`內力上限 +${o.v}`, pot:`金創藥 +${o.v}` }[o.k]];
+  $('sceneIn').innerHTML = wxArt(e.kind === 'boss' ? 'moon' : CHAPTERS[S.ch].art, S.kills) +
+    `<h2>${e.kind === 'boss' ? '頭目伏誅！' : '勝利！'}</h2>${ups.length ? `<div class="lvup">升級！等級 ${S.lv}</div><div style="text-align:center" class="muted">生命、攻擊、防禦、身法、內力都提升了</div>` : ''}
+    <div class="story">擊敗 ${e.name}　經驗 +${exp}　銀兩 +${gold}</div><div class="muted" style="margin-bottom:8px">選一項獎勵：</div><div class="col" id="rw"></div>`;
+  for (const o of opts) {
+    const [t, n, d] = lab(o), b = document.createElement('button'); b.className = 'reward';
+    b.innerHTML = `<div class="t">${t}</div><b>${n}</b><small>${d}</small>`;
+    b.onclick = () => {
+      if (o.k === 'move') S.moves.push(o.v);
+      else if (o.k === 'weapon') { S.atk += o.v[1] - (S.wAtk || 0); S.wAtk = o.v[1]; S.weapon = o.v[0]; }
+      else if (o.k === 'hp') { S.hpMax += o.v; S.hp += o.v; } else if (o.k === 'pot') S.pots += o.v; else if (o.k === 'mp') { S.mpMax += o.v; S.mp = S.mpMax; } else S[o.k] += o.v;
+      closeScene(); nextStep();
+    };
+    $('rw').appendChild(b);
+  }
+  $('scene').classList.remove('hide'); $('scene').scrollTop = 0;
+}
+async function loseBattle() {
+  B.busy = true; await wait(500);
+  $('battle').classList.add('hide');
+  const fame = S.kills * 3 + S.ch * 25 + S.lv * 4;
+  L.fame += fame; L.runs++; L.best = Math.max(L.best, S.ch + 1); saveL();
+  try { localStorage.removeItem('jh2Run'); } catch(e) {}
+  scene('你倒下了……', `${S.name}倒在了${CHAPTERS[S.ch].n.split('・')[1]}。\n\n等級 ${S.lv}　擊敗 ${S.kills} 人\n江湖上留下了你的名號：名望 <b class="gold">+${fame}</b>\n\n名望可以在「轉世傳承」強化下一世。`, [
+    { label:'轉世傳承', fn: () => { closeScene(); legacy(); } }, { label:'回到標題', fn: () => { closeScene(); title_(); } }], 'moon');
+}
+function victory() {
+  const fame = 200 + S.kills * 3 + S.lv * 5;
+  L.fame += fame; L.runs++; L.wins++; L.best = 6; saveL();
+  try { localStorage.removeItem('jh2Run'); } catch(e) {}
+  scene('🏆 天下第一', `華山之巔，天魔教主倒在你劍下。\n群雄齊聲：「${S.name}，天下第一！」\n\n等級 ${S.lv}　擊敗 ${S.kills} 人　招式 ${S.moves.length} 種\n名望 <b class="gold">+${fame}</b>（共通關 ${L.wins} 次）`, [
+    { label:'轉世傳承', fn: () => { closeScene(); legacy(); } }, { label:'回到標題', fn: () => { closeScene(); title_(); } }], 'duel');
+}
+
+// ================= 奇遇／商店／客棧 =================
+const EVENTS = [
+  () => ({ t:'老乞丐', art:'temple', s:'破廟裡的老乞丐向你伸出髒兮兮的手。', c:[
+    { l:'給他 15 兩', n:'或許有回報', ok: S.gold >= 15, f:() => { S.gold -= 15; if (Math.random() < 0.6) { const m = pick(MOVE_POOL.filter(x => !S.moves.includes(x))); if (m) { S.moves.push(m); return `老乞丐拿樹枝在地上比劃了幾下——竟是一套「${MOVES[m].n}」！\n\n<b class="gold">學會新招式：${MOVES[m].n}</b>`; } } S.atk += 1; return '老乞丐咧嘴一笑，拍了拍你的肩膀。你覺得手臂一熱。\n\n攻擊 +1'; } },
+    { l:'離開', f:() => '你轉身離開。' }] }),
+  () => ({ t:'山洞殘卷', art:'cave', s:'山洞深處有一卷殘破的秘笈，字跡模糊。', c:[
+    { l:'硬著頭皮練', n:'七成學會新招，三成走火（扣血）', f:() => { if (Math.random() < 0.7) { const m = pick(MOVE_POOL.filter(x => !S.moves.includes(x))); if (m) { S.moves.push(m); return `你參透了殘卷！\n\n<b class="gold">學會新招式：${MOVES[m].n}</b>`; } S.mpMax += 15; return '殘卷上的招式你都會了，但內力運行更順暢。\n\n內力上限 +15'; } const d = Math.round(S.hpMax * 0.25); S.hp = Math.max(1, S.hp - d); return `氣血翻湧，你噴出一口血。\n\n生命 -${d}`; } },
+    { l:'拿去賣錢', n:'+50 兩', f:() => { S.gold += 50; return '書肆老闆給了你五十兩。'; } }] }),
+  () => ({ t:'懸崖靈芝', art:'cliff', s:'峭壁上長著一株百年靈芝。', c:[
+    { l:'攀上去採', n:'身法越高越容易成功', f:() => { if (Math.random() < 0.35 + S.spd / 40) { S.hpMax += 20; S.hp += 20; return '你如壁虎般攀上，服下靈芝。\n\n<b class="gold">生命上限 +20</b>'; } const d = Math.round(S.hpMax * 0.2); S.hp = Math.max(1, S.hp - d); return `手一滑摔了下來。\n\n生命 -${d}`; } },
+    { l:'算了', f:() => '命比較重要。' }] }),
+  () => ({ t:'瀑布悟劍', art:'waterfall', s:'大瀑布轟然而下，水勢千變萬化。', c:[
+    { l:'觀瀑悟劍', n:'攻擊 +2', f:() => { S.atk += 2; return '你看了一整天，劍招多了幾分氣勢。\n\n攻擊 +2'; } },
+    { l:'在瀑布下打坐', n:'內力上限 +12', f:() => { S.mpMax += 12; S.mp = S.mpMax; return '水流沖刷之下，內息更加綿長。\n\n內力上限 +12'; } }] }),
+  () => ({ t:'路見不平', art:'village', s:'惡霸正在欺負賣菜的老婆婆。', c:[
+    { l:'出手教訓', n:'打一場，贏了多拿銀兩', f:() => { closeScene(); const e = makeEnemy('normal'); e.name = '惡霸'; battle(e); return null; } },
+    { l:'塞錢給婆婆', n:'-10 兩，聲望好事', ok: S.gold >= 10, f:() => { S.gold -= 10; S.pots++; return '婆婆千恩萬謝，硬塞給你一瓶祖傳傷藥。\n\n金創藥 +1'; } }] }),
+  () => ({ t:'隱世高人', art:'hut', s:'茅屋前，一個老者正在劈柴，每一斧都分毫不差。', c:[
+    { l:'上前請教', n:'可能獲得指點', f:() => { const r = Math.random(); if (r < 0.5) { S.spd += 3; S.def += 1; return '老者教你步法與卸力的訣竅。\n\n身法 +3　防禦 +1'; } return '老者只說了一句：「柴劈完了，你走吧。」'; } },
+    { l:'幫他劈柴', n:'生命回滿', f:() => { S.hp = S.hpMax; return '劈了一下午柴，吃了一頓熱飯，睡得很香。\n\n生命全滿'; } }] }),
+  () => ({ t:'賭坊', art:'inn', s:'骰子聲叮噹作響。', c:[
+    { l:'押 30 兩', n:'一半機率翻倍', ok: S.gold >= 30, f:() => { if (Math.random() < 0.5) { S.gold += 30; return '開大！你贏了 30 兩。'; } S.gold -= 30; return '莊家通吃。輸了 30 兩。'; } },
+    { l:'走人', f:() => '你沒踏進去。' }] }),
+  () => ({ t:'故人', art:'river', s:'渡口遇見當年一起出山的同伴。', c:[
+    { l:'把酒言歡', n:'回復生命', f:() => { const h = Math.round(S.hpMax * 0.35); S.hp = Math.min(S.hpMax, S.hp + h); return `你們喝到天亮。\n\n生命 +${h}`; } },
+    { l:'切磋武藝', n:'經驗 +25', f:() => { S.exp += 25; let t = '你們過了幾十招，各有所得。\n\n經驗 +25'; while (S.exp >= expNeed()) { S.exp -= expNeed(); S.lv++; S.hpMax += 14; S.hp += 14; S.atk += 2; S.def += 1; S.spd += 1; S.mpMax += 4; t += `\n<b class="gold">升級！等級 ${S.lv}</b>`; } return t; } }] }),
+];
+function doEvent() {
+  const E = pick(EVENTS)();
+  scene(E.t, E.s, E.c.map(c => ({ label: c.l, note: c.n, dis: c.ok === false, fn: () => { const r = c.f(); if (r === null) return; saveS(); scene(E.t, r, [{ label:'繼續', fn: () => { closeScene(); nextStep(); } }], E.art); } })), E.art);
+}
+function shop() {
+  const items = [
+    { n:'金創藥', d:'戰鬥中回復 40% 生命', p:30, f:() => S.pots++ },
+    { n:'秘笈', d:'隨機學會一種新招式', p:80, ok: MOVE_POOL.some(m => !S.moves.includes(m)), f:() => { const m = pick(MOVE_POOL.filter(x => !S.moves.includes(x))); S.moves.push(m); return `學會「${MOVES[m].n}」`; } },
+    { n:'磨刀石', d:'攻擊 +2', p:50, f:() => S.atk += 2 },
+    { n:'護身甲', d:'防禦 +2', p:50, f:() => S.def += 2 },
+    { n:'大補丸', d:'生命上限 +20', p:60, f:() => { S.hpMax += 20; S.hp += 20; } },
+  ];
+  const draw = (msgT = '') => {
+    $('sceneIn').innerHTML = wxArt('village', 9) + `<h2>雜貨鋪</h2><div class="story">掌櫃笑瞇瞇：「客官要點什麼？」\n你有 <b class="gold">${S.gold}</b> 兩${msgT ? '\n\n' + msgT : ''}</div><div class="col" id="shopL"></div>`;
+    for (const it of items) { const b = document.createElement('button'); b.className = 'choice'; b.innerHTML = `${it.n}　<span class="gold">${it.p} 兩</span><small>${it.d}</small>`; b.disabled = S.gold < it.p || it.ok === false;
+      b.onclick = () => { S.gold -= it.p; const r = it.f(); saveS(); draw(`<span class="good">買了${it.n}${typeof r === 'string' ? '：' + r : ''}</span>`); }; $('shopL').appendChild(b); }
+    const x = document.createElement('button'); x.textContent = '離開'; x.onclick = () => { closeScene(); nextStep(); }; $('shopL').appendChild(x);
+  };
+  draw(); $('scene').classList.remove('hide'); $('scene').scrollTop = 0;
+}
+function rest() {
+  scene('客棧', `熱騰騰的飯菜，乾淨的床鋪。\n目前生命 ${S.hp}/${S.hpMax}`, [
+    { label:'好好睡一覺', note:`回復 50% 生命`, fn: () => { S.hp = Math.min(S.hpMax, S.hp + Math.round(S.hpMax * 0.5)); saveS(); closeScene(); nextStep(); } },
+    { label:'挑燈夜練', note:'攻擊 +2、內力上限 +8', fn: () => { S.atk += 2; S.mpMax += 8; S.mp = S.mpMax; saveS(); closeScene(); nextStep(); } },
+  ], 'inn');
+}
+
+// ================= 傳承 =================
+const LUP = [
+  { k:'hp', n:'根骨', d:'起始生命 +10', base:30 }, { k:'atk', n:'筋力', d:'起始攻擊 +1', base:40 },
+  { k:'mp', n:'內息', d:'起始內力 +5', base:30 }, { k:'gold', n:'家底', d:'起始銀兩 +25', base:25 },
+];
+function legacy() {
+  const draw = () => {
+    $('sceneIn').innerHTML = wxArt('moon', 1) + `<h2>轉世傳承</h2><div class="story">前世留下的名望，能讓下一世更強。\n名望：<b class="gold">${L.fame}</b>　闖蕩 ${L.runs} 次　通關 ${L.wins} 次</div><div class="col" id="lg"></div>`;
+    for (const u of LUP) { const lv = L.up[u.k], cost = Math.round(u.base * (1 + lv * 0.6)); const b = document.createElement('button'); b.className = 'choice';
+      b.innerHTML = `${u.n}　Lv.${lv}　<span class="gold">${cost} 名望</span><small>${u.d}（目前 +${lv * { hp:10, atk:1, mp:5, gold:25 }[u.k]}）</small>`; b.disabled = L.fame < cost;
+      b.onclick = () => { L.fame -= cost; L.up[u.k]++; saveL(); draw(); }; $('lg').appendChild(b); }
+    const x = document.createElement('button'); x.textContent = '完成'; x.onclick = () => { closeScene(); title_(); }; $('lg').appendChild(x);
+  };
+  draw(); $('scene').classList.remove('hide');
+}
+
+// ================= 場景 =================
+function scene(title, text, choices, kind) {
+  $('sceneIn').innerHTML = (kind ? wxArt(kind, ri(1, 99)) : '') + `<h2>${title}</h2><div class="story">${text}</div><div class="col" id="chs"></div>`;
+  for (const c of choices) { const b = document.createElement('button'); b.className = 'choice'; b.innerHTML = c.label + (c.note ? `<small>${c.note}</small>` : ''); b.disabled = !!c.dis; b.onclick = () => c.fn(); $('chs').appendChild(b); }
+  $('scene').classList.remove('hide'); $('scene').scrollTop = 0;
+}
+function closeScene() { $('scene').classList.add('hide'); }
+
+// ================= 標題 =================
+function title_() {
+  showOnly('sTitle'); $('tArt').innerHTML = wxArt('gate', 2);
+  $('bCont').classList.toggle('hide', !loadS());
+}
+$('bNew').onclick = () => {
+  const go = () => { newRun(); closeScene(); const C = CHAPTERS[0]; scene('出山', `你叫 <b class="gold">${S.name}</b>，十六歲，剛下山。\n\n${C.story}`, [{ label:'踏入江湖', fn: () => { closeScene(); renderMap(); } }], 'gate'); };
+  if (loadS()) scene('重新出山', '你還有一段未完的江湖路，重新開始會放棄它。', [{ label:'確定重新開始', fn: go }, { label:'算了', fn: closeScene }]); else go();
+};
+$('bCont').onclick = () => { S = loadS(); if (S) renderMap(); };
+$('bLegacy').onclick = legacy;
+title_();
+</script>
+<a href="./" id="gbHome" style="position:fixed;top:calc(4px + env(safe-area-inset-top));left:50%;transform:translateX(-50%);z-index:9999;background:rgba(0,0,0,.45);color:#fff;text-decoration:none;font:600 13px -apple-system,sans-serif;padding:4px 12px;border-radius:12px;opacity:.6">⌂ 遊戲盒</a>
+<script>if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});</script>
+</body>
+</html>

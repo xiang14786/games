@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="遊戲盒">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<title>弓兵大進擊</title>
+<style>
+  * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html,body { margin:0; height:100%; background:#0f1117; overflow:hidden; color:#e8eaf0;
+    font-family:-apple-system,"PingFang TC","Noto Sans TC","Microsoft JhengHei",sans-serif;
+    touch-action:none; user-select:none; -webkit-user-select:none; overscroll-behavior:none; }
+  #wrap { position:relative; width:100%; height:100%; max-width:520px; margin:0 auto; }
+  canvas { display:block; width:100%; height:100%; }
+  #hud { position:absolute; top:8px; left:12px; right:12px; pointer-events:none; text-shadow:0 2px 5px #000; }
+  #hud .r1 { display:flex; justify-content:space-between; font-size:20px; font-weight:800; }
+  .gold { color:#f7c948; }
+  #prog { margin-top:6px; height:8px; background:rgba(255,255,255,.12); border-radius:5px; overflow:hidden; }
+  #prog i { display:block; height:100%; width:0; background:#5fa8ff; }
+  .ov { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px;
+    background:rgba(9,10,15,.92); padding:20px; text-align:center; overflow-y:auto; touch-action:pan-y; }
+  .ov.hide { display:none; }
+  h1 { margin:0; font-size:42px; color:#5fa8ff; }
+  h2 { margin:0; font-size:32px; }
+  p { margin:0; font-size:18px; color:#b9bfcc; line-height:1.7; }
+  button { background:#5fa8ff; color:#08162a; border:0; border-radius:14px; padding:14px 30px; font-size:21px; font-weight:800;
+    cursor:pointer; font-family:inherit; }
+  button.ghost { background:#262c38; color:#e8eaf0; }
+  button:disabled { opacity:.35; }
+  .row { display:flex; gap:10px; flex-wrap:wrap; justify-content:center; }
+  .item { width:100%; max-width:420px; background:#1b2029; border-radius:14px; padding:12px 14px; display:flex; align-items:center; gap:12px; text-align:left; }
+  .item .ic { font-size:32px; width:42px; text-align:center; }
+  .item .tx { flex:1; }
+  .item .nm { font-size:19px; font-weight:800; }
+  .item .ds { font-size:15px; color:#9aa3b5; }
+  .item button { padding:10px 12px; font-size:16px; min-width:92px; }
+  #shop { justify-content:flex-start; padding-top:22px; }
+</style>
+</head>
+<body>
+<div id="wrap">
+  <canvas id="c"></canvas>
+  <div id="hud" style="display:none">
+    <div class="r1"><span id="hLv">第 1 關</span><span class="gold">● <span id="hGold">0</span></span></div>
+    <div id="prog"><i id="progBar"></i></div>
+  </div>
+
+  <div class="ov" id="menu">
+    <h1>弓兵大進擊</h1>
+    <p>手指<b>左右拖曳</b>移動隊伍，弓兵會自動射箭<br>
+      <span style="color:#5fa8ff">藍門</span>加兵、<span style="color:#ff6b6b">紅門</span>扣兵 —— <b>射門可以讓數字變大！</b><br>
+      射爆 <span class="gold">兵桶</span> 可以救出更多弓兵<br>撞到敵軍會一換一，最後打倒 BOSS 過關</p>
+    <p style="font-size:22px">第 <b id="mLv">1</b> 關　<span class="gold">● <span id="mGold">0</span></span></p>
+    <div class="row"><button id="mStart">出征</button><button class="ghost" id="mShop">升級</button></div>
+  </div>
+
+  <div class="ov hide" id="end">
+    <h2 id="eT"></h2>
+    <p id="eP"></p>
+    <div class="row"><button id="eNext"></button><button class="ghost" id="eShop">升級</button></div>
+  </div>
+
+  <div class="ov hide" id="shop">
+    <h2>軍營升級</h2>
+    <p style="font-size:22px"><span class="gold">● <span id="sGold">0</span></span></p>
+    <div id="sList" style="display:flex;flex-direction:column;gap:10px;width:100%;align-items:center"></div>
+    <div class="row"><button id="sStart">出征</button><button class="ghost" id="sBack">返回</button></div>
+  </div>
+</div>
+<script>
+// ===== 存檔 =====
+let save = { level:1, gold:0, up:{ troops:0, atk:0, rate:0, coin:0 } };
+try { const s = JSON.parse(localStorage.getItem('archerRush')); if (s) { save.level = s.level||1; save.gold = s.gold||0; Object.assign(save.up, s.up||{}); } } catch(e) {}
+function persist() { try { localStorage.setItem('archerRush', JSON.stringify(save)); } catch(e) {} }
+
+const UPS = [
+  { k:'troops', ic:'🛡️', nm:'起始兵力', max:20, base:40,  mul:1.3,  ds:l=>`開局 ${5+l*4} 名弓兵` },
+  { k:'atk',    ic:'🏹', nm:'攻擊力',   max:25, base:50,  mul:1.3,  ds:l=>`傷害 +${l*12}%` },
+  { k:'rate',   ic:'⚡', nm:'射速',     max:12, base:70,  mul:1.38, ds:l=>`射速 +${l*8}%` },
+  { k:'coin',   ic:'💰', nm:'戰利品',   max:12, base:90,  mul:1.38, ds:l=>`金幣 +${l*15}%` },
+];
+const upCost = (u, l) => Math.round(u.base * Math.pow(u.mul, l));
+
+// ===== 畫布 =====
+const cv = document.getElementById('c'), ctx = cv.getContext('2d');
+const W = 400; let H = 760, PY = 600;
+function resize() {
+  const r = cv.getBoundingClientRect(), dpr = window.devicePixelRatio || 1, s = r.width / W;
+  H = r.height / s; PY = H - 170;
+  cv.width = r.width * dpr; cv.height = r.height * dpr;
+  ctx.setTransform(dpr*s, 0, 0, dpr*s, 0, 0);
+  if (!running) draw();
+}
+window.addEventListener('resize', resize);
+
+function mulberry32(a) { return function() { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+const L0 = 30, L1 = W - 30; // 路面左右邊界
+const MID = W / 2;
+
+// ===== 關卡產生 =====
+function genLevel(L) {
+  const rnd = mulberry32(L * 9973 + 7);
+  const R = (a,b) => a + rnd()*(b-a);
+  const diff = 1 + (L-1) * 0.22;
+  const segs = 7 + Math.min(L, 13);
+  const ev = []; let d = 260;
+  for (let i = 0; i < segs; i++) {
+    let t = rnd();
+    if (i === 0) t = 0;
+    const ramp = 0.25 + 0.95 * i / segs; // 關卡前段比較溫和
+    if (t < 0.38) {
+      const good = () => rnd() < 0.15 ? { op:'mul', v:2 } : { op:'add', v: Math.round(R(4, 12) * Math.sqrt(diff)) };
+      const bad = () => rnd() < 0.2 ? { op:'div', v:2 } : { op:'add', v: -Math.round(R(5, 16) * diff * ramp) };
+      const pair = rnd() < 0.7 ? [good(), bad()] : [good(), good()];
+      if (rnd() < 0.5) pair.reverse();
+      ev.push({ d, t:'gate', pair });
+    } else if (t < 0.62) {
+      ev.push({ d, t:'crowd', n: Math.round(R(12, 26) * Math.pow(diff, 1.4) * ramp), x: R(L0 + 60, L1 - 60) });
+    } else if (t < 0.8) {
+      ev.push({ d, t:'barrel', hp: Math.round(R(18, 34) * diff), reward: Math.round(R(4, 9) * Math.sqrt(diff)), side: rnd() < .5 ? 0 : 1 });
+    } else {
+      ev.push({ d, t:'wall', n: Math.round(R(6, 16) * diff * ramp), side: rnd() < .5 ? 0 : 1 });
+    }
+    d += R(300, 380);
+  }
+  return { ev, end: d, bossHp: Math.round(380 * Math.pow(diff, 1.6)), bossHit: 1 + Math.floor(L / 3), diff };
+}
+
+// ===== 狀態 =====
+let running = false, S = null, frame = 0;
+function newGame() {
+  const L = save.level, lv = genLevel(L);
+  S = { L, lv, evI: 0, dist: 0, speed: 2.3, x: MID, tx: MID, n: 5 + save.up.troops * 4,
+    objs: [], arrows: [], pops: [], fx: [], fireT: 0, kills: 0, earned: 0, boss: null, bossT: 0, over: false, form: [] };
+}
+const atkMul = () => 1 + save.up.atk * 0.12;
+const rateMul = () => 1 + save.up.rate * 0.08;
+const coinMul = () => 1 + save.up.coin * 0.15;
+const formR = () => 10 + Math.sqrt(Math.min(S.n, 400)) * 6.2;
+
+function formation(n) {
+  const pts = [], m = Math.min(n, 160);
+  for (let i = 0; i < m; i++) { const a = i * 2.39996, r = 7.2 * Math.sqrt(i); pts.push([Math.cos(a)*r, Math.sin(a)*r*0.8]); }
+  return pts;
+}
+
+function spawn(e) {
+  const y = -60;
+  if (e.t === 'gate') {
+    e.pair.forEach((g, i) => S.objs.push({ t:'gate', x: i ? MID : L0, w: (L1-L0)/2, y, h: 44, g, prog: 0, pairId: e.d }));
+  } else if (e.t === 'crowd') {
+    S.objs.push({ t:'crowd', x: e.x, y, hp: e.n * 3, n: e.n });
+  } else if (e.t === 'barrel') {
+    S.objs.push({ t:'barrel', x: e.side ? MID + 50 : L0 + 50, w: 80, y, h: 60, hp: e.hp, max: e.hp, reward: e.reward });
+  } else if (e.t === 'wall') {
+    S.objs.push({ t:'wall', x: e.side ? MID : L0, w: (L1-L0)/2, y, h: 36, n: e.n, prog: 0 });
+  }
+}
+function crowdR(o) { return 14 + Math.sqrt(o.n) * 6.5; }
+
+function gateLabel(g) { return g.op === 'mul' ? '×' + g.v : g.op === 'div' ? '÷' + g.v : (g.v >= 0 ? '+' : '') + g.v; }
+function gateGood(g) { return g.op === 'mul' || (g.op === 'add' && g.v > 0); }
+
+function pop(text, x, y, col) { S.pops.push({ text, x, y, t: 50, col }); }
+
+// ===== 更新 =====
+function update() {
+  frame++;
+  const lv = S.lv;
+  // 移動
+  const fr = formR();
+  S.tx = Math.max(L0 + Math.min(fr, 60), Math.min(L1 - Math.min(fr, 60), S.tx));
+  S.x += (S.tx - S.x) * 0.25;
+
+  // 捲動 & 生成
+  if (!S.boss) {
+    S.dist += S.speed;
+    while (S.evI < lv.ev.length && lv.ev[S.evI].d <= S.dist) spawn(lv.ev[S.evI++]);
+    for (const o of S.objs) o.y += S.speed + (o.t === 'crowd' ? 0.9 : 0);
+    if (S.dist > lv.end && S.objs.length === 0) {
+      S.boss = { x: MID, y: -90, hp: lv.bossHp, max: lv.bossHp, r: 58 };
+    }
+  } else {
+    const b = S.boss;
+    if (b.y + b.r * 0.8 < PY - fr) b.y += 0.6;
+    else { S.bossT++; if (S.bossT % 30 === 0) { const hh = Math.max(lv.bossHit, Math.ceil(S.n * 0.05)); S.n -= hh; pop('-' + hh, S.x, PY - 20, '#ff6b6b'); shake = 6; } }
+    b.x += (S.x - b.x) * 0.004;
+  }
+
+  // 射擊
+  S.fireT -= rateMul();
+  if (S.fireT <= 0 && S.n > 0) {
+    S.fireT = 14;
+    const k = Math.min(S.n, 12);
+    const dmg = Math.pow(S.n, 0.85) * 0.45 * atkMul() / k;
+    const f = S.form;
+    for (let i = 0; i < k; i++) {
+      const p = f[Math.floor(Math.random() * f.length)] || [0,0];
+      S.arrows.push({ x: S.x + p[0], y: PY + p[1] - 8, dmg });
+    }
+  }
+
+  // 箭
+  for (const a of S.arrows) {
+    a.y -= 15;
+    if (a.dead) continue;
+    if (S.boss) {
+      const b = S.boss;
+      if (Math.abs(a.x - b.x) < b.r && a.y < b.y + b.r * 0.6 && a.y > b.y - b.r) { a.dead = true; b.hp -= a.dmg; hitFx(a.x, a.y); if (b.hp <= 0) return win(); }
+      continue;
+    }
+    let best = null, by = -1e9;
+    for (const o of S.objs) {
+      if (o.dead) continue;
+      let hit = false, bottom;
+      if (o.t === 'crowd') { const r = crowdR(o); hit = Math.abs(a.x - o.x) < r && a.y < o.y + r*0.7 && a.y > o.y - r*0.7; bottom = o.y + r*0.7; }
+      else if (o.t === 'barrel') { hit = Math.abs(a.x - o.x) < o.w/2 && a.y < o.y + o.h/2 && a.y > o.y - o.h/2; bottom = o.y + o.h/2; }
+      else { hit = a.x > o.x && a.x < o.x + o.w && a.y < o.y + o.h/2 && a.y > o.y - o.h/2; bottom = o.y + o.h/2; }
+      if (hit && bottom > by) { best = o; by = bottom; }
+    }
+    if (!best) continue;
+    a.dead = true; hitFx(a.x, a.y);
+    const o = best;
+    if (o.t === 'crowd') {
+      o.hp -= a.dmg; const nn = Math.max(0, Math.ceil(o.hp / 3));
+      if (nn < o.n) { S.kills += o.n - nn; o.n = nn; }
+      if (o.n <= 0) o.dead = true;
+    } else if (o.t === 'barrel') {
+      o.hp -= a.dmg;
+      if (o.hp <= 0) { o.dead = true; S.n += o.reward; pop('+' + o.reward + ' 弓兵', o.x, o.y, '#5fa8ff'); burst(o.x, o.y, '#c68a4a'); }
+    } else if (o.t === 'gate') {
+      if (o.g.op === 'add') { o.prog += 1; if (o.prog >= 7) { o.prog = 0; o.g.v++; } }
+    } else if (o.t === 'wall') {
+      o.prog += a.dmg; const step = 1.2 * lv.diff; while (o.prog >= step && o.n > 0) { o.prog -= step; o.n--; }
+      if (o.n <= 0) { o.dead = true; burst(o.x + o.w/2, o.y, '#8a6a4a'); }
+    }
+  }
+  S.arrows = S.arrows.filter(a => !a.dead && a.y > -40);
+
+  // 碰撞
+  const top = PY - fr * 0.8;
+  for (const o of S.objs) {
+    if (o.dead) continue;
+    if (o.t === 'gate' && o.y >= PY - 10) {
+      const inMe = S.x >= o.x && S.x < o.x + o.w;
+      for (const p of S.objs) if (p.t === 'gate' && p.pairId === o.pairId) p.dead = true;
+      const g = inMe ? o.g : S.objs.find(p => p.t === 'gate' && p.pairId === o.pairId && p !== o).g;
+      const before = S.n;
+      if (g.op === 'add') S.n += g.v; else if (g.op === 'mul') S.n *= g.v; else S.n = Math.ceil(S.n / g.v);
+      const dd = S.n - before;
+      pop((dd >= 0 ? '+' : '') + dd, S.x, PY - 50, dd >= 0 ? '#5fa8ff' : '#ff6b6b');
+      if (dd < 0) shake = 6;
+    } else if (o.t === 'crowd') {
+      const r = crowdR(o);
+      if (o.y + r * 0.7 >= top && Math.abs(o.x - S.x) < r + fr * 0.8) {
+        o.dead = true; S.n -= o.n; S.kills += Math.min(o.n, S.n + o.n);
+        pop('-' + o.n, S.x, PY - 50, '#ff6b6b'); burst(S.x, top, '#ff6b6b'); shake = 8;
+      }
+    } else if (o.t === 'wall') {
+      if (o.y + o.h/2 >= top && S.x + fr*0.6 > o.x && S.x - fr*0.6 < o.x + o.w) {
+        o.dead = true; S.n -= o.n; pop('-' + o.n, S.x, PY - 50, '#ff6b6b'); burst(S.x, top, '#8a6a4a'); shake = 8;
+      }
+    }
+    if (o.y > H + 80) o.dead = true;
+  }
+  S.objs = S.objs.filter(o => !o.dead);
+  S.n = Math.max(0, Math.floor(S.n));
+  if (S.n <= 0) return lose();
+  S.form = formation(S.n);
+
+  for (const p of S.pops) { p.y -= 1; p.t--; }
+  S.pops = S.pops.filter(p => p.t > 0);
+  for (const f of S.fx) { f.x += f.vx; f.y += f.vy; f.vy += 0.2; f.t--; }
+  S.fx = S.fx.filter(f => f.t > 0);
+  if (shake > 0) shake *= 0.85;
+}
+let shake = 0;
+function hitFx(x, y) { if (S.fx.length < 120 && Math.random() < 0.4) S.fx.push({ x, y, vx: (Math.random()-.5)*3, vy: -Math.random()*2, t: 10, c:'#ffd27a' }); }
+function burst(x, y, c) { for (let i = 0; i < 18; i++) S.fx.push({ x, y, vx: (Math.random()-.5)*7, vy: -Math.random()*6, t: 30, c }); }
+
+// ===== 繪圖 =====
+function rr(x,y,w,h,r){ ctx.beginPath(); if (ctx.roundRect) ctx.roundRect(x,y,w,h,r); else ctx.rect(x,y,w,h); }
+function txt(t, x, y, size, col, stroke = true) {
+  ctx.font = `900 ${size}px -apple-system,"PingFang TC",sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  if (stroke) { ctx.lineWidth = 5; ctx.strokeStyle = 'rgba(0,0,0,.75)'; ctx.strokeText(t, x, y); }
+  ctx.fillStyle = col; ctx.fillText(t, x, y);
+}
+function soldier(x, y, body, head) {
+  ctx.fillStyle = body; ctx.beginPath(); ctx.arc(x, y, 6.5, 0, 7); ctx.fill();
+  ctx.fillStyle = head; ctx.beginPath(); ctx.arc(x, y - 2.5, 3.6, 0, 7); ctx.fill();
+}
+
+function draw() {
+  ctx.save();
+  if (shake > 0.5) ctx.translate((Math.random()-.5)*shake, (Math.random()-.5)*shake);
+  // 地圖：兩側深色水面 + 石板路
+  ctx.fillStyle = '#0f2236'; ctx.fillRect(-10, -10, W+20, H+20);
+  ctx.fillStyle = '#2b2f3a'; ctx.fillRect(L0, -10, L1-L0, H+20);
+  const off = S ? S.dist % 40 : 0;
+  ctx.strokeStyle = 'rgba(255,255,255,.05)'; ctx.lineWidth = 1;
+  for (let y = -40 + off; y < H; y += 40) { ctx.beginPath(); ctx.moveTo(L0, y); ctx.lineTo(L1, y); ctx.stroke();
+    for (let x = L0 + ((Math.floor((y - off)/40)) % 2 ? 0 : 30); x < L1; x += 60) { ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x, y + 40); ctx.stroke(); } }
+  ctx.fillStyle = '#474d5c'; ctx.fillRect(L0 - 10, -10, 10, H+20); ctx.fillRect(L1, -10, 10, H+20);
+  ctx.fillStyle = 'rgba(95,168,255,.06)'; for (let y = (frame*0.6)%30 - 30; y < H; y += 30) { ctx.fillRect(4, y, 14, 2); ctx.fillRect(W - 18, y + 12, 14, 2); }
+  if (!S) { ctx.restore(); return; }
+
+  // 物件
+  for (const o of S.objs) {
+    if (o.t === 'gate') {
+      const good = gateGood(o.g), c = good ? '#3d86e6' : '#d64545';
+      ctx.globalAlpha = 0.85; ctx.fillStyle = c; rr(o.x + 4, o.y - o.h/2, o.w - 8, o.h, 8); ctx.fill(); ctx.globalAlpha = 1;
+      ctx.strokeStyle = good ? '#9cc8ff' : '#ff9a9a'; ctx.lineWidth = 3; rr(o.x + 4, o.y - o.h/2, o.w - 8, o.h, 8); ctx.stroke();
+      txt(gateLabel(o.g), o.x + o.w/2, o.y + 1, 30, '#fff');
+    } else if (o.t === 'wall') {
+      ctx.fillStyle = '#7a5532'; rr(o.x + 4, o.y - o.h/2, o.w - 8, o.h, 4); ctx.fill();
+      ctx.strokeStyle = '#4a321c'; ctx.lineWidth = 3;
+      for (let x = o.x + 20; x < o.x + o.w - 8; x += 26) { ctx.beginPath(); ctx.moveTo(x, o.y - o.h/2); ctx.lineTo(x, o.y + o.h/2); ctx.stroke(); }
+      ctx.fillStyle = '#9aa0ab'; ctx.fillRect(o.x + 4, o.y - 4, o.w - 8, 6);
+      txt('-' + o.n, o.x + o.w/2, o.y + 1, 26, '#ffd0d0');
+    } else if (o.t === 'barrel') {
+      ctx.fillStyle = '#9a6634'; rr(o.x - o.w/2, o.y - o.h/2, o.w, o.h, 14); ctx.fill();
+      ctx.fillStyle = '#5c3b1c'; ctx.fillRect(o.x - o.w/2, o.y - 14, o.w, 6); ctx.fillRect(o.x - o.w/2, o.y + 10, o.w, 6);
+      soldier(o.x - 14, o.y - o.h/2 - 4, '#3d86e6', '#9cc8ff'); soldier(o.x + 14, o.y - o.h/2 - 4, '#3d86e6', '#9cc8ff');
+      txt(Math.ceil(o.hp), o.x, o.y + 2, 26, '#fff');
+      txt('+' + o.reward, o.x, o.y + o.h/2 + 14, 17, '#9cc8ff');
+    } else if (o.t === 'crowd') {
+      const pts = formation(o.n);
+      for (const p of pts) soldier(o.x + p[0], o.y + p[1], '#d64545', '#ff9a9a');
+      txt(o.n, o.x, o.y - crowdR(o) * 0.8 - 14, 24, '#ffb0b0');
+    }
+  }
+
+  // BOSS
+  if (S.boss) {
+    const b = S.boss, wob = Math.sin(frame * 0.1) * 3;
+    ctx.fillStyle = 'rgba(0,0,0,.3)'; ctx.beginPath(); ctx.ellipse(b.x, b.y + b.r*0.75, b.r, b.r*0.3, 0, 0, 7); ctx.fill();
+    ctx.fillStyle = '#5a2a6e'; ctx.beginPath(); ctx.arc(b.x, b.y + wob, b.r, 0, 7); ctx.fill();
+    ctx.fillStyle = '#7d3b96'; ctx.beginPath(); ctx.arc(b.x, b.y - 14 + wob, b.r * 0.55, 0, 7); ctx.fill();
+    ctx.fillStyle = '#ffdf5a'; ctx.beginPath(); ctx.moveTo(b.x - 26, b.y - 40 + wob); ctx.lineTo(b.x - 34, b.y - 66 + wob); ctx.lineTo(b.x - 14, b.y - 46 + wob); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(b.x + 26, b.y - 40 + wob); ctx.lineTo(b.x + 34, b.y - 66 + wob); ctx.lineTo(b.x + 14, b.y - 46 + wob); ctx.fill();
+    ctx.fillStyle = '#ff4040'; ctx.beginPath(); ctx.arc(b.x - 11, b.y - 18 + wob, 5, 0, 7); ctx.arc(b.x + 11, b.y - 18 + wob, 5, 0, 7); ctx.fill();
+    const bw = 170; ctx.fillStyle = 'rgba(0,0,0,.6)'; rr(b.x - bw/2, b.y - b.r - 44, bw, 14, 7); ctx.fill();
+    ctx.fillStyle = '#ff5a4a'; rr(b.x - bw/2, b.y - b.r - 44, bw * Math.max(0, b.hp / b.max), 14, 7); ctx.fill();
+    txt(Math.ceil(b.hp), b.x, b.y - b.r - 64, 28, '#fff');
+  }
+
+  // 箭
+  ctx.strokeStyle = '#ffe9a8'; ctx.lineWidth = 2.2;
+  ctx.beginPath(); for (const a of S.arrows) { ctx.moveTo(a.x, a.y); ctx.lineTo(a.x, a.y + 14); } ctx.stroke();
+  ctx.fillStyle = '#fff'; for (const a of S.arrows) { ctx.beginPath(); ctx.moveTo(a.x, a.y - 4); ctx.lineTo(a.x - 3, a.y + 2); ctx.lineTo(a.x + 3, a.y + 2); ctx.fill(); }
+
+  // 我方部隊
+  const f = S.form;
+  for (let i = f.length - 1; i >= 0; i--) soldier(S.x + f[i][0], PY + f[i][1], '#3d86e6', '#9cc8ff');
+  ctx.fillStyle = '#ffd34d'; ctx.beginPath(); ctx.arc(S.x, PY - 3, 4, 0, 7); ctx.fill(); // 隊長頭盔
+  txt(S.n, S.x, PY + formR() * 0.8 + 22, 26, '#ffffff');
+
+  for (const p of S.fx) { ctx.globalAlpha = Math.min(1, p.t / 10); ctx.fillStyle = p.c; ctx.fillRect(p.x, p.y, 4, 4); }
+  ctx.globalAlpha = 1;
+  for (const p of S.pops) { ctx.globalAlpha = Math.min(1, p.t / 20); txt(p.text, p.x, p.y, 28, p.col); }
+  ctx.globalAlpha = 1;
+  ctx.restore();
+
+  // HUD
+  document.getElementById('hGold').textContent = save.gold;
+  const pr = S.boss ? 1 : Math.min(1, S.dist / S.lv.end);
+  document.getElementById('progBar').style.width = (pr * 100) + '%';
+  document.getElementById('progBar').style.background = S.boss ? '#ff5a4a' : '#5fa8ff';
+}
+
+// ===== 迴圈 & 畫面 =====
+let last = 0, acc = 0;
+function loop(t) {
+  if (!running) return;
+  acc += Math.min(t - last, 100); last = t;
+  while (acc >= 1000/60 && running) { update(); acc -= 1000/60; }
+  draw();
+  if (running) requestAnimationFrame(loop);
+}
+const $ = id => document.getElementById(id);
+function show(id) { ['menu','end','shop'].forEach(x => $(x).classList.toggle('hide', x !== id)); $('hud').style.display = id ? 'none' : 'block'; }
+
+function startGame() {
+  newGame(); S.form = formation(S.n);
+  $('hLv').textContent = '第 ' + S.L + ' 關';
+  show(null); running = true; last = performance.now(); acc = 0; requestAnimationFrame(loop);
+}
+function win() {
+  running = false;
+  const g = Math.round((S.kills + S.n * 2 + 60 * S.L) * coinMul());
+  save.gold += g; save.level++; persist();
+  draw();
+  $('eT').textContent = '🎉 勝利！'; $('eT').style.color = '#7ee0a8';
+  $('eP').innerHTML = `擊倒 BOSS！剩下 <b>${S.n}</b> 名弓兵<br>擊殺 ${S.kills}　獲得 <span class="gold">● ${g}</span>`;
+  $('eNext').textContent = '下一關'; show('end');
+}
+function lose() {
+  running = false;
+  const g = Math.round((S.kills + 15 * S.L) * coinMul() * 0.6);
+  save.gold += g; persist();
+  draw();
+  $('eT').textContent = '全軍覆沒…'; $('eT').style.color = '#ff6b6b';
+  $('eP').innerHTML = `擊殺 ${S.kills}，撤退時撿到 <span class="gold">● ${g}</span><br>去軍營升級再來挑戰吧！`;
+  $('eNext').textContent = '再試一次'; show('end');
+}
+function menu() { $('mLv').textContent = save.level; $('mGold').textContent = save.gold; show('menu'); }
+function renderShop() {
+  $('sGold').textContent = save.gold;
+  const list = $('sList'); list.innerHTML = '';
+  for (const u of UPS) {
+    const l = save.up[u.k], maxed = l >= u.max, cost = upCost(u, l);
+    const d = document.createElement('div'); d.className = 'item';
+    d.innerHTML = `<div class="ic">${u.ic}</div><div class="tx"><div class="nm">${u.nm}　<span style="color:#9aa3b5;font-size:15px">Lv.${l}</span></div><div class="ds">${u.ds(l)}${maxed ? '' : '　→ ' + u.ds(l+1)}</div></div>`;
+    const b = document.createElement('button');
+    b.textContent = maxed ? '已滿級' : '● ' + cost; b.disabled = maxed || save.gold < cost;
+    b.onclick = () => { if (!maxed && save.gold >= cost) { save.gold -= cost; save.up[u.k]++; persist(); renderShop(); } };
+    d.appendChild(b); list.appendChild(d);
+  }
+}
+function openShop() { renderShop(); show('shop'); }
+$('mStart').onclick = startGame; $('eNext').onclick = startGame; $('sStart').onclick = startGame;
+$('mShop').onclick = openShop; $('eShop').onclick = openShop; $('sBack').onclick = menu;
+
+// ===== 操作：相對拖曳 =====
+let dragX = null, startTx = 0;
+function toWorld(cx) { const r = cv.getBoundingClientRect(); return (cx - r.left) / r.width * W; }
+cv.addEventListener('touchstart', e => { e.preventDefault(); if (!S) return; dragX = toWorld(e.touches[0].clientX); startTx = S.tx; }, {passive:false});
+cv.addEventListener('touchmove', e => { e.preventDefault(); if (!S || dragX === null) return; S.tx = startTx + (toWorld(e.touches[0].clientX) - dragX) * 1.3; }, {passive:false});
+cv.addEventListener('touchend', e => { e.preventDefault(); dragX = null; }, {passive:false});
+cv.addEventListener('mousedown', e => { if (!S) return; dragX = toWorld(e.clientX); startTx = S.tx; });
+window.addEventListener('mousemove', e => { if (S && dragX !== null) S.tx = startTx + (toWorld(e.clientX) - dragX) * 1.3; });
+window.addEventListener('mouseup', () => dragX = null);
+window.addEventListener('keydown', e => { if (!S) return; if (e.key === 'ArrowLeft') S.tx -= 40; if (e.key === 'ArrowRight') S.tx += 40; });
+
+resize(); menu();
+</script>
+<a href="./" id="gbHome" style="position:fixed;top:calc(4px + env(safe-area-inset-top));left:50%;transform:translateX(-50%);z-index:9999;background:rgba(0,0,0,.45);color:#fff;text-decoration:none;font:600 13px -apple-system,sans-serif;padding:4px 12px;border-radius:12px;opacity:.6">⌂ 遊戲盒</a>
+<script>if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});</script>
+</body>
+</html>

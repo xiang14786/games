@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="遊戲盒">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<title>喵喵找位子</title>
+<style>
+  * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html,body { margin:0; min-height:100%; background:#12141b; color:#e8eaf0;
+    font-family:-apple-system,"PingFang TC","Noto Sans TC","Microsoft JhengHei",sans-serif;
+    user-select:none; -webkit-user-select:none; overscroll-behavior:none; }
+  .wrap { max-width:520px; margin:0 auto; padding:16px 14px 30px; }
+  .screen.hide { display:none; }
+  h1 { margin:6px 0 4px; font-size:40px; text-align:center; color:#ffb86b; }
+  .sub { text-align:center; color:#9aa3b5; font-size:17px; margin-bottom:18px; }
+  .card { background:#1c2029; border-radius:16px; padding:16px; margin-bottom:12px; }
+  .card h3 { margin:0 0 6px; font-size:22px; }
+  .card p { margin:0 0 12px; color:#9aa3b5; font-size:16px; line-height:1.6; }
+  button { background:#ffb86b; color:#24160a; border:0; border-radius:12px; padding:12px 20px;
+    font-size:19px; font-weight:800; cursor:pointer; font-family:inherit; }
+  button.ghost { background:#2a303c; color:#e8eaf0; }
+  button.sm { padding:9px 14px; font-size:16px; }
+  button:disabled { opacity:.35; }
+  .row { display:flex; gap:8px; flex-wrap:wrap; }
+  .rules { color:#b9bfcc; font-size:16px; line-height:1.8; }
+  .rules b { color:#ffb86b; }
+  .top { display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; gap:8px; }
+  .title { font-size:20px; font-weight:800; }
+  .hearts { font-size:24px; letter-spacing:2px; }
+  .timer { font-size:20px; font-variant-numeric:tabular-nums; color:#9aa3b5; min-width:60px; text-align:right; }
+  #board { display:grid; width:100%; aspect-ratio:1; border:3px solid #0a0b0f; border-radius:10px; overflow:hidden;
+    touch-action:none; background:#0a0b0f; }
+  .cell { position:relative; display:flex; align-items:center; justify-content:center; border:1px solid rgba(0,0,0,.25);
+    font-size:clamp(20px,7vw,34px); line-height:1; }
+  .cell.x::after { content:'✕'; color:rgba(20,20,30,.55); font-size:.7em; font-weight:900; }
+  .cell.cat { font-size:clamp(22px,8vw,38px); }
+  .cell.bad { animation:bad .5s; }
+  .cell.pop { animation:pop .3s; }
+  .cell.hint { box-shadow:inset 0 0 0 4px #fff; }
+  @keyframes bad { 0%,100%{filter:none} 30%{filter:brightness(.4) sepia(1) hue-rotate(-50deg) saturate(6)} }
+  @keyframes pop { 0%{transform:scale(.3)} 70%{transform:scale(1.2)} 100%{transform:scale(1)} }
+  .shake { animation:shake .35s; }
+  @keyframes shake { 25%{transform:translateX(-6px)} 75%{transform:translateX(6px)} }
+  .tools { display:flex; gap:8px; margin-top:12px; justify-content:space-between; flex-wrap:wrap; }
+  .toggle { display:flex; align-items:center; gap:8px; color:#9aa3b5; font-size:16px; margin-top:12px; }
+  .toggle input { width:22px; height:22px; }
+  .tip { color:#7d8496; font-size:15px; margin-top:10px; line-height:1.6; text-align:center; }
+  .ov { position:fixed; inset:0; background:rgba(8,9,13,.88); display:flex; align-items:center; justify-content:center; z-index:9; padding:20px; }
+  .ov.hide { display:none; }
+  .box { background:#1c2029; border-radius:18px; padding:26px 22px; text-align:center; max-width:360px; width:100%; }
+  .box h2 { margin:0 0 10px; font-size:30px; }
+  .box p { margin:0 0 18px; font-size:18px; color:#b9bfcc; line-height:1.7; }
+  .box .row { justify-content:center; }
+  .sizes button { flex:1; min-width:64px; }
+  .done { color:#7cc47f; font-weight:800; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <!-- 主選單 -->
+  <div class="screen" id="home">
+    <h1>🐱 喵喵找位子</h1>
+    <div class="sub">每隻貓都想要自己的地盤</div>
+    <div class="card">
+      <h3>📅 每日挑戰</h3>
+      <p id="dailyInfo">每天一題 8×8，大家同一題</p>
+      <button id="bDaily">開始今天的題目</button>
+    </div>
+    <div class="card">
+      <h3>🏆 闖關模式</h3>
+      <p id="lvInfo">第 1 關</p>
+      <button id="bLevel">繼續闖關</button>
+    </div>
+    <div class="card">
+      <h3>🎲 自由練習</h3>
+      <p>隨機出題，選盤面大小</p>
+      <div class="row sizes">
+        <button class="ghost" data-n="5">5×5</button><button class="ghost" data-n="6">6×6</button>
+        <button class="ghost" data-n="7">7×7</button><button class="ghost" data-n="8">8×8</button>
+      </div>
+    </div>
+    <div class="card rules">
+      <h3>規則</h3>
+      ① 每個<b>顏色區塊</b>剛好放 1 隻貓<br>
+      ② 每一<b>橫列</b>、每一<b>直行</b>也剛好 1 隻<br>
+      ③ 貓咪<b>不能相鄰</b>，斜角也不行<br>
+      點一下畫 ✕（排除），再點一下放 🐱，再點清除。<br>
+      手指<b>滑過</b>多格可以一次畫 ✕。<br>
+      放錯貓會扣一顆 ❤️，扣完就要重來。靠推理，不要猜！
+    </div>
+  </div>
+
+  <!-- 遊戲畫面 -->
+  <div class="screen hide" id="game">
+    <div class="top">
+      <button class="ghost sm" id="bBack">← 選單</button>
+      <div class="title" id="gTitle"></div>
+      <div class="timer" id="gTime">0:00</div>
+    </div>
+    <div class="top">
+      <div class="hearts" id="gHearts"></div>
+      <div style="color:#9aa3b5;font-size:17px" id="gCount"></div>
+    </div>
+    <div id="board"></div>
+    <div class="tools">
+      <button class="ghost sm" id="bHint">💡 提示</button>
+      <button class="ghost sm" id="bClear">清除 ✕</button>
+      <button class="ghost sm" id="bRestart">↻ 重來</button>
+    </div>
+    <label class="toggle"><input type="checkbox" id="autoX" checked> 放好貓後自動在不能放的格子畫 ✕</label>
+    <div class="tip">先找最小的區塊，或只剩一列／一行可以放的顏色</div>
+  </div>
+</div>
+
+<div class="ov hide" id="ov"><div class="box">
+  <h2 id="ovT"></h2><p id="ovP"></p>
+  <div class="row" id="ovBtns"></div>
+</div></div>
+
+<script>
+// ===== 出題引擎（每題保證唯一解） =====
+function mulberry32(a) { return function() { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+
+function randPlacement(n, rnd) {
+  const p = []; const used = Array(n).fill(false);
+  function bt(r) {
+    if (r === n) return true;
+    const cols = [...Array(n).keys()].sort(() => rnd() - 0.5);
+    for (const c of cols) {
+      if (used[c]) continue;
+      if (r > 0 && Math.abs(p[r-1] - c) <= 1) continue;
+      used[c] = true; p[r] = c;
+      if (bt(r+1)) return true;
+      used[c] = false;
+    }
+    return false;
+  }
+  bt(0); return p;
+}
+
+function growRegions(n, sol, rnd) {
+  const reg = Array(n*n).fill(-1);
+  const front = [];
+  for (let r = 0; r < n; r++) reg[r*n + sol[r]] = r;
+  // 每區有不同的成長權重 → 大小不均，題目比較有推理感
+  const w = Array.from({length:n}, () => 0.3 + rnd()*1.7);
+  let left = n*n - n;
+  while (left > 0) {
+    // 依權重挑區塊
+    let tot = 0; for (const x of w) tot += x;
+    let k = rnd() * tot, g = 0; while (k > w[g]) { k -= w[g]; g++; } if (g >= n) g = n-1;
+    const cand = [];
+    for (let i = 0; i < n*n; i++) if (reg[i] === g) {
+      const r = i / n | 0, c = i % n;
+      for (const [dr,dc] of [[1,0],[-1,0],[0,1],[0,-1]]) { const rr = r+dr, cc = c+dc; if (rr>=0&&rr<n&&cc>=0&&cc<n&&reg[rr*n+cc]===-1) cand.push(rr*n+cc); }
+    }
+    if (!cand.length) { w[g] = 0.0001; if (w.every(x => x < 0.001)) break; continue; }
+    reg[cand[Math.floor(rnd()*cand.length)]] = g; left--;
+  }
+  return reg;
+}
+
+function countSolutions(n, reg, limit = 2) {
+  let count = 0; const colU = Array(n).fill(false), regU = Array(n).fill(false); const p = [];
+  function bt(r) {
+    if (count >= limit) return;
+    if (r === n) { count++; return; }
+    for (let c = 0; c < n; c++) {
+      const g = reg[r*n+c];
+      if (colU[c] || regU[g]) continue;
+      if (r > 0 && Math.abs(p[r-1] - c) <= 1) continue;
+      colU[c] = regU[g] = true; p[r] = c;
+      bt(r+1);
+      colU[c] = regU[g] = false;
+    }
+  }
+  bt(0); return count;
+}
+
+function makePuzzle(n, seed) {
+  const rnd = mulberry32(seed);
+  for (let tries = 0; tries < 5000; tries++) {
+    const sol = randPlacement(n, rnd);
+    for (let k = 0; k < 30; k++) {
+      const reg = growRegions(n, sol, rnd);
+      if (reg.includes(-1)) continue;
+      if (countSolutions(n, reg) === 1) return { n, reg, sol, tries: tries*30+k };
+    }
+  }
+  return null;
+}
+
+
+</script>
+<script>
+const COLORS = ['#e88c8c','#eab06c','#e3d36b','#8fcf86','#6cc6cf','#83a2ea','#b896ea','#e98fc9'];
+const $ = id => document.getElementById(id);
+
+let store = { level:1, daily:{}, best:{} };
+try { Object.assign(store, JSON.parse(localStorage.getItem('meowSeat')) || {}); } catch(e) {}
+function persist() { try { localStorage.setItem('meowSeat', JSON.stringify(store)); } catch(e) {} }
+try { const a = localStorage.getItem('meowAutoX'); if (a !== null) $('autoX').checked = a === '1'; } catch(e) {}
+$('autoX').onchange = () => { try { localStorage.setItem('meowAutoX', $('autoX').checked ? '1':'0'); } catch(e) {} };
+
+function today() { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0'); }
+function dateSeed(s) { let h = 2166136261; for (const ch of s) { h ^= ch.charCodeAt(0); h = Math.imul(h, 16777619); } return h >>> 0; }
+function levelSize(l) { return l <= 5 ? 5 : l <= 15 ? 6 : l <= 35 ? 7 : 8; }
+function fmt(s) { return Math.floor(s/60) + ':' + String(s%60).padStart(2,'0'); }
+
+let G = null, timerH = null;
+
+function refreshHome() {
+  const d = store.daily[today()];
+  $('dailyInfo').innerHTML = d ? `<span class="done">今天已完成 ✓</span>　用時 ${fmt(d)}` : '每天一題 8×8';
+  $('bDaily').textContent = d ? '再玩一次今天的題目' : '開始今天的題目';
+  $('lvInfo').textContent = `目前第 ${store.level} 關（${levelSize(store.level)}×${levelSize(store.level)}）`;
+}
+
+function start(mode, n, seed, title) {
+  const pz = makePuzzle(n, seed);
+  G = { mode, n, seed, title, reg: pz.reg, sol: pz.sol, st: Array(n*n).fill(0), hearts: 3, t: 0, hints: 0, mistakes: 0, done: false };
+  $('home').classList.add('hide'); $('game').classList.remove('hide');
+  buildBoard(); render();
+  clearInterval(timerH);
+  timerH = setInterval(() => { if (!G.done) { G.t++; $('gTime').textContent = fmt(G.t); } }, 1000);
+  $('gTime').textContent = '0:00';
+}
+
+let cells = [];
+function buildBoard() {
+  const b = $('board'), n = G.n; b.innerHTML = ''; cells = [];
+  b.style.gridTemplateColumns = `repeat(${n},1fr)`; b.style.gridTemplateRows = `repeat(${n},1fr)`;
+  for (let i = 0; i < n*n; i++) {
+    const r = i/n|0, c = i%n, g = G.reg[i];
+    const d = document.createElement('div'); d.className = 'cell'; d.dataset.i = i;
+    d.style.background = COLORS[g];
+    const th = '3px solid #0a0b0f';
+    if (r > 0 && G.reg[i-n] !== g) d.style.borderTop = th;
+    if (c > 0 && G.reg[i-1] !== g) d.style.borderLeft = th;
+    if (r < n-1 && G.reg[i+n] !== g) d.style.borderBottom = th;
+    if (c < n-1 && G.reg[i+1] !== g) d.style.borderRight = th;
+    b.appendChild(d); cells.push(d);
+  }
+}
+
+function render() {
+  const n = G.n;
+  cells.forEach((d, i) => {
+    d.classList.toggle('x', G.st[i] === 1);
+    d.classList.toggle('cat', G.st[i] === 2);
+    d.textContent = G.st[i] === 2 ? '🐱' : '';
+  });
+  $('gTitle').textContent = G.title;
+  $('gHearts').textContent = '❤️'.repeat(G.hearts) + '🖤'.repeat(3 - G.hearts);
+  $('gCount').textContent = `🐱 ${G.st.filter(v => v===2).length} / ${n}`;
+}
+
+function isSol(i) { return G.sol[i/G.n|0] === i % G.n; }
+
+function autoX(i) {
+  if (!$('autoX').checked) return;
+  const n = G.n, r = i/n|0, c = i%n, g = G.reg[i];
+  for (let j = 0; j < n*n; j++) {
+    if (j === i || G.st[j] === 2) continue;
+    const rr = j/n|0, cc = j%n;
+    if (rr === r || cc === c || G.reg[j] === g || (Math.abs(rr-r) <= 1 && Math.abs(cc-c) <= 1)) G.st[j] = 1;
+  }
+}
+
+function placeCat(i) {
+  if (isSol(i)) {
+    G.st[i] = 2; autoX(i); render();
+    cells[i].classList.remove('pop'); void cells[i].offsetWidth; cells[i].classList.add('pop');
+    if (G.st.filter(v => v===2).length === G.n) win();
+  } else {
+    G.hearts--; G.mistakes++; G.st[i] = 1; render();
+    cells[i].classList.remove('bad'); void cells[i].offsetWidth; cells[i].classList.add('bad');
+    $('board').classList.remove('shake'); void $('board').offsetWidth; $('board').classList.add('shake');
+    try { navigator.vibrate && navigator.vibrate(120); } catch(e) {}
+    if (G.hearts <= 0) lose();
+  }
+}
+
+function tapCell(i) {
+  if (G.done || G.st[i] === 2 && false) return;
+  if (G.st[i] === 0) G.st[i] = 1;
+  else if (G.st[i] === 1) { placeCat(i); return; }
+  else G.st[i] = 0;
+  render();
+}
+
+// 觸控：點一下循環；滑過多格畫 ✕
+let drag = null;
+function cellAt(x, y) { const el = document.elementFromPoint(x, y); return el && el.classList.contains('cell') ? +el.dataset.i : -1; }
+function pStart(x, y) { if (!G || G.done) return; const i = cellAt(x, y); if (i < 0) return; drag = { first: i, moved: false, mode: G.st[i] === 1 ? 0 : 1 }; }
+function pMove(x, y) {
+  if (!drag) return; const i = cellAt(x, y); if (i < 0) return;
+  if (i !== drag.first || drag.moved) {
+    if (!drag.moved) { drag.moved = true; paint(drag.first); }
+    paint(i);
+  }
+}
+function paint(i) { if (G.st[i] === 2) return; G.st[i] = drag.mode; render(); }
+function pEnd() { if (!drag) return; if (!drag.moved) tapCell(drag.first); drag = null; }
+const bd = $('board');
+bd.addEventListener('touchstart', e => { e.preventDefault(); const t = e.touches[0]; pStart(t.clientX, t.clientY); }, {passive:false});
+bd.addEventListener('touchmove', e => { e.preventDefault(); const t = e.touches[0]; pMove(t.clientX, t.clientY); }, {passive:false});
+bd.addEventListener('touchend', e => { e.preventDefault(); pEnd(); }, {passive:false});
+bd.addEventListener('mousedown', e => pStart(e.clientX, e.clientY));
+window.addEventListener('mousemove', e => { if (drag) pMove(e.clientX, e.clientY); });
+window.addEventListener('mouseup', pEnd);
+
+$('bHint').onclick = () => {
+  if (G.done) return;
+  // 先清掉放錯的 ✕？（✕ 不扣分，提示直接指出一隻貓的位置）
+  for (let r = 0; r < G.n; r++) {
+    const i = r*G.n + G.sol[r];
+    if (G.st[i] !== 2) {
+      G.hints++; G.st[i] = 2; autoX(i); render();
+      cells[i].classList.add('hint'); setTimeout(() => cells[i].classList.remove('hint'), 1200);
+      if (G.st.filter(v => v===2).length === G.n) win();
+      return;
+    }
+  }
+};
+$('bClear').onclick = () => { G.st = G.st.map(v => v === 1 ? 0 : v); render(); };
+$('bRestart').onclick = () => start(G.mode, G.n, G.seed, G.title);
+$('bBack').onclick = home;
+
+function home() { clearInterval(timerH); $('game').classList.add('hide'); $('home').classList.remove('hide'); $('ov').classList.add('hide'); refreshHome(); }
+
+function overlay(t, p, btns) {
+  $('ovT').textContent = t; $('ovP').innerHTML = p;
+  const b = $('ovBtns'); b.innerHTML = '';
+  for (const [label, fn, ghost] of btns) { const x = document.createElement('button'); x.textContent = label; if (ghost) x.className = 'ghost'; x.onclick = () => { $('ov').classList.add('hide'); fn(); }; b.appendChild(x); }
+  $('ov').classList.remove('hide');
+}
+
+function win() {
+  G.done = true; clearInterval(timerH);
+  const stars = G.hints ? 1 : G.mistakes === 0 ? 3 : G.mistakes === 1 ? 2 : 1;
+  const key = 'n' + G.n; let rec = '';
+  if (!G.hints && (!store.best[key] || G.t < store.best[key])) { store.best[key] = G.t; rec = '<br><span class="done">新的最快紀錄！</span>'; }
+  let btns = [['回選單', home, true]];
+  if (G.mode === 'daily') { const d = today(); if (!store.daily[d] || G.t < store.daily[d]) store.daily[d] = G.t; }
+  if (G.mode === 'level') { store.level = Math.max(store.level, G.lvl + 1); btns.push(['下一關', playLevel]); }
+  if (G.mode === 'free') btns.push(['再來一題', () => playFree(G.n)]);
+  persist();
+  setTimeout(() => overlay('🎉 全部入座！', `${'⭐'.repeat(stars)}${'☆'.repeat(3-stars)}<br>用時 <b>${fmt(G.t)}</b>　失誤 ${G.mistakes}　提示 ${G.hints}<br>${G.n}×${G.n} 最快 ${store.best[key] ? fmt(store.best[key]) : '—'}${rec}`, btns), 450);
+}
+function lose() {
+  G.done = true; clearInterval(timerH);
+  setTimeout(() => overlay('😿 愛心用完了', '再仔細推理一次吧！', [['回選單', home, true], ['重來這題', () => start(G.mode, G.n, G.seed, G.title)]]), 500);
+}
+
+function playLevel() { const l = store.level, n = levelSize(l); start('level', n, l * 7919 + 13, `第 ${l} 關`); G.lvl = l; }
+function playFree(n) { start('free', n, (Math.random() * 1e9) | 0, `練習 ${n}×${n}`); }
+$('bDaily').onclick = () => start('daily', 8, dateSeed('meow' + today()), '每日 ' + today().slice(5).replace('-', '/'));
+$('bLevel').onclick = playLevel;
+document.querySelectorAll('.sizes button').forEach(b => b.onclick = () => playFree(+b.dataset.n));
+
+refreshHome();
+</script>
+<a href="./" id="gbHome" style="position:fixed;top:calc(4px + env(safe-area-inset-top));left:50%;transform:translateX(-50%);z-index:9999;background:rgba(0,0,0,.45);color:#fff;text-decoration:none;font:600 13px -apple-system,sans-serif;padding:4px 12px;border-radius:12px;opacity:.6">⌂ 遊戲盒</a>
+<script>if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});</script>
+</body>
+</html>

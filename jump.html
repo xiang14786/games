@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="遊戲盒">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<title>跳跳果凍</title>
+<style>
+  * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html,body { margin:0; height:100%; background:#101318; overflow:hidden;
+    font-family:-apple-system,"PingFang TC","Noto Sans TC","Microsoft JhengHei",sans-serif;
+    touch-action:none; user-select:none; -webkit-user-select:none; overscroll-behavior:none; }
+  #wrap { position:relative; width:100%; height:100%; max-width:480px; margin:0 auto; }
+  canvas { display:block; width:100%; height:100%; }
+  #hud { position:absolute; top:10px; left:14px; right:14px; display:flex; justify-content:space-between;
+    color:#e8eaf0; font-size:22px; font-weight:800; pointer-events:none; text-shadow:0 2px 6px #000; }
+  #hud small { font-size:15px; color:#8a91a3; font-weight:600; }
+  .overlay { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:16px; background:rgba(10,12,16,.82); color:#e8eaf0; text-align:center; padding:24px; }
+  .overlay.hide { display:none; }
+  .overlay h1 { margin:0; font-size:42px; color:#7ee0a8; }
+  .overlay p { margin:0; font-size:18px; line-height:1.7; color:#b9bfcc; }
+  .overlay b { color:#f2b84b; }
+  button { background:#7ee0a8; color:#102018; border:0; border-radius:14px; padding:14px 34px;
+    font-size:22px; font-weight:800; cursor:pointer; }
+</style>
+</head>
+<body>
+<div id="wrap">
+  <canvas id="c"></canvas>
+  <div id="hud"><span id="sc">0</span><span><small>最高 </small><span id="bs">0</span></span></div>
+  <div class="overlay" id="start">
+    <h1>跳跳果凍</h1>
+    <p>按住螢幕<b>左半邊</b>往左、<b>右半邊</b>往右<br>踩著平台一直往上跳！<br>
+      <span style="color:#7ee0a8">綠台</span>普通・<span style="color:#6cb4ff">藍台</span>會移動・<span style="color:#c98a5a">棕台</span>一踩就碎<br>
+      踩到<span style="color:#f2b84b">彈簧</span>會飛超高</p>
+    <button id="go">開始</button>
+  </div>
+  <div class="overlay hide" id="over">
+    <h1 style="color:#ff7b7b">掉下去了！</h1>
+    <p id="res"></p>
+    <button id="again">再跳一次</button>
+  </div>
+</div>
+<script>
+const cv = document.getElementById('c'), ctx = cv.getContext('2d');
+const W = 360; let H = 640, scale = 1;
+function resize() {
+  const r = cv.getBoundingClientRect(), dpr = window.devicePixelRatio || 1;
+  scale = r.width / W; H = r.height / scale;
+  cv.width = r.width * dpr; cv.height = r.height * dpr;
+  ctx.setTransform(dpr*scale, 0, 0, dpr*scale, 0, 0);
+}
+window.addEventListener('resize', resize); resize();
+
+let best = 0; try { best = +localStorage.getItem('jellyBest') || 0; } catch(e) {}
+document.getElementById('bs').textContent = best;
+
+const G = 0.38, JUMP = -11.5, SPRING = -19, PW = 62, PH = 13;
+let p, plats, camY, maxH, score, running = false, dirL = false, dirR = false, stars;
+
+function rand(a,b){ return a + Math.random()*(b-a); }
+
+function makePlat(y) {
+  const h = maxH + 0; const lvl = Math.min(score / 3000, 1);
+  const r = Math.random();
+  let type = 'n';
+  if (r < 0.12 + 0.18*lvl) type = 'm';
+  const pl = { x: rand(0, W-PW), y, type, vx: type==='m' ? (Math.random()<.5?-1:1)*rand(1,1.6+lvl*1.5) : 0, broken:false, fall:0, spring: null };
+  if (type === 'n' && Math.random() < 0.08) pl.spring = { x: rand(8, PW-22), used:false };
+  return pl;
+}
+
+function reset() {
+  p = { x: W/2-18, y: H-120, w: 36, h: 34, vx: 0, vy: JUMP, face: 1, squish: 0 };
+  camY = 0; score = 0; maxH = 0;
+  plats = [{ x: W/2-PW/2, y: H-60, type:'n', vx:0, broken:false, fall:0, spring:null }];
+  let y = H-60;
+  while (y > -200) { y -= rand(55, 85); plats.push(makePlat(y)); }
+  stars = Array.from({length:40}, () => ({ x: rand(0,W), y: rand(-H, H), r: rand(.5,1.8) }));
+}
+
+function gap() { const lvl = Math.min(score/3000,1); return rand(55 + 30*lvl, 85 + 45*lvl); }
+
+function update() {
+  const acc = 0.9, maxV = 6.5;
+  if (dirL && !dirR) { p.vx -= acc; p.face = -1; }
+  else if (dirR && !dirL) { p.vx += acc; p.face = 1; }
+  else p.vx *= 0.85;
+  p.vx = Math.max(-maxV, Math.min(maxV, p.vx));
+  p.x += p.vx;
+  if (p.x + p.w < 0) p.x = W; if (p.x > W) p.x = -p.w;
+
+  p.vy += G; p.y += p.vy;
+  p.squish *= 0.85;
+
+  if (p.vy > 0) {
+    for (const pl of plats) {
+      if (pl.broken) continue;
+      const feet = p.y + p.h, prevFeet = feet - p.vy;
+      if (p.x + p.w - 6 > pl.x && p.x + 6 < pl.x + PW && prevFeet <= pl.y + 2 && feet >= pl.y) {
+        if (pl.type === 'b') { pl.broken = true; continue; }
+        p.y = pl.y - p.h;
+        if (pl.spring && p.x + p.w > pl.x + pl.spring.x - 4 && p.x < pl.x + pl.spring.x + 18) { p.vy = SPRING; pl.spring.used = true; }
+        else p.vy = JUMP;
+        p.squish = 1;
+        break;
+      }
+    }
+  }
+
+  for (const pl of plats) {
+    if (pl.type === 'm' && !pl.broken) { pl.x += pl.vx; if (pl.x < 0 || pl.x + PW > W) pl.vx *= -1; }
+    if (pl.broken) { pl.fall += 0.6; pl.y += pl.fall; }
+  }
+
+  const line = H * 0.42;
+  if (p.y < line) {
+    const d = line - p.y; p.y = line; maxH += d;
+    for (const pl of plats) pl.y += d;
+    for (const s of stars) { s.y += d * 0.3; if (s.y > H) { s.y -= H + 20; s.x = rand(0,W); } }
+  }
+  score = Math.floor(maxH / 4);
+
+  plats = plats.filter(pl => pl.y < H + 60);
+  let top = Math.min(...plats.map(pl => pl.y));
+  while (top > -60) {
+    const g2 = gap(); top -= g2; plats.push(makePlat(top));
+    // 碎台當陷阱，額外放在中間，不會擋住唯一的路
+    if (Math.random() < 0.15 + 0.2*Math.min(score/3000,1)) plats.push({ x: rand(0, W-PW), y: top + g2/2, type:'b', vx:0, broken:false, fall:0, spring:null });
+  }
+
+  if (p.y > H + 40) gameOver();
+}
+
+function rr(x,y,w,h,r){ ctx.beginPath(); ctx.roundRect ? ctx.roundRect(x,y,w,h,r) : ctx.rect(x,y,w,h); }
+
+function draw() {
+  const g = ctx.createLinearGradient(0,0,0,H);
+  g.addColorStop(0,'#141a2a'); g.addColorStop(1,'#0d1015');
+  ctx.fillStyle = g; ctx.fillRect(0,0,W,H);
+  ctx.fillStyle = 'rgba(200,210,255,.35)';
+  for (const s of stars) { ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, 7); ctx.fill(); }
+
+  for (const pl of plats) {
+    const col = pl.type==='m' ? '#6cb4ff' : pl.type==='b' ? '#c98a5a' : '#7ee0a8';
+    ctx.fillStyle = col;
+    if (pl.type === 'b' && pl.broken) {
+      ctx.save(); ctx.globalAlpha = .7;
+      rr(pl.x - 4, pl.y, PW/2-2, PH, 5); ctx.fill();
+      rr(pl.x + PW/2 + 4, pl.y + 3, PW/2-2, PH, 5); ctx.fill();
+      ctx.restore(); continue;
+    }
+    rr(pl.x, pl.y, PW, PH, 6); ctx.fill();
+    ctx.fillStyle = 'rgba(255,255,255,.25)'; rr(pl.x+4, pl.y+2, PW-8, 3, 2); ctx.fill();
+    if (pl.type === 'b') { ctx.strokeStyle = '#6b4329'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(pl.x+PW/2-4, pl.y); ctx.lineTo(pl.x+PW/2+3, pl.y+PH/2); ctx.lineTo(pl.x+PW/2-2, pl.y+PH); ctx.stroke(); }
+    if (pl.spring) {
+      const sx = pl.x + pl.spring.x, up = pl.spring.used ? 16 : 9;
+      ctx.strokeStyle = '#f2b84b'; ctx.lineWidth = 2.5; ctx.beginPath();
+      for (let i = 0; i <= 4; i++) { const yy = pl.y - (up*i/4); ctx.lineTo(sx + (i%2?14:2), yy); }
+      ctx.stroke(); ctx.fillStyle = '#f2b84b'; rr(sx-1, pl.y-up-4, 18, 5, 2); ctx.fill();
+    }
+  }
+
+  // 果凍小角色
+  const sq = p.squish * 0.25;
+  const w = p.w * (1 + sq), h = p.h * (1 - sq);
+  const cx = p.x + p.w/2, by = p.y + p.h;
+  ctx.save(); ctx.translate(cx, by);
+  ctx.fillStyle = '#ff8fb8';
+  ctx.beginPath();
+  ctx.moveTo(-w/2, 0);
+  ctx.quadraticCurveTo(-w/2, -h*1.05, 0, -h);
+  ctx.quadraticCurveTo(w/2, -h*1.05, w/2, 0);
+  ctx.closePath(); ctx.fill();
+  ctx.fillStyle = 'rgba(255,255,255,.35)'; ctx.beginPath(); ctx.ellipse(-w*0.22, -h*0.7, 5, 3, -0.5, 0, 7); ctx.fill();
+  const ex = p.face * 4;
+  ctx.fillStyle = '#1b1020';
+  ctx.beginPath(); ctx.arc(-7+ex, -h*0.5, 3.2, 0, 7); ctx.arc(7+ex, -h*0.5, 3.2, 0, 7); ctx.fill();
+  ctx.fillStyle = 'rgba(255,90,140,.6)';
+  ctx.beginPath(); ctx.ellipse(-12+ex, -h*0.32, 3.5, 2, 0, 0, 7); ctx.ellipse(12+ex, -h*0.32, 3.5, 2, 0, 0, 7); ctx.fill();
+  ctx.restore();
+
+  document.getElementById('sc').textContent = score;
+}
+
+let last = 0, accT = 0;
+function loop(t) {
+  if (!running) return;
+  const dt = Math.min(t - last, 100); last = t; accT += dt;
+  while (accT >= 1000/60) { update(); accT -= 1000/60; if (!running) break; }
+  draw();
+  requestAnimationFrame(loop);
+}
+
+function start() {
+  document.getElementById('start').classList.add('hide');
+  document.getElementById('over').classList.add('hide');
+  reset(); running = true; last = performance.now(); accT = 0;
+  requestAnimationFrame(loop);
+}
+
+function gameOver() {
+  running = false;
+  if (score > best) { best = score; try { localStorage.setItem('jellyBest', best); } catch(e) {} }
+  document.getElementById('bs').textContent = best;
+  document.getElementById('res').innerHTML = '這次跳了 <b>' + score + '</b> 分<br>最高紀錄 <b>' + best + '</b>';
+  document.getElementById('over').classList.remove('hide');
+  dirL = dirR = false;
+}
+
+document.getElementById('go').onclick = start;
+document.getElementById('again').onclick = start;
+
+// 觸控：按住左半邊 / 右半邊
+function updTouches(e) {
+  if (!running) return;
+  const r = cv.getBoundingClientRect(); dirL = dirR = false;
+  for (const t of e.touches) { if (t.clientX - r.left < r.width/2) dirL = true; else dirR = true; }
+}
+cv.addEventListener('touchstart', e => { e.preventDefault(); updTouches(e); }, {passive:false});
+cv.addEventListener('touchmove', e => { e.preventDefault(); updTouches(e); }, {passive:false});
+cv.addEventListener('touchend', e => { e.preventDefault(); updTouches(e); }, {passive:false});
+cv.addEventListener('touchcancel', e => { dirL = dirR = false; });
+// 滑鼠 / 鍵盤
+cv.addEventListener('mousedown', e => { const r = cv.getBoundingClientRect(); if (e.clientX - r.left < r.width/2) dirL = true; else dirR = true; });
+window.addEventListener('mouseup', () => { dirL = dirR = false; });
+window.addEventListener('keydown', e => { if (e.key==='ArrowLeft'||e.key==='a') dirL = true; if (e.key==='ArrowRight'||e.key==='d') dirR = true; });
+window.addEventListener('keyup', e => { if (e.key==='ArrowLeft'||e.key==='a') dirL = false; if (e.key==='ArrowRight'||e.key==='d') dirR = false; });
+
+reset(); draw();
+</script>
+<a href="./" id="gbHome" style="position:fixed;top:calc(4px + env(safe-area-inset-top));left:50%;transform:translateX(-50%);z-index:9999;background:rgba(0,0,0,.45);color:#fff;text-decoration:none;font:600 13px -apple-system,sans-serif;padding:4px 12px;border-radius:12px;opacity:.6">⌂ 遊戲盒</a>
+<script>if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});</script>
+</body>
+</html>
