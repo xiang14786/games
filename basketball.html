@@ -11,114 +11,145 @@
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <title>籃球轉生記</title>
 <style>
-  :root { --bg:#10131a; --card:#1a1f29; --card2:#252c38; --ink:#eaeef4; --muted:#95a1b3; --gold:#ffb84d; --red:#ef6461; --blue:#5aa9ff; --green:#6fd08c; }
+  :root { --bg:#0b0e14; --card:#151a24; --card2:#1e2533; --line:#273042; --ink:#eef2f8; --muted:#8e9ab0; --gold:#ffb84d; --red:#ff6b6b; --blue:#5aa9ff; --green:#5fd68a; --tc:#3fa7d6; }
   * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
-  html,body { margin:0; background:var(--bg); color:var(--ink); font-family:-apple-system,"PingFang TC","Noto Sans TC","Microsoft JhengHei",sans-serif; font-size:17px; user-select:none; -webkit-user-select:none; overscroll-behavior:none; }
-  .wrap { max-width:540px; margin:0 auto; padding:calc(30px + env(safe-area-inset-top)) 12px calc(40px + env(safe-area-inset-bottom)); }
+  html,body { margin:0; background:var(--bg); color:var(--ink); font-family:-apple-system,"PingFang TC","Noto Sans TC","Microsoft JhengHei",sans-serif; font-size:16px; user-select:none; -webkit-user-select:none; overscroll-behavior:none; }
+  body { background: radial-gradient(1200px 500px at 50% -200px, color-mix(in srgb, var(--tc) 35%, transparent), transparent 70%), var(--bg); background-attachment: fixed; min-height:100vh; }
+  .wrap { max-width:560px; margin:0 auto; padding:calc(32px + env(safe-area-inset-top)) 12px calc(40px + env(safe-area-inset-bottom)); }
   .hide { display:none !important; }
-  h1 { text-align:center; font-size:40px; margin:8px 0 4px; color:var(--gold); }
-  h2 { margin:6px 0 10px; color:var(--gold); font-size:23px; }
-  h3 { margin:0 0 8px; font-size:18px; }
-  button { font-family:inherit; background:var(--gold); color:#2a1600; border:0; border-radius:12px; padding:13px 16px; font-size:18px; font-weight:800; cursor:pointer; }
-  button.ghost { background:var(--card2); color:var(--ink); border:1px solid #333d4c; }
+  h1 { text-align:center; font-size:38px; margin:6px 0 2px; background:linear-gradient(90deg,#ffd27a,#ff8a3d); -webkit-background-clip:text; background-clip:text; color:transparent; font-weight:900; }
+  h2 { margin:4px 0 10px; font-size:22px; font-weight:900; }
+  h3 { margin:0 0 8px; font-size:16px; color:#cfd7e6; display:flex; align-items:center; gap:6px; }
+  button { font-family:inherit; background:linear-gradient(135deg,#ffc56b,#ff8a3d); color:#2a1300; border:0; border-radius:14px; padding:13px 16px; font-size:17px; font-weight:800; cursor:pointer; box-shadow:0 4px 14px rgba(255,138,61,.25); }
+  button.ghost { background:var(--card2); color:var(--ink); border:1px solid var(--line); box-shadow:none; }
   button:disabled { opacity:.35; }
   .col { display:flex; flex-direction:column; gap:10px; }
-  .row { display:flex; gap:8px; }
-  .card { background:var(--card); border:1px solid #29313e; border-radius:14px; padding:12px; margin-bottom:10px; }
-  .muted { color:var(--muted); } .good { color:var(--green); } .bad { color:var(--red); } .gold { color:var(--gold); } .blue { color:var(--blue); }
-  input { width:100%; font-family:inherit; font-size:20px; padding:12px; border-radius:10px; border:1px solid #333d4c; background:#0b0e13; color:var(--ink); }
-  .lb { color:var(--muted); font-size:15px; margin:14px 0 6px; display:block; }
-  .opt { text-align:left; background:var(--card2); color:var(--ink); border:2px solid transparent; font-weight:700; font-size:17px; }
-  .opt.sel { border-color:var(--gold); }
-  .opt small { display:block; color:var(--muted); font-weight:400; font-size:14px; margin-top:2px; }
-  .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
-  .grid3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; }
-  .grid2 button, .grid3 button { text-align:left; padding:11px 9px; font-size:16px; line-height:1.3; }
-  .grid2 button small, .grid3 button small { display:block; font-size:12px; color:var(--muted); font-weight:400; }
-  .stat { display:flex; align-items:center; gap:8px; margin:4px 0; font-size:15px; }
-  .stat .l { width:40px; color:var(--muted); }
-  .bar { flex:1; height:9px; background:#0b0e13; border-radius:6px; overflow:hidden; }
-  .bar i { display:block; height:100%; border-radius:6px; }
-  .stat .v { width:30px; text-align:right; font-weight:800; }
-  .chips { display:flex; flex-wrap:wrap; gap:6px; margin-top:6px; }
-  .chip { background:var(--card2); border-radius:8px; padding:4px 8px; font-size:14px; }
-  .art { width:100%; display:block; border-radius:14px; margin-bottom:10px; }
-  .prof { display:flex; gap:12px; align-items:center; }
-  .prof svg { width:80px; height:80px; flex:none; border-radius:16px; }
-  .ovr { font-size:34px; font-weight:900; color:var(--gold); line-height:1; text-align:center; }
-  .ovr small { display:block; font-size:12px; color:var(--muted); font-weight:600; }
-  table { width:100%; border-collapse:collapse; font-size:14px; }
-  td,th { padding:5px 3px; border-bottom:1px solid #29313e; text-align:center; }
-  th { color:var(--muted); font-weight:600; }
+  .row { display:flex; gap:8px; align-items:center; }
+  .card { background:linear-gradient(180deg,rgba(255,255,255,.03),rgba(255,255,255,0)) ,var(--card); border:1px solid var(--line); border-radius:18px; padding:14px; margin-bottom:12px; box-shadow:0 6px 20px rgba(0,0,0,.25); }
+  .muted { color:var(--muted); } .good { color:var(--green); } .bad { color:var(--red); } .gold { color:var(--gold); }
+  input { width:100%; font-family:inherit; font-size:19px; padding:12px; border-radius:12px; border:1px solid var(--line); background:#0a0d13; color:var(--ink); }
+  .lb { color:var(--muted); font-size:14px; margin:14px 0 6px; display:block; }
+  .opt { text-align:left; background:var(--card2); color:var(--ink); border:2px solid transparent; font-weight:700; box-shadow:none; }
+  .opt.sel { border-color:var(--gold); background:#2a2416; }
+  .opt small { display:block; color:var(--muted); font-weight:400; font-size:13px; margin-top:2px; }
+  .art { width:100%; display:block; border-radius:18px; margin-bottom:12px; }
+  table { width:100%; border-collapse:collapse; font-size:13.5px; }
+  td,th { padding:6px 3px; border-bottom:1px solid var(--line); text-align:center; white-space:nowrap; }
+  th { color:var(--muted); font-weight:600; font-size:12px; }
   td.l, th.l { text-align:left; }
-  tr.me td { color:var(--gold); font-weight:800; }
-  .tabs { display:flex; gap:6px; margin:8px 0; }
-  .tabs button { flex:1; padding:9px 2px; font-size:15px; }
-  .tabs button.on { background:var(--gold); color:#2a1600; }
-  .scene { position:fixed; inset:0; background:rgba(8,10,14,.96); z-index:10; overflow-y:auto; }
-  .scene .inner { max-width:540px; margin:0 auto; padding:calc(30px + env(safe-area-inset-top)) 14px 40px; }
-  .story { font-size:18px; line-height:1.8; white-space:pre-wrap; margin-bottom:14px; }
-  .choice { text-align:left; background:var(--card2); color:var(--ink); border:1px solid #333d4c; }
-  .choice small { display:block; color:var(--muted); font-weight:400; font-size:14px; margin-top:3px; }
+  tr.me td { color:var(--gold); font-weight:800; background:rgba(255,184,77,.06); }
+  .scroll-x { overflow-x:auto; -webkit-overflow-scrolling:touch; }
+  /* 主角卡 */
+  .hero { position:relative; border-radius:22px; padding:16px; overflow:hidden; margin-bottom:12px; border:1px solid rgba(255,255,255,.08); }
+  .hero .bg { position:absolute; inset:0; background:linear-gradient(135deg, var(--tc), #0b0e14 75%); opacity:.9; }
+  .hero .bg2 { position:absolute; right:-30px; top:-30px; width:200px; height:200px; opacity:.12; }
+  .hero .in { position:relative; display:flex; gap:14px; align-items:center; }
+  .hero .av svg { width:92px; height:92px; border-radius:20px; box-shadow:0 6px 18px rgba(0,0,0,.4); }
+  .hero .nm { font-size:24px; font-weight:900; }
+  .hero .sub { font-size:14px; opacity:.85; }
+  .badge { width:66px; height:80px; border-radius:14px; display:flex; flex-direction:column; align-items:center; justify-content:center; font-weight:900; box-shadow:0 6px 16px rgba(0,0,0,.4); flex:none; }
+  .badge b { font-size:30px; line-height:1; } .badge span { font-size:11px; opacity:.85; margin-top:2px; }
+  .meters { position:relative; display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-top:12px; }
+  .meter { background:rgba(0,0,0,.35); border-radius:12px; padding:7px 9px; font-size:12px; }
+  .meter .t { display:flex; justify-content:space-between; opacity:.9; }
+  .meter .b { height:6px; background:rgba(255,255,255,.12); border-radius:4px; margin-top:5px; overflow:hidden; }
+  .meter .b i { display:block; height:100%; border-radius:4px; }
+  .tabs { display:grid; grid-template-columns:repeat(4,1fr); gap:6px; margin:4px 0 12px; position:sticky; top:calc(28px + env(safe-area-inset-top)); z-index:5; background:rgba(11,14,20,.85); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); padding:6px 0; }
+  .tabs button { padding:9px 2px; font-size:14px; background:var(--card2); color:var(--ink); border:1px solid var(--line); box-shadow:none; }
+  .tabs button.on { background:linear-gradient(135deg,#ffc56b,#ff8a3d); color:#2a1300; border-color:transparent; }
+  .sub-tabs { display:flex; gap:6px; margin-bottom:10px; overflow-x:auto; }
+  .sub-tabs button { padding:7px 12px; font-size:14px; white-space:nowrap; background:var(--card2); color:var(--ink); border:1px solid var(--line); box-shadow:none; border-radius:20px; }
+  .sub-tabs button.on { background:#fff; color:#111; }
+  .trains { display:grid; grid-template-columns:repeat(2,1fr); gap:8px; }
+  .tr { display:flex; gap:10px; align-items:center; text-align:left; background:var(--card2); color:var(--ink); border:1px solid var(--line); box-shadow:none; padding:10px; font-size:15px; }
+  .tr .ic { font-size:24px; width:34px; height:34px; display:flex; align-items:center; justify-content:center; border-radius:10px; background:rgba(255,255,255,.06); flex:none; }
+  .tr small { display:block; font-size:12px; color:var(--muted); font-weight:500; }
+  .attr { display:flex; align-items:center; gap:8px; margin:6px 0; font-size:14px; }
+  .attr .l { width:38px; color:var(--muted); }
+  .attr .bar { flex:1; height:10px; background:#0a0d13; border-radius:6px; overflow:hidden; position:relative; }
+  .attr .bar i { display:block; height:100%; border-radius:6px; }
+  .attr .bar u { position:absolute; top:0; bottom:0; width:2px; background:rgba(255,255,255,.5); }
+  .attr .v { width:28px; text-align:right; font-weight:900; }
+  .chips { display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; }
+  .chip { background:var(--card2); border:1px solid var(--line); border-radius:20px; padding:4px 10px; font-size:13px; }
+  .mini-team { display:flex; align-items:center; gap:8px; }
+  .mini-team svg { width:26px; height:26px; flex:none; }
+  .scene { position:fixed; inset:0; background:rgba(6,8,12,.97); z-index:20; overflow-y:auto; }
+  .scene .inner { max-width:560px; margin:0 auto; padding:calc(32px + env(safe-area-inset-top)) 14px 40px; }
+  .story { font-size:17px; line-height:1.8; white-space:pre-wrap; margin-bottom:14px; }
+  .choice { text-align:left; background:var(--card2); color:var(--ink); border:1px solid var(--line); box-shadow:none; }
+  .choice small { display:block; color:var(--muted); font-weight:400; font-size:13px; margin-top:3px; }
+  .vs { display:grid; grid-template-columns:1fr auto 1fr; align-items:center; gap:8px; text-align:center; margin:4px 0 14px; }
+  .vs svg { width:64px; height:64px; }
+  .vs .t { font-weight:900; font-size:16px; margin-top:4px; } .vs .r { color:var(--muted); font-size:13px; }
+  .vs .x { font-size:26px; font-weight:900; color:var(--muted); }
   /* 比賽 */
-  #game { position:fixed; inset:0; background:var(--bg); z-index:9; overflow-y:auto; }
-  #game .inner { max-width:540px; margin:0 auto; padding:calc(30px + env(safe-area-inset-top)) 10px 24px; }
-  .sb { display:grid; grid-template-columns:1fr auto 1fr; align-items:center; background:var(--card); border-radius:14px; padding:10px 12px; }
-  .sb .tm { font-size:14px; color:var(--muted); }
-  .sb .sc { font-size:38px; font-weight:900; font-variant-numeric:tabular-nums; line-height:1.1; }
-  .sb .mid { text-align:center; }
-  .sb .q { font-weight:900; font-size:18px; } .sb .clk { color:var(--muted); font-variant-numeric:tabular-nums; }
-  #lead { width:100%; height:90px; display:block; margin:8px 0; background:var(--card); border-radius:12px; }
-  .myline { display:flex; justify-content:space-around; background:var(--card); border-radius:12px; padding:8px; margin-bottom:8px; }
-  .myline div { text-align:center; } .myline b { display:block; font-size:24px; } .myline span { font-size:12px; color:var(--muted); }
-  .feed { background:#0b0e13; border-radius:12px; padding:10px; height:230px; overflow-y:auto; font-size:15px; line-height:1.7; }
-  .feed .me { color:var(--gold); font-weight:700; } .feed .q { color:var(--blue); font-weight:800; margin-top:4px; } .feed .op { color:#c9a3a3; } .feed .big { color:#fff; font-weight:900; }
-  .clutch { background:linear-gradient(135deg,#4a2a0a,#1a1f29); border:2px solid var(--gold); border-radius:14px; padding:12px; margin-top:10px; animation:glow 1.2s infinite; }
-  @keyframes glow { 50% { box-shadow:0 0 18px #ffb84d88; } }
-  .toast { position:fixed; left:50%; top:calc(40px + env(safe-area-inset-top)); transform:translateX(-50%); z-index:50; background:linear-gradient(135deg,#ffb84d,#f08a24); color:#2a1600; border-radius:14px; padding:10px 16px; font-weight:900; font-size:17px; box-shadow:0 6px 20px rgba(0,0,0,.5); animation:tin 3.2s forwards; text-align:center; min-width:240px; }
-  .toast small { display:block; font-weight:600; font-size:13px; }
-  @keyframes tin { 0% { opacity:0; transform:translate(-50%,-20px); } 10%,85% { opacity:1; transform:translate(-50%,0); } 100% { opacity:0; transform:translate(-50%,-10px); } }
-  .ach { display:flex; gap:10px; align-items:center; padding:8px 0; border-bottom:1px solid #29313e; }
-  .ach .i { font-size:28px; width:36px; text-align:center; }
+  #game { position:fixed; inset:0; background:var(--bg); z-index:15; overflow-y:auto; }
+  #game .inner { max-width:560px; margin:0 auto; padding:calc(32px + env(safe-area-inset-top)) 10px 24px; }
+  .sb { display:grid; grid-template-columns:1fr auto 1fr; align-items:center; border-radius:18px; padding:12px; background:linear-gradient(90deg, color-mix(in srgb, var(--hc) 45%, #151a24), #151a24 45%, #151a24 55%, color-mix(in srgb, var(--ac) 45%, #151a24)); border:1px solid var(--line); }
+  .sb .side { display:flex; align-items:center; gap:8px; } .sb .side.r { flex-direction:row-reverse; text-align:right; }
+  .sb svg { width:40px; height:40px; }
+  .sb .tm { font-size:13px; opacity:.85; } .sb .sc { font-size:36px; font-weight:900; font-variant-numeric:tabular-nums; line-height:1; }
+  .sb .mid { text-align:center; padding:0 6px; } .sb .q { font-weight:900; } .sb .clk { color:var(--muted); font-variant-numeric:tabular-nums; font-size:14px; }
+  #lead { width:100%; height:80px; display:block; margin:8px 0; background:var(--card); border-radius:14px; border:1px solid var(--line); }
+  .myline { display:grid; grid-template-columns:repeat(5,1fr); background:var(--card); border:1px solid var(--line); border-radius:14px; padding:8px 4px; margin-bottom:8px; text-align:center; }
+  .myline b { display:block; font-size:22px; } .myline span { font-size:11px; color:var(--muted); }
+  .feed { background:#080a0f; border:1px solid var(--line); border-radius:14px; padding:8px; height:250px; overflow-y:auto; font-size:14px; }
+  .ev { display:flex; gap:8px; align-items:flex-start; padding:5px 4px; border-bottom:1px solid rgba(255,255,255,.04); }
+  .ev .dot { width:8px; height:8px; border-radius:50%; margin-top:6px; flex:none; }
+  .ev .tm { color:var(--muted); font-size:12px; width:38px; flex:none; margin-top:1px; font-variant-numeric:tabular-nums; }
+  .ev.me { background:rgba(255,184,77,.08); border-radius:8px; } .ev.me .tx { color:var(--gold); font-weight:700; }
+  .ev.q .tx { color:var(--blue); font-weight:800; } .ev.big .tx { font-weight:900; }
+  .clutch { background:linear-gradient(135deg,#4a2a0a,#151a24); border:2px solid var(--gold); border-radius:18px; padding:12px; margin-top:10px; animation:glow 1.2s infinite; }
+  @keyframes glow { 50% { box-shadow:0 0 22px rgba(255,184,77,.5); } }
+  .toast { position:fixed; left:50%; bottom:calc(24px + env(safe-area-inset-bottom)); transform:translateX(-50%); z-index:50; background:linear-gradient(135deg,#ffd27a,#ff8a3d); color:#2a1300; border-radius:16px; padding:10px 18px; font-weight:900; box-shadow:0 8px 24px rgba(0,0,0,.5); animation:tin 3.2s forwards; text-align:center; min-width:250px; }
+  .toast small { display:block; font-weight:600; font-size:12px; }
+  @keyframes tin { 0% { opacity:0; transform:translate(-50%,20px) scale(.9); } 10%,85% { opacity:1; transform:translate(-50%,0) scale(1); } 100% { opacity:0; } }
+  .ach { display:flex; gap:12px; align-items:center; padding:9px 0; border-bottom:1px solid var(--line); }
+  .ach .i { font-size:26px; width:44px; height:44px; border-radius:12px; display:flex; align-items:center; justify-content:center; background:linear-gradient(135deg,#3a2a10,#1e2533); flex:none; }
   .ach.off { opacity:.3; filter:grayscale(1); }
-  .big-num { font-size:44px; font-weight:900; color:var(--gold); text-align:center; }
+  .big-score { display:grid; grid-template-columns:1fr auto 1fr; align-items:center; text-align:center; margin:6px 0 12px; }
+  .big-score svg { width:56px; height:56px; } .big-score .s { font-size:42px; font-weight:900; }
+  .result-tag { text-align:center; font-size:20px; font-weight:900; margin-bottom:10px; }
+  .pog { display:flex; gap:10px; align-items:center; background:linear-gradient(135deg,#3a2a10,#151a24); border:1px solid #5a4422; border-radius:16px; padding:10px; margin-bottom:12px; }
+  .pog svg { width:52px; height:52px; border-radius:12px; }
 </style>
 </head>
 <body>
 <div class="wrap">
   <div id="sTitle">
     <div id="titleArt"></div>
-    <h1>🏀 籃球轉生記</h1>
+    <h1>籃球轉生記</h1>
     <div style="text-align:center;color:var(--muted);margin-bottom:18px">籃球生涯模擬：從高中打到名人堂</div>
     <div class="col">
-      <button id="bNew">新的人生</button>
-      <button class="ghost hide" id="bCont">繼續生涯</button>
-      <button class="ghost" id="bHall">歷代球員・成就殿堂</button>
+      <button id="bNew">🏀 新的人生</button>
+      <button class="ghost hide" id="bCont">▶ 繼續生涯</button>
+      <button class="ghost" id="bHall">🏛️ 歷代球員・成就殿堂</button>
     </div>
-    <div class="card muted" style="margin-top:16px;line-height:1.8;font-size:16px">
-      每週安排訓練，然後<b class="gold">觀看比賽</b>：比分、走勢圖和你的每一球都會即時播出。<br>
-      比賽最後關頭由你決定怎麼打——自己單打、擋拆、還是傳給射手，投進就是<b class="gold">絕殺</b>。<br>
-      拚明星賽、MVP、冠軍戒指，最後退休球衣、進名人堂。
+    <div class="card muted" style="margin-top:16px;line-height:1.8;font-size:15px">
+      每週安排訓練，然後觀看比賽：兩隊每位球員的數據都會即時累積，最後關頭由你決定怎麼打。<br>
+      整個聯盟的球員都會成長、老化、轉隊和退休。拚明星賽、MVP、總冠軍，最後退休球衣、進名人堂。
     </div>
   </div>
 
   <div id="sCreate" class="hide">
-    <h2>新的球員</h2>
+    <h2>建立球員</h2>
     <div id="legacy"></div>
-    <div class="prof card" id="cAvatar"></div>
+    <div class="card row" id="cAvatar"></div>
     <label class="lb">姓名</label>
     <div class="row"><input id="iName" maxlength="6"><button class="ghost" id="bRnd" style="white-space:nowrap">隨機</button></div>
+    <label class="lb">背號（0–99）</label>
+    <input id="iNum" type="number" inputmode="numeric" min="0" max="99">
     <label class="lb">位置</label>
     <div class="col" id="posPick"></div>
-    <div class="row" style="margin-top:10px"><button class="ghost" id="bLook" style="flex:1">換個外型</button></div>
-    <button id="bStart" style="width:100%;margin-top:14px">入學</button>
+    <button class="ghost" id="bLook" style="width:100%;margin-top:10px">換個外型</button>
+    <button id="bStart" style="width:100%;margin-top:12px">入學</button>
   </div>
 
   <div id="sHub" class="hide">
-    <div id="hArt"></div>
-    <div class="card prof"><div id="hAvatar"></div><div style="flex:1"><div style="font-size:23px;font-weight:900" id="hName"></div><div class="muted" id="hSub" style="font-size:15px"></div><div id="hWhen" style="margin-top:3px;font-size:15px"></div></div><div class="ovr" id="hOvr"></div></div>
-    <div class="card hide" id="hNote" style="font-size:16px;line-height:1.6"></div>
-    <div class="tabs" id="tabs"><button class="ghost on" data-t="week">本週</button><button class="ghost" data-t="me">能力</button><button class="ghost" data-t="league">聯盟</button><button class="ghost" data-t="ach">成就</button></div>
+    <div class="hero" id="hero"></div>
+    <div class="card hide" id="hNote" style="font-size:15px;line-height:1.6"></div>
+    <div class="tabs" id="tabs"><button data-t="week">📅 本週</button><button data-t="me">🧍 球員</button><button data-t="league">🏆 聯盟</button><button data-t="ach">🎖️ 成就</button></div>
     <div id="tWeek"></div><div id="tMe" class="hide"></div><div id="tLeague" class="hide"></div><div id="tAch" class="hide"></div>
   </div>
 
@@ -132,10 +163,8 @@
 <div class="scene hide" id="scene"><div class="inner" id="sceneIn"></div></div>
 
 <div id="game" class="hide"><div class="inner">
-  <div class="sb"><div><div class="tm" id="gHome"></div><div class="sc" id="gOur">0</div></div>
-    <div class="mid"><div class="q" id="gQ">第 1 節</div><div class="clk" id="gClk">12:00</div></div>
-    <div style="text-align:right"><div class="tm" id="gAway"></div><div class="sc" id="gOpp">0</div></div></div>
-  <canvas id="lead" width="520" height="90"></canvas>
+  <div class="sb" id="sb"></div>
+  <canvas id="lead" width="540" height="80"></canvas>
   <div class="myline" id="gMy"></div>
   <div class="feed" id="gFeed"></div>
   <div id="gClutch"></div>
@@ -209,609 +238,716 @@ const rnd = (a,b) => a + Math.random()*(b-a), ri = (a,b) => Math.floor(rnd(a,b+1
 const clamp = (v,a,b) => Math.max(a, Math.min(b, v));
 const $ = id => document.getElementById(id);
 const sleep = ms => new Promise(r => setTimeout(r, ms));
-const SUR = ['林','陳','黃','張','李','王','吳','劉','蔡','楊','許','鄭','謝','郭','洪','曾','邱','廖','賴','周','高','簡','游','韋','朴','金','崔'];
-const GIV = ['承','宇','翔','哲','皓','睿','恩','昊','俊','浩','東','賢','成','勳','振','凱','佑','廷','晨','祐','澤','碩','岳','騰','旻','彥'];
-const randName = () => pick(SUR) + pick(GIV) + pick(GIV);
 const f1 = v => (Math.round(v * 10) / 10).toFixed(1);
-const PRO_TEAMS = [ ['台港海鷗','#3fa7d6'], ['山城猛虎','#f29e4c'], ['北境雪狼','#9aa5b1'], ['南灣巨鯨','#2f6fb5'], ['中原雷鳴','#f1c40f'], ['東岸飛鷹','#c0392b'], ['西嶺黑熊','#8d6e63'], ['星城閃電','#8e44ad'], ['港灣海盜','#16a085'], ['赤焰鳳凰','#e74c3c'] ];
-const HS_TEAMS = [ ['青嶺高中','#2e86de'], ['海星高中','#10ac84'], ['白楊工商','#ee5253'], ['明德高中','#5f27cd'], ['鳳鳴實中','#ff9f43'], ['大成高中','#576574'], ['光華高中','#1dd1a1'], ['永安高中','#c8d6e5'] ];
+const SUR = ['林','陳','黃','張','李','王','吳','劉','蔡','楊','許','鄭','謝','郭','洪','曾','邱','廖','賴','周','高','簡','游','韋','朴','金','崔','宋','江','范','彭','魏','蕭','唐','杜','余','呂'];
+const GIV = ['承','宇','翔','哲','皓','睿','恩','昊','俊','浩','東','賢','成','勳','振','凱','佑','廷','晨','祐','澤','碩','岳','騰','旻','彥','翰','杰','霖','毅','軒','豪','銘','偉','安','傑','恆','暘'];
+const randName = () => pick(SUR) + pick(GIV) + pick(GIV);
+const PRO_TEAMS = [ ['台港海鷗','#2fa4e7','鷗'], ['山城猛虎','#f29e4c','虎'], ['北境雪狼','#9fb2c8','狼'], ['南灣巨鯨','#2f6fd5','鯨'], ['中原雷鳴','#f1c40f','雷'], ['東岸飛鷹','#e74c3c','鷹'], ['西嶺黑熊','#a1887f','熊'], ['星城閃電','#9b59b6','電'], ['港灣海盜','#1abc9c','盜'], ['赤焰鳳凰','#ff5e3a','凰'] ];
+const HS_TEAMS = [ ['青嶺高中','#2e86de','嶺'], ['海星高中','#10ac84','星'], ['白楊工商','#ee5253','楊'], ['明德高中','#8854d0','明'], ['鳳鳴實中','#ff9f43','鳴'], ['大成高中','#778ca3','成'], ['光華高中','#1dd1a1','華'], ['永安高中','#c8d6e5','安'] ];
 const ATTR = { shoot:'中距', three:'三分', drive:'切入', pass:'傳球', reb:'籃板', def:'防守', ath:'體能' };
+const ATTR_COL = { shoot:'#ffb84d', three:'#ff8a3d', drive:'#ff6b6b', pass:'#5aa9ff', reb:'#4bcffa', def:'#5fd68a', ath:'#c792ea' };
 const POS = {
-  G: { n:'後衛', d:'控球、三分、助攻。傳球與三分起點較高', h:[180,190], base:{ shoot:3, three:6, drive:3, pass:7, reb:-4, def:1, ath:2 }, w:{ shoot:.16, three:.22, drive:.16, pass:.22, reb:.04, def:.1, ath:.1 }, rebF:.07 },
-  F: { n:'前鋒', d:'全能得分。中距、切入起點較高', h:[192,201], base:{ shoot:6, three:2, drive:5, pass:1, reb:2, def:2, ath:3 }, w:{ shoot:.2, three:.13, drive:.22, pass:.1, reb:.13, def:.12, ath:.1 }, rebF:.13 },
-  C: { n:'中鋒', d:'禁區霸主。籃板、防守、體能起點較高', h:[203,213], base:{ shoot:2, three:-6, drive:5, pass:0, reb:8, def:6, ath:5 }, w:{ shoot:.12, three:.03, drive:.24, pass:.07, reb:.24, def:.18, ath:.12 }, rebF:.22 },
+  G: { n:'後衛', d:'控球、三分、助攻', base:{ shoot:3, three:6, drive:3, pass:8, reb:-6, def:1, ath:2 }, w:{ shoot:.16, three:.22, drive:.16, pass:.22, reb:.04, def:.1, ath:.1 }, rf:.6, h:[180,190] },
+  F: { n:'前鋒', d:'全能得分手', base:{ shoot:6, three:2, drive:5, pass:1, reb:2, def:2, ath:3 }, w:{ shoot:.2, three:.13, drive:.22, pass:.1, reb:.13, def:.12, ath:.1 }, rf:1, h:[193,202] },
+  C: { n:'中鋒', d:'籃板、禁區、護框', base:{ shoot:1, three:-10, drive:5, pass:-2, reb:9, def:6, ath:5 }, w:{ shoot:.12, three:.03, drive:.24, pass:.07, reb:.24, def:.18, ath:.12 }, rf:1.6, h:[204,214] },
 };
+const SPILL = { shoot:{ three:.3 }, three:{ shoot:.3 }, drive:{ ath:.2 }, ath:{ drive:.2, reb:.1 }, pass:{}, reb:{ def:.15 }, def:{ ath:.15 } };
 const MEMORIES = {
-  HS_CHAMP:{ n:'高中冠軍', t:'大心臟', d:'關鍵時刻成功率 +8%' }, DRAFT1:{ n:'狀元', t:'天生彈性', d:'起始切入 +6' }, UNDRAFTED:{ n:'落選', t:'不屈', d:'受傷機率 -35%' },
-  P40:{ n:'40 分之夜', t:'得分本能', d:'中距、三分成長 +25%' }, TD:{ n:'大三元', t:'全能', d:'所有能力起始 +2' }, MVP:{ n:'MVP', t:'王者氣場', d:'教練起始信任 +25' },
-  DPOY:{ n:'最佳防守', t:'防守天才', d:'防守成長 +25%' }, CHAMP:{ n:'總冠軍', t:'冠軍血統', d:'所屬球隊實力 +3' }, CLUTCH:{ n:'絕殺', t:'冷血殺手', d:'關鍵時刻成功率 +12%' }, LONG:{ n:'十年老將', t:'不老', d:'衰退延後兩年' },
+  HS_CHAMP:{ n:'高中冠軍', t:'大心臟', d:'關鍵時刻成功率 +8%' }, DRAFT1:{ n:'狀元', t:'天生彈性', d:'起始切入、體能 +5' }, UNDRAFTED:{ n:'落選', t:'不屈', d:'受傷機率 -35%、潛力 +3' },
+  P40:{ n:'40 分之夜', t:'得分本能', d:'中距、三分成長 +25%' }, TD:{ n:'大三元', t:'全能', d:'所有能力起始 +3' }, MVP:{ n:'MVP', t:'王者氣場', d:'起始教練信任 +25、潛力 +4' },
+  DPOY:{ n:'最佳防守', t:'防守天才', d:'防守成長 +25%' }, CHAMP:{ n:'總冠軍', t:'冠軍血統', d:'團隊默契成長加倍' }, CLUTCH:{ n:'絕殺', t:'冷血殺手', d:'關鍵時刻成功率 +12%' }, LONG:{ n:'十年老將', t:'不老', d:'衰退延後兩年' },
 };
 const ACH = [
   ['debut','🏀','初登場','打出第一場比賽'], ['p20','🔥','20 分','單場 20 分'], ['p30','🔥','30 分','單場 30 分'], ['p40','🌋','40 分之夜','單場 40 分'], ['p50','☄️','50 分神蹟','單場 50 分'],
-  ['dd','➕','雙十','單場雙十'], ['td','🔺','大三元','單場得分、籃板、助攻都上雙'], ['clutch','🎯','絕殺','最後一擊投進逆轉／超前'], ['hsc','🏫','高中冠軍','拿下高中聯賽冠軍'],
-  ['lottery','📣','樂透秀','選秀前五順位'], ['no1','👑','狀元','選秀第一順位'], ['starter','⭐','先發','成為先發球員'], ['allstar','🌟','明星賽','入選明星賽'],
-  ['ring','💍','總冠軍','拿下總冠軍'], ['fmvp','🏆','總冠軍賽 MVP','總冠軍賽最有價值球員'], ['mvp','👑','年度 MVP','聯盟最有價值球員'], ['roy','🌱','新人王','年度最佳新秀'],
-  ['dpoy','🛡️','最佳防守','年度最佳防守球員'], ['scoring','💯','得分王','單季得分王'], ['k1','📈','生涯 1000 分',''], ['k5','📈','生涯 5000 分',''], ['k10','🏔️','生涯一萬分',''],
-  ['ten','🎖️','十年老將','職業生涯十年'], ['jersey','👕','退休球衣','球隊為你退休背號'], ['hof','🏛️','名人堂','入選名人堂'],
+  ['dd','➕','雙十','單場雙十'], ['td','🔺','大三元','單場三項上雙'], ['clutch','🎯','絕殺','最後一擊逆轉'], ['hsc','🏫','高中冠軍','拿下高中聯賽冠軍'], ['pog','⭐','本場最佳','獲選單場最佳球員'],
+  ['lottery','📣','樂透秀','選秀前五順位'], ['no1','👑','狀元','選秀第一順位'], ['starter','🟢','先發','成為先發球員'], ['o80','💎','總評 80','總評達到 80'], ['o90','🔴','總評 90','總評達到 90'],
+  ['allstar','🌟','明星賽','入選明星賽'], ['ring','💍','總冠軍','拿下總冠軍'], ['fmvp','🏆','總冠軍賽 MVP',''], ['mvp','👑','年度 MVP',''], ['roy','🌱','新人王',''],
+  ['dpoy','🛡️','最佳防守',''], ['scoring','💯','得分王',''], ['k1','📈','生涯 1000 分',''], ['k5','📈','生涯 5000 分',''], ['k10','🏔️','生涯一萬分',''],
+  ['ten','🎖️','十年老將','職業生涯十年'], ['jersey','👕','退休球衣',''], ['hof','🏛️','名人堂',''],
 ];
+
+// ===================== 圖：隊徽、牌卡、雷達 =====================
+function logo(t, s = 40) {
+  const id = 'g' + t.m.charCodeAt(0) + Math.floor(Math.random() * 1e6);
+  return `<svg viewBox="0 0 100 110" width="${s}" height="${s}" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="${id}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${t.c}"/><stop offset="1" stop-color="#0b0e14"/></linearGradient></defs>
+    <path d="M50 4 L92 18 L88 64 Q82 92 50 106 Q18 92 12 64 L8 18 Z" fill="url(#${id})" stroke="#fff" stroke-opacity=".8" stroke-width="4"/>
+    <path d="M50 14 L82 25 L79 62 Q74 84 50 96 Q26 84 21 62 L18 25 Z" fill="none" stroke="#fff" stroke-opacity=".25" stroke-width="2"/>
+    <text x="50" y="70" font-size="44" font-weight="900" fill="#fff" text-anchor="middle" font-family="sans-serif">${t.m}</text></svg>`;
+}
+function tier(o) {
+  if (o >= 90) return { n:'傳奇', bg:'linear-gradient(160deg,#ff4d6d,#7b1fa2)', fg:'#fff' };
+  if (o >= 80) return { n:'鑽石', bg:'linear-gradient(160deg,#9be7ff,#5b5fff)', fg:'#0a1030' };
+  if (o >= 70) return { n:'黃金', bg:'linear-gradient(160deg,#ffe08a,#c98a1a)', fg:'#2a1a00' };
+  if (o >= 60) return { n:'白銀', bg:'linear-gradient(160deg,#eef2f7,#8b98a9)', fg:'#1a2230' };
+  return { n:'青銅', bg:'linear-gradient(160deg,#e0a77a,#7a4a2a)', fg:'#1e0f04' };
+}
+function badge(o, label) { const t = tier(o); return `<div class="badge" style="background:${t.bg};color:${t.fg}"><b>${o}</b><span>${label || t.n}</span></div>`; }
+function radar(a) {
+  const keys = Object.keys(ATTR), n = keys.length, cx = 150, cy = 135, R = 100;
+  const pt = (i, v) => { const ang = -Math.PI / 2 + i * 2 * Math.PI / n; return [cx + Math.cos(ang) * R * v, cy + Math.sin(ang) * R * v]; };
+  let g = '';
+  for (const lv of [0.25, 0.5, 0.75, 1]) g += `<polygon points="${keys.map((_, i) => pt(i, lv).join(',')).join(' ')}" fill="none" stroke="rgba(255,255,255,.1)"/>`;
+  keys.forEach((k, i) => { const [x, y] = pt(i, 1); g += `<line x1="${cx}" y1="${cy}" x2="${x}" y2="${y}" stroke="rgba(255,255,255,.08)"/>`; const [lx, ly] = pt(i, 1.22); g += `<text x="${lx}" y="${ly + 4}" font-size="13" fill="#8e9ab0" text-anchor="middle">${ATTR[k]} <tspan fill="#fff" font-weight="800">${Math.round(a[k])}</tspan></text>`; });
+  g += `<polygon points="${keys.map((k, i) => pt(i, clamp(a[k], 0, 99) / 99).join(',')).join(' ')}" fill="rgba(255,184,77,.28)" stroke="#ffb84d" stroke-width="2.5"/>`;
+  return `<svg viewBox="0 0 300 270" style="width:100%;max-width:340px;display:block;margin:0 auto">${g}</svg>`;
+}
 
 // ===================== 存檔 =====================
 let C = null, LEG = { lives:[], talents:[], inherit:null, ach:{} };
-try { const l = JSON.parse(localStorage.getItem('hoop2Legacy')); if (l) LEG = Object.assign(LEG, l); } catch(e) {}
-const saveLeg = () => { try { localStorage.setItem('hoop2Legacy', JSON.stringify(LEG)); } catch(e) {} };
-const saveRun = () => { try { localStorage.setItem('hoop2Run', JSON.stringify(C)); } catch(e) {} };
-const loadRun = () => { try { return JSON.parse(localStorage.getItem('hoop2Run')); } catch(e) { return null; } };
+try { const l = JSON.parse(localStorage.getItem('hoop3Legacy')); if (l) LEG = Object.assign(LEG, l); } catch(e) {}
+const saveLeg = () => { try { localStorage.setItem('hoop3Legacy', JSON.stringify(LEG)); } catch(e) {} };
+const saveRun = () => { try { localStorage.setItem('hoop3Run', JSON.stringify(C)); } catch(e) {} };
+const loadRun = () => { try { return JSON.parse(localStorage.getItem('hoop3Run')); } catch(e) { return null; } };
 const has = t => LEG.talents.includes(t);
 
-// ===================== 成就提示 =====================
+// ===================== 提示 =====================
 let toastQ = [], toastOn = false;
 function toast(t, s) { toastQ.push([t, s]); if (!toastOn) nextToast(); }
-function nextToast() {
-  const x = toastQ.shift(); if (!x) { toastOn = false; return; } toastOn = true;
-  const el = document.createElement('div'); el.className = 'toast'; el.innerHTML = `${x[0]}${x[1] ? `<small>${x[1]}</small>` : ''}`;
-  document.body.appendChild(el); setTimeout(() => { el.remove(); nextToast(); }, 3200);
-}
-function unlock(id) {
-  if (!C || C.ach[id]) return;
-  const a = ACH.find(x => x[0] === id); if (!a) return;
-  C.ach[id] = C.age; LEG.ach[id] = (LEG.ach[id] || 0) + 1; saveLeg();
-  toast(`${a[1]} 成就解鎖：${a[2]}`, a[3]);
-}
+function nextToast() { const x = toastQ.shift(); if (!x) { toastOn = false; return; } toastOn = true; const el = document.createElement('div'); el.className = 'toast'; el.innerHTML = `${x[0]}${x[1] ? `<small>${x[1]}</small>` : ''}`; document.body.appendChild(el); setTimeout(() => { el.remove(); nextToast(); }, 3200); }
+function unlock(id) { if (!C || C.ach[id]) return; const a = ACH.find(x => x[0] === id); if (!a) return; C.ach[id] = C.age; LEG.ach[id] = (LEG.ach[id] || 0) + 1; saveLeg(); toast(`${a[1]} 成就解鎖：${a[2]}`, a[3]); }
 function pushMem(k) { if (!C.memories.includes(k)) C.memories.push(k); }
 
-// ===================== 建立 =====================
+// ===================== 球員模型 =====================
+let PID = 1;
+const ME = () => C.players.ME;
+function ovrOf(p) { const w = POS[p.pos].w; let s = 0; for (const k in w) s += p.a[k] * w[k]; return Math.round(s); }
+const ovr = () => ovrOf(ME());
+function line() { return { g:0, min:0, pts:0, reb:0, ast:0, stl:0, blk:0, fgm:0, fga:0, tpm:0, tpa:0, ftm:0, fta:0 }; }
+function makeNPC(target, age, team) {
+  const pos = pick(['G','G','F','F','C']), P = POS[pos];
+  const a = {}; for (const k in ATTR) a[k] = clamp(target + P.base[k] * 1.4 + rnd(-7, 7), 15, 97);
+  const p = { id: 'P' + (PID++), name: randName(), pos, age, a, pot: clamp(target + rnd(0, 18) - Math.max(0, age - 24) * 3, 40, 97), team, st: line(), car: line() };
+  return p;
+}
+function genLeague(pro) {
+  const src = pro ? PRO_TEAMS : HS_TEAMS, players = C.players || {};
+  const teams = src.map(([n, c, m]) => ({ n, c, m, w:0, l:0, pf:0, pa:0, roster: [] }));
+  for (const t of teams) {
+    const lvl = pro ? rnd(58, 66) : rnd(32, 42);
+    const n = t.n === C.team ? 9 : 10;
+    for (let i = 0; i < n; i++) {
+      const tgt = lvl + (i === 0 ? rnd(13, 22) : i === 1 ? rnd(8, 15) : i < 5 ? rnd(2, 8) : rnd(-8, 0));
+      const p = makeNPC(tgt, pro ? ri(20, 34) : ri(16, 18), t.n); players[p.id] = p; t.roster.push(p.id);
+    }
+  }
+  C.players = players; C.teams = teams;
+  const mine = teams.find(t => t.n === C.team); mine.roster.push('ME'); ME().team = C.team;
+}
+const team = n => C.teams.find(t => t.n === n);
+const myTeam = () => team(C.team);
+const P = id => C.players[id];
+const teamOvr = t => { const r = t.roster.map(id => ovrOf(P(id))).sort((a, b) => b - a).slice(0, 8); return Math.round(r.reduce((s, v) => s + v, 0) / r.length); };
+
+// ===================== 建立角色 =====================
 let selPos = 'F', look = { skin:2, hair:0, hc:0 }, num = 23;
 function renderCreate() {
-  $('iName').value = randName(); num = ri(0, 99); look = { skin: ri(0,4), hair: ri(0,3), hc: ri(0,4) };
+  $('iName').value = randName(); num = ri(0, 99); $('iNum').value = num; look = { skin: ri(0,4), hair: ri(0,3), hc: ri(0,4) };
   const last = LEG.lives[0];
-  $('legacy').innerHTML = LEG.lives.length ? `<div class="card" style="font-size:15px;line-height:1.7">第 <b class="gold">${LEG.lives.length + 1}</b> 世<br>${LEG.talents.length ? '天賦：' + LEG.talents.map(k => `<b class="gold">${MEMORIES[k].t}</b>（${MEMORIES[k].d}）`).join('、') + '<br>' : ''}${LEG.inherit ? `傳承：${ATTR[LEG.inherit.k]} +${LEG.inherit.v}<br>` : ''}<span class="muted">前世：${last.name}・${last.summary}</span></div>` : '';
+  $('legacy').innerHTML = LEG.lives.length ? `<div class="card" style="font-size:14px;line-height:1.7">第 <b class="gold">${LEG.lives.length + 1}</b> 世<br>${LEG.talents.length ? '天賦：' + LEG.talents.map(k => `<b class="gold">${MEMORIES[k].t}</b>（${MEMORIES[k].d}）`).join('、') + '<br>' : ''}${LEG.inherit ? `傳承：${ATTR[LEG.inherit.k]} +${LEG.inherit.v}<br>` : ''}<span class="muted">前世：${last.name}・${last.summary}</span></div>` : '';
   drawCreate();
 }
 function drawCreate() {
   $('posPick').innerHTML = '';
   for (const [k, p] of Object.entries(POS)) { const b = document.createElement('button'); b.className = 'opt' + (selPos === k ? ' sel' : ''); b.innerHTML = `${p.n}（${p.h[0]}–${p.h[1]} cm）<small>${p.d}</small>`; b.onclick = () => { selPos = k; drawCreate(); }; $('posPick').appendChild(b); }
-  $('cAvatar').innerHTML = avatar(look, '#5aa9ff', num) + `<div><b style="font-size:20px">#${num}</b><div class="muted">${POS[selPos].n}</div></div>`;
+  $('cAvatar').innerHTML = `<div style="width:84px;height:84px;border-radius:18px;overflow:hidden;flex:none">${avatar(look, '#5aa9ff', num)}</div><div><b style="font-size:22px">#${num}</b><div class="muted">${POS[selPos].n}</div></div>`;
 }
 $('bRnd').onclick = () => $('iName').value = randName();
-$('bLook').onclick = () => { look = { skin: ri(0,4), hair: ri(0,3), hc: ri(0,4) }; num = ri(0, 99); drawCreate(); };
+$('bLook').onclick = () => { look = { skin: ri(0,4), hair: ri(0,3), hc: ri(0,4) }; drawCreate(); };
+$('iNum').oninput = () => { const v = parseInt($('iNum').value, 10); if (!isNaN(v)) { num = clamp(v, 0, 99); drawCreate(); } };
 $('bStart').onclick = () => {
-  const P = POS[selPos], inh = LEG.inherit;
-  C = { name: ($('iName').value.trim() || randName()).slice(0, 6), pos: selPos, look, num, height: ri(P.h[0], P.h[1]),
-    phase:'HS', year:1, week:1, age:16, iq:20, fatigue:0, injury:0, trust: 20 + (has('MVP') ? 25 : 0), money:0, salary:0, contract:0, role:'先發',
-    team:null, career: line(), seasons: [], memories: [], highlights: [], ach: {}, rings:0, allstars:0, mvps:0, proYear:0, awards: [], note:'' };
-  C.a = {}; for (const k in ATTR) C.a[k] = ri(24, 32) + P.base[k] + (has('TD') ? 2 : 0) + (inh && inh.k === k ? inh.v : 0);
-  if (has('DRAFT1')) C.a.drive += 6;
-  const S = pick(HS_TEAMS); C.team = { n: S[0], c: S[1] };
-  newSeason();
+  const Pz = POS[selPos], inh = LEG.inherit, S = pick(HS_TEAMS);
+  C = { name: ($('iName').value.trim() || randName()).slice(0, 6), pos: selPos, look, num, height: ri(Pz.h[0], Pz.h[1]), team: S[0],
+    phase:'HS', year:1, week:1, age:16, iq:25, fatigue:0, injury:0, trust: 30 + (has('MVP') ? 25 : 0), morale:60, chem:30, money:0, salary:0, contract:0, role:'先發',
+    seasons: [], memories: [], highlights: [], ach: {}, rings:0, allstars:0, mvps:0, proYear:0, awards: [], note:'', players: {} };
+  const a = {}; for (const k in ATTR) a[k] = ri(34, 41) + Pz.base[k] + (has('TD') ? 3 : 0) + (inh && inh.k === k ? inh.v : 0);
+  if (has('DRAFT1')) { a.drive += 5; a.ath += 5; }
+  C.players.ME = { id:'ME', name: C.name, pos: selPos, age:16, a, pot: ri(74, 88) + (has('UNDRAFTED') ? 3 : 0) + (has('MVP') ? 4 : 0), team: C.team, st: line(), car: line(), me: true };
+  genLeague(false); newSeason();
+  const legend = num === 23 || num === 24;
+  if (legend) { ME().pot = 99; C.legend = true; }
   const coach = LEG.lives[0];
-  C.note = coach ? `你進了${C.team.n}籃球隊。教練是 <b class="gold">${coach.name}</b>——前世的你。「我當年沒做到的，就交給你了。」` : `你進了${C.team.n}籃球隊，穿上 ${C.num} 號球衣。高中三年，目標是選秀會。`;
-  saveRun(); showHub();
+  C.note = (legend ? `<b class="gold">✨ 傳奇背號 ${num} 號！</b>你感覺到身上流著某種傳奇的血液……潛力上限 <b class="gold">99</b>。<br><br>` : '') + (coach ? `你進了${C.team}籃球隊。教練是 <b class="gold">${coach.name}</b>——前世的你。「我當年沒做到的，就交給你了。」` : `你進了${C.team}籃球隊，穿上 ${C.num} 號球衣。高中三年，目標是選秀會。`);
+  saveRun(); showHub(); if (legend) toast('✨ 傳奇背號！', '潛力上限 99');
 };
-function line() { return { g:0, min:0, pts:0, reb:0, ast:0, stl:0, blk:0, fgm:0, fga:0, tpm:0, tpa:0, ftm:0, fta:0 }; }
 
-// ===================== 能力 =====================
-function ovr() { const w = POS[C.pos].w; let s = 0; for (const k in w) s += C.a[k] * w[k]; return Math.round(s + C.iq * 0.04); }
-function growth(k) {
-  let g = C.phase === 'HS' ? 1 : C.age <= 25 ? 0.9 : C.age <= 29 ? 0.65 : 0.35;
-  if ((k === 'shoot' || k === 'three') && has('P40')) g *= 1.25;
-  if (k === 'def' && has('DPOY')) g *= 1.25;
-  return g;
-}
-const avg = (l, k) => l.g ? f1(l[k] / l.g) : '0.0';
-const pct = (m, a) => a ? Math.round(m / a * 100) + '%' : '—';
-const MIN = { 板凳:12, 輪替:22, 先發:32, 核心:36 };
-function assignRole() {
-  if (C.phase === 'HS') { const o = ovr(); C.role = o >= 38 || C.year >= 2 ? '核心' : '先發'; return; }
-  const o = ovr(), t = C.trust;
-  const old = C.role;
-  C.role = o >= 74 && t >= 55 ? '核心' : o >= 63 && t >= 35 ? '先發' : o >= 54 ? '輪替' : '板凳';
-  if (C.role !== old && ['先發','核心'].includes(C.role)) unlock('starter');
-}
-
-// ===================== 聯盟 =====================
+// ===================== 賽季 =====================
 function newSeason() {
   const pro = C.phase === 'PRO';
-  const src = pro ? PRO_TEAMS : HS_TEAMS;
-  const champBonus = has('CHAMP') ? 3 : 0;
-  C.league = src.map(([n, c]) => {
-    const old = C.league && C.league.find(t => t.n === n);
-    const base = pro ? 60 : 44;
-    const r = old ? clamp(old.r + rnd(-4, 4), base - 10, base + 14) : base + rnd(-8, 10);
-    return { n, c, r: Math.round(r + (n === C.team.n ? champBonus : 0)), w:0, l:0 };
-  });
-  // NPC 明星（排行榜、MVP、明星賽用）
-  C.stars = [];
-  const others = C.league.filter(t => t.n !== C.team.n);
-  for (let i = 0; i < (pro ? 14 : 8); i++) {
-    const t = pick(others), p = pick(['G','F','C']);
-    const tier = pro ? rnd(0.55, 1.05) : rnd(0.5, 1);
-    C.stars.push({ name: randName(), team: t.n, pos: p, ppg: (pro ? 13 : 12) + tier * 16, rpg: p === 'C' ? 6 + tier * 7 : p === 'F' ? 4 + tier * 4 : 2.5 + tier * 3, apg: p === 'G' ? 3 + tier * 6 : 1.5 + tier * 3, spb: 0.6 + tier * 1.4, g:0, pts:0, reb:0, ast:0, sb:0, rookie: Math.random() < 0.15 });
-  }
-  if (!pro) C.rival = pick(C.stars).name;
-  C.season = line(); C.week = 1; C.allstarDone = false;
-  C.weeks = pro ? 12 : 7; C.gpw = pro ? 2 : 1;
+  for (const t of C.teams) { t.w = t.l = t.pf = t.pa = 0; }
+  for (const id in C.players) C.players[id].st = line();
+  C.week = 1; C.allstarDone = false; C.weeks = pro ? 12 : 7; C.gpw = pro ? 2 : 1;
+  if (!pro) { const others = C.teams.filter(t => t.n !== C.team); const ot = pick(others); C.rival = ot.roster.map(P).sort((a, b) => ovrOf(b) - ovrOf(a))[0].name; }
   assignRole();
 }
-const myTeam = () => C.league.find(t => t.n === C.team.n);
-function standings() { return [...C.league].sort((a, b) => (b.w - b.l) - (a.w - a.l) || b.r - a.r); }
-function simOthersWeek() {
-  // 其他隊伍本週戰績
-  for (const t of C.league) if (t.n !== C.team.n) for (let i = 0; i < C.gpw; i++) { const o = pick(C.league.filter(x => x !== t)); if (Math.random() < 0.5 + (t.r - o.r) * 0.02) t.w++; else t.l++; }
-  for (const s of C.stars) for (let i = 0; i < C.gpw; i++) { s.g++; s.pts += s.ppg * rnd(0.6, 1.4); s.reb += s.rpg * rnd(0.5, 1.5); s.ast += s.apg * rnd(0.5, 1.5); s.sb += s.spb * rnd(0.3, 1.7); }
+function myRank() { const t = myTeam(); const arr = t.roster.map(id => ({ id, v: ovrOf(P(id)) + (id === 'ME' ? (C.trust - 50) * 0.15 : 0) })).sort((a, b) => b.v - a.v); return arr.findIndex(x => x.id === 'ME') + 1; }
+function assignRole() {
+  const r = myRank(), old = C.role;
+  C.role = r <= 2 && (C.trust >= 55 || C.phase === 'HS') ? '核心' : r <= 5 ? '先發' : r <= 8 ? '輪替' : '板凳';
+  if (['先發','核心'].includes(C.role) && !['先發','核心'].includes(old) && C.phase === 'PRO') unlock('starter');
+  if (C.phase === 'PRO' && C.proYear === 1 && C.week === 1 && ['先發','核心'].includes(C.role)) unlock('starter');
 }
-function leaderRows(stat) {
-  const rows = C.stars.map(s => ({ name: s.name, team: s.team, v: s.g ? s[stat] / s.g : 0 }));
-  if (C.season.g) rows.push({ name: C.name, team: C.team.n, v: C.season[stat] / C.season.g, me: true });
-  return rows.sort((a, b) => b.v - a.v);
+function minutesFor(t) {
+  // 依總評排序分配上場時間（你的教練信任會影響）
+  const arr = t.roster.filter(id => !(id === 'ME' && C.injury)).map(id => ({ id, v: ovrOf(P(id)) + (id === 'ME' ? (C.trust - 50) * 0.15 : 0) + rnd(-1, 1) })).sort((a, b) => b.v - a.v);
+  const base = [34, 33, 32, 30, 29, 22, 18, 14, 10, 6];
+  const m = {}; arr.forEach((x, i) => m[x.id] = base[i] || 0);
+  if (m.ME !== undefined && C.role === '核心') m.ME = Math.max(m.ME, 36);
+  return m;
 }
-function mvpScore(s, team) { const g = Math.max(1, s.g); const t = C.league.find(x => x.n === team); const wp = t && (t.w + t.l) ? t.w / (t.w + t.l) : 0.5; return s.pts / g + 0.8 * s.reb / g + 1.0 * s.ast / g + 1.2 * (s.sb !== undefined ? s.sb : s.stl + s.blk) / g + wp * 14; }
-function mvpRace() {
-  const rows = C.stars.map(s => ({ name: s.name, team: s.team, v: mvpScore(s, s.team) }));
-  if (C.season.g) rows.push({ name: C.name, team: C.team.n, v: mvpScore(C.season, C.team.n), me: true });
-  return rows.sort((a, b) => b.v - a.v);
+
+// ===================== 比賽引擎 =====================
+function wpick(items, wf) { let tot = 0; const w = items.map(x => { const v = Math.max(0.0001, wf(x)); tot += v; return v; }); let r = Math.random() * tot; for (let i = 0; i < items.length; i++) { r -= w[i]; if (r <= 0) return items[i]; } return items[items.length - 1]; }
+function onCourt(t, mins, late) {
+  const ids = t.roster.filter(id => mins[id] > 0);
+  if (late) return [...ids].sort((a, b) => mins[b] - mins[a]).slice(0, 5);
+  const out = [], pool = [...ids];
+  while (out.length < 5 && pool.length) { const x = wpick(pool, id => mins[id]); out.push(x); pool.splice(pool.indexOf(x), 1); }
+  return out;
 }
+function simGame(home, away, opt = {}) {
+  const G = { home, away, N: ri(194, 202), i: 0, s: { [home.n]: 0, [away.n]: 0 }, box: {}, hist: [0], ot: 0, opt, feed: [], run: null, clutchDone: false, finalDone: false, clutchHit: false };
+  for (const t of [home, away]) { G[t.n] = minutesFor(t); for (const id of t.roster) G.box[id] = line(); for (const id in G[t.n]) G.box[id].min = G[t.n][id]; }
+  return G;
+}
+const isMine = t => t.n === C.team;
+function posses(G, off, def, force) {
+  const late = G.i >= G.N * 0.95 || G.ot;
+  const oc = force ? force.court : onCourt(off, G[off.n], late), dc = onCourt(def, G[def.n], late);
+  const D = dc.reduce((s, id) => s + P(id).a.def, 0) / 5;
+  const lvl = C.phase === 'HS' ? 40 : 62;
+  const dAdj = (D - lvl) * 0.0022;
+  const chemB = isMine(off) ? (C.chem - 50) * 0.0003 : 0;
+  const B = G.box;
+  const shooter = force ? force.shooter : wpick(oc, id => Math.pow(Math.max(5, ovrOf(P(id)) - 28), 1.5) * (id === 'ME' && C.role === '核心' ? 1.2 : 1));
+  const p = P(shooter), a = p.a;
+  // 失誤
+  if (!force && Math.random() < 0.12 - a.pass * 0.0004) {
+    if (Math.random() < 0.6) { const st = wpick(dc, id => Math.pow(P(id).a.def, 2)); B[st].stl++; ev(G, def, st, `${P(st).name}抄截${p.name}`, st === 'ME'); }
+    return 0;
+  }
+  const moraleB = shooter === 'ME' ? (C.morale - 50) * 0.0005 : 0;
+  const w3 = Math.pow(a.three, 2.2) * (p.pos === 'C' ? 0.25 : 1), wd = Math.pow(a.drive, 2.2), wm = Math.pow(a.shoot, 2.2);
+  let type = force ? force.type : wpick(['3','d','2'], x => x === '3' ? w3 : x === 'd' ? wd : wm);
+  let pts = 0, made = false, txt = '';
+  const bs = B[shooter];
+  if (type === '3') { bs.fga++; bs.tpa++; made = Math.random() < 0.19 + a.three * 0.0024 - dAdj + chemB + moraleB + (force ? force.bonus : 0); if (made) { pts = 3; bs.tpm++; txt = pick(['底角三分命中','弧頂三分，唰！','後撤步三分進了','接球就投，三分空心']); } else txt = '三分不進'; }
+  else if (type === '2') { bs.fga++; made = Math.random() < 0.28 + a.shoot * 0.0026 - dAdj + chemB + moraleB + (force ? force.bonus : 0); if (made) { pts = 2; txt = pick(['中距離跳投命中','急停跳投進了','轉身後仰跳投得手']); } else txt = '中距離不進'; }
+  else {
+    if (!force && Math.random() < 0.16) { const ft = 0.55 + a.shoot * 0.004; let m = 0; for (let k = 0; k < 2; k++) { bs.fta++; if (Math.random() < ft) { m++; bs.ftm++; } } bs.pts += m; G.s[off.n] += m; if (m && (shooter === 'ME' || Math.random() < 0.15)) ev(G, off, shooter, `${p.name}切入造成犯規，罰球 ${m}/2`, shooter === 'ME'); return m; }
+    bs.fga++; made = Math.random() < 0.38 + a.drive * 0.003 + a.ath * 0.0008 - dAdj + chemB + moraleB + (force ? force.bonus : 0);
+    if (made) { pts = 2; const dunk = a.ath > 62 && Math.random() < 0.4; txt = dunk ? pick(['暴力灌籃！','空中接力灌籃！','單手爆扣！']) : pick(['切入上籃得手','歐洲步上籃','拋投得分','禁區強打得分']); if (Math.random() < 0.1) { bs.fta++; if (Math.random() < 0.55 + a.shoot * 0.004) { bs.ftm++; pts++; txt += '，還加罰命中'; } } }
+    else if (Math.random() < 0.18) { const bl = wpick(dc, id => Math.pow(P(id).a.def, 2) * (P(id).pos === 'C' ? 3 : P(id).pos === 'F' ? 1.3 : 0.4)); B[bl].blk++; txt = `切入被${P(bl).name}蓋了火鍋`; if (bl === 'ME') ev(G, def, 'ME', `${C.name}一記火鍋蓋掉${p.name}！`, true); }
+    else txt = '切入上籃不進';
+  }
+  if (made) {
+    bs.fgm++; bs.pts += pts; G.s[off.n] += pts;
+    let astTxt = '';
+    if (Math.random() < (type === 'd' ? 0.45 : 0.62) + (isMine(off) ? (C.chem - 50) * 0.002 : 0)) { const others = oc.filter(id => id !== shooter); if (others.length) { const as = wpick(others, id => Math.pow(P(id).a.pass, 2.2)); B[as].ast++; astTxt = `（${P(as).name}助攻）`; if (as === 'ME' && shooter !== 'ME') ev(G, off, 'ME', `${C.name}妙傳，${p.name}${txt}`, true); } }
+    if (shooter === 'ME' || pts === 3 && Math.random() < 0.25 || txt.includes('灌籃') && Math.random() < 0.6 || Math.random() < 0.06) ev(G, off, shooter, `${p.name}${txt}${astTxt}`, shooter === 'ME', pts === 3 || txt.includes('灌籃'));
+  } else {
+    if (shooter === 'ME') ev(G, off, 'ME', `${C.name}${txt}`, true);
+    // 籃板
+    const offReb = Math.random() < 0.26;
+    const rt = offReb ? off : def, rc = offReb ? oc : dc;
+    const rb = wpick(rc, id => Math.pow(P(id).a.reb, 2) * POS[P(id).pos].rf);
+    B[rb].reb++;
+    if (rb === 'ME' && offReb) ev(G, off, 'ME', `${C.name}搶下進攻籃板`, true);
+  }
+  return pts;
+}
+function ev(G, t, id, txt, me, big) { if (!G.opt.watch) return; G.feed.push({ t: t.c, txt, me, big, clk: clockOf(G).s }); }
+function clockOf(G) { if (G.ot) { const k = (G.i - G.N) % 20; return { q:'延長', s: fmtC(5 - k / 20 * 5) }; } const t = Math.min(48, G.i / G.N * 48); const q = Math.min(4, Math.floor(t / 12) + 1); return { q:`Q${q}`, s: fmtC(12 - (t - (q - 1) * 12)) }; }
+const fmtC = m => `${Math.floor(m)}:${String(Math.floor((m % 1) * 60)).padStart(2, '0')}`;
+
+// 跑一整場（非觀看）
+function runQuick(G) {
+  const h = G.home, a = G.away;
+  while (true) {
+    const end = G.N + G.ot * 20;
+    if (G.i >= end) { if (G.s[h.n] === G.s[a.n]) { G.ot++; continue; } break; }
+    const off = G.i % 2 === 0 ? h : a, def = off === h ? a : h;
+    // 我方最後一擊（自動）
+    if ((isMine(off)) && !G.finalDone && !G.ot && G.i >= G.N - 2) { const d = G.s[off.n] - G.s[def.n]; if (d <= 0 && d >= -3) { G.finalDone = true; autoClutch(G, off, def, d); G.i++; continue; } }
+    posses(G, off, def); G.i++;
+  }
+  return G;
+}
+function autoClutch(G, off, def, d) {
+  const oc = onCourt(off, G[off.n], true);
+  if (!oc.includes('ME')) return posses(G, off, def);
+  const type = d === -3 ? '3' : C.players.ME.a.drive > C.players.ME.a.shoot ? 'd' : '2';
+  const before = G.s[off.n];
+  posses(G, off, def, { court: oc, shooter: 'ME', type, bonus: clutchBonus() });
+  if (G.s[off.n] > G.s[def.n] && before <= G.s[def.n]) G.clutchHit = true;
+}
+const clutchBonus = () => C.iq / 500 + (has('HS_CHAMP') ? 0.08 : 0) + (has('CLUTCH') ? 0.12 : 0) + (C.chem - 50) * 0.001;
+function finalize(G) {
+  const h = G.home, a = G.away, hs = G.s[h.n], as = G.s[a.n];
+  const win = hs > as ? h : a, lose = win === h ? a : h;
+  if (!G.opt.playoff) { win.w++; lose.l++; h.pf += hs; h.pa += as; a.pf += as; a.pa += hs; }
+  for (const id in G.box) { const b = G.box[id], p = P(id); if (!p) continue; if (b.min > 0 && !G.opt.playoff) { p.st.g++; p.car.g++; for (const k in b) { p.st[k] += b[k]; p.car[k] += b[k]; } } }
+  return { win, lose };
+}
+const gameScore = b => b.pts + 0.7 * b.reb + 0.9 * b.ast + 1.2 * (b.stl + b.blk) - 0.35 * (b.fga - b.fgm);
 
 // ===================== 畫面 =====================
 function showOnly(id) { ['sTitle','sCreate','sHub','sHall'].forEach(x => $(x).classList.toggle('hide', x !== id)); window.scrollTo(0, 0); }
-function showHub() { showOnly('sHub'); renderHub(); }
-let tab = 'week';
-document.querySelectorAll('#tabs button').forEach(b => b.onclick = () => { tab = b.dataset.t; renderHub(); });
-function sbar(l, v, col) { return `<div class="stat"><span class="l">${l}</span><div class="bar"><i style="width:${Math.min(100, v)}%;background:${col}"></i></div><span class="v">${Math.round(v)}</span></div>`; }
+function setTC() { const t = C && C.teams ? myTeam() : null; document.documentElement.style.setProperty('--tc', t ? t.c : '#3fa7d6'); }
+function showHub() { showOnly('sHub'); setTC(); renderHub(); }
+let tab = 'week', ltab = 'stand', lteam = null;
+document.querySelectorAll('#tabs button').forEach(b => b.onclick = () => { tab = b.dataset.t; renderHub(); window.scrollTo(0, 0); });
+function meter(label, v, col) { return `<div class="meter"><div class="t"><span>${label}</span><b>${Math.round(v)}</b></div><div class="b"><i style="width:${clamp(v, 0, 100)}%;background:${col}"></i></div></div>`; }
 function renderHub() {
-  $('hArt').innerHTML = art(C.injury ? 'injury' : C.phase === 'HS' ? 'school' : 'gym', C.team.c, C.week + C.year * 13);
-  $('hAvatar').innerHTML = avatar(C.look, C.team.c, C.num);
-  $('hName').textContent = C.name;
-  const T = myTeam();
-  $('hSub').innerHTML = `${C.team.n}・${POS[C.pos].n}・${C.role}（${MIN[C.role]} 分鐘）`;
-  $('hWhen').innerHTML = (C.phase === 'HS' ? `高${'一二三'[C.year-1]}・第 ${C.week}/${C.weeks} 週` : `職業第 ${C.proYear} 年・第 ${C.week}/${C.weeks} 週`) + `　<span class="muted">戰績 ${T.w}-${T.l}</span>`;
-  $('hOvr').innerHTML = `${ovr()}<small>總評</small>`;
+  const T = myTeam(), o = ovr();
+  if (o >= 80) unlock('o80'); if (o >= 90) unlock('o90');
+  $('hero').innerHTML = `<div class="bg"></div><div class="bg2">${logo(T, 200)}</div>
+    <div class="in"><div class="av">${avatar(C.look, T.c, C.num)}</div><div style="flex:1;min-width:0"><div class="nm">${C.name}</div>
+    <div class="sub">${POS[C.pos].n}・${C.height}cm・${C.age} 歲</div><div class="sub mini-team" style="margin-top:4px">${logo(T, 22)}<span>${T.n}・${C.role}</span></div>
+    <div class="sub" style="margin-top:4px">${C.phase === 'HS' ? `高${'一二三'[C.year-1]}` : `職業第 ${C.proYear} 年`}・第 ${C.week}/${C.weeks} 週・戰績 <b>${T.w}-${T.l}</b></div></div>${badge(o)}</div>
+    <div class="meters">${meter('😊 士氣', C.morale, '#5fd68a')}${meter('🤝 默契', C.chem, '#5aa9ff')}${meter('😮‍💨 疲勞', C.fatigue, C.fatigue >= 70 ? '#ff6b6b' : '#ffb84d')}</div>`;
   $('hNote').innerHTML = C.note; $('hNote').classList.toggle('hide', !C.note);
   document.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('on', b.dataset.t === tab));
   ['week','me','league','ach'].forEach(t => $('t' + t[0].toUpperCase() + t.slice(1)).classList.toggle('hide', tab !== t));
-  if (tab === 'week') renderWeek(); if (tab === 'me') renderMe(); if (tab === 'league') renderLeague(); if (tab === 'ach') renderAch();
+  ({ week: renderWeek, me: renderMe, league: renderLeague, ach: renderAch })[tab]();
 }
+const TRAIN = [['shoot','🎯','中距練習'],['three','🏹','三分練習'],['drive','⚡','切入終結'],['pass','🧠','傳球視野'],['reb','💪','籃板卡位'],['def','🛡️','防守腳步'],['ath','🏋️','體能重訓'],['team','🤝','團隊配合'],['iq','📼','看比賽錄影'],['rest','😴','休息']];
 function renderWeek() {
-  const L = C.season;
-  let h = `<div class="card"><h3>${C.phase === 'HS' ? '本季' : '本季'}平均</h3><table><tr><th>場</th><th>得分</th><th>籃板</th><th>助攻</th><th>抄+阻</th><th>命中</th><th>三分</th></tr>
-    <tr><td>${L.g}</td><td><b>${avg(L,'pts')}</b></td><td>${avg(L,'reb')}</td><td>${avg(L,'ast')}</td><td>${L.g ? f1((L.stl + L.blk) / L.g) : '0.0'}</td><td>${pct(L.fgm, L.fga)}</td><td>${pct(L.tpm, L.tpa)}</td></tr></table></div>`;
-  h += `<div class="card"><h3>本週訓練 <span class="muted" style="font-size:14px">（選一項，然後打本週 ${C.gpw} 場比賽）</span></h3><div class="grid3" id="trainBtns"></div>
-    <div class="chips"><span class="chip ${C.fatigue >= 70 ? 'bad' : ''}">疲勞 ${Math.round(C.fatigue)}</span>${C.injury ? `<span class="chip bad">傷停 ${C.injury} 週</span>` : ''}<span class="chip">球商 ${C.iq}</span><span class="chip">教練信任 ${C.trust}</span>${C.phase === 'PRO' ? `<span class="chip">年薪 ${C.salary} 萬</span><span class="chip">合約剩 ${C.contract} 年</span>` : ''}</div></div>`;
-  const R = mvpRace(), myR = R.findIndex(r => r.me);
-  h += `<div class="card"><h3>MVP 排行 ${myR >= 0 ? `<span class="gold" style="font-size:15px">你排第 ${myR + 1}</span>` : ''}</h3><table>${R.slice(0, 5).map((r, i) => `<tr class="${r.me ? 'me' : ''}"><td>${i + 1}</td><td class="l">${r.name}</td><td class="l muted">${r.team}</td><td>${f1(r.v)}</td></tr>`).join('')}</table></div>`;
+  const L = ME().st, g = Math.max(1, L.g);
+  let h = `<div class="card"><h3>📊 本季平均</h3><table><tr><th>場</th><th>分鐘</th><th>得分</th><th>籃板</th><th>助攻</th><th>抄截</th><th>阻攻</th><th>命中</th></tr>
+    <tr class="me"><td>${L.g}</td><td>${f1(L.min / g)}</td><td>${f1(L.pts / g)}</td><td>${f1(L.reb / g)}</td><td>${f1(L.ast / g)}</td><td>${f1(L.stl / g)}</td><td>${f1(L.blk / g)}</td><td>${L.fga ? Math.round(L.fgm / L.fga * 100) + '%' : '—'}</td></tr></table></div>`;
+  h += `<div class="card"><h3>🏋️ 本週訓練 <span class="muted" style="font-size:13px;font-weight:400">選一項，接著打本週 ${C.gpw} 場</span></h3><div class="trains" id="trainBtns"></div>
+    <div class="chips"><span class="chip">🧠 球商 ${C.iq}</span><span class="chip">📋 教練信任 ${C.trust}</span>${C.injury ? `<span class="chip bad">🩹 傷停 ${C.injury} 週</span>` : ''}${C.phase === 'PRO' ? `<span class="chip">💰 年薪 ${C.salary} 萬</span><span class="chip">📝 合約剩 ${C.contract} 年</span>` : ''}</div></div>`;
+  const R = mvpRace(), myR = R.findIndex(r => r.id === 'ME');
+  h += `<div class="card"><h3>👑 MVP 排行 ${myR >= 0 ? `<span class="gold" style="font-size:13px">你第 ${myR + 1}</span>` : ''}</h3><table>${R.slice(0, 5).map((r, i) => `<tr class="${r.id === 'ME' ? 'me' : ''}"><td>${i + 1}</td><td class="l">${P(r.id).name}</td><td class="l"><span class="mini-team">${logo(team(P(r.id).team), 18)}<span class="muted">${P(r.id).team}</span></span></td><td>${f1(r.ppg)} 分</td></tr>`).join('')}</table></div>`;
   if (C.phase === 'PRO' && C.age >= 32) h += `<button class="ghost" id="bRetire" style="width:100%">宣布退休</button>`;
   $('tWeek').innerHTML = h;
-  const T = [['shoot','中距練習'],['three','三分練習'],['drive','切入／終結'],['pass','傳球視野'],['reb','籃板卡位'],['def','防守腳步'],['ath','體能重訓'],['iq','看比賽錄影'],['rest','休息']];
-  for (const [k, n] of T) {
-    const b = document.createElement('button'); b.className = 'ghost';
-    b.innerHTML = `${n}<small>${k === 'rest' ? '疲勞 -45' : k === 'iq' ? '球商 +8' : ATTR[k] + ' ' + Math.round(C.a[k])}</small>`;
+  for (const [k, ic, n] of TRAIN) {
+    const b = document.createElement('button'); b.className = 'tr';
+    const sub = k === 'rest' ? '疲勞 -45' : k === 'iq' ? `球商 ${C.iq}` : k === 'team' ? `默契 ${Math.round(C.chem)}` : `${ATTR[k]} ${Math.round(ME().a[k])}`;
+    b.innerHTML = `<span class="ic">${ic}</span><span>${n}<small>${sub}</small></span>`;
     if (C.injury && k !== 'rest') b.disabled = true;
     b.onclick = () => train(k); $('trainBtns').appendChild(b);
   }
-  if (C.injury) { const b = $('trainBtns').lastChild; b.innerHTML = '復健<small>傷停中</small>'; }
+  if (C.injury) $('trainBtns').lastChild.innerHTML = `<span class="ic">🩹</span><span>復健<small>傷停 ${C.injury} 週</small></span>`;
   if ($('bRetire')) $('bRetire').onclick = () => scene('退休', `你今年 ${C.age} 歲。要在這裡畫下句點嗎？`, [{ label:'宣布退休', fn:() => retire() }, { label:'再打一年', fn:() => closeScene() }], 'night');
 }
+function potGrade(p) { const v = p.pot; return v >= 92 ? 'S' : v >= 87 ? 'A+' : v >= 82 ? 'A' : v >= 77 ? 'B+' : v >= 72 ? 'B' : 'C'; }
 function renderMe() {
-  const cols = { shoot:'#ffb84d', three:'#f39c12', drive:'#ef6461', pass:'#5aa9ff', reb:'#4bcffa', def:'#6fd08c', ath:'#c792ea' };
-  let s = ''; for (const k in ATTR) s += sbar(ATTR[k], C.a[k], cols[k]);
-  const K = C.career;
-  $('tMe').innerHTML = `<div class="card"><h3>能力（總評 ${ovr()}）</h3>${s}<div class="chips"><span class="chip">身高 ${C.height}cm</span><span class="chip">${C.age} 歲</span>${C.phase === 'PRO' ? `<span class="chip">存款 ${C.money} 萬</span>` : ''}<span class="chip">💍 ${C.rings}</span><span class="chip">🌟 明星賽 ${C.allstars}</span><span class="chip">👑 MVP ${C.mvps}</span></div></div>
-    <div class="card"><h3>生涯</h3><table><tr><th>年度</th><th>隊</th><th>場</th><th>分</th><th>板</th><th>助</th><th>命中</th></tr>
-    ${C.seasons.map(x => `<tr><td>${x.label}</td><td class="muted">${x.team.slice(0, 2)}</td><td>${x.g}</td><td>${avg(x,'pts')}</td><td>${avg(x,'reb')}</td><td>${avg(x,'ast')}</td><td>${pct(x.fgm, x.fga)}</td></tr>`).join('')}
-    <tr class="me"><td>生涯</td><td></td><td>${K.g}</td><td>${avg(K,'pts')}</td><td>${avg(K,'reb')}</td><td>${avg(K,'ast')}</td><td>${pct(K.fgm, K.fga)}</td></tr></table>
-    <div class="muted" style="margin-top:6px;font-size:14px">生涯總得分 ${K.pts}　${C.awards.length ? '獎項：' + C.awards.join('、') : ''}</div></div>`;
+  const me = ME(), K = me.car;
+  let bars = ''; for (const k in ATTR) bars += `<div class="attr"><span class="l">${ATTR[k]}</span><div class="bar"><i style="width:${me.a[k]}%;background:${ATTR_COL[k]}"></i><u style="left:${me.pot}%"></u></div><span class="v">${Math.round(me.a[k])}</span></div>`;
+  $('tMe').innerHTML = `<div class="card"><h3>📈 能力雷達</h3>${radar(me.a)}<div class="row" style="justify-content:center;gap:16px;margin-top:4px">${badge(ovr(), '總評')}${badge(Math.round(me.pot), '潛力 ' + potGrade(me))}</div></div>
+    <div class="card"><h3>🔢 能力值 <span class="muted" style="font-size:12px;font-weight:400">白線是潛力上限，越接近越難練</span></h3>${bars}
+    <div class="chips"><span class="chip">💍 ${C.rings}</span><span class="chip">🌟 明星賽 ${C.allstars}</span><span class="chip">👑 MVP ${C.mvps}</span>${C.phase === 'PRO' ? `<span class="chip">💰 存款 ${C.money} 萬</span>` : ''}</div></div>
+    <div class="card"><h3>📜 生涯</h3><div class="scroll-x"><table><tr><th class="l">年度</th><th>隊</th><th>場</th><th>分</th><th>板</th><th>助</th><th>命中</th></tr>
+    ${C.seasons.map(x => `<tr><td class="l">${x.label}</td><td class="muted">${x.team.slice(0, 2)}</td><td>${x.g}</td><td>${f1(x.pts / Math.max(1, x.g))}</td><td>${f1(x.reb / Math.max(1, x.g))}</td><td>${f1(x.ast / Math.max(1, x.g))}</td><td>${x.fga ? Math.round(x.fgm / x.fga * 100) + '%' : '—'}</td></tr>`).join('')}
+    <tr class="me"><td class="l">生涯</td><td></td><td>${K.g}</td><td>${f1(K.pts / Math.max(1, K.g))}</td><td>${f1(K.reb / Math.max(1, K.g))}</td><td>${f1(K.ast / Math.max(1, K.g))}</td><td>${K.fga ? Math.round(K.fgm / K.fga * 100) + '%' : '—'}</td></tr></table></div>
+    <div class="muted" style="margin-top:6px;font-size:13px">生涯總得分 ${K.pts}${C.awards.length ? '　獎項：' + C.awards.join('、') : ''}</div></div>`;
+}
+function leaders(stat, minG) {
+  const rows = [];
+  for (const id in C.players) { const p = C.players[id]; if (!p.team || p.st.g < minG) continue; const v = stat === 'fg' ? (p.st.fga >= p.st.g * 5 ? p.st.fgm / p.st.fga * 100 : -1) : stat === 'sb' ? (p.st.stl + p.st.blk) / p.st.g : p.st[stat] / p.st.g; if (v >= 0) rows.push({ id, v }); }
+  return rows.sort((a, b) => b.v - a.v);
+}
+function mvpRace() {
+  const minG = Math.max(1, Math.floor(myTeam().w + myTeam().l) * 0.5);
+  const rows = [];
+  for (const id in C.players) { const p = C.players[id]; if (!p.team || p.st.g < minG || !p.st.g) continue; const g = p.st.g, t = team(p.team), wp = t.w + t.l ? t.w / (t.w + t.l) : 0.5;
+    rows.push({ id, ppg: p.st.pts / g, v: p.st.pts / g + 0.8 * p.st.reb / g + p.st.ast / g + 1.2 * (p.st.stl + p.st.blk) / g + wp * 14 }); }
+  return rows.sort((a, b) => b.v - a.v);
 }
 function renderLeague() {
-  const st = standings();
-  const lead = (k, n) => { const r = leaderRows(k); const me = r.findIndex(x => x.me); return `<div class="card"><h3>${n}排行${me >= 0 ? `　<span class="gold" style="font-size:14px">你第 ${me + 1}</span>` : ''}</h3><table>${r.slice(0, 5).map((x, i) => `<tr class="${x.me ? 'me' : ''}"><td>${i + 1}</td><td class="l">${x.name}</td><td class="l muted">${x.team}</td><td>${f1(x.v)}</td></tr>`).join('')}</table></div>`; };
-  $('tLeague').innerHTML = `<div class="card"><h3>戰績排名 <span class="muted" style="font-size:14px">（前 4 名進季後賽）</span></h3><table><tr><th></th><th class="l">球隊</th><th>勝</th><th>敗</th><th>實力</th></tr>${st.map((t, i) => `<tr class="${t.n === C.team.n ? 'me' : ''}"><td>${i + 1}</td><td class="l"><span style="color:${t.c}">●</span> ${t.n}</td><td>${t.w}</td><td>${t.l}</td><td class="muted">${t.r}</td></tr>`).join('')}</table></div>` + lead('pts', '得分') + lead('reb', '籃板') + lead('ast', '助攻');
+  let h = `<div class="sub-tabs">${[['stand','📋 戰績'],['lead','🏅 球員排行'],['teams','👥 球隊名單']].map(([k, n]) => `<button data-l="${k}" class="${ltab === k ? 'on' : ''}">${n}</button>`).join('')}</div>`;
+  const tg = Math.max(1, myTeam().w + myTeam().l), minG = Math.max(1, Math.floor(tg * 0.4));
+  if (ltab === 'stand') {
+    const st = standings();
+    h += `<div class="card"><h3>📋 戰績排名 <span class="muted" style="font-size:12px;font-weight:400">前 4 名進季後賽</span></h3><table><tr><th></th><th class="l">球隊</th><th>勝</th><th>敗</th><th>得分</th><th>失分</th><th>總評</th></tr>${st.map((t, i) => { const g = Math.max(1, t.w + t.l); return `<tr class="${t.n === C.team ? 'me' : ''}" ${i === 3 ? 'style="border-bottom:2px solid #ffb84d"' : ''}><td>${i + 1}</td><td class="l"><span class="mini-team">${logo(t, 22)}${t.n}</span></td><td>${t.w}</td><td>${t.l}</td><td>${f1(t.pf / g)}</td><td>${f1(t.pa / g)}</td><td class="muted">${teamOvr(t)}</td></tr>`; }).join('')}</table></div>`;
+  } else if (ltab === 'lead') {
+    for (const [k, n] of [['pts','得分'],['reb','籃板'],['ast','助攻'],['sb','抄截＋阻攻'],['fg','命中率']]) {
+      const r = leaders(k, minG), mi = r.findIndex(x => x.id === 'ME');
+      h += `<div class="card"><h3>${n} ${mi >= 0 ? `<span class="gold" style="font-size:13px">你第 ${mi + 1}</span>` : ''}</h3><table>${r.slice(0, 8).map((x, i) => `<tr class="${x.id === 'ME' ? 'me' : ''}"><td>${i + 1}</td><td class="l">${P(x.id).name}</td><td class="l"><span class="mini-team">${logo(team(P(x.id).team), 18)}<span class="muted" style="font-size:12px">${P(x.id).team}</span></span></td><td class="muted">${POS[P(x.id).pos].n}</td><td><b>${f1(x.v)}${k === 'fg' ? '%' : ''}</b></td></tr>`).join('')}${mi >= 8 ? `<tr class="me"><td>${mi + 1}</td><td class="l">${C.name}</td><td></td><td></td><td>${f1(r[mi].v)}</td></tr>` : ''}</table></div>`;
+    }
+  } else {
+    const t = team(lteam || C.team);
+    h += `<div class="sub-tabs">${C.teams.map(x => `<button data-tm="${x.n}" class="${x.n === t.n ? 'on' : ''}">${x.m} ${x.n.slice(0, 2)}</button>`).join('')}</div>`;
+    const rs = t.roster.map(P).sort((a, b) => ovrOf(b) - ovrOf(a));
+    h += `<div class="card"><h3><span class="mini-team">${logo(t, 30)}${t.n}</span><span class="muted" style="font-size:13px;font-weight:400">${t.w}-${t.l}・總評 ${teamOvr(t)}</span></h3><div class="scroll-x"><table><tr><th class="l">球員</th><th>位置</th><th>年齡</th><th>總評</th><th>得分</th><th>籃板</th><th>助攻</th></tr>
+      ${rs.map(p => { const g = Math.max(1, p.st.g); return `<tr class="${p.id === 'ME' ? 'me' : ''}"><td class="l">${p.id === 'ME' ? C.name : p.name}</td><td class="muted">${POS[p.pos].n}</td><td>${p.age}</td><td><span style="display:inline-block;min-width:30px;border-radius:6px;padding:1px 4px;background:${tier(ovrOf(p)).bg};color:${tier(ovrOf(p)).fg};font-weight:900">${ovrOf(p)}</span></td><td>${f1(p.st.pts / g)}</td><td>${f1(p.st.reb / g)}</td><td>${f1(p.st.ast / g)}</td></tr>`; }).join('')}</table></div></div>`;
+  }
+  $('tLeague').innerHTML = h;
+  document.querySelectorAll('[data-l]').forEach(b => b.onclick = () => { ltab = b.dataset.l; renderLeague(); });
+  document.querySelectorAll('[data-tm]').forEach(b => b.onclick = () => { lteam = b.dataset.tm; renderLeague(); });
 }
 function renderAch() {
   const got = ACH.filter(a => C.ach[a[0]]).length;
-  $('tAch').innerHTML = `<div class="card"><h3>這一世的成就　<span class="gold">${got}/${ACH.length}</span></h3>${ACH.map(a => `<div class="ach ${C.ach[a[0]] ? '' : 'off'}"><div class="i">${a[1]}</div><div><b>${a[2]}</b>${C.ach[a[0]] ? `<span class="muted" style="font-size:13px">　${C.ach[a[0]]} 歲達成</span>` : ''}<div class="muted" style="font-size:14px">${a[3]}</div></div></div>`).join('')}</div>`;
+  $('tAch').innerHTML = `<div class="card"><h3>🎖️ 這一世的成就　<span class="gold">${got}/${ACH.length}</span></h3>${ACH.map(a => `<div class="ach ${C.ach[a[0]] ? '' : 'off'}"><div class="i">${a[1]}</div><div><b>${a[2]}</b>${C.ach[a[0]] ? `<span class="muted" style="font-size:12px">　${C.ach[a[0]]} 歲</span>` : ''}<div class="muted" style="font-size:13px">${a[3]}</div></div></div>`).join('')}</div>`;
 }
+const standings = () => [...C.teams].sort((a, b) => (b.w - b.l) - (a.w - a.l) || (b.pf - b.pa) - (a.pf - a.pa));
 
 // ===================== 場景 =====================
 function scene(title, text, choices, kind, color) {
-  $('sceneIn').innerHTML = (kind ? art(kind, color || (C && C.team.c) || '#5aa9ff', ri(1, 999)) : '') + `<h2>${title}</h2><div class="story">${text}</div><div class="col" id="chs"></div>`;
-  for (const c of choices) { const b = document.createElement('button'); b.className = 'choice'; b.innerHTML = c.label + (c.note ? `<small>${c.note}</small>` : ''); b.disabled = !!c.dis; b.onclick = () => c.fn(); $('chs').appendChild(b); }
+  $('sceneIn').innerHTML = (kind ? art(kind, color || (C && C.teams ? myTeam().c : '#5aa9ff'), ri(1, 999)) : '') + `<h2>${title}</h2><div class="story">${text}</div><div class="col" id="chs"></div>`;
+  for (const c of choices) { const b = document.createElement('button'); b.className = c.main ? '' : 'choice'; b.innerHTML = c.label + (c.note ? `<small>${c.note}</small>` : ''); b.onclick = () => c.fn(); $('chs').appendChild(b); }
   $('scene').classList.remove('hide'); $('scene').scrollTop = 0;
 }
 function closeScene() { $('scene').classList.add('hide'); if (!$('sHub').classList.contains('hide')) renderHub(); }
+function vsBlock(a, b) { return `<div class="vs"><div>${logo(a, 64)}<div class="t">${a.n}</div><div class="r">${a.w}-${a.l}・總評 ${teamOvr(a)}</div></div><div class="x">VS</div><div>${logo(b, 64)}<div class="t">${b.n}</div><div class="r">${b.w}-${b.l}・總評 ${teamOvr(b)}</div></div></div>`; }
 
-// ===================== 每週 =====================
+// ===================== 訓練 =====================
+function ageF() { const a = C.age; return a <= 18 ? 1.35 : a <= 22 ? 1.25 : a <= 25 ? 1.1 : a <= 28 ? 0.8 : a <= 31 ? 0.5 : 0.25; }
+function dimF(v, pot) { let f = v < 50 ? 1.1 : v < 60 ? 0.9 : v < 70 ? 0.7 : v < 80 ? 0.5 : v < 88 ? 0.32 : 0.18; if (v >= pot) f *= 0.04; else if (v >= pot - 6) f *= 0.45; return f; }
+function growAttr(k, base) {
+  const me = ME(); let mult = ageF() * (0.85 + C.morale / 333);
+  if ((k === 'shoot' || k === 'three') && has('P40')) mult *= 1.25;
+  if (k === 'def' && has('DPOY')) mult *= 1.25;
+  const g = base * mult * dimF(me.a[k], me.pot);
+  me.a[k] = Math.min(99, me.a[k] + g);
+  for (const [s, r] of Object.entries(SPILL[k] || {})) me.a[s] = Math.min(99, me.a[s] + g * r * dimF(me.a[s], me.pot));
+  return g;
+}
 function train(k) {
   let t = '';
-  if (C.injury) { C.injury--; C.fatigue = Math.max(0, C.fatigue - 35); t = '你在防護室做復健。'; }
-  else if (k === 'rest') { C.fatigue = Math.max(0, C.fatigue - 45); t = '你好好休息了一週。'; }
-  else if (k === 'iq') { C.iq = Math.min(100, C.iq + 8); C.fatigue += 4; t = '你把下一個對手的比賽錄影看了三遍。\n球商 +8（關鍵時刻判斷更準）'; }
+  if (C.injury) { C.injury--; C.fatigue = Math.max(0, C.fatigue - 35); t = '🩹 你在防護室做復健。'; }
+  else if (k === 'rest') { C.fatigue = Math.max(0, C.fatigue - 45); C.morale = Math.min(100, C.morale + 3); t = '😴 好好休息了一週，士氣 +3。'; }
+  else if (k === 'iq') { C.iq = Math.min(100, C.iq + 7); C.fatigue += 4; t = '📼 你把對手的錄影看了三遍。\n球商 +7（關鍵時刻更準、教練更信任）'; C.trust = Math.min(100, C.trust + 2); }
+  else if (k === 'team') { const add = has('CHAMP') ? 16 : 10; C.chem = Math.min(100, C.chem + add); C.fatigue += 6; growAttr('pass', 2); t = `🤝 你和隊友練了一整週的戰術跑位。\n團隊默契 +${add}，傳球小幅提升`; }
   else {
-    const tired = C.fatigue >= 60 ? 0.6 : 1, g = rnd(2.4, 4.2) * growth(k) * tired;
-    C.a[k] = Math.min(99, C.a[k] + g); C.fatigue += rnd(10, 15);
-    t = `${ATTR[k]} <span class="good">+${g.toFixed(1)}</span>${tired < 1 ? '　<span class="muted">（太疲勞，效果打折）</span>' : ''}`;
-    if (C.fatigue > 72 && Math.random() < (C.fatigue - 68) * 0.012 * (has('UNDRAFTED') ? 0.65 : 1)) { const w = ri(1, 3); C.injury = w; C.fatigue = 30; t += `\n\n<span class="bad">練太兇，腳踝扭傷了，傷停 ${w} 週。</span>`; }
+    const tired = C.fatigue >= 65 ? 0.6 : 1;
+    const before = ovr();
+    const g = growAttr(k, rnd(4, 6) * tired);
+    C.fatigue += rnd(8, 11);
+    t = `${TRAIN.find(x => x[0] === k)[1]} ${ATTR[k]} <span class="good">+${g.toFixed(1)}</span>${Object.keys(SPILL[k] || {}).length ? `（連帶 ${Object.keys(SPILL[k]).map(s => ATTR[s]).join('、')} 小幅提升）` : ''}${tired < 1 ? '\n<span class="muted">太疲勞，效果打折</span>' : ''}${ME().a[k] >= ME().pot - 5 ? '\n<span class="muted">已接近潛力上限，越來越難進步</span>' : ''}`;
+    if (ovr() > before) t += `\n\n總評 <b class="gold">${before} → ${ovr()}</b>`;
+    if (C.fatigue > 75 && Math.random() < (C.fatigue - 70) * 0.012 * (has('UNDRAFTED') ? 0.65 : 1)) { const w = ri(1, 3); C.injury = w; C.fatigue = 35; t += `\n\n<span class="bad">練太兇，腳踝扭傷了，傷停 ${w} 週（疲勞超過 75）。</span>`; }
   }
   C.note = ''; saveRun();
   playWeek(t);
 }
-async function playWeek(trainText) {
-  const games = [];
-  for (let i = 0; i < C.gpw; i++) games.push(pick(C.league.filter(t => t.n !== C.team.n)));
-  let i = 0;
+
+// ===================== 每週流程 =====================
+function pairings() {
+  const ts = [...C.teams].sort(() => Math.random() - 0.5), pairs = [];
+  for (let i = 0; i + 1 < ts.length; i += 2) pairs.push([ts[i], ts[i + 1]]);
+  return pairs;
+}
+function playWeek(trainText) {
+  let round = 0;
   const next = () => {
-    if (i >= games.length) return endWeek();
-    const o = games[i]; i++;
-    if (C.injury) { const win = Math.random() < 0.5 + (myTeam().r - o.r) * 0.02 - 0.08; recordTeam(win); return scene('傷停中', `你坐在場邊看隊友對 ${o.n}。\n\n${win ? '球隊贏了' : '球隊輸了'}`, [{ label:'繼續', fn:() => { closeScene(); next(); } }], 'injury'); }
-    const T = myTeam(), isRival = C.phase === 'HS' && C.stars.find(s => s.name === C.rival && s.team === o.n);
-    scene(`第 ${C.week} 週・第 ${i} 場`, `${trainText && i === 1 ? trainText + '\n\n' : ''}<b>${C.team.n}</b>（${T.w}-${T.l}）vs <b>${o.n}</b>（${o.w}-${o.l}）\n你的角色：${C.role}，約 ${MIN[C.role]} 分鐘${isRival ? `\n\n<b class="bad">宿敵 ${C.rival} 在對面。</b>` : ''}`, [
-      { label:'🏀 觀看比賽', note:'即時播出，最後關頭由你決定', fn:() => { closeScene(); startGame(o, { watch: true, onEnd: next }); } },
-      { label:'⏭ 直接看結果', fn:() => { closeScene(); startGame(o, { watch: false, onEnd: next }); } },
-    ], 'arena', o.c);
+    if (round >= C.gpw) return endWeek();
+    round++;
+    const pairs = pairings();
+    const mine = pairs.find(p => p.some(isMine));
+    for (const pr of pairs) if (pr !== mine) { const G = simGame(pr[0], pr[1]); runQuick(G); finalize(G); }
+    const [h, a] = mine[0].n === C.team ? mine : [mine[1], mine[0]];
+    const intro = (trainText && round === 1 ? `<div class="card" style="font-size:15px;line-height:1.7;white-space:pre-wrap">${trainText}</div>` : '');
+    const rival = C.phase === 'HS' && a.roster.some(id => P(id).name === C.rival);
+    $('sceneIn').innerHTML = intro + `<h2>第 ${C.week} 週・第 ${round} 場</h2>` + vsBlock(h, a) + `<div class="muted" style="text-align:center;margin-bottom:12px">你是${C.role}${C.injury ? '（傷停中）' : ''}${rival ? `<br><b class="bad">宿敵 ${C.rival} 在對面</b>` : ''}</div><div class="col" id="chs"></div>`;
+    const go = watch => { $('scene').classList.add('hide'); playGame(h, a, { watch, onEnd: next }); };
+    const b1 = document.createElement('button'); b1.innerHTML = '🏀 觀看比賽'; b1.onclick = () => go(true);
+    const b2 = document.createElement('button'); b2.className = 'ghost'; b2.innerHTML = '⏭ 直接看結果'; b2.onclick = () => go(false);
+    $('chs').append(b1, b2); $('scene').classList.remove('hide'); $('scene').scrollTop = 0;
   };
   next();
 }
-function recordTeam(win) { const T = myTeam(); if (win) T.w++; else T.l++; }
 function endWeek() {
-  simOthersWeek();
   C.week++;
-  C.fatigue = Math.max(0, C.fatigue - 6);
+  C.fatigue = Math.max(0, C.fatigue - 8);
+  if (['板凳'].includes(C.role)) C.morale = Math.max(0, C.morale - 2);
+  assignRole();
   if (C.phase === 'PRO' && !C.allstarDone && C.week > C.weeks / 2) { C.allstarDone = true; return allStar(); }
   if (C.week > C.weeks) return endRegular();
   saveRun(); showHub();
 }
 function allStar() {
-  const rows = C.stars.map(s => ({ name: s.name, v: mvpScore(s, s.team) })); rows.push({ name: C.name, v: mvpScore(C.season, C.team.n), me: true }); rows.sort((a, b) => b.v - a.v);
-  const rank = rows.findIndex(r => r.me) + 1;
-  if (rank <= 8) { C.allstars++; unlock('allstar'); C.highlights.push(`職業第 ${C.proYear} 年入選明星賽`); C.trust = Math.min(100, C.trust + 5); saveRun();
-    return scene('🌟 明星賽', `票選結果出爐——你以第 ${rank} 名入選明星賽！\n這是你第 ${C.allstars} 次入選。`, [{ label:'繼續', fn:() => { closeScene(); showHub(); } }], 'arena'); }
-  saveRun(); scene('明星賽票選', `明星賽名單公布，你排在第 ${rank} 名，這次沒有入選（前 8 名入選）。\n下半季再加油。`, [{ label:'繼續', fn:() => { closeScene(); showHub(); } }], 'gym');
+  const R = mvpRace(), rank = R.findIndex(r => r.id === 'ME') + 1;
+  if (rank && rank <= 10) { C.allstars++; unlock('allstar'); C.highlights.push(`職業第 ${C.proYear} 年入選明星賽`); C.morale = Math.min(100, C.morale + 10); C.trust = Math.min(100, C.trust + 5); saveRun();
+    return scene('🌟 明星賽', `明星賽名單出爐——你以第 ${rank} 名入選！\n這是你第 ${C.allstars} 次入選。\n士氣 +10`, [{ label:'繼續', main:true, fn:() => { closeScene(); showHub(); } }], 'arena'); }
+  saveRun(); scene('明星賽名單', `明星賽名單公布，你排在第 ${rank || '—'} 名，這次沒有入選（前 10 名入選）。\n\n入選的球員：${R.slice(0, 10).map(r => P(r.id).name).join('、')}`, [{ label:'繼續', main:true, fn:() => { closeScene(); showHub(); } }], 'gym');
 }
 
-// ===================== 比賽引擎 =====================
+// ===================== 觀看比賽 =====================
 let GM = null;
-function startGame(opp, opt) {
-  const T = myTeam(), hs = C.phase === 'HS';
-  const N = ri(188, 200);
-  const mins = clamp(MIN[C.role] + ri(-3, 3), 6, 42);
-  const o = ovr();
-  const usage = { 板凳:.17, 輪替:.19, 先發:.22, 核心:.28 }[C.role] * (0.7 + o / 150);
-  const oppStar = C.stars.filter(s => s.team === opp.n).sort((a, b) => b.ppg - a.ppg)[0];
-  GM = { opp, opt, T, N, i: 0, our: 0, them: 0, mins, usage, me: line(), hist: [0], feed: [], oppStar, ot: 0, clutchDone: false, finalDone: false, speed: opt.watch ? 55 : 0, paused: false, clutchHit: false, starPts: 0 };
-  GM.me.min = mins;
-  if (opt.watch) {
-    $('game').classList.remove('hide'); $('game').scrollTop = 0;
-    $('gHome').textContent = C.team.n; $('gAway').textContent = opp.n; $('gFeed').innerHTML = ''; $('gClutch').innerHTML = '';
-    $('gSpeed').textContent = '⏩ 快轉'; $('gSpeed').disabled = false; $('gSkip').disabled = false;
-    feed(`<div class="q">${C.team.n} vs ${opp.n}　比賽開始！</div>`);
-  }
-  runGame();
+function playGame(h, a, opt) {
+  const G = simGame(h, a, opt); GM = G; G.speed = opt.watch ? 45 : 0; G.fi = 0;
+  if (!opt.watch) { runQuick(G); return endGame(G); }
+  $('game').classList.remove('hide'); $('game').scrollTop = 0; $('gFeed').innerHTML = ''; $('gClutch').innerHTML = '';
+  document.documentElement.style.setProperty('--hc', h.c); document.documentElement.style.setProperty('--ac', a.c);
+  $('gSpeed').textContent = '⏩ 快轉'; $('gSpeed').disabled = false; $('gSkip').disabled = false;
+  G.feed.push({ q: true, txt: `${h.n} vs ${a.n}　比賽開始` });
+  watchLoop(G);
 }
-function onCourt(i) {
-  // 你在場上的時段：開場、第三節開場、末段（主力）
-  const t = i / GM.N * 48, m = GM.mins;
-  if (m >= 30) return !(t > 9 && t < 9 + (48 - m) / 2) && !(t > 33 && t < 33 + (48 - m) / 2);
-  const start = C.role === '輪替' ? 10 : 14;
-  return (t >= start && t < start + m / 2) || (t >= 34 && t < 34 + m / 2) || (t >= 46 && C.trust >= 50);
-}
-function clock(i) {
-  const total = GM.N, t = Math.min(48, i / total * 48);
-  if (GM.ot) { const left = Math.max(0, 5 - ((i - total) % 20) / 20 * 5); return { q:'延長賽', s: fmtClock(left) }; }
-  const q = Math.min(4, Math.floor(t / 12) + 1); const left = 12 - (t - (q - 1) * 12);
-  return { q:`第 ${q} 節`, s: fmtClock(left), qn: q };
-}
-const fmtClock = m => `${Math.floor(m)}:${String(Math.floor((m % 1) * 60)).padStart(2, '0')}`;
-function feed(h) { if (!GM.opt.watch) return; const f = $('gFeed'); f.insertAdjacentHTML('beforeend', h); f.scrollTop = f.scrollHeight; }
-function myLine() {
-  const m = GM.me;
+function renderLive(G) {
+  const h = G.home, a = G.away, k = clockOf(G);
+  $('sb').innerHTML = `<div class="side">${logo(h, 40)}<div><div class="tm">${h.n}</div><div class="sc">${G.s[h.n]}</div></div></div><div class="mid"><div class="q">${k.q}</div><div class="clk">${k.s}</div></div><div class="side r">${logo(a, 40)}<div><div class="tm">${a.n}</div><div class="sc">${G.s[a.n]}</div></div></div>`;
+  const m = G.box.ME || line();
   $('gMy').innerHTML = `<div><b>${m.pts}</b><span>得分</span></div><div><b>${m.reb}</b><span>籃板</span></div><div><b>${m.ast}</b><span>助攻</span></div><div><b>${m.stl + m.blk}</b><span>抄阻</span></div><div><b>${m.fgm}/${m.fga}</b><span>投籃</span></div>`;
+  const f = $('gFeed');
+  while (G.fi < G.feed.length) { const e = G.feed[G.fi++]; f.insertAdjacentHTML('beforeend', e.q ? `<div class="ev q"><span class="tx">${e.txt}</span></div>` : `<div class="ev ${e.me ? 'me' : ''} ${e.big ? 'big' : ''}"><span class="tm">${e.clk}</span><span class="dot" style="background:${e.t}"></span><span class="tx">${e.txt}</span></div>`); }
+  f.scrollTop = f.scrollHeight;
+  const cv = $('lead'); const c = cv.getContext && cv.getContext('2d'); if (!c) return;
+  const W = 540, H = 80; c.clearRect(0, 0, W, H);
+  c.strokeStyle = '#273042'; c.beginPath(); c.moveTo(0, H / 2); c.lineTo(W, H / 2); c.stroke(); for (let q = 1; q < 4; q++) { c.beginPath(); c.moveTo(W * q / 4, 0); c.lineTo(W * q / 4, H); c.stroke(); }
+  const hs = G.hist, n = Math.max(G.N + G.ot * 20, hs.length), mx = Math.max(10, ...hs.map(Math.abs));
+  const pts = hs.map((v, i) => [i / n * W, H / 2 - v / mx * (H / 2 - 6)]);
+  c.beginPath(); c.moveTo(0, H / 2); pts.forEach(p => c.lineTo(p[0], p[1])); c.lineTo(pts[pts.length - 1][0], H / 2); c.closePath();
+  const gr = c.createLinearGradient(0, 0, 0, H); gr.addColorStop(0, h.c + '88'); gr.addColorStop(0.5, 'rgba(0,0,0,0)'); gr.addColorStop(1, a.c + '88'); c.fillStyle = gr; c.fill();
+  c.lineWidth = 2.5; c.strokeStyle = '#fff'; c.beginPath(); pts.forEach((p, i) => i ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1])); c.stroke();
+  c.fillStyle = '#8e9ab0'; c.font = '11px sans-serif'; c.fillText(h.n.slice(0, 2) + '領先', 4, 12); c.fillText(a.n.slice(0, 2) + '領先', 4, H - 4);
 }
-function drawLead() {
-  const cv = $('lead'); if (!cv.getContext) return; const c = cv.getContext('2d'); if (!c) return;
-  const W = 520, H = 90; c.clearRect(0, 0, W, H);
-  c.strokeStyle = '#333d4c'; c.lineWidth = 1; c.beginPath(); c.moveTo(0, H / 2); c.lineTo(W, H / 2); c.stroke();
-  for (let q = 1; q < 4; q++) { c.beginPath(); c.moveTo(W * q / 4, 0); c.lineTo(W * q / 4, H); c.stroke(); }
-  const h = GM.hist, n = Math.max(GM.N + (GM.ot ? 20 : 0), h.length), mx = Math.max(10, ...h.map(Math.abs));
-  c.lineWidth = 3; c.beginPath();
-  h.forEach((v, i) => { const x = i / n * W, y = H / 2 - v / mx * (H / 2 - 6); i ? c.lineTo(x, y) : c.moveTo(x, y); });
-  c.strokeStyle = C.team.c; c.stroke();
-  c.fillStyle = '#95a1b3'; c.font = '11px sans-serif'; c.fillText('領先', 4, 12); c.fillText('落後', 4, H - 4);
-}
-function render() { if (!GM.opt.watch) return; const k = clock(GM.i); $('gOur').textContent = GM.our; $('gOpp').textContent = GM.them; $('gQ').textContent = k.q; $('gClk').textContent = k.s; myLine(); drawLead(); }
-
-// 一個我方回合
-function ourPoss(force) {
-  const me = GM.me, oppDef = GM.opp.r, on = onCourt(GM.i) || force;
-  const defAdj = (oppDef - (C.phase === 'HS' ? 44 : 60)) * 0.0025;
-  if (on && (force || Math.random() < GM.usage)) {
-    const a = C.a;
-    // 傳球創造
-    if (!force && Math.random() < a.pass / 420) {
-      const made = Math.random() < 0.5 + a.pass * 0.0015 - defAdj;
-      if (made) { const p = Math.random() < 0.38 ? 3 : 2; me.ast++; GM.our += p; feed(`<div class="me">🎯 ${C.name}妙傳助攻，隊友${p === 3 ? '三分' : '上籃'}得手</div>`); return p; }
-      return 0;
-    }
-    const w3 = Math.pow(a.three, 1.6) * (C.pos === 'C' ? 0.3 : 1), wd = Math.pow(a.drive, 1.6), wm = Math.pow(a.shoot, 1.6);
-    let r = Math.random() * (w3 + wd + wm), type = r < w3 ? 3 : r < w3 + wd ? 'd' : 2;
-    if (force) type = force;
-    let p, pts = 0, txt;
-    if (type === 3) { p = 0.19 + a.three * 0.0023 - defAdj; me.tpa++; me.fga++; if (Math.random() < p) { pts = 3; me.tpm++; me.fgm++; txt = pick(['左側底角三分，唰！','弧頂急停三分命中！','後撤步三分——進了！','接球就投，三分空心！']); } else txt = '三分出手，沒進'; }
-    else if (type === 2) { p = 0.28 + a.shoot * 0.0026 - defAdj; me.fga++; if (Math.random() < p) { pts = 2; me.fgm++; txt = pick(['罰球線急停跳投，進！','轉身後仰跳投，命中！','中距離拔起來投——進了！']); } else txt = '中距離跳投偏出'; }
-    else { p = 0.39 + a.drive * 0.003 + a.ath * 0.0008 - defAdj; me.fga++;
-      if (Math.random() < 0.17) { const ft = 0.55 + a.shoot * 0.004; let m = 0; for (let k = 0; k < 2; k++) { me.fta++; if (Math.random() < ft) { m++; me.ftm++; } } pts = m; txt = `切入造成犯規，罰球 ${m}/2`; me.fga--; }
-      else if (Math.random() < p) { pts = 2; me.fgm++; const dunk = a.ath > 58 && Math.random() < 0.4; txt = dunk ? pick(['一步過人，暴力灌籃！！','空中接力灌籃！']) : pick(['切入上籃得手','歐洲步上籃！','拋投進了','禁區強打得分']); if (Math.random() < 0.12) { me.fta++; if (Math.random() < 0.55 + a.shoot * 0.004) { me.ftm++; pts++; txt += '，還加罰命中！'; } } }
-      else txt = pick(['切入上籃被蓋','擠進禁區出手沒進']); }
-    me.pts += pts; GM.our += pts;
-    if (pts === 0 && Math.random() < POS[C.pos].rebF * 0.8 * (a.reb / 60)) { me.reb++; txt += '（搶下進攻籃板）'; }
-    feed(`<div class="me">${pts ? '🔥 ' : '　'}${C.name}：${txt}</div>`);
-    return pts;
-  }
-  // 隊友回合
-  const make = clamp(0.47 + (GM.T.r - oppDef) * 0.004, 0.32, 0.62);
-  if (Math.random() < make) { const p = Math.random() < 0.35 ? 3 : 2; GM.our += p; if (on && Math.random() < C.a.pass / 900) { me.ast++; } return p; }
-  if (on && Math.random() < POS[C.pos].rebF * 0.6 * (C.a.reb / 60)) me.reb++;
-  return 0;
-}
-function theirPoss() {
-  const me = GM.me, on = onCourt(GM.i);
-  let make = clamp(0.47 + (GM.opp.r - GM.T.r) * 0.004 + (C.phase === 'HS' ? 0 : 0), 0.32, 0.62);
-  if (on) make -= (C.a.def - 50) * 0.0012;
-  if (on && Math.random() < C.a.def / 1700) { me.stl++; feed(`<div class="me">🖐 ${C.name}抄截！</div>`); return 0; }
-  if (on && C.pos !== 'G' && Math.random() < C.a.def / (C.pos === 'C' ? 1300 : 2600)) { me.blk++; feed(`<div class="me">🚫 ${C.name}一記火鍋！</div>`); return 0; }
-  if (Math.random() < make) {
-    const p = Math.random() < 0.35 ? 3 : 2; GM.them += p;
-    if (GM.oppStar && Math.random() < 0.3) { GM.starPts += p; if (GM.opt.watch && Math.random() < 0.35) feed(`<div class="op">　${GM.oppStar.name}${p === 3 ? '三分命中' : '得分'}</div>`); }
-    return p;
-  }
-  if (on && Math.random() < POS[C.pos].rebF * (C.a.reb / 60)) me.reb++;
-  return 0;
-}
-
-async function runGame() {
-  const g = GM;
+async function watchLoop(G) {
+  const h = G.home, a = G.away;
   while (true) {
-    const end = g.N + (g.ot ? g.ot * 20 : 0);
-    if (g.i >= end) {
-      if (g.our === g.them) { g.ot++; feed(`<div class="q">平手！進入延長賽</div>`); continue; }
-      break;
+    const end = G.N + G.ot * 20;
+    if (G.i >= end) { if (G.s[h.n] === G.s[a.n]) { G.ot++; G.feed.push({ q: true, txt: '平手！進入延長賽' }); continue; } break; }
+    const off = G.i % 2 === 0 ? h : a, def = off === h ? a : h;
+    if (G.i > 0 && !G.ot && Math.floor(G.i / G.N * 4) !== Math.floor((G.i - 1) / G.N * 4)) G.feed.push({ q: true, txt: `— ${clockOf(G).q} 開始　${h.n.slice(0, 2)} ${G.s[h.n]} : ${G.s[a.n]} ${a.n.slice(0, 2)} —` });
+    const d = G.s[C.team] - G.s[(h.n === C.team ? a : h).n];
+    const myOff = isMine(off), late = onCourt(off, G[off.n], true).includes('ME');
+    if (myOff && late && !C.injury && !G.ot) {
+      if (!G.finalDone && G.i >= G.N - 2 && d <= 0 && d >= -3) { G.finalDone = true; renderLive(G); await clutchUI(G, off, def, true, d); G.hist.push(G.s[h.n] - G.s[a.n]); G.i++; renderLive(G); continue; }
+      if (!G.clutchDone && G.i >= G.N * 0.95 && Math.abs(d) <= 6 && G.i < G.N - 4) { G.clutchDone = true; renderLive(G); await clutchUI(G, off, def, false, d); G.hist.push(G.s[h.n] - G.s[a.n]); G.i++; renderLive(G); continue; }
     }
-    const k = clock(g.i);
-    if (g.opt.watch && g.i > 0 && !g.ot && Math.floor(g.i / g.N * 4) !== Math.floor((g.i - 1) / g.N * 4)) feed(`<div class="q">— ${k.q}開始　比分 ${g.our} : ${g.them} —</div>`);
-    // 關鍵時刻：最後一擊（落後 1–3 分或平手、最後一次我方進攻）
-    const lastOwn = !g.ot && g.i >= g.N - 2 && g.i % 2 === 0;
-    const diff = g.our - g.them;
-    if (lastOwn && !g.finalDone && diff <= 0 && diff >= -3) {
-      g.finalDone = true;
-      const pts = await clutch(true); if (g.dead) return;
-      g.hist.push(g.our - g.them); g.i += 2; render(); continue;
-    }
-    // 兩分鐘關鍵時刻
-    if (!g.ot && !g.clutchDone && g.i >= g.N * 0.95 - 2 && g.i % 2 === 0 && Math.abs(diff) <= 6 && onCourt(g.i)) {
-      g.clutchDone = true; await clutch(false); if (g.dead) return; g.hist.push(g.our - g.them); g.i += 2; render(); continue;
-    }
-    const side = g.i % 2 === 0 ? 'us' : 'them';
-    const pp = side === 'us' ? ourPoss() : theirPoss();
-    if (pp > 0) { if (g.run && g.run.side === side) g.run.pts += pp; else g.run = { side, pts: pp, shown: false };
-      if (g.run.pts >= 8 && !g.run.shown) { g.run.shown = true; feed(side === 'us' ? `<div class="big">🔥 ${C.team.n}打出一波 ${g.run.pts}:0 攻勢！</div>` : `<div class="op">⚠ ${g.opp.n}連得 ${g.run.pts} 分，教練喊暫停</div>`); } }
-    g.hist.push(g.our - g.them); g.i++;
-    if (g.opt.watch) { render(); if (g.speed) await sleep(g.speed); if (g.dead) return; }
+    const before = G.s[off.n];
+    posses(G, off, def);
+    const pp = G.s[off.n] - before;
+    if (pp > 0) { if (G.run && G.run.t === off.n) G.run.p += pp; else G.run = { t: off.n, p: pp, shown: false }; if (G.run.p >= 8 && !G.run.shown) { G.run.shown = true; G.feed.push({ t: off.c, big: true, me: false, clk: clockOf(G).s, txt: isMine(off) ? `🔥 ${off.n}打出一波 ${G.run.p}:0 攻勢！` : `⚠ ${off.n}連得 ${G.run.p} 分，教練喊暫停` }); } }
+    G.hist.push(G.s[h.n] - G.s[a.n]); G.i++;
+    renderLive(G);
+    if (G.speed) await sleep(G.speed);
   }
-  finishGame();
+  renderLive(G); G.feed.push({ q: true, txt: `比賽結束　${G.s[h.n]} : ${G.s[a.n]}` }); renderLive(G);
+  setTimeout(() => endGame(G), 800);
 }
-function clutch(final) {
+function clutchUI(G, off, def, final, d) {
   return new Promise(res => {
-    const g = GM, diff = g.our - g.them;
-    const iqB = C.iq / 400 + (has('HS_CHAMP') ? 0.08 : 0) + (has('CLUTCH') ? 0.12 : 0);
-    const a = C.a, defAdj = (g.opp.r - (C.phase === 'HS' ? 44 : 60)) * 0.0025;
+    const oc = onCourt(off, G[off.n], true), me = ME().a;
+    const mates = oc.filter(id => id !== 'ME').map(P);
+    const shooter = mates.sort((x, y) => (y.a.three + y.a.shoot) - (x.a.three + x.a.shoot))[0];
+    const big = mates.sort((x, y) => (y.a.drive + y.a.reb) - (x.a.drive + x.a.reb))[0];
+    const cb = clutchBonus(), lvl = C.phase === 'HS' ? 40 : 62;
+    const D = onCourt(def, G[def.n], true).reduce((s, id) => s + P(id).a.def, 0) / 5, dAdj = (D - lvl) * 0.0022;
     const opts = [
-      { k:'iso3', l:'自己投三分', p: 0.2 + a.three * 0.0026 + iqB - defAdj, pts:3, d:`三分 ${Math.round(a.three)}` },
-      { k:'iso2', l:'自己切入／中距', p: 0.36 + Math.max(a.drive, a.shoot) * 0.0028 + iqB - defAdj, pts:2, d:`切入 ${Math.round(a.drive)}・中距 ${Math.round(a.shoot)}` },
-      { k:'pnr', l:'擋拆找隊友', p: 0.38 + a.pass * 0.0025 + iqB * 0.6 - defAdj, pts:2, ast:true, d:`傳球 ${Math.round(a.pass)}` },
+      { l:'🏹 自己投三分', p: 0.19 + me.three * 0.0024 - dAdj + cb, f:{ shooter:'ME', type:'3' }, d:`三分 ${Math.round(me.three)}` },
+      { l:'⚡ 自己切入／中距', p: 0.36 + Math.max(me.drive, me.shoot) * 0.0028 - dAdj + cb, f:{ shooter:'ME', type: me.drive >= me.shoot ? 'd' : '2' }, d:`切入 ${Math.round(me.drive)}・中距 ${Math.round(me.shoot)}`, pts:2 },
+      { l:`🤝 擋拆傳給 ${shooter ? shooter.name : '隊友'}`, p: shooter ? 0.19 + shooter.a.three * 0.0024 - dAdj + (C.chem - 50) * 0.002 + me.pass * 0.001 : 0.3, f:{ shooter: shooter ? shooter.id : 'ME', type:'3' }, d:`隊上最佳射手・默契 ${Math.round(C.chem)}`, pts:3 },
     ];
-    const resolve = (o) => {
-      const made = Math.random() < clamp(o.p, 0.12, 0.8);
-      const me = g.me;
-      if (o.k !== 'pnr') { me.fga++; if (o.pts === 3) me.tpa++; }
-      let txt;
-      if (made) { g.our += o.pts; if (o.k === 'pnr') { me.ast++; txt = '你吸引包夾，把球塞給切入的隊友——得手！'; } else { me.fgm++; me.pts += o.pts; if (o.pts === 3) me.tpm++; txt = o.pts === 3 ? '你在三分線外拔起來——<b>唰！</b>' : '你一個節奏變換切進去——<b>進了！</b>'; } }
-      else txt = o.k === 'pnr' ? '傳球被對手預判，隊友出手不進。' : '出手……打框彈出！';
-      const nd = g.our - g.them;
-      if (final && made && nd > 0 && o.k !== 'pnr') { g.clutchHit = true; txt += '<br><span class="big">💥 絕殺！！全場沸騰！</span>'; }
-      else if (final && made && nd > 0) txt += '<br><span class="big">💥 最後一擊逆轉！</span>';
-      else if (final && made && nd === 0) txt += '<br>追平比分！';
-      feed(`<div class="me">⏱ ${txt}</div>`);
-      $('gClutch').innerHTML = ''; render(); res();
+    const resolve = o => {
+      $('gClutch').innerHTML = '';
+      const before = G.s[off.n], oppS = G.s[def.n];
+      if (o.f.shooter !== 'ME') { G.box.ME.ast += 0; }
+      posses(G, off, def, { court: oc, shooter: o.f.shooter, type: o.f.type, bonus: o.f.shooter === 'ME' ? cb : 0 });
+      const got = G.s[off.n] - before;
+      if (got && o.f.shooter !== 'ME') G.box.ME.ast++;
+      const nd = G.s[off.n] - G.s[def.n];
+      let txt = got ? (o.f.shooter === 'ME' ? '你出手——<b>進了！</b>' : `你吸引包夾，${P(o.f.shooter).name}空檔出手——<b>進了！</b>`) : '出手……打框彈出！';
+      if (final && got && nd > 0 && before <= oppS) { if (o.f.shooter === 'ME') G.clutchHit = true; txt += '　💥 <b>絕殺！全場沸騰！</b>'; }
+      else if (final && got && nd === 0) txt += '　追平！';
+      G.feed.push({ t: off.c, me: true, big: true, clk: clockOf(G).s, txt: '⏱ ' + txt });
+      renderLive(G); res();
     };
-    if (!g.opt.watch) { // AI 自動選
-      const best = opts.filter(o => !(diff <= -3 && o.pts < 3) || !final).sort((x, y) => y.p * y.pts - x.p * x.pts)[0];
-      if (final && diff === -3) resolve(opts[0]); else resolve(best || opts[1]);
-      return;
-    }
-    const left = final ? '最後 8 秒' : '剩 2 分鐘';
-    const situ = diff === 0 ? '平手' : diff > 0 ? `領先 ${diff} 分` : `落後 ${-diff} 分`;
-    const need = final && diff <= -3 ? '<br><b class="bad">要三分才追得平！</b>' : final && diff < 0 ? '<br>投進兩分可以追平或超前！' : '';
-    $('gClutch').innerHTML = `<div class="clutch"><div style="font-size:19px;font-weight:900">⏱ ${final ? '最後一擊！' : '關鍵時刻！'}　${left}・${situ}</div><div class="muted" style="margin:4px 0 10px">球在你手上，教練看著你。${need}</div><div class="col" id="cBtns"></div></div>`;
-    for (const o of opts) { const b = document.createElement('button'); b.className = 'choice'; b.innerHTML = `${o.l}　<span class="gold">成功率約 ${Math.round(clamp(o.p, 0.12, 0.8) * 100)}%</span><small>${o.d}・${o.pts} 分</small>`; b.onclick = () => resolve(o); $('cBtns').appendChild(b); }
+    const situ = d === 0 ? '平手' : d > 0 ? `領先 ${d} 分` : `落後 ${-d} 分`;
+    $('gClutch').innerHTML = `<div class="clutch"><div style="font-size:18px;font-weight:900">⏱ ${final ? '最後一擊！' : '關鍵時刻！'}　${final ? '剩 6 秒' : '剩 2 分鐘'}・${situ}</div><div class="muted" style="margin:4px 0 10px">${final && d <= -3 ? '<b class="bad">要三分才追得平！</b>' : '教練把球交給你。'}</div><div class="col" id="cBtns"></div></div>`;
+    for (const o of opts) { const b = document.createElement('button'); b.className = 'choice'; b.innerHTML = `${o.l}　<span class="gold">約 ${Math.round(clamp(o.p, 0.1, 0.8) * 100)}%</span><small>${o.d}</small>`; b.onclick = () => resolve(o); $('cBtns').appendChild(b); }
     $('gClutch').scrollIntoView && $('gClutch').scrollIntoView({ block:'end', behavior:'smooth' });
   });
 }
-$('gSpeed').onclick = () => { if (!GM) return; GM.speed = GM.speed > 5 ? 4 : 55; $('gSpeed').textContent = GM.speed > 5 ? '⏩ 快轉' : '▶ 正常速度'; };
+$('gSpeed').onclick = () => { if (!GM) return; GM.speed = GM.speed > 5 ? 3 : 45; $('gSpeed').textContent = GM.speed > 5 ? '⏩ 快轉' : '▶ 正常速度'; };
 $('gSkip').onclick = () => { if (!GM) return; GM.speed = 0; $('gSpeed').disabled = true; $('gSkip').disabled = true; };
 
-function finishGame() {
-  const g = GM, m = g.me, win = g.our > g.them, playoff = g.opt.playoff;
-  if (!playoff) recordTeam(win);
-  for (const T of [C.season, C.career]) { T.g++; for (const k in m) T[k] += m[k]; }
-  if (playoff) { C.po = C.po || line(); C.po.g++; for (const k in m) C.po[k] += m[k]; }
-  C.fatigue += 6 + g.mins * 0.2;
-  const gs = m.pts + 0.7 * m.reb + 0.9 * m.ast + 1.2 * (m.stl + m.blk) - 0.3 * (m.fga - m.fgm);
-  C.trust = clamp(C.trust + (gs >= 20 ? 5 : gs >= 12 ? 3 : gs >= 6 ? 1 : -2) + (win ? 1 : 0), 0, 100);
+function boxTable(G, t) {
+  const ids = t.roster.filter(id => G.box[id] && G.box[id].min > 0).sort((x, y) => G.box[y].min - G.box[x].min);
+  const tot = line(); ids.forEach(id => { for (const k in tot) tot[k] += G.box[id][k]; });
+  return `<div class="card" style="padding:10px"><h3><span class="mini-team">${logo(t, 26)}${t.n}</span><span style="margin-left:auto;font-size:20px;font-weight:900">${G.s[t.n]}</span></h3><div class="scroll-x"><table><tr><th class="l">球員</th><th>分鐘</th><th>分</th><th>板</th><th>助</th><th>抄</th><th>阻</th><th>投籃</th><th>三分</th></tr>
+    ${ids.map(id => { const b = G.box[id]; return `<tr class="${id === 'ME' ? 'me' : ''}"><td class="l">${id === 'ME' ? C.name : P(id).name}</td><td class="muted">${b.min}</td><td><b>${b.pts}</b></td><td>${b.reb}</td><td>${b.ast}</td><td>${b.stl}</td><td>${b.blk}</td><td>${b.fgm}/${b.fga}</td><td>${b.tpm}/${b.tpa}</td></tr>`; }).join('')}
+    <tr><td class="l muted">全隊</td><td></td><td><b>${tot.pts}</b></td><td>${tot.reb}</td><td>${tot.ast}</td><td>${tot.stl}</td><td>${tot.blk}</td><td>${tot.fgm}/${tot.fga}</td><td>${tot.tpm}/${tot.tpa}</td></tr></table></div></div>`;
+}
+function endGame(G) {
+  const { win } = finalize(G);
+  const won = win.n === C.team, m = G.box.ME || line(), h = G.home, a = G.away;
+  if (m.min > 0 || G.box.ME) {
+    // 士氣、信任、默契、比賽成長
+    C.morale = clamp(C.morale + (won ? 3 : -3), 0, 100);
+    C.chem = Math.min(100, C.chem + (has('CHAMP') ? 3 : 1.5));
+    const gs = gameScore(m);
+    C.trust = clamp(C.trust + (gs >= 22 ? 5 : gs >= 14 ? 3 : gs >= 7 ? 1 : -2), 0, 100);
+    if (m.min > 0) { C.fatigue += 4 + m.min * 0.1; const ks = Object.keys(ATTR); for (let i = 0; i < 2; i++) growAttr(pick(ks), 0.35); C.iq = Math.min(100, C.iq + 0.5); }
+  }
   // 成就
-  unlock('debut');
-  const tag = C.phase === 'HS' ? `高${'一二三'[C.year-1]}` : `職業第 ${C.proYear} 年`;
+  const tag = C.phase === 'HS' ? `高${'一二三'[C.year-1]}` : `職業第 ${C.proYear} 年`, opp = h.n === C.team ? a : h;
+  if (m.min > 0) unlock('debut');
   if (m.pts >= 20) unlock('p20'); if (m.pts >= 30) unlock('p30');
-  if (m.pts >= 40) { unlock('p40'); pushMem('P40'); C.highlights.push(`${tag}對 ${g.opp.n} 砍下 ${m.pts} 分`); }
+  if (m.pts >= 40) { unlock('p40'); pushMem('P40'); C.highlights.push(`${tag}對${opp.n}砍下 ${m.pts} 分`); }
   if (m.pts >= 50) unlock('p50');
   const dbl = [m.pts, m.reb, m.ast, m.stl, m.blk].filter(v => v >= 10).length;
-  if (dbl >= 2) unlock('dd'); if (dbl >= 3) { unlock('td'); pushMem('TD'); C.highlights.push(`${tag}對 ${g.opp.n} 拿下大三元`); }
-  if (g.clutchHit && win) { unlock('clutch'); pushMem('CLUTCH'); C.highlights.push(`${tag}對 ${g.opp.n} 投進絕殺`); }
-  const K = C.career.pts; if (K >= 1000) unlock('k1'); if (K >= 5000) unlock('k5'); if (K >= 10000) unlock('k10');
-  if (C.fatigue > 78 && Math.random() < (C.fatigue - 74) * 0.01 * (has('UNDRAFTED') ? 0.65 : 1)) { C.injury = ri(1, 3); }
+  if (dbl >= 2) unlock('dd'); if (dbl >= 3) { unlock('td'); pushMem('TD'); C.highlights.push(`${tag}對${opp.n}拿下大三元`); }
+  if (G.clutchHit && won) { unlock('clutch'); pushMem('CLUTCH'); C.highlights.push(`${tag}對${opp.n}投進絕殺`); }
+  const K = ME().car.pts; if (K >= 1000) unlock('k1'); if (K >= 5000) unlock('k5'); if (K >= 10000) unlock('k10');
+  // 本場最佳
+  let pog = null, best = -99; for (const id in G.box) { if (!G.box[id].min) continue; const v = gameScore(G.box[id]) + ((h.roster.includes(id) ? h : a) === win ? 4 : 0); if (v > best) { best = v; pog = id; } }
+  if (pog === 'ME') unlock('pog');
+  let inj = '';
+  if (m.min > 0 && C.fatigue > 80 && Math.random() < (C.fatigue - 76) * 0.01 * (has('UNDRAFTED') ? 0.65 : 1)) { C.injury = ri(1, 3); inj = `<div class="card bad">賽後膝蓋不舒服，傷停 ${C.injury} 週（疲勞超過 80）。</div>`; }
   saveRun();
-  const box = `<div class="card"><table><tr><th class="l"></th><th>分</th><th>板</th><th>助</th><th>抄</th><th>阻</th><th>投籃</th><th>三分</th></tr>
-    <tr class="me"><td class="l">${C.name}</td><td>${m.pts}</td><td>${m.reb}</td><td>${m.ast}</td><td>${m.stl}</td><td>${m.blk}</td><td>${m.fgm}/${m.fga}</td><td>${m.tpm}/${m.tpa}</td></tr>
-    ${g.oppStar ? `<tr><td class="l muted">${g.oppStar.name}</td><td>${Math.max(g.starPts, Math.round(g.oppStar.ppg * rnd(0.6, 1.2)))}</td><td colspan="6" class="muted">${g.opp.n}頭號球星</td></tr>` : ''}</table>
-    <div class="muted" style="font-size:14px;margin-top:6px">上場 ${g.mins} 分鐘　效率值 ${f1(gs)}${gs >= 25 ? '　<b class="gold">本場最佳球員</b>' : ''}</div></div>`;
-  const head = `<div class="big-num">${g.our} : ${g.them}</div><div style="text-align:center;font-size:22px;font-weight:900" class="${win ? 'good' : 'bad'}">${win ? '贏球！' : '輸球'}${g.ot ? '（延長賽）' : ''}</div>`;
-  const after = () => { $('game').classList.add('hide'); GM = null; g.opt.onEnd(win, m); };
-  if (C.injury) { C.note = `<span class="bad">賽後膝蓋不舒服，傷停 ${C.injury} 週（疲勞累積）。</span>`; }
-  const show = () => {
-    $('sceneIn').innerHTML = art(win ? 'arena' : 'night', C.team.c, ri(1, 99)) + head + box + (C.injury ? `<div class="card bad">賽後受傷，傷停 ${C.injury} 週（疲勞太高）。</div>` : '') + `<button id="bNextG" style="width:100%">繼續</button>`;
-    $('scene').classList.remove('hide'); $('scene').scrollTop = 0;
-    $('bNextG').onclick = () => { $('scene').classList.add('hide'); after(); };
-  };
-  if (g.opt.watch) { render(); feed(`<div class="q">比賽結束　${g.our} : ${g.them}</div>`); setTimeout(show, 900); } else show();
+  const pp = P(pog), pt = h.roster.includes(pog) ? h : a, pb = G.box[pog];
+  $('sceneIn').innerHTML = art(won ? 'arena' : 'night', C.teams ? myTeam().c : '#fff', ri(1, 99)) +
+    `<div class="big-score"><div>${logo(h, 56)}<div class="muted" style="font-size:13px">${h.n}</div></div><div class="s">${G.s[h.n]} : ${G.s[a.n]}</div><div>${logo(a, 56)}<div class="muted" style="font-size:13px">${a.n}</div></div></div>
+    <div class="result-tag ${won ? 'good' : 'bad'}">${won ? '🎉 贏球！' : '輸球'}${G.ot ? '（延長賽）' : ''}</div>
+    <div class="pog">${pog === 'ME' ? avatar(C.look, pt.c, C.num) : logo(pt, 52)}<div><div class="gold" style="font-size:13px;font-weight:800">⭐ 本場最佳球員</div><b style="font-size:18px">${pog === 'ME' ? C.name : pp.name}</b><div class="muted" style="font-size:13px">${pb.pts} 分 ${pb.reb} 籃板 ${pb.ast} 助攻　${pt.n}</div></div></div>${inj}` +
+    boxTable(G, h) + boxTable(G, a) + `<button id="bNextG" style="width:100%">繼續</button>`;
+  $('scene').classList.remove('hide'); $('scene').scrollTop = 0;
+  $('bNextG').onclick = () => { $('scene').classList.add('hide'); $('game').classList.add('hide'); GM = null; G.opt.onEnd(won, m); };
 }
 
 // ===================== 季後賽 =====================
 function endRegular() {
-  const st = standings(), seed = st.findIndex(t => t.n === C.team.n) + 1;
+  const st = standings(), seed = st.findIndex(t => t.n === C.team) + 1;
   saveRun();
-  if (seed > 4) { C.note = ''; return scene('例行賽結束', `球隊戰績 ${myTeam().w}-${myTeam().l}，排名第 ${seed}，<b class="bad">無緣季後賽</b>。`, [{ label:'繼續', fn:() => { closeScene(); endSeason(false); } }], 'night'); }
-  C.po = line();
-  const bo = C.phase === 'HS' ? 1 : 3;
-  const semiOpp = st[seed === 1 ? 3 : seed === 2 ? 2 : seed === 3 ? 1 : 0];
-  scene('季後賽！', `球隊以第 ${seed} 種子打進季後賽。\n準決賽對手：${semiOpp.n}（${semiOpp.w}-${semiOpp.l}）\n${bo === 1 ? '單場淘汰' : '三戰兩勝'}`, [{ label:'開打', fn:() => { closeScene(); series(semiOpp, bo, '準決賽', won => {
-    if (!won) return scene('季後賽出局', '準決賽落敗，賽季結束。', [{ label:'繼續', fn:() => { closeScene(); endSeason(false); } }], 'night');
-    const others = st.slice(0, 4).filter(t => t.n !== C.team.n && t.n !== semiOpp.n);
-    const fOpp = Math.random() < 0.5 + (others[0].r - others[1].r) * 0.03 ? others[0] : others[1];
+  if (seed > 4) return scene('例行賽結束', `球隊戰績 ${myTeam().w}-${myTeam().l}，排名第 ${seed}，<b class="bad">無緣季後賽</b>。`, [{ label:'繼續', main:true, fn:() => { closeScene(); endSeason(); } }], 'night');
+  const bo = C.phase === 'HS' ? 1 : 3, opp = st[4 - seed];
+  scene('季後賽！', `球隊以第 ${seed} 種子打進季後賽。\n準決賽對手：${opp.n}（${opp.w}-${opp.l}）　${bo === 1 ? '單場淘汰' : '三戰兩勝'}`, [{ label:'開打', main:true, fn:() => { closeScene(); series(opp, bo, '準決賽', won => {
+    if (!won) return scene('季後賽出局', '準決賽落敗，賽季結束。', [{ label:'繼續', main:true, fn:() => { closeScene(); endSeason(); } }], 'night');
+    const oth = st.slice(0, 4).filter(t => t.n !== C.team && t.n !== opp.n);
+    const fo = Math.random() < 0.5 + (teamOvr(oth[0]) - teamOvr(oth[1])) * 0.04 ? oth[0] : oth[1];
     const bo2 = C.phase === 'HS' ? 1 : 5;
-    scene('🏆 總冠軍賽', `你們晉級${C.phase === 'HS' ? '冠軍賽' : '總冠軍賽'}！\n對手：${fOpp.n}\n${bo2 === 1 ? '一場定江山' : '五戰三勝'}`, [{ label:'開打', fn:() => { closeScene(); series(fOpp, bo2, '總冠軍賽', w2 => {
-      if (w2) champion(); else scene('亞軍', '只差一步……冠軍賽落敗。明年再來。', [{ label:'繼續', fn:() => { closeScene(); endSeason(false); } }], 'night');
-    }); } }], 'arena', fOpp.c);
-  }); } }], 'arena', semiOpp.c);
+    scene('🏆 總冠軍賽', `晉級${C.phase === 'HS' ? '冠軍賽' : '總冠軍賽'}！\n對手：${fo.n}（${fo.w}-${fo.l}）　${bo2 === 1 ? '一場定江山' : '五戰三勝'}`, [{ label:'開打', main:true, fn:() => { closeScene(); series(fo, bo2, '總冠軍賽', w2 => w2 ? champion() : scene('亞軍', '只差一步……冠軍賽落敗。', [{ label:'繼續', main:true, fn:() => { closeScene(); endSeason(); } }], 'night')); } }], 'arena', fo.c);
+  }); } }], 'arena', opp.c);
 }
 function series(opp, bo, name, done) {
-  let w = 0, l = 0, n = 0; const need = Math.ceil(bo / 2); const fin = [];
+  let w = 0, l = 0, n = 0; const need = Math.ceil(bo / 2); C.lastSeries = [];
   const next = () => {
     if (w >= need) return done(true); if (l >= need) return done(false);
-    n++;
-    scene(`${name}・第 ${n} 戰`, `${C.team.n} vs ${opp.n}\n系列賽 ${w} : ${l}${(w === need - 1 || l === need - 1) && bo > 1 ? '\n<b class="gold">' + (w === need - 1 && l === need - 1 ? '搶七般的決勝戰！' : w === need - 1 ? '再贏一場就晉級！' : '輸了就淘汰！') + '</b>' : ''}`, [
-      { label:'🏀 觀看比賽', fn:() => { closeScene(); startGame(opp, { watch:true, playoff:true, onEnd:(win, m) => { if (win) w++; else l++; fin.push(m); next(); } }); } },
-      { label:'⏭ 直接看結果', fn:() => { closeScene(); startGame(opp, { watch:false, playoff:true, onEnd:(win, m) => { if (win) w++; else l++; fin.push(m); next(); } }); } },
-    ], 'arena', opp.c);
+    n++; const T = myTeam();
+    $('sceneIn').innerHTML = art('arena', opp.c, n) + `<h2>${name}・第 ${n} 戰</h2>` + vsBlock(T, opp) + `<div style="text-align:center;font-size:22px;font-weight:900;margin-bottom:12px">系列賽 ${w} : ${l}</div><div class="col" id="chs"></div>`;
+    const go = watch => { $('scene').classList.add('hide'); playGame(T, opp, { watch, playoff: true, onEnd: (won, m) => { if (won) w++; else l++; C.lastSeries.push(m); next(); } }); };
+    const b1 = document.createElement('button'); b1.innerHTML = '🏀 觀看比賽'; b1.onclick = () => go(true);
+    const b2 = document.createElement('button'); b2.className = 'ghost'; b2.innerHTML = '⏭ 直接看結果'; b2.onclick = () => go(false);
+    $('chs').append(b1, b2); $('scene').classList.remove('hide'); $('scene').scrollTop = 0;
   };
-  C.lastSeries = fin; next();
+  next();
 }
 function champion() {
-  if (C.phase === 'HS') { unlock('hsc'); pushMem('HS_CHAMP'); C.highlights.push(`高${'一二三'[C.year-1]}拿下高中聯賽冠軍`); C.trust += 10;
-    return scene('🏆 高中冠軍！', `${C.team.n}奪得高中聯賽冠軍！\n全隊把你拋向空中。`, [{ label:'繼續', fn:() => { closeScene(); endSeason(true); } }], 'trophy'); }
+  C.morale = Math.min(100, C.morale + 15);
+  if (C.phase === 'HS') { unlock('hsc'); pushMem('HS_CHAMP'); C.highlights.push(`高${'一二三'[C.year-1]}拿下高中聯賽冠軍`);
+    return scene('🏆 高中冠軍！', `${C.team}奪得高中聯賽冠軍！全隊把你拋向空中。`, [{ label:'繼續', main:true, fn:() => { closeScene(); endSeason(); } }], 'trophy'); }
   C.rings++; unlock('ring'); pushMem('CHAMP');
-  const f = C.lastSeries || []; const avgP = f.length ? f.reduce((s, m) => s + m.pts, 0) / f.length : 0;
-  const fmvp = avgP >= 18;
+  const f = C.lastSeries || [], avgP = f.length ? f.reduce((s, m) => s + m.pts, 0) / f.length : 0, fmvp = avgP >= 18;
   if (fmvp) { unlock('fmvp'); C.awards.push(`職${C.proYear} 總冠軍賽MVP`); }
   C.highlights.push(`職業第 ${C.proYear} 年拿下總冠軍${fmvp ? '（總冠軍賽 MVP）' : ''}`);
-  scene('💍 總冠軍！', `${C.team.n}奪得總冠軍！香檳灑滿了休息室。\n這是你的第 ${C.rings} 枚冠軍戒指。${fmvp ? `\n\n<b class="gold">你以場均 ${f1(avgP)} 分獲選總冠軍賽 MVP！</b>` : ''}`, [{ label:'繼續', fn:() => { closeScene(); endSeason(true); } }], 'trophy');
+  scene('💍 總冠軍！', `${C.team}奪得總冠軍！香檳灑滿了休息室。\n這是你的第 ${C.rings} 枚冠軍戒指。${fmvp ? `\n\n<b class="gold">你以場均 ${f1(avgP)} 分獲選總冠軍賽 MVP！</b>` : ''}`, [{ label:'繼續', main:true, fn:() => { closeScene(); endSeason(); } }], 'trophy');
 }
 
-// ===================== 季末 =====================
-function endSeason(champ) {
-  const L = C.season, lines = [];
-  C.seasons.push({ label: C.phase === 'HS' ? `高${'一二三'[C.year-1]}` : `職${C.proYear}`, team: C.team.n, ...L });
+// ===================== 季末與休賽季 =====================
+function endSeason() {
+  const L = ME().st, lines = [];
+  C.seasons.push({ label: C.phase === 'HS' ? `高${'一二三'[C.year-1]}` : `職${C.proYear}`, team: C.team, ...L });
   if (C.phase === 'PRO') {
     const R = mvpRace();
-    if (R[0].me && L.g >= 12) { C.mvps++; unlock('mvp'); pushMem('MVP'); C.awards.push(`職${C.proYear} MVP`); lines.push('<b class="gold">👑 年度 MVP！</b>'); C.highlights.push(`職業第 ${C.proYear} 年獲選 MVP`); }
-    const pts = leaderRows('pts'); if (pts[0].me) { unlock('scoring'); C.awards.push(`職${C.proYear} 得分王`); lines.push(`💯 得分王（${f1(pts[0].v)} 分）`); }
-    if (L.g && (L.stl + L.blk) / L.g >= 2.6) { unlock('dpoy'); pushMem('DPOY'); C.awards.push(`職${C.proYear} 最佳防守`); lines.push('🛡️ 年度最佳防守球員'); }
+    if (R[0] && R[0].id === 'ME') { C.mvps++; unlock('mvp'); pushMem('MVP'); C.awards.push(`職${C.proYear} MVP`); lines.push('👑 <b class="gold">年度 MVP！</b>'); C.highlights.push(`職業第 ${C.proYear} 年獲選 MVP`); }
+    else if (R[0]) lines.push(`年度 MVP：${P(R[0].id).name}（${P(R[0].id).team}）`);
+    const pts = leaders('pts', 8); if (pts[0] && pts[0].id === 'ME') { unlock('scoring'); C.awards.push(`職${C.proYear} 得分王`); lines.push(`💯 得分王（${f1(pts[0].v)} 分）`); }
+    const sb = leaders('sb', 8); if (sb[0] && sb[0].id === 'ME') { unlock('dpoy'); pushMem('DPOY'); C.awards.push(`職${C.proYear} 最佳防守`); lines.push('🛡️ 年度最佳防守球員'); }
     if (C.proYear === 1 && L.g && L.pts / L.g >= 12) { unlock('roy'); C.awards.push('新人王'); lines.push('🌱 新人王！'); }
-    if (R.findIndex(r => r.me) < 5) lines.push('入選年度最佳陣容');
-    const perf = L.g ? L.pts / L.g : 0;
-    C.money += C.salary;
-    C.proYear++; C.contract--;
+    if (lines.some(x => x.includes('MVP') && x.includes('gold')) || lines.length > 1) C.morale = Math.min(100, C.morale + 10);
+    C.money += C.salary; C.proYear++; C.contract--;
     if (C.proYear > 10) { unlock('ten'); pushMem('LONG'); }
   }
+  C.age++; ME().age = C.age;
   // 老化
-  C.age++;
-  const dAge = has('LONG') ? 32 : 30;
-  if (C.phase === 'PRO' && C.age > dAge) { const d = C.age - dAge; C.a.ath -= 2 + d * 0.5; C.a.drive -= 1 + d * 0.4; C.a.def -= 0.8 + d * 0.3; C.a.reb -= 0.6 + d * 0.2; }
+  const dA = has('LONG') ? 32 : 30, me = ME();
+  if (C.phase === 'PRO' && C.age > dA) { const d = C.age - dA; me.a.ath -= 1.5 + d * 0.6; me.a.drive -= 0.8 + d * 0.4; me.a.def -= 0.6 + d * 0.3; if (C.age > dA + 3) for (const k in me.a) me.a[k] -= 0.5 + d * 0.2; }
+  offseasonNPC();
   saveRun();
-  const text = `<b>${C.phase === 'HS' ? `高${'一二三'[C.year-1]}` : `第 ${C.proYear - 1} 季`}結束</b>\n平均 ${avg(L,'pts')} 分 ${avg(L,'reb')} 板 ${avg(L,'ast')} 助　命中率 ${pct(L.fgm, L.fga)}\n球隊戰績 ${myTeam().w}-${myTeam().l}${lines.length ? '\n\n' + lines.join('\n') : ''}`;
+  const g = Math.max(1, L.g);
+  const text = `<b>${C.seasons[C.seasons.length - 1].label}結束</b>\n平均 ${f1(L.pts / g)} 分 ${f1(L.reb / g)} 板 ${f1(L.ast / g)} 助　命中 ${L.fga ? Math.round(L.fgm / L.fga * 100) : 0}%\n球隊戰績 ${myTeam().w}-${myTeam().l}${lines.length ? '\n\n' + lines.join('\n') : ''}`;
   if (C.phase === 'HS') {
-    if (C.year === 3) return scene('畢業', text + '\n\n高中三年結束了。接下來——選秀會。', [{ label:'前往選秀會', fn:() => { closeScene(); draft(); } }], 'school');
-    return scene('學年結束', text, [{ label:'升上新學年', fn:() => { closeScene(); C.year++; newSeason(); C.note = `升上高${'一二三'[C.year-1]}。這一屆最強的對手是 <b class="bad">${C.rival}</b>。`; saveRun(); showHub(); } }], lines.length ? 'trophy' : 'school');
+    if (C.year === 3) return scene('畢業', text + '\n\n高中三年結束了。接下來——選秀會。', [{ label:'前往選秀會', main:true, fn:() => { closeScene(); draft(); } }], 'school');
+    return scene('學年結束', text, [{ label:'升上新學年', main:true, fn:() => { closeScene(); C.year++; newSeason(); C.note = `升上高${'一二三'[C.year-1]}。這一屆最強的對手是 <b class="bad">${C.rival}</b>。`; saveRun(); showHub(); } }], 'school');
   }
-  const forced = C.age >= 39 || (C.age >= 30 && ovr() < 50);
-  if (forced) return scene('季末', text + `\n\n<span class="bad">${C.age >= 39 ? '身體已經跟不上了。' : '沒有球隊願意給你合約了。'}</span>`, [{ label:'結束職業生涯', fn:() => { closeScene(); retire(); } }], 'night');
-  scene('季末', text, [{ label:'繼續', fn:() => { closeScene(); offseason(); } }], lines.length ? 'trophy' : 'gym');
+  if (C.age >= 39 || (C.age >= 31 && ovr() < 55)) return scene('季末', text + `\n\n<span class="bad">${C.age >= 39 ? '身體已經跟不上了。' : '沒有球隊願意給你合約了。'}</span>`, [{ label:'結束職業生涯', main:true, fn:() => { closeScene(); retire(); } }], 'night');
+  scene('季末', text, [{ label:'進入休賽季', main:true, fn:() => { closeScene(); C.contract <= 0 ? freeAgency() : (newSeason(), C.note = `新球季開始，你是${C.role}。`, saveRun(), showHub()); } }], lines.length ? 'trophy' : 'gym');
 }
-function offseason() {
-  if (C.contract <= 0) return freeAgency();
-  newSeason(); C.note = `新球季開始。你是${C.role}。`; saveRun(); showHub();
+function offseasonNPC() {
+  const news = [];
+  for (const id in C.players) {
+    if (id === 'ME') continue; const p = C.players[id]; if (!p.team) continue;
+    p.age++;
+    for (const k in p.a) { if (p.age <= 25) p.a[k] = Math.min(p.pot + 3, p.a[k] + rnd(0.5, 4)); else if (p.age >= 31) p.a[k] -= rnd(0.5, 2.5) + (p.age - 31) * 0.4; else p.a[k] += rnd(-1, 1.5); }
+    const lim = C.phase === 'HS' ? 18 : 36;
+    if (p.age > lim || (C.phase === 'PRO' && p.age > 30 && ovrOf(p) < 52)) { const t = team(p.team); t.roster = t.roster.filter(x => x !== id); if (ovrOf(p) > 70) news.push(`${p.name}宣布退休`); p.team = null; }
+  }
+  if (C.phase === 'PRO') {
+    // 少數球員轉隊
+    for (let i = 0; i < 4; i++) { const a = pick(C.teams), b = pick(C.teams.filter(t => t !== a)); const id = pick(a.roster.filter(x => x !== 'ME')); if (!id) continue; a.roster = a.roster.filter(x => x !== id); b.roster.push(id); P(id).team = b.n; if (ovrOf(P(id)) >= 72) news.push(`${P(id).name}從${a.n}轉戰${b.n}`); }
+    for (const t of C.teams) { while (t.roster.length > 11) { const out = t.roster.filter(x => x !== 'ME').map(P).sort((x, y) => ovrOf(x) - ovrOf(y))[0]; t.roster = t.roster.filter(x => x !== out.id); out.team = null; } }
+  }
+  // 補新秀
+  for (const t of C.teams) while (t.roster.length < 10) { const p = makeNPC(C.phase === 'PRO' ? (Math.random() < 0.15 ? rnd(66, 76) : rnd(50, 64)) : rnd(30, 38), C.phase === 'PRO' ? ri(19, 21) : 16, t.n); C.players[p.id] = p; t.roster.push(p.id); }
+  // 清掉退休球員避免存檔過大
+  for (const id in C.players) if (!C.players[id].team && id !== 'ME') delete C.players[id];
+  C.news = news.slice(0, 6);
 }
 function freeAgency() {
-  const o = ovr(), base = Math.round(80 + Math.max(0, o - 45) * 18 + (C.season.g ? C.season.pts / C.season.g : 0) * 10);
-  const cur = myTeam();
-  const pool = C.league.filter(t => t.n !== C.team.n).sort((a, b) => b.r - a.r);
+  const o = ovr(), L = ME().st, ppg = L.g ? L.pts / L.g : 0, base = Math.round(80 + Math.max(0, o - 45) * 20 + ppg * 12);
+  const cur = myTeam(), pool = C.teams.filter(t => t.n !== C.team).sort((a, b) => teamOvr(b) - teamOvr(a));
   const offers = [
-    { t: cur, sal: Math.round(base * 1.0), y: 3, note:'原隊續約，教練信任保留' },
-    { t: pool[0], sal: Math.round(base * 0.8), y: 2, note:`聯盟最強隊之一（實力 ${pool[0].r}），衝冠軍但薪水較低` },
-    { t: pool[pool.length - 1], sal: Math.round(base * 1.4), y: 4, note:`重建中的球隊（實力 ${pool[pool.length - 1].r}），給你最多錢和球權` },
+    { t: cur, sal: base, y: 3, note:`原隊續約・保留默契 ${Math.round(C.chem)}` },
+    { t: pool[0], sal: Math.round(base * 0.8), y: 2, note:`聯盟最強隊之一（總評 ${teamOvr(pool[0])}），衝冠軍但薪水較低` },
+    { t: pool[pool.length - 1], sal: Math.round(base * 1.4), y: 4, note:`重建中（總評 ${teamOvr(pool[pool.length - 1])}），最多錢和球權` },
   ];
-  scene('自由球員', `你的合約到期了，三支球隊開出條件：`, offers.map(x => ({ label:`${x.t.n}　<span class="gold">${x.sal} 萬 × ${x.y} 年</span>`, note: x.note, fn:() => {
-    const moved = x.t.n !== C.team.n;
-    C.team = { n: x.t.n, c: x.t.c }; C.salary = x.sal; C.contract = x.y;
-    if (moved) { C.trust = Math.max(30, C.trust - 15); if (x === offers[2]) C.trust += 20; }
-    closeScene(); newSeason(); C.note = moved ? `你加盟了${C.team.n}！` : `你和${C.team.n}續約了。`; saveRun(); showHub();
+  scene('📝 自由球員', `你的合約到期了，三支球隊開出條件：${C.news && C.news.length ? '\n\n<span class="muted">休賽季新聞：' + C.news.join('、') + '</span>' : ''}`, offers.map(x => ({ label:`${x.t.m} ${x.t.n}　<span class="gold">${x.sal} 萬 × ${x.y} 年</span>`, note: x.note, fn:() => {
+    const moved = x.t.n !== C.team;
+    if (moved) { cur.roster = cur.roster.filter(id => id !== 'ME'); x.t.roster.push('ME'); while (x.t.roster.length > 11) { const out = x.t.roster.filter(id => id !== 'ME').map(P).sort((p, q) => ovrOf(p) - ovrOf(q))[0]; x.t.roster = x.t.roster.filter(id => id !== out.id); cur.roster.push(out.id); out.team = cur.n; } C.team = x.t.n; ME().team = C.team; C.chem = 25; C.trust = Math.max(30, C.trust - 15) + (x === offers[2] ? 20 : 0); }
+    C.salary = x.sal; C.contract = x.y;
+    closeScene(); newSeason(); setTC(); C.note = moved ? `你加盟了${C.team}！和新隊友的默契要重新培養。` : `你和${C.team}續約了。`; saveRun(); showHub();
   } })), 'draft');
 }
 
 // ===================== 選秀 =====================
 function draft() {
-  const ppg = C.seasons.length ? C.seasons[C.seasons.length - 1].pts / Math.max(1, C.seasons[C.seasons.length - 1].g) : 0;
-  const v = ovr() + ppg * 0.35 + (C.ach.hsc ? 5 : 0) + rnd(-3, 3);
-  const pool = []; for (let i = 0; i < 40; i++) pool.push(40 + rnd(-6, 12));
+  const last = C.seasons[C.seasons.length - 1], ppg = last && last.g ? last.pts / last.g : 0;
+  const v = ovr() + ppg * 0.3 + (C.ach.hsc ? 4 : 0) + rnd(-3, 3);
+  const pool = []; for (let i = 0; i < 40; i++) pool.push(55 + rnd(-8, 12));
   const rank = pool.filter(x => x > v).length + 1;
   const head = `選秀會當晚，你坐在台下，手心都是汗。\n（球探評價 ${Math.round(v)}）\n\n`;
-  if (rank > 20) { pushMem('UNDRAFTED'); C.highlights.push('選秀會上沒有被唸到名字'); saveRun();
-    return scene('選秀會', head + '一輪、二輪……最後一個名字唸完，燈光暗了下來。\n\n<b class="bad">落選了。</b>', [{ label:'這一世到此為止', fn:() => { closeScene(); endLife('選秀落選'); } }], 'draft'); }
+  if (rank > 20) { pushMem('UNDRAFTED'); C.highlights.push('選秀會上沒有被唸到名字'); saveRun(); return scene('選秀會', head + '一輪、二輪……最後一個名字唸完，燈光暗了下來。\n\n<b class="bad">落選了。</b>', [{ label:'這一世到此為止', main:true, fn:() => { closeScene(); endLife('選秀落選'); } }], 'draft'); }
   const T = pick(PRO_TEAMS);
   if (rank <= 5) unlock('lottery'); if (rank === 1) { unlock('no1'); pushMem('DRAFT1'); }
   C.highlights.push(`第 ${rank <= 10 ? 1 : 2} 輪第 ${rank} 順位被${T[0]}選中`);
-  const bonus = Math.round(1200 / rank + 100); C.money += bonus;
-  C.salary = Math.round(500 / Math.sqrt(rank) + 60); C.contract = 3;
-  scene('選秀會', head + `「第 ${rank} 順位——${T[0]}選擇……${C.name}！」${rank === 1 ? '\n\n<b class="gold">狀元！</b>' : rank <= 5 ? '\n\n<b class="gold">樂透秀！</b>' : ''}\n\n簽約金 ${bonus} 萬，新秀合約 ${C.salary} 萬 × 3 年。`, [{ label:'加入職業聯盟', fn:() => {
-    C.phase = 'PRO'; C.proYear = 1; C.age = 19; C.team = { n: T[0], c: T[1] }; C.trust = Math.min(100, 20 + (has('MVP') ? 25 : 0) + Math.max(0, 25 - rank * 2)); C.league = null; newSeason();
-    C.note = `你穿上了${C.team.n}的球衣。${C.role === '板凳' ? '總教練說：「新秀先從板凳開始，表現給我看。」' : `你一進聯盟就是${C.role}！`}`; saveRun(); closeScene(); showHub();
+  const bonus = Math.round(1200 / rank + 100); C.money += bonus; C.salary = Math.round(500 / Math.sqrt(rank) + 60); C.contract = 3;
+  scene('選秀會', head + `「第 ${rank} 順位——${T[0]}選擇……${C.name}！」${rank === 1 ? '\n\n<b class="gold">狀元！</b>' : rank <= 5 ? '\n\n<b class="gold">樂透秀！</b>' : ''}\n\n簽約金 ${bonus} 萬，新秀合約 ${C.salary} 萬 × 3 年。`, [{ label:'加入職業聯盟', main:true, fn:() => {
+    C.phase = 'PRO'; C.proYear = 1; C.team = T[0]; C.trust = Math.min(100, 30 + (has('MVP') ? 25 : 0) + Math.max(0, 25 - rank * 2)); C.chem = 25;
+    C.players = { ME: ME() }; ME().st = line(); genLeague(true); newSeason(); setTC();
+    C.note = `你穿上了${C.team}的球衣，目前是${C.role}。先去「聯盟 → 球隊名單」看看你的新隊友吧。`; saveRun(); closeScene(); showHub();
   } }], 'draft', T[1]);
 }
 
 // ===================== 退休／轉生 =====================
 function retire() {
-  const K = C.career, score = K.pts / 1000 + C.rings * 3 + C.mvps * 4 + C.allstars * 1.2;
-  const msgs = [];
-  if ((score >= 9 && K.pts >= 5000) || (C.rings >= 2 && K.pts >= 3000) || C.mvps >= 1) { unlock('jersey'); msgs.push(`👕 ${C.team.n}宣布退休你的 ${C.num} 號球衣。`); }
+  const K = ME().car, score = K.pts / 1000 + C.rings * 3 + C.mvps * 4 + C.allstars * 1.2, msgs = [];
+  if ((score >= 9 && K.pts >= 5000) || (C.rings >= 2 && K.pts >= 3000) || C.mvps >= 1) { unlock('jersey'); msgs.push(`👕 ${C.team}宣布退休你的 ${C.num} 號球衣。`); }
   if (score >= 16 && (K.pts >= 8000 || C.mvps >= 1)) { unlock('hof'); msgs.push('🏛️ 你入選了名人堂！'); C.highlights.push('入選名人堂'); }
   saveRun();
-  scene('退休', `${C.age} 歲，${C.name}宣布退休。\n\n生涯 ${K.g} 場　${K.pts} 分（平均 ${avg(K,'pts')}）\n💍 ${C.rings}　🌟 明星賽 ${C.allstars} 次　👑 MVP ${C.mvps} 次${msgs.length ? '\n\n' + msgs.join('\n') : ''}`, [{ label:'回顧這一生', fn:() => { closeScene(); endLife('退休'); } }], msgs.length ? 'trophy' : 'night');
+  scene('退休', `${C.age} 歲，${C.name}宣布退休。\n\n生涯 ${K.g} 場　${K.pts} 分（平均 ${f1(K.pts / Math.max(1, K.g))}）\n💍 ${C.rings}　🌟 明星賽 ${C.allstars} 次　👑 MVP ${C.mvps} 次${msgs.length ? '\n\n' + msgs.join('\n') : ''}`, [{ label:'回顧這一生', main:true, fn:() => { closeScene(); endLife('退休'); } }], msgs.length ? 'trophy' : 'night');
 }
 function endLife(how) {
-  const K = C.career;
+  const K = ME().car, T = myTeam();
   const summary = C.phase === 'HS' ? `高中畢業後${how}` : `職業 ${C.proYear - 1} 年・${K.pts} 分・💍${C.rings}・MVP ${C.mvps}`;
   const mems = [...new Set(C.memories)];
-  const inh = Object.keys(ATTR).map(k => ({ k, v: Math.max(2, Math.round(C.a[k] * 0.1)) })).sort((a, b) => b.v - a.v).slice(0, 4);
+  const inh = Object.keys(ATTR).map(k => ({ k, v: Math.max(3, Math.round(ME().a[k] * 0.1)) })).sort((a, b) => b.v - a.v).slice(0, 4);
   let selM = mems[0] || null, selI = inh[0];
   const draw = () => {
-    $('sceneIn').innerHTML = art('night', C.team.c, 3) + `<div class="prof card">${avatar(C.look, C.team.c, C.num)}<div><b style="font-size:22px">${C.name}</b><div class="muted">${summary}</div></div></div>
-      ${C.highlights.length ? `<div class="card" style="line-height:1.8"><b>名場面</b><br>${C.highlights.join('<br>')}</div>` : ''}
-      <div class="card">成就 <b class="gold">${Object.keys(C.ach).length}/${ACH.length}</b>　${ACH.filter(a => C.ach[a[0]]).map(a => a[1]).join(' ')}</div>
+    $('sceneIn').innerHTML = art('night', T.c, 3) + `<div class="card row"><div style="width:80px;height:80px;border-radius:16px;overflow:hidden;flex:none">${avatar(C.look, T.c, C.num)}</div><div><b style="font-size:21px">${C.name}</b><div class="muted">${summary}</div></div></div>
+      ${C.highlights.length ? `<div class="card" style="line-height:1.8"><h3>🎬 名場面</h3>${C.highlights.join('<br>')}</div>` : ''}
+      <div class="card">🎖️ 成就 <b class="gold">${Object.keys(C.ach).length}/${ACH.length}</b>　${ACH.filter(a => C.ach[a[0]]).map(a => a[1]).join(' ')}</div>
       <h2>轉生</h2><div class="muted" style="margin-bottom:8px">選一段記憶，變成下一位球員的天賦</div><div class="col" id="mm"></div>
-      <div class="muted" style="margin:14px 0 8px">再選一項能力傳承下去</div><div class="grid2" id="ii"></div>
+      <div class="muted" style="margin:14px 0 8px">再選一項能力傳承下去</div><div class="col" id="ii" style="display:grid;grid-template-columns:1fr 1fr;gap:8px"></div>
       <button id="bReborn" style="width:100%;margin-top:16px">轉生</button>`;
     for (const k of mems) { const m = MEMORIES[k], b = document.createElement('button'); b.className = 'opt' + (selM === k ? ' sel' : ''); b.innerHTML = `${m.n}<small>天賦「${m.t}」：${m.d}${has(k) ? '（已擁有）' : ''}</small>`; b.onclick = () => { selM = k; draw(); }; $('mm').appendChild(b); }
     if (!mems.length) $('mm').innerHTML = '<div class="muted">這一世沒有留下特別的記憶。</div>';
     for (const x of inh) { const b = document.createElement('button'); b.className = 'opt' + (selI === x ? ' sel' : ''); b.innerHTML = `${ATTR[x.k]} +${x.v}`; b.onclick = () => { selI = x; draw(); }; $('ii').appendChild(b); }
     $('bReborn').onclick = () => {
-      LEG.lives.unshift({ name: C.name, summary, highlights: C.highlights, team: C.team.n, pos: C.pos, look: C.look, num: C.num, color: C.team.c, ach: Object.keys(C.ach).length });
+      LEG.lives.unshift({ name: C.name, summary, highlights: C.highlights, team: C.team, pos: C.pos, look: C.look, num: C.num, color: T.c, ach: Object.keys(C.ach).length });
       if (selM && !LEG.talents.includes(selM)) { LEG.talents.push(selM); if (LEG.talents.length > 4) LEG.talents.shift(); }
-      LEG.inherit = selI; saveLeg(); try { localStorage.removeItem('hoop2Run'); } catch(e) {}
+      LEG.inherit = selI; saveLeg(); try { localStorage.removeItem('hoop3Run'); } catch(e) {}
       $('scene').classList.add('hide'); renderCreate(); showOnly('sCreate');
     };
   };
@@ -819,16 +955,15 @@ function endLife(how) {
 }
 
 // ===================== 標題 =====================
-function title_() { showOnly('sTitle'); $('titleArt').innerHTML = art('arena', '#ffb84d', 11); $('bCont').classList.toggle('hide', !loadRun()); }
+function title_() { showOnly('sTitle'); document.documentElement.style.setProperty('--tc', '#ff8a3d'); $('titleArt').innerHTML = art('arena', '#ffb84d', 11); $('bCont').classList.toggle('hide', !loadRun()); }
 $('bNew').onclick = () => {
   const go = () => { closeScene(); renderCreate(); showOnly('sCreate'); };
-  if (loadRun()) scene('新的人生', '你還有一位進行中的球員，重新開始會放棄他（不會留下轉生記憶）。', [{ label:'確定', fn:() => { try { localStorage.removeItem('hoop2Run'); } catch(e) {} go(); } }, { label:'算了', fn:() => closeScene() }]); else go();
+  if (loadRun()) scene('新的人生', '你還有一位進行中的球員，重新開始會放棄他（不會留下轉生記憶）。', [{ label:'確定', main:true, fn:() => { try { localStorage.removeItem('hoop3Run'); } catch(e) {} go(); } }, { label:'算了', fn:() => closeScene() }]); else go();
 };
-$('bCont').onclick = () => { C = loadRun(); if (C) showHub(); };
+$('bCont').onclick = () => { C = loadRun(); if (C) { PID = Math.max(PID, ...Object.keys(C.players).filter(k => k[0] === 'P').map(k => +k.slice(1) + 1)); showHub(); } };
 $('bHall').onclick = () => {
-  const totalAch = Object.keys(LEG.ach).length;
-  $('hallList').innerHTML = `<div class="card"><h3>成就殿堂　<span class="gold">${totalAch}/${ACH.length}</span></h3>${ACH.map(a => `<div class="ach ${LEG.ach[a[0]] ? '' : 'off'}"><div class="i">${a[1]}</div><div><b>${a[2]}</b>${LEG.ach[a[0]] ? `<span class="muted" style="font-size:13px">　達成 ${LEG.ach[a[0]]} 次</span>` : ''}<div class="muted" style="font-size:14px">${a[3]}</div></div></div>`).join('')}</div>` +
-    (LEG.lives.length ? LEG.lives.map((l, i) => `<div class="card prof">${avatar(l.look, l.color, l.num)}<div><b style="font-size:18px">第 ${LEG.lives.length - i} 世　${l.name}</b>　<span class="muted">${POS[l.pos].n}</span><br>${l.summary}${l.highlights && l.highlights.length ? `<div class="muted" style="font-size:14px;margin-top:4px;line-height:1.6">${l.highlights.slice(0, 6).join('<br>')}</div>` : ''}</div></div>`).join('') : '<div class="card muted">還沒有前世。</div>');
+  $('hallList').innerHTML = `<div class="card"><h3>🏛️ 成就殿堂　<span class="gold">${Object.keys(LEG.ach).length}/${ACH.length}</span></h3>${ACH.map(a => `<div class="ach ${LEG.ach[a[0]] ? '' : 'off'}"><div class="i">${a[1]}</div><div><b>${a[2]}</b>${LEG.ach[a[0]] ? `<span class="muted" style="font-size:12px">　達成 ${LEG.ach[a[0]]} 次</span>` : ''}<div class="muted" style="font-size:13px">${a[3]}</div></div></div>`).join('')}</div>` +
+    (LEG.lives.length ? LEG.lives.map((l, i) => `<div class="card row"><div style="width:72px;height:72px;border-radius:14px;overflow:hidden;flex:none">${avatar(l.look, l.color, l.num)}</div><div><b>第 ${LEG.lives.length - i} 世　${l.name}</b>　<span class="muted">${POS[l.pos].n}</span><br><span style="font-size:14px">${l.summary}</span>${l.highlights && l.highlights.length ? `<div class="muted" style="font-size:13px;margin-top:4px;line-height:1.6">${l.highlights.slice(0, 5).join('<br>')}</div>` : ''}</div></div>`).join('') : '<div class="card muted">還沒有前世。</div>');
   showOnly('sHall');
 };
 $('bHallBack').onclick = title_;
