@@ -59,6 +59,14 @@
   .box .row { justify-content:center; }
   .sizes button { flex:1; min-width:64px; }
   .done { color:#7cc47f; font-weight:800; }
+  .area { display:flex; justify-content:space-between; align-items:center; font-size:15px; color:#9aa3b5; margin:-4px 0 10px; }
+  .prog { height:10px; background:#0e1016; border-radius:6px; overflow:hidden; margin:6px 0 12px; }
+  .prog i { display:block; height:100%; background:linear-gradient(90deg,#ffb86b,#ff7b9c); }
+  .coll { display:grid; grid-template-columns:repeat(5,1fr); gap:8px; }
+  .coll button { padding:8px 2px; font-size:28px; line-height:1.1; background:#262b36; border:2px solid transparent; }
+  .coll button small { display:block; font-size:11px; color:#9aa3b5; font-weight:600; margin-top:2px; }
+  .coll button.on { border-color:#ffb86b; }
+  .coll button:disabled { opacity:.35; }
 </style>
 </head>
 <body>
@@ -68,21 +76,28 @@
     <h1>🐱 喵喵找位子</h1>
     <div class="sub">每隻貓都想要自己的地盤</div>
     <div class="card">
-      <h3>📅 每日挑戰</h3>
-      <p id="dailyInfo">每天一題 8×8，大家同一題</p>
-      <button id="bDaily">開始今天的題目</button>
+      <h3>🏆 闖關模式</h3>
+      <div class="area"><span id="areaName"></span><span id="starInfo"></span></div>
+      <p id="lvInfo">第 1 關</p>
+      <div class="prog"><i id="lvProg"></i></div>
+      <button id="bLevel">繼續闖關</button>
     </div>
     <div class="card">
-      <h3>🏆 闖關模式</h3>
-      <p id="lvInfo">第 1 關</p>
-      <button id="bLevel">繼續闖關</button>
+      <h3>📅 每日挑戰</h3>
+      <p id="dailyInfo">每天一題 8×8，大家同一題</p>
+      <div class="row"><button id="bDaily" style="flex:1">一般 8×8</button><button id="bDailyH" style="flex:1;background:#ff7b9c">困難 10×10</button></div>
+    </div>
+    <div class="card">
+      <h3>🐾 貓咪圖鑑 <span id="collInfo" style="font-size:15px;color:#9aa3b5;font-weight:600"></span></h3>
+      <p>每過 5 關收集一隻新貓咪，點一下就換成盤面上的貓。</p>
+      <div class="coll" id="coll"></div>
     </div>
     <div class="card">
       <h3>🎲 自由練習</h3>
       <p>隨機出題，選盤面大小</p>
       <div class="row sizes">
         <button class="ghost" data-n="5">5×5</button><button class="ghost" data-n="6">6×6</button>
-        <button class="ghost" data-n="7">7×7</button><button class="ghost" data-n="8">8×8</button>
+        <button class="ghost" data-n="7">7×7</button><button class="ghost" data-n="8">8×8</button><button class="ghost" data-n="9">9×9</button><button class="ghost" data-n="10">10×10</button>
       </div>
     </div>
     <div class="card rules">
@@ -124,85 +139,86 @@
 </div></div>
 
 <script>
-// ===== 出題引擎（每題保證唯一解） =====
+// ===== 出題引擎 v2（爬山修正法，9×9、10×10 也很快，保證唯一解） =====
 function mulberry32(a) { return function() { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
-
 function randPlacement(n, rnd) {
   const p = []; const used = Array(n).fill(false);
   function bt(r) {
     if (r === n) return true;
     const cols = [...Array(n).keys()].sort(() => rnd() - 0.5);
-    for (const c of cols) {
-      if (used[c]) continue;
-      if (r > 0 && Math.abs(p[r-1] - c) <= 1) continue;
-      used[c] = true; p[r] = c;
-      if (bt(r+1)) return true;
-      used[c] = false;
-    }
+    for (const c of cols) { if (used[c]) continue; if (r > 0 && Math.abs(p[r-1] - c) <= 1) continue; used[c] = true; p[r] = c; if (bt(r+1)) return true; used[c] = false; }
     return false;
   }
   bt(0); return p;
 }
-
-function growRegions(n, sol, rnd) {
+function growRegions(n, sol, rnd, spread) {
   const reg = Array(n*n).fill(-1);
-  const front = [];
   for (let r = 0; r < n; r++) reg[r*n + sol[r]] = r;
-  // 每區有不同的成長權重 → 大小不均，題目比較有推理感
-  const w = Array.from({length:n}, () => 0.3 + rnd()*1.7);
+  const w = Array.from({length:n}, () => 1 - spread / 2 + rnd() * spread);
   let left = n*n - n;
   while (left > 0) {
-    // 依權重挑區塊
     let tot = 0; for (const x of w) tot += x;
     let k = rnd() * tot, g = 0; while (k > w[g]) { k -= w[g]; g++; } if (g >= n) g = n-1;
     const cand = [];
-    for (let i = 0; i < n*n; i++) if (reg[i] === g) {
-      const r = i / n | 0, c = i % n;
-      for (const [dr,dc] of [[1,0],[-1,0],[0,1],[0,-1]]) { const rr = r+dr, cc = c+dc; if (rr>=0&&rr<n&&cc>=0&&cc<n&&reg[rr*n+cc]===-1) cand.push(rr*n+cc); }
-    }
+    for (let i = 0; i < n*n; i++) if (reg[i] === g) { const r = i / n | 0, c = i % n;
+      for (const [dr,dc] of [[1,0],[-1,0],[0,1],[0,-1]]) { const rr = r+dr, cc = c+dc; if (rr>=0&&rr<n&&cc>=0&&cc<n&&reg[rr*n+cc]===-1) cand.push(rr*n+cc); } }
     if (!cand.length) { w[g] = 0.0001; if (w.every(x => x < 0.001)) break; continue; }
     reg[cand[Math.floor(rnd()*cand.length)]] = g; left--;
   }
   return reg;
 }
-
-function countSolutions(n, reg, limit = 2) {
-  let count = 0; const colU = Array(n).fill(false), regU = Array(n).fill(false); const p = [];
+function findSolutions(n, reg, limit = 2) {
+  const out = []; const colU = Array(n).fill(false), regU = Array(n).fill(false); const p = [];
   function bt(r) {
-    if (count >= limit) return;
-    if (r === n) { count++; return; }
-    for (let c = 0; c < n; c++) {
-      const g = reg[r*n+c];
-      if (colU[c] || regU[g]) continue;
-      if (r > 0 && Math.abs(p[r-1] - c) <= 1) continue;
-      colU[c] = regU[g] = true; p[r] = c;
-      bt(r+1);
-      colU[c] = regU[g] = false;
-    }
+    if (out.length >= limit) return;
+    if (r === n) { out.push(p.slice()); return; }
+    for (let c = 0; c < n; c++) { const g = reg[r*n+c]; if (colU[c] || regU[g]) continue; if (r > 0 && Math.abs(p[r-1] - c) <= 1) continue; colU[c] = regU[g] = true; p[r] = c; bt(r+1); colU[c] = regU[g] = false; }
   }
-  bt(0); return count;
+  bt(0); return out;
 }
-
-function makePuzzle(n, seed) {
+function connectedWithout(n, reg, g, x) {
+  const cells = []; for (let i = 0; i < n*n; i++) if (reg[i] === g && i !== x) cells.push(i);
+  if (!cells.length) return false;
+  const seen = new Set([cells[0]]), st = [cells[0]];
+  while (st.length) { const i = st.pop(), r = i / n | 0, c = i % n;
+    for (const [dr,dc] of [[1,0],[-1,0],[0,1],[0,-1]]) { const rr = r+dr, cc = c+dc, j = rr*n+cc; if (rr>=0&&rr<n&&cc>=0&&cc<n&&j!==x&&reg[j]===g&&!seen.has(j)) { seen.add(j); st.push(j); } } }
+  return seen.size === cells.length;
+}
+function makePuzzle(n, seed, spread = 1.7) {
   const rnd = mulberry32(seed);
-  for (let tries = 0; tries < 5000; tries++) {
-    const sol = randPlacement(n, rnd);
-    for (let k = 0; k < 30; k++) {
-      const reg = growRegions(n, sol, rnd);
-      if (reg.includes(-1)) continue;
-      if (countSolutions(n, reg) === 1) return { n, reg, sol, tries: tries*30+k };
+  for (let tries = 0; tries < 50; tries++) {
+    const sol = randPlacement(n, rnd), reg = growRegions(n, sol, rnd, spread);
+    if (reg.includes(-1)) continue;
+    const seeds = new Set(sol.map((c, r) => r*n + c));
+    for (let it = 0; it < 400; it++) {
+      const s = findSolutions(n, reg);
+      if (s.length === 1) return { n, reg, sol };
+      const alt = s.find(a => a.some((c, r) => c !== sol[r]));
+      const rows = [...Array(n).keys()].filter(r => alt[r] !== sol[r]).sort(() => rnd() - 0.5);
+      let moved = false;
+      for (const r of rows) {
+        const x = r*n + alt[r]; if (seeds.has(x)) continue; const g = reg[x], c = alt[r];
+        const nb = [];
+        for (const [dr,dc] of [[1,0],[-1,0],[0,1],[0,-1]]) { const rr = r+dr, cc = c+dc; if (rr>=0&&rr<n&&cc>=0&&cc<n&&reg[rr*n+cc]!==g) nb.push(reg[rr*n+cc]); }
+        if (!nb.length || !connectedWithout(n, reg, g, x)) continue;
+        reg[x] = nb[Math.floor(rnd()*nb.length)]; moved = true; break;
+      }
+      if (!moved) break;
     }
   }
   return null;
 }
-
+if (typeof module !== 'undefined') module.exports = { makePuzzle, findSolutions };
 
 </script>
 <script>
-const COLORS = ['#e88c8c','#eab06c','#e3d36b','#8fcf86','#6cc6cf','#83a2ea','#b896ea','#e98fc9'];
+const COLORS = ['#e88c8c','#eab06c','#e3d36b','#8fcf86','#6cc6cf','#83a2ea','#b896ea','#e98fc9','#c8ccd4','#b08a64'];
+const AREAS = [ [1,'🏘️ 巷口',5], [6,'🌳 公園',6], [16,'🏠 屋頂',7], [31,'⚓ 漁港',8], [56,'☕ 貓咪咖啡廳',9], [86,'🏯 貓之城',10], [131,'🌙 無盡夜空',10] ];
+const CATS = [ ['🐱','小橘'], ['😺','笑笑'], ['😸','瞇瞇'], ['😹','哈哈'], ['😻','花癡'], ['😼','壞壞'], ['😽','親親'], ['🙀','嚇嚇'], ['😿','哭哭'], ['😾','氣氣'],
+  ['🐈','散步貓'], ['🐈‍⬛','黑貓'], ['🐯','虎斑'], ['🦁','獅子王'], ['🐆','花豹'], ['🐅','老虎'], ['🐼','熊貓（？）'], ['🦊','狐狸（？）'], ['🐰','兔兔（？）'], ['👑','貓王'] ];
 const $ = id => document.getElementById(id);
 
-let store = { level:1, daily:{}, best:{} };
+let store = { level:1, daily:{}, dailyH:{}, best:{}, stars:{}, cat:0 };
 try { Object.assign(store, JSON.parse(localStorage.getItem('meowSeat')) || {}); } catch(e) {}
 function persist() { try { localStorage.setItem('meowSeat', JSON.stringify(store)); } catch(e) {} }
 try { const a = localStorage.getItem('meowAutoX'); if (a !== null) $('autoX').checked = a === '1'; } catch(e) {}
@@ -210,7 +226,12 @@ $('autoX').onchange = () => { try { localStorage.setItem('meowAutoX', $('autoX')
 
 function today() { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0'); }
 function dateSeed(s) { let h = 2166136261; for (const ch of s) { h ^= ch.charCodeAt(0); h = Math.imul(h, 16777619); } return h >>> 0; }
-function levelSize(l) { return l <= 5 ? 5 : l <= 15 ? 6 : l <= 35 ? 7 : 8; }
+store.dailyH = store.dailyH || {}; store.stars = store.stars || {}; store.cat = store.cat || 0;
+function levelSize(l) { return l <= 5 ? 5 : l <= 15 ? 6 : l <= 30 ? 7 : l <= 55 ? 8 : l <= 85 ? 9 : 10; }
+function levelSpread(l) { return l <= 10 ? 1.7 : l % 3 === 0 ? 0.6 : l % 3 === 1 ? 1.1 : 1.6; }
+function areaOf(l) { let a = AREAS[0], i = 0; AREAS.forEach((x, k) => { if (l >= x[0]) { a = x; i = k; } }); return { a, i, next: AREAS[i + 1] }; }
+const catsOwned = () => Math.min(CATS.length, 1 + Math.floor((store.level - 1) / 5));
+const catIcon = () => CATS[Math.min(store.cat, catsOwned() - 1)][0];
 function fmt(s) { return Math.floor(s/60) + ':' + String(s%60).padStart(2,'0'); }
 
 let G = null, timerH = null;
@@ -218,12 +239,22 @@ let G = null, timerH = null;
 function refreshHome() {
   const d = store.daily[today()];
   $('dailyInfo').innerHTML = d ? `<span class="done">今天已完成 ✓</span>　用時 ${fmt(d)}` : '每天一題 8×8';
-  $('bDaily').textContent = d ? '再玩一次今天的題目' : '開始今天的題目';
-  $('lvInfo').textContent = `目前第 ${store.level} 關（${levelSize(store.level)}×${levelSize(store.level)}）`;
+  $('bDaily').textContent = d ? '一般 8×8 ✓' : '一般 8×8';
+  const l = store.level, A = areaOf(l), n = levelSize(l);
+  $('areaName').textContent = A.a[1]; $('starInfo').textContent = `⭐ ${Object.values(store.stars).reduce((a, b) => a + b, 0)}`;
+  $('lvInfo').innerHTML = `目前第 <b>${l}</b> 關（${n}×${n}）${levelSpread(l) < 1 ? '<span style="color:#ff7b9c">・困難盤</span>' : ''}`;
+  const end = A.next ? A.next[0] : l + 1; $('lvProg').style.width = (A.next ? (l - A.a[0]) / (end - A.a[0]) * 100 : 100) + '%';
+  $('bLevel').textContent = A.next ? `繼續闖關（再 ${end - l} 關到 ${A.next[1]}）` : '繼續闖關';
+  const dh = store.dailyH[today()];
+  if (dh) $('dailyInfo').innerHTML += `<br><span class="done">困難題已完成 ✓</span>　用時 ${fmt(dh)}`;
+  const own = catsOwned(); $('collInfo').textContent = `${own}/${CATS.length}`;
+  $('coll').innerHTML = '';
+  CATS.forEach(([e, nm], i) => { const b = document.createElement('button'); b.className = i === Math.min(store.cat, own - 1) ? 'on' : ''; b.disabled = i >= own;
+    b.innerHTML = i < own ? `${e}<small>${nm}</small>` : `❓<small>第 ${i * 5 + 1} 關</small>`; b.onclick = () => { store.cat = i; persist(); refreshHome(); }; $('coll').appendChild(b); });
 }
 
-function start(mode, n, seed, title) {
-  const pz = makePuzzle(n, seed);
+function start(mode, n, seed, title, spread = 1.5) {
+  let pz = null; for (let k = 0; !pz && k < 20; k++) pz = makePuzzle(n, seed + k * 101, k < 10 ? spread : 1.7);
   G = { mode, n, seed, title, reg: pz.reg, sol: pz.sol, st: Array(n*n).fill(0), hearts: 3, t: 0, hints: 0, mistakes: 0, done: false };
   $('home').classList.add('hide'); $('game').classList.remove('hide');
   buildBoard(); render();
@@ -254,7 +285,7 @@ function render() {
   cells.forEach((d, i) => {
     d.classList.toggle('x', G.st[i] === 1);
     d.classList.toggle('cat', G.st[i] === 2);
-    d.textContent = G.st[i] === 2 ? '🐱' : '';
+    d.textContent = G.st[i] === 2 ? catIcon() : '';
   });
   $('gTitle').textContent = G.title;
   $('gHearts').textContent = '❤️'.repeat(G.hearts) + '🖤'.repeat(3 - G.hearts);
@@ -348,21 +379,30 @@ function win() {
   const key = 'n' + G.n; let rec = '';
   if (!G.hints && (!store.best[key] || G.t < store.best[key])) { store.best[key] = G.t; rec = '<br><span class="done">新的最快紀錄！</span>'; }
   let btns = [['回選單', home, true]];
-  if (G.mode === 'daily') { const d = today(); if (!store.daily[d] || G.t < store.daily[d]) store.daily[d] = G.t; }
-  if (G.mode === 'level') { store.level = Math.max(store.level, G.lvl + 1); btns.push(['下一關', playLevel]); }
+  let extra = '';
+  if (G.mode === 'daily') { const d = today(), D = G.n === 10 ? store.dailyH : store.daily; if (!D[d] || G.t < D[d]) D[d] = G.t; }
+  if (G.mode === 'level') {
+    const before = catsOwned(), A0 = areaOf(G.lvl).i;
+    store.stars[G.lvl] = Math.max(store.stars[G.lvl] || 0, stars);
+    store.level = Math.max(store.level, G.lvl + 1);
+    if (catsOwned() > before) { const c = CATS[catsOwned() - 1]; extra += `<br><br>🎁 新貓咪加入圖鑑：<b style="font-size:26px">${c[0]}</b> ${c[1]}`; }
+    if (areaOf(store.level).i > A0) extra += `<br>🗺️ 解鎖新地區：<b>${areaOf(store.level).a[1]}</b>（${levelSize(store.level)}×${levelSize(store.level)}）`;
+    btns.push(['下一關', playLevel]);
+  }
   if (G.mode === 'free') btns.push(['再來一題', () => playFree(G.n)]);
   persist();
-  setTimeout(() => overlay('🎉 全部入座！', `${'⭐'.repeat(stars)}${'☆'.repeat(3-stars)}<br>用時 <b>${fmt(G.t)}</b>　失誤 ${G.mistakes}　提示 ${G.hints}<br>${G.n}×${G.n} 最快 ${store.best[key] ? fmt(store.best[key]) : '—'}${rec}`, btns), 450);
+  setTimeout(() => overlay('🎉 全部入座！', `${'⭐'.repeat(stars)}${'☆'.repeat(3-stars)}<br>用時 <b>${fmt(G.t)}</b>　失誤 ${G.mistakes}　提示 ${G.hints}<br>${G.n}×${G.n} 最快 ${store.best[key] ? fmt(store.best[key]) : '—'}${rec}${extra}`, btns), 450);
 }
 function lose() {
   G.done = true; clearInterval(timerH);
   setTimeout(() => overlay('😿 愛心用完了', '再仔細推理一次吧！', [['回選單', home, true], ['重來這題', () => start(G.mode, G.n, G.seed, G.title)]]), 500);
 }
 
-function playLevel() { const l = store.level, n = levelSize(l); start('level', n, l * 7919 + 13, `第 ${l} 關`); G.lvl = l; }
+function playLevel() { const l = store.level, n = levelSize(l); start('level', n, l * 7919 + 13, `第 ${l} 關`, levelSpread(l)); G.lvl = l; }
 function playFree(n) { start('free', n, (Math.random() * 1e9) | 0, `練習 ${n}×${n}`); }
 $('bDaily').onclick = () => start('daily', 8, dateSeed('meow' + today()), '每日 ' + today().slice(5).replace('-', '/'));
 $('bLevel').onclick = playLevel;
+$('bDailyH').onclick = () => start('daily', 10, dateSeed('meowH' + today()), '困難 ' + today().slice(5).replace('-', '/'), 0.7);
 document.querySelectorAll('.sizes button').forEach(b => b.onclick = () => playFree(+b.dataset.n));
 
 refreshHome();

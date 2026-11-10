@@ -107,9 +107,9 @@
     <div class="card" style="margin-top:16px;line-height:1.8;font-size:16px">
       <b class="gold">怎麼玩</b><br>
       ① 在地圖上選路：⚔ 戰鬥、💀 強敵、❓ 奇遇、💰 商店、🍵 客棧。<br>
-      ② 每章盡頭有一個<b>頭目</b>，打倒他進入下一章，五章打完就是天下第一。<br>
+      ② 每章盡頭有一個<b>頭目</b>，打倒他進入下一章，八章打完就是天下第一。<br>
       ③ 戰鬥時<b>看對手頭上的意圖</b>：他要「蓄力」，就用<b>格擋</b>擋下，或用<b>點穴手</b>打斷。<br>
-      ④ 打贏可以三選一：學新招式、加能力或拿兵器。倒下了也會留下名望，讓下一世更強。
+      ④ 打贏可以三選一：新招式、招式精進、<b>心法</b>、兵器護甲或能力。招式用得越多越熟練，最高練到五重。<br>⑤ 倒下了也會留下名望，讓下一世更強；打得越遠解鎖越多門派，通關後還有「江湖險惡」難度可以挑戰。
     </div>
   </div>
 
@@ -259,26 +259,69 @@ const MOVES = {
   shield: { n:'金鐘罩', cost:15, d:'獲得護體真氣，吸收傷害', tag:'守' },
   drain:  { n:'吸星手', cost:16, d:'1.1 倍，吸回六成傷害', tag:'' },
   poison: { n:'毒砂掌', cost:12, d:'0.5 倍並使對手中毒 3 回合', tag:'' },
-  ult:    { n:'天外飛仙', cost:45, d:'驚天一劍，3.2 倍', tag:'絕' },
+  dog:    { n:'打狗棒法', cost:12, d:'0.9 倍，對手下一招傷害 -40%', tag:'' },
+  sword3: { n:'奪命三仙劍', cost:16, d:'【華山絕學】連刺三劍，各 0.65 倍', tag:'' },
+  luohan: { n:'羅漢伏魔拳', cost:15, d:'【少林絕學】1.4 倍，並獲得護體', tag:'守' },
+  emei:   { n:'峨眉心經', cost:18, d:'【峨眉絕學】回復 22% 生命並解毒', tag:'' },
+  needle: { n:'暴雨梨花針', cost:20, d:'【唐門絕學】五針各 0.38 倍，每針可能中毒', tag:'' },
+  dragon: { n:'降龍十八掌', cost:28, d:'【丐幫絕學】2.4 倍，無視防守', tag:'破' },
+  ult:    { n:'天外飛仙', cost:55, d:'驚天一劍，2.8 倍', tag:'絕' },
 };
-const MOVE_POOL = ['fast','smash','stun','shield','drain','poison'];
+const MOVE_POOL = ['fast','smash','stun','shield','drain','poison','dog'];
+const SECTS = [
+  { k:'hs', n:'華山派', d:'劍法又快又利，身法 +3', moves:['basic','guard','breathe','fast'], sig:'sword3', mod:{ spd:3 }, robe:'#3d6b5a', ok:() => true },
+  { k:'sl', n:'少林寺', d:'皮粗肉厚、以守為攻：生命 +30、防禦 +2、攻擊 -1', moves:['basic','guard','breathe','shield'], sig:'luohan', mod:{ hp:30, def:2, atk:-1 }, robe:'#a8742a', ok:() => true },
+  { k:'em', n:'峨眉派', d:'能吸血又能療傷，久戰不倒：內力 +15', moves:['basic','guard','breathe','drain'], sig:'emei', mod:{ mp:15 }, robe:'#5a4a6a', ok:() => L.best >= 3, need:'打到第三章解鎖' },
+  { k:'tm', n:'唐門', d:'暗器與毒，慢慢磨死對手：身法 +5、生命 -10', moves:['basic','guard','breathe','poison'], sig:'needle', mod:{ spd:5, hp:-10 }, robe:'#2a4a4a', ok:() => L.best >= 5, need:'打到第五章解鎖' },
+  { k:'gb', n:'丐幫', d:'掌力雄渾，一掌定乾坤：攻擊 +3、生命 +10', moves:['basic','guard','breathe','dog'], sig:'dragon', mod:{ atk:3, hp:10 }, robe:'#6a4a3a', ok:() => L.wins >= 1, need:'通關一次解鎖' },
+];
+const ARTS = {
+  yjj:{ n:'易筋經', d:'每回合回復 3% 生命' },
+  jy: { n:'九陽神功', d:'每回合內力回復加倍' },
+  lb: { n:'凌波微步', d:'閃避率 +12%' },
+  dg: { n:'獨孤劍意', d:'暴擊率 +10%，暴擊傷害 1.6→2.1 倍' },
+  jg: { n:'金剛不壞', d:'受到的傷害 -15%' },
+  bm: { n:'北冥神功', d:'每場勝利回復 15% 生命' },
+  qk: { n:'乾坤大挪移', d:'格擋時反彈 80% 傷害' },
+  hg: { n:'化功大法', d:'攻擊有 25% 機率使對手中毒' },
+  xt: { n:'先天功', d:'開戰時獲得 25% 生命的護體真氣' },
+  wx: { n:'小無相功', d:'所有招式內力消耗 -25%' },
+};
+const hasA = k => (S.arts || []).includes(k);
+const MLN = ['', '一重', '二重', '三重', '四重', '五重'], MLX = [0, 0, 5, 12, 22, 36];
+const mlv = m => (S.ml && S.ml[m]) || 1;
+const mmul = m => 1 + 0.1 * (mlv(m) - 1);
+const costOf = m => Math.round(MOVES[m].cost * (hasA('wx') ? 0.75 : 1));
+const NOLV = ['basic','guard','breathe'];
+function learn(m) { if (!S.moves.includes(m)) S.moves.push(m); S.ml[m] = S.ml[m] || 1; S.mu[m] = S.mu[m] || 0; }
+function masterUp(m) { if (mlv(m) >= 5) return false; S.ml[m] = mlv(m) + 1; S.mu[m] = Math.max(S.mu[m] || 0, MLX[S.ml[m]]); return true; }
+function gainArt(k, done) {
+  if (hasA(k)) { S.atk += 2; return done(`你已練過${ARTS[k].n}，再讀一遍，功力更深。\n\n攻擊 +2`); }
+  if (S.arts.length < 3) { S.arts.push(k); return done(`<b class="gold">領悟心法：${ARTS[k].n}</b>\n${ARTS[k].d}`); }
+  scene('心法已滿', `你最多同時修練三門心法。要捨棄哪一門來修練 <b class="gold">${ARTS[k].n}</b>（${ARTS[k].d}）？`,
+    S.arts.map((a, i) => ({ label:`捨棄 ${ARTS[a].n}`, note: ARTS[a].d, fn: () => { S.arts[i] = k; done(`<b class="gold">改修 ${ARTS[k].n}</b>`); } })).concat([{ label:'不學了', fn: () => done('你把秘笈收了起來。') }]), 'meditate');
+}
 
 // ================= 章節 =================
 const CHAPTERS = [
-  { n:'第一章・青石鎮', art:'village', boss:{ name:'黑風寨主 雷天霸', look:'bandit', col:'#5a2a1a', hp:130, atk:10, def:2, traits:['charge'] }, story:'青石鎮外，黑風寨的山賊年年來搶糧。你決定替鎮民出頭。', foes:['山賊','黑風寨嘍囉','惡霸','野狼幫打手'], looks:['bandit'] },
+  { n:'第一章・青石鎮', art:'village', boss:{ name:'黑風寨主 雷天霸', look:'bandit', col:'#5a2a1a', hp:150, atk:12, def:2, traits:['charge'] }, story:'青石鎮外，黑風寨的山賊年年來搶糧。你決定替鎮民出頭。', foes:['山賊','黑風寨嘍囉','惡霸','野狼幫打手'], looks:['bandit'] },
   { n:'第二章・官道風雲', art:'road', boss:{ name:'毒手書生 白無常', look:'scholar', col:'#3a5a3a', hp:230, atk:15, def:3, traits:['poison'] }, story:'你護送鏢車北上，一路上暗器與毒藥防不勝防。幕後黑手是個搖扇的書生。', foes:['劫鏢匪','萬毒谷弟子','刺客','黑店夥計'], looks:['bandit','scholar'] },
-  { n:'第三章・古剎之謎', art:'temple', boss:{ name:'鐵臂金剛 鐵無心', look:'monk', col:'#a8742a', hp:320, atk:17, def:6, traits:['guard'] }, story:'城外古寺夜夜傳出怪聲。被逐出寺的武僧盤據於此，一身橫練刀槍不入。', foes:['惡僧','守寺武僧','盜墓賊','金剛門徒'], looks:['monk','bandit'] },
-  { n:'第四章・落鷹谷', art:'war', boss:{ name:'血刀老祖', look:'blood', col:'#7a1a1a', hp:420, atk:21, def:5, traits:['drain','charge'] }, story:'正邪大戰在落鷹谷爆發。血刀門的老祖以人血練功，殺得正道節節敗退。', foes:['血刀門徒','魔教護法','亂兵','血衣刀客'], looks:['blood','bandit'] },
-  { n:'第五章・華山之巔', art:'duel', boss:{ name:'天魔教主', look:'demon', col:'#3a2244', hp:560, atk:25, def:7, traits:['charge','drain','phase'] }, story:'月圓之夜，天魔教主約戰天下英雄於華山之巔。勝者，便是武林至尊。', foes:['天魔衛','幽冥使者','魔教長老','暗影刺客'], looks:['demon','blood'] },
+  { n:'第三章・竹林劍影', art:'bamboo', boss:{ name:'青竹劍客 柳無痕', look:'scholar', col:'#2a5a3a', hp:310, atk:17, def:4, traits:['multi','guard'] }, story:'竹林深處住著一名劍客，據說他的劍快到看不見。他把劍丟到你腳邊：「拔劍。」', foes:['竹林劍手','青衣刺客','劍廬弟子','蒙面人'], looks:['scholar','bandit'] },
+  { n:'第四章・古剎之謎', art:'temple', boss:{ name:'鐵臂金剛 鐵無心', look:'monk', col:'#a8742a', hp:400, atk:19, def:7, traits:['guard','charge'] }, story:'城外古寺夜夜傳出怪聲。被逐出寺的武僧盤據於此，一身橫練刀槍不入。', foes:['惡僧','守寺武僧','盜墓賊','金剛門徒'], looks:['monk','bandit'] },
+  { n:'第五章・大漠孤煙', art:'road', boss:{ name:'金刀胡王 赫連霸', look:'bandit', col:'#8a6a1a', hp:500, atk:22, def:7, traits:['charge','multi'] }, story:'你西出陽關追查失蹤的鏢銀。黃沙之中，金刀胡王率鐵騎攔路。', foes:['馬賊','胡刀手','沙漠狼騎','西域番僧'], looks:['bandit','monk'] },
+  { n:'第六章・苗疆蠱林', art:'cave', boss:{ name:'五毒教主 藍鳳凰', look:'scholar', col:'#2a3a6a', hp:590, atk:24, def:7, traits:['poison','drain'] }, story:'中原高手接連中蠱而死，線索指向南方苗疆。毒霧瀰漫的林子裡，五毒教主等你自投羅網。', foes:['五毒教徒','蠱師','毒人','苗寨武士'], looks:['scholar','blood'] },
+  { n:'第七章・落鷹谷', art:'war', boss:{ name:'血刀老祖', look:'blood', col:'#7a1a1a', hp:690, atk:27, def:8, traits:['drain','charge','multi'] }, story:'正邪大戰在落鷹谷爆發。血刀門的老祖以人血練功，殺得正道節節敗退。', foes:['血刀門徒','魔教護法','亂兵','血衣刀客'], looks:['blood','bandit'] },
+  { n:'第八章・華山之巔', art:'duel', boss:{ name:'天魔教主', look:'demon', col:'#3a2244', hp:820, atk:30, def:9, traits:['charge','drain','multi','phase'] }, story:'月圓之夜，天魔教主約戰天下英雄於華山之巔。勝者，便是武林至尊。', foes:['天魔衛','幽冥使者','魔教長老','暗影刺客'], looks:['demon','blood'] },
 ];
+const HEAT = ['初出茅廬','江湖險惡 1','江湖險惡 2','江湖險惡 3','江湖險惡 4','江湖險惡 5','江湖險惡 6','江湖險惡 7','江湖險惡 8','江湖險惡 9','江湖險惡 10'];
 const NODE = { fight:{ ic:'⚔', n:'戰鬥' }, elite:{ ic:'💀', n:'強敵' }, event:{ ic:'❓', n:'奇遇' }, shop:{ ic:'💰', n:'商店' }, rest:{ ic:'🍵', n:'客棧' }, boss:{ ic:'👹', n:'頭目' } };
 
 // ================= 存檔 =================
 let S = null, L = { fame:0, up:{ hp:0, atk:0, mp:0, gold:0 }, runs:0, best:0, wins:0 };
 try { const x = JSON.parse(localStorage.getItem('jh2Legacy')); if (x) { L = Object.assign(L, x); L.up = Object.assign({ hp:0, atk:0, mp:0, gold:0 }, x.up || {}); } } catch(e) {}
 const saveL = () => { try { localStorage.setItem('jh2Legacy', JSON.stringify(L)); } catch(e) {} };
-const saveS = () => { try { localStorage.setItem('jh2Run', JSON.stringify(S)); } catch(e) {} };
-const loadS = () => { try { return JSON.parse(localStorage.getItem('jh2Run')); } catch(e) { return null; } };
+const saveS = () => { try { localStorage.setItem('jh3Run', JSON.stringify(S)); } catch(e) {} };
+const loadS = () => { try { return JSON.parse(localStorage.getItem('jh3Run')); } catch(e) { return null; } };
 
 // ================= 人物圖 =================
 function fighterSVG(look, col, flip, weapon = 'sword', boss = false) {
@@ -309,16 +352,18 @@ const LOOK_WEAPON = { bandit:'saber', scholar:'fan', monk:'fist', blood:'saber',
 function avatarSm() { return `<div style="width:64px;height:64px;border-radius:12px;background:#2a241c;overflow:hidden;flex:none">${fighterSVG('hero', S.robe, false, 'sword').replace('viewBox="0 0 140 160"', 'viewBox="30 4 70 70"')}</div>`; }
 
 // ================= 新遊戲 =================
-function newRun() {
-  S = { name: randName(), robe: pick(['#3d6b5a','#4a5a7a','#6a4a3a','#5a4a6a']), lv:1, exp:0, hpMax: 100 + L.up.hp * 10, atk: 10 + L.up.atk, def: 2, spd: 5, mpMax: 40 + L.up.mp * 5,
-    gold: 30 + L.up.gold * 25, pots: 2, moves: ['basic','guard','breathe','fast'], weapon:'木劍', ch:0, step:0, map:null, kills:0, picked:[], firstFight:true, log:[] };
+function newRun(sect, heat) {
+  const X = SECTS.find(x => x.k === sect) || SECTS[0], m = X.mod;
+  S = { name: randName(), sect: X.k, heat: heat || 0, robe: X.robe, lv:1, exp:0, hpMax: 100 + L.up.hp * 10 + (m.hp || 0), atk: 10 + L.up.atk + (m.atk || 0), def: 2 + (m.def || 0), spd: 5 + (m.spd || 0), mpMax: 40 + L.up.mp * 5 + (m.mp || 0),
+    gold: 30 + L.up.gold * 25, pots: 2, moves: [], ml: {}, mu: {}, arts: [], weapon:'木劍', armor:'布衣', ch:0, step:0, map:null, kills:0, picked:[], firstFight:true, log:[] };
+  for (const mv of X.moves) learn(mv);
   S.hp = S.hpMax; S.mp = S.mpMax;
   genMap(); saveS();
 }
 function genMap() {
-  const steps = [];
-  for (let i = 0; i < 6; i++) {
-    let pool = i === 0 ? ['fight','fight','event'] : i === 5 ? ['rest','shop','rest'] : ['fight','fight','elite','event','event','shop','rest'];
+  const steps = [], N = 8;
+  for (let i = 0; i < N; i++) {
+    let pool = i === 0 ? ['fight','fight','event'] : i === N - 1 ? ['rest','shop','rest'] : i === 4 ? [S.ch ? 'elite' : 'fight','event','shop','rest'] : S.ch === 0 ? ['fight','fight','event','event','shop','rest'] : ['fight','fight','fight','elite','event','event','shop','rest'];
     const a = pick(pool); let b = pick(pool); let t = 0; while (b === a && t++ < 10) b = pick(pool);
     steps.push(shuffle([a, b]));
   }
@@ -336,13 +381,13 @@ function renderMap() {
   $('mName').textContent = S.name; $('mLv').textContent = `等級 ${S.lv}`;
   $('mHp').style.width = (S.hp / S.hpMax * 100) + '%'; $('mHpT').textContent = `生命 ${S.hp}/${S.hpMax}`;
   $('mExp').style.width = (S.exp / expNeed() * 100) + '%'; $('mExpT').textContent = `經驗 ${S.exp}/${expNeed()}`;
-  $('mChips').innerHTML = `<span class="chip">⚔ 攻擊 ${S.atk}</span><span class="chip">🛡 防禦 ${S.def}</span><span class="chip">💨 身法 ${S.spd}</span><span class="chip">🔵 內力 ${S.mpMax}</span><span class="chip">🗡 ${S.weapon}</span><span class="chip">💰 ${S.gold} 兩</span><span class="chip">💊 ×${S.pots}</span>`;
+  $('mChips').innerHTML = `<span class="chip">⚔ 攻擊 ${S.atk}</span><span class="chip">🛡 防禦 ${S.def}</span><span class="chip">💨 身法 ${S.spd}</span><span class="chip">🔵 內力 ${S.mpMax}</span><span class="chip">🗡 ${S.weapon}</span><span class="chip">🥋 ${S.armor}</span><span class="chip">🏯 ${SECTS.find(x => x.k === S.sect).n}</span>${S.heat ? `<span class="chip bad">🔥 險惡 ${S.heat}</span>` : ''}<span class="chip">💰 ${S.gold} 兩</span><span class="chip">💊 ×${S.pots}</span>`;
   $('mArt').innerHTML = wxArt(C.art, S.ch + 3);
-  $('mGoal').innerHTML = `<b>${C.n}</b>　<span class="muted">（${S.ch + 1}/5）</span><br>${C.story}<br>目標：打倒 <b class="bad">${C.boss.name}</b>`;
+  $('mGoal').innerHTML = `<b>${C.n}</b>　<span class="muted">（${S.ch + 1}/${CHAPTERS.length}）</span><br>${C.story}<br>目標：打倒 <b class="bad">${C.boss.name}</b>`;
   $('mPath').innerHTML = '';
   S.map.forEach((opts, i) => {
     const row = document.createElement('div'); row.className = 'step';
-    row.innerHTML = `<div class="no">${i === 6 ? '終' : i + 1}</div>`;
+    row.innerHTML = `<div class="no">${i === S.map.length - 1 ? '終' : i + 1}</div>`;
     const box = document.createElement('div'); box.className = 'opts';
     for (const t of opts) {
       const b = document.createElement('button'); const N = NODE[t];
@@ -354,7 +399,8 @@ function renderMap() {
     }
     row.appendChild(box); $('mPath').appendChild(row);
   });
-  $('mMoves').innerHTML = S.moves.map(m => `<b class="gold">${MOVES[m].n}</b>${MOVES[m].cost ? `（${MOVES[m].cost}）` : ''}：${MOVES[m].d}`).join('<br>');
+  $('mMoves').innerHTML = S.moves.map(m => `<b class="gold">${MOVES[m].n}</b>${NOLV.includes(m) ? '' : `<span class="good">・${MLN[mlv(m)]}</span>`}${MOVES[m].cost ? `（${costOf(m)}）` : ''}：${MOVES[m].d}`).join('<br>') +
+    `<div style="margin-top:8px"><b>心法</b>（${S.arts.length}/3）<br>${S.arts.length ? S.arts.map(a => `<b class="gold">${ARTS[a].n}</b>：${ARTS[a].d}`).join('<br>') : '尚未領悟。打倒頭目或強敵、奇遇都有機會得到。'}</div>`;
   // 捲到目前這一步
   setTimeout(() => { const n = document.querySelector('.node.now'); if (n && n.scrollIntoView) n.scrollIntoView({ block:'center', behavior:'smooth' }); }, 50);
 }
@@ -382,22 +428,22 @@ function nextStep() {
 
 // ================= 敵人 =================
 function makeEnemy(kind) {
-  const C = CHAPTERS[S.ch], c = S.ch + 1;
-  if (kind === 'boss') { const b = C.boss; const bh = Math.round(b.hp * (1 + S.ch * 0.2)); return { ...b, atk: b.atk + S.ch * 3, kind, max: bh, hp: bh, traits: [...b.traits], weapon: LOOK_WEAPON[b.look] }; }
+  const C = CHAPTERS[S.ch], c = S.ch + 1, hf = (1 + S.heat * 0.1) * (1 + Math.max(0, S.ch - 3) * 0.1) * (S.ch === 0 ? 0.8 : 1);
+  if (kind === 'boss') { const b = C.boss; const hp = Math.round(b.hp * hf * (1 + S.ch * 0.1)); return { ...b, kind, max: hp, hp, atk: Math.round((b.atk + S.ch * 5) * hf), traits: [...b.traits, ...(S.heat >= 3 && !b.traits.includes('charge') ? ['charge'] : [])], weapon: LOOK_WEAPON[b.look] }; }
   const look = pick(C.looks);
   const el = kind === 'elite';
-  const hp = Math.round((34 + c * 28 + c * c * 6 + S.step * 4) * (el ? 1.7 : 1) * rnd(0.9, 1.1));
+  const hp = Math.round((30 + c * 24 + c * c * 6 + S.step * 5) * (el ? 1.7 : 1) * rnd(0.9, 1.1) * hf);
   const traits = [];
-  if (el) traits.push(pick(['charge','poison','guard','drain']));
-  if (!el && Math.random() < 0.3) traits.push(pick(['charge','guard']));
+  if (el) traits.push(pick(['charge','poison','guard','drain','multi']));
+  if (!el && Math.random() < 0.3 + S.ch * 0.04) traits.push(pick(['charge','guard','multi']));
   const name = (el ? pick(['頭領','好手','高手']) + '・' : '') + pick(C.foes);
-  return { name, look, col: pick(['#5a3a2a','#3a3a50','#4a4a3a','#5a2a3a','#2a4a4a']), kind, hp, max: hp, atk: Math.round((5 + c * 3 + c * c * 0.6) * (el ? 1.3 : 1)), def: Math.round(c * 1.2), traits, weapon: LOOK_WEAPON[look] };
+  return { name, look, col: pick(['#5a3a2a','#3a3a50','#4a4a3a','#5a2a3a','#2a4a4a']), kind, hp, max: hp, atk: Math.round((5 + c * 2.8 + c * c * 0.55) * (el ? 1.3 : 1) * hf), def: Math.round(c * 1.1), traits, weapon: LOOK_WEAPON[look] };
 }
 
 // ================= 戰鬥 =================
 let B = null;
 function battle(e) {
-  B = { e, turn: 0, stunCD: 0, shield: 0, pPoison: 0, ePoison: 0, eStun: false, guard: false, busy: false, phase2: false };
+  B = { e, turn: 0, stunCD: 0, eWeak: 0, shield: hasA('xt') ? Math.round(S.hpMax * 0.25) : 0, pPoison: 0, ePoison: 0, eStun: false, guard: false, busy: false, phase2: false };
   e.charging = false;
   $('battle').classList.remove('hide');
   $('stBg').innerHTML = wxArt(CHAPTERS[S.ch].art, S.ch * 7 + S.step);
@@ -422,15 +468,16 @@ function pickIntent() {
   if (e.traits.includes('poison')) w.poison = 3;
   if (e.traits.includes('drain')) w.drain = 2.5;
   if (e.kind === 'boss' && e.hp < e.max * 0.5 && !e.healed) w.heal = 1.5;
+  if (e.traits.includes('multi')) w.multi = 2.6;
   if (B.phase2) { w.charge += 2; }
   let tot = 0; for (const k in w) tot += w[k];
   let r = Math.random() * tot, t = 'atk'; for (const k in w) { r -= w[k]; if (r <= 0) { t = k; break; } }
   const a = e.atk * (B.phase2 ? 1.25 : 1);
-  e.intent = { t, v: Math.round(t === 'poison' ? a * 0.7 : t === 'drain' ? a * 1.1 : a) };
+  e.intent = { t, v: Math.round(t === 'poison' ? a * 0.7 : t === 'drain' ? a * 1.1 : t === 'multi' ? a * 0.62 : a) };
 }
 function intentText() {
   const i = B.e.intent;
-  return { atk:`⚔ 攻擊 ${i.v}`, heavy:`💥 重擊 ${i.v}！快格擋或點穴`, charge:'⚡ 蓄力中……下回合重擊', guard:'🛡 防守：傷害減半（劈山掌可破）', poison:`☠ 毒招 ${i.v}＋中毒`, drain:`🩸 吸血攻擊 ${i.v}`, heal:'💚 運功療傷', stunned:'💫 被點住穴道，動彈不得' }[i.t];
+  return { atk:`⚔ 攻擊 ${i.v}`, heavy:`💥 重擊 ${i.v}！快格擋或點穴`, charge:'⚡ 蓄力中……下回合重擊', multi:`⚔⚔ 連擊 ${i.v}×2`, guard:'🛡 防守：傷害減半（劈山掌可破）', poison:`☠ 毒招 ${i.v}＋中毒`, drain:`🩸 吸血攻擊 ${i.v}`, heal:'💚 運功療傷', stunned:'💫 被點住穴道，動彈不得' }[i.t];
 }
 function renderBattle() {
   const e = B.e;
@@ -448,9 +495,9 @@ function renderBattle() {
     const M = MOVES[m], b = document.createElement('button');
     b.className = 'mv' + (m === 'ult' ? ' ult' : '');
     const hint = (m === 'stun' && ['charge','heavy'].includes(e.intent.t) && !(B.stunCD > 0 && e.kind !== 'normal')) || (m === 'guard' && e.intent.t === 'heavy') || (m === 'smash' && e.intent.t === 'guard');
-    b.innerHTML = `<b>${hint ? '⭐' : ''}${M.n}</b>${M.cost ? `<span class="c">內力 ${M.cost}</span>` : '<span class="c">免費</span>'}<small>${M.d}</small>`;
+    b.innerHTML = `<b>${hint ? '⭐' : ''}${M.n}</b>${NOLV.includes(m) ? '' : `<span class="good" style="font-size:11px">${MLN[mlv(m)]}</span> `}${M.cost ? `<span class="c">內力 ${costOf(m)}</span>` : '<span class="c">免費</span>'}<small>${M.d}</small>`;
     if (hint) b.style.borderColor = '#d9b25f';
-    b.disabled = B.busy || S.mp < M.cost;
+    b.disabled = B.busy || S.mp < costOf(m);
     b.onclick = () => playerAct(m);
     $('moves').appendChild(b);
   }
@@ -473,18 +520,19 @@ function dmgTo(target, mult, opts = {}) {
   // 我方打敵人
   const e = B.e;
   let d = S.atk * mult * rnd(0.9, 1.1);
-  let crit = Math.random() < S.spd / 100 + (opts.crit || 0);
-  if (crit) d *= 1.6;
-  if (e.intent.t === 'guard' && !B.eStun) d *= opts.breakGuard ? 1.5 : 0.5;
-  d = Math.max(1, Math.round(d - e.def));
+  let crit = Math.random() < Math.min(0.5, S.spd / 100) + (opts.crit || 0) + (hasA('dg') ? 0.1 : 0);
+  if (crit) d *= hasA('dg') ? 2.1 : 1.6;
+  if (e.intent.t === 'guard' && !B.eStun && !opts.pierce) d *= opts.breakGuard ? 1.5 : 0.5;
+  d = Math.max(1, Math.round(d - (opts.pierce ? 0 : e.def)));
+  if (hasA('hg') && Math.random() < 0.25) B.ePoison = Math.max(B.ePoison, 2);
   e.hp -= d;
   return { d, crit };
 }
 async function playerAct(m) {
   if (B.busy) return; B.busy = true;
-  const e = B.e, M = MOVES[m]; S.mp -= M.cost; S.firstFight = false;
+  const e = B.e, M = MOVES[m]; S.mp -= costOf(m); S.firstFight = false; const mm = mmul(m);
   B.guard = false; let text = '';
-  const hit = async (mult, o = {}) => { anim('pF', 'lungeR'); await wait(170); const r = dmgTo(e, mult, o); slashFx('e', r.crit ? '#ffd27a' : '#fff'); anim('eF', 'hurt'); floatNum('e', (r.crit ? '暴擊 ' : '') + '-' + r.d, r.crit ? '#ffd27a' : '#fff'); renderBattle(); await wait(260); return r; };
+  const hit = async (mult, o = {}) => { anim('pF', 'lungeR'); await wait(170); const r = dmgTo(e, mult * mm, o); slashFx('e', r.crit ? '#ffd27a' : '#fff'); anim('eF', 'hurt'); floatNum('e', (r.crit ? '暴擊 ' : '') + '-' + r.d, r.crit ? '#ffd27a' : '#fff'); renderBattle(); await wait(260); return r; };
   if (m === 'basic') { const r = await hit(1); text = `你一掌拍出，造成 <b>${r.d}</b> 傷害。`; }
   else if (m === 'guard') { B.guard = true; S.mp = Math.min(S.mpMax, S.mp + 12); $('pF').classList.add('guarding'); text = '你沉肩墜肘，嚴陣以待。'; }
   else if (m === 'breathe') { S.mp = Math.min(S.mpMax, S.mp + 25); const h = Math.round(S.hpMax * 0.06); S.hp = Math.min(S.hpMax, S.hp + h); floatNum('p', '+' + h, '#7fbf7a'); text = '你調勻內息，內力 +25。'; }
@@ -494,10 +542,17 @@ async function playerAct(m) {
     if (tough && B.stunCD > 0) text = `${e.name}已有防備，點穴手被封住了！（還要 ${B.stunCD} 回合）`;
     else if (['charge','heavy'].includes(e.intent.t) || (!tough && Math.random() < 0.45)) { B.eStun = true; e.charging = false; if (tough) B.stunCD = 3; text = `點中穴道！<b class="gold">${e.name}被定住了</b>，這回合無法出手。`; floatNum('e', '定！', '#ffd27a'); }
     else text = `點穴手只造成 ${r.d} 傷害，沒點中要穴。${tough ? '（強敵只有在蓄力時才點得中）' : ''}`; }
-  else if (m === 'shield') { const s = 18 + S.def * 3 + S.lv * 2; B.shield += s; text = `金鐘罩護體，可吸收 ${s} 傷害。`; floatNum('p', '🔰' + s, '#9cc8ff'); }
+  else if (m === 'shield') { const s = Math.round((18 + S.def * 3 + S.lv * 2) * mm); B.shield += s; text = `金鐘罩護體，可吸收 ${s} 傷害。`; floatNum('p', '🔰' + s, '#9cc8ff'); }
   else if (m === 'drain') { const r = await hit(1.1); const h = Math.round(r.d * 0.6); S.hp = Math.min(S.hpMax, S.hp + h); floatNum('p', '+' + h, '#7fbf7a'); text = `吸星手奪走 ${r.d} 生命，回復 ${h}。`; }
   else if (m === 'poison') { const r = await hit(0.5); B.ePoison = 3; text = `毒砂掌命中，${e.name}中毒了！`; }
-  else if (m === 'ult') { $('stage').style.filter = 'brightness(1.6)'; await wait(150); $('stage').style.filter = ''; const r = await hit(3.2, { crit: 0.15 }); text = `<b class="gold">天外飛仙！</b>一劍造成 <b>${r.d}</b> 傷害！`; }
+  else if (m === 'ult') { $('stage').style.filter = 'brightness(1.6)'; await wait(150); $('stage').style.filter = ''; const r = await hit(2.8, { crit: 0.15 }); text = `<b class="gold">天外飛仙！</b>一劍造成 <b>${r.d}</b> 傷害！`; }
+  else if (m === 'dog') { const r = await hit(0.9); B.eWeak = 1; text = `打狗棒纏住對手，造成 ${r.d} 傷害，<b class="gold">${e.name}下一招力道大減</b>。`; }
+  else if (m === 'sword3') { const a = await hit(0.65), b = await hit(0.65), c = await hit(0.65); text = `奪命三仙劍！${a.d}＋${b.d}＋${c.d}！`; }
+  else if (m === 'luohan') { const r = await hit(1.4); const s = Math.round((10 + S.def * 2 + S.lv) * mm); B.shield += s; floatNum('p', '🔰' + s, '#9cc8ff'); text = `羅漢伏魔拳造成 <b>${r.d}</b> 傷害，護體 +${s}。`; }
+  else if (m === 'emei') { const h = Math.round(S.hpMax * 0.22 * mm); S.hp = Math.min(S.hpMax, S.hp + h); B.pPoison = 0; floatNum('p', '+' + h, '#7fbf7a'); text = `峨眉心經運轉周天，回復 ${h} 生命，毒素盡除。`; }
+  else if (m === 'needle') { let tot = 0, pz = false; for (let i = 0; i < 5; i++) { const r = await hit(0.38); tot += r.d; if (Math.random() < 0.3) pz = true; } if (pz) B.ePoison = 3; text = `暴雨梨花針！共 <b>${tot}</b> 傷害${pz ? '，對手中毒' : ''}！`; }
+  else if (m === 'dragon') { $('stage').style.filter = 'brightness(1.4)'; await wait(120); $('stage').style.filter = ''; const r = await hit(2.4, { pierce: true }); text = `<b class="gold">亢龍有悔！</b>降龍十八掌造成 <b>${r.d}</b> 傷害！`; }
+  if (!NOLV.includes(m)) { S.mu[m] = (S.mu[m] || 0) + 1; const lv = mlv(m); if (lv < 5 && S.mu[m] >= MLX[lv + 1]) { S.ml[m] = lv + 1; text += `<br><b class="good">✨ ${M.n}練到${MLN[lv + 1]}！威力提升</b>`; } }
   say(text); renderBattle();
   await wait(350);
   if (e.hp <= 0) return winBattle();
@@ -514,25 +569,37 @@ async function enemyAct() {
   else if (it.t === 'heal') { const h = Math.round(e.max * 0.12); e.hp = Math.min(e.max, e.hp + h); e.healed = true; floatNum('e', '+' + h, '#7fbf7a'); text = `${e.name}運功療傷，回復 ${h}。`; }
   else {
     e.charging = false;
-    anim('eF', 'lungeL'); await wait(170);
-    let d = it.v * rnd(0.9, 1.1);
-    const dodge = it.t !== 'heavy' && Math.random() < S.spd / 200;
-    if (dodge) { text = `你身形一晃，閃過了${e.name}的攻擊！`; floatNum('p', '閃', '#9cc8ff'); }
-    else {
+    const n = it.t === 'multi' ? 2 : 1, parts = [];
+    let tot = 0, absT = 0, refl = 0;
+    for (let k = 0; k < n; k++) {
+      anim('eF', 'lungeL'); await wait(170);
+      let d = it.v * rnd(0.9, 1.1) * (B.eWeak ? 0.6 : 1);
+      const dodge = it.t !== 'heavy' && Math.random() < Math.min(0.35, S.spd / 200 + (hasA('lb') ? 0.12 : 0));
+      if (dodge) { parts.push('閃'); floatNum('p', '閃', '#9cc8ff'); await wait(n > 1 ? 220 : 0); continue; }
       if (B.guard) d *= 0.3;
-      d = Math.max(1, Math.round(d - S.def));
+      if (hasA('jg')) d *= 0.85;
+      d = Math.max(1, Math.round(d * 100 / (100 + S.def * 2)));
       let absorbed = 0; if (B.shield) { absorbed = Math.min(B.shield, d); B.shield -= absorbed; d -= absorbed; }
-      S.hp -= d; anim('pF', 'hurt'); slashFx('p', '#ff8070'); floatNum('p', '-' + d, '#ff8070');
-      text = `${e.name}${it.t === 'heavy' ? '蓄滿的重擊' : it.t === 'poison' ? '的毒招' : it.t === 'drain' ? '的吸血功' : '出手'}打中你，<b class="bad">${d}</b> 傷害${B.guard ? '（格擋）' : ''}${absorbed ? `（護體吸收 ${absorbed}）` : ''}。`;
-      if (it.t === 'poison') { B.pPoison = 3; text += '你中毒了！'; }
-      if (it.t === 'drain') { const h = Math.round((d + absorbed) * 0.5); e.hp = Math.min(e.max, e.hp + h); text += `${e.name}回復 ${h}。`; }
+      S.hp -= d; tot += d; absT += absorbed; parts.push(d);
+      if (B.guard && hasA('qk')) { const r = Math.round((d + absorbed) * 0.8 + it.v * 0.3); e.hp -= r; refl += r; floatNum('e', '挪 -' + r, '#ffd27a'); }
+      anim('pF', 'hurt'); slashFx('p', '#ff8070'); floatNum('p', '-' + d, '#ff8070');
+      if (n > 1) await wait(220);
     }
+    if (parts.every(x => x === '閃')) text = `你身形一晃，閃過了${e.name}的攻擊！`;
+    else {
+      text = `${e.name}${it.t === 'heavy' ? '蓄滿的重擊' : it.t === 'poison' ? '的毒招' : it.t === 'drain' ? '的吸血功' : it.t === 'multi' ? '的連擊' : '出手'}打中你，<b class="bad">${tot}</b> 傷害${n > 1 ? `（${parts.join('、')}）` : ''}${B.guard ? '（格擋）' : ''}${absT ? `（護體吸收 ${absT}）` : ''}${B.eWeak ? '（被棒法纏住，力道大減）' : ''}。`;
+      if (refl) text += `<b class="gold">乾坤大挪移反彈 ${refl}！</b>`;
+      if (it.t === 'poison') { B.pPoison = 3; text += '你中毒了！'; }
+      if (it.t === 'drain') { const h = Math.round((tot + absT) * 0.5); e.hp = Math.min(e.max, e.hp + h); text += `${e.name}回復 ${h}。`; }
+    }
+    B.eWeak = 0;
   }
   $('pF').classList.remove('guarding');
-  // 回合結束：中毒、內力
+  // 回合結束：中毒、內力、心法
   if (B.ePoison) { const p = 5 + S.lv * 2; e.hp -= p; B.ePoison--; floatNum('e', '☠' + p, '#7fbf7a'); }
   if (B.pPoison) { const p = 4 + S.ch * 2; S.hp -= p; B.pPoison--; text += `　毒發 -${p}`; }
-  S.mp = Math.min(S.mpMax, S.mp + 6);
+  if (hasA('yjj') && S.hp > 0) S.hp = Math.min(S.hpMax, S.hp + Math.round(S.hpMax * 0.03));
+  S.mp = Math.min(S.mpMax, S.mp + (hasA('jy') ? 12 : 6));
   if (B.stunCD > 0) B.stunCD--;
   B.turn++;
   say(text); pickIntent(); B.busy = false; renderBattle();
@@ -554,19 +621,37 @@ async function winBattle() {
   let ups = [];
   while (S.exp >= expNeed()) { S.exp -= expNeed(); S.lv++; S.hpMax += 14; S.hp += 14; S.atk += 2; S.def += 1; S.spd += 1; S.mpMax += 4; ups.push(S.lv); }
   if (e.kind === 'boss') S.hp = Math.min(S.hpMax, S.hp + Math.round(S.hpMax * 0.25));
+  if (hasA('bm')) S.hp = Math.min(S.hpMax, S.hp + Math.round(S.hpMax * 0.15));
   rewardScreen(e, exp, gold, ups);
 }
+const WEAPONS = [['精鋼劍', 4], ['青鋒劍', 6], ['寒鐵劍', 8], ['龍泉寶劍', 11], ['倚天劍', 15], ['屠龍刀', 19]];
+const ARMORS = [['皮甲', 2], ['鎖子甲', 4], ['天蠶衣', 6], ['軟蝟甲', 9], ['金絲寶甲', 12]];
 function rewardScreen(e, exp, gold, ups) {
   const opts = [];
+  const X = SECTS.find(x => x.k === S.sect);
   const unknown = MOVE_POOL.filter(m => !S.moves.includes(m));
-  if (e.kind === 'boss' && S.ch >= 2 && !S.moves.includes('ult')) opts.push({ k:'move', v:'ult' });
-  if (unknown.length) opts.push({ k:'move', v: pick(unknown) });
-  const stats = shuffle([{ k:'hp', v: 25 }, { k:'atk', v: 3 }, { k:'def', v: 2 }, { k:'spd', v: 4 }, { k:'mp', v: 15 }, { k:'pot', v: 2 }]);
+  const freeArts = Object.keys(ARTS).filter(a => !hasA(a));
+  const canUp = S.moves.filter(m => !NOLV.includes(m) && mlv(m) < 5);
+  if (e.kind === 'boss') {
+    if (!S.moves.includes(X.sig)) opts.push({ k:'move', v: X.sig });
+    else if (S.ch >= 2 && !S.moves.includes('ult')) opts.push({ k:'move', v:'ult' });
+    opts.push({ k:'art', v: pick(freeArts) });
+  } else if (e.kind === 'elite' && Math.random() < 0.45) opts.push({ k:'art', v: pick(freeArts) });
+  if (unknown.length && Math.random() < 0.7) opts.push({ k:'move', v: pick(unknown) });
+  if (canUp.length && opts.length < 3) opts.push({ k:'ml', v: pick(canUp) });
+  const stats = shuffle([{ k:'hp', v: 25 + S.ch * 5 }, { k:'atk', v: 3 }, { k:'def', v: 2 }, { k:'spd', v: 4 }, { k:'mp', v: 15 }, ...(S.pots < 5 ? [{ k:'pot', v: 2 }] : [])]);
   while (opts.length < 3) opts.push(stats.pop());
-  if (e.kind !== 'normal' && Math.random() < 0.6) opts[2] = { k:'weapon', v: pick([['精鋼劍', 4], ['青鋒劍', 5], ['寒鐵劍', 6], ['倚天殘劍', 8]].filter(w => w[1] > (S.wAtk || 0))) || ['磨刀石', 2] };
-  const lab = o => o.k === 'move' ? ['新招式', MOVES[o.v].n, MOVES[o.v].d + `（內力 ${MOVES[o.v].cost}）`]
-    : o.k === 'weapon' ? ['兵器', o.v[0], `攻擊 +${o.v[1]}`]
-    : ['修為', { hp:'強身健體', atk:'力貫千鈞', def:'銅皮鐵骨', spd:'凌波微步', mp:'內息綿長', pot:'金創藥' }[o.k], { hp:`生命上限 +${o.v}`, atk:`攻擊 +${o.v}`, def:`防禦 +${o.v}`, spd:`身法 +${o.v}（暴擊與閃避）`, mp:`內力上限 +${o.v}`, pot:`金創藥 +${o.v}` }[o.k]];
+  if (e.kind !== 'normal' && Math.random() < 0.6) {
+    const tierMax = 1 + Math.floor(S.ch * 0.75);
+    if (Math.random() < 0.5) { const w = WEAPONS.filter((x, i) => i <= tierMax && x[1] > (S.wAtk || 0)); if (w.length) opts[2] = { k:'weapon', v: w[0] }; }
+    else { const a = ARMORS.filter((x, i) => i <= tierMax && x[1] > (S.aDef || 0)); if (a.length) opts[2] = { k:'armor', v: a[0] }; }
+  }
+  const lab = o => o.k === 'move' ? [MOVES[o.v].d.startsWith('【') ? '門派絕學' : '新招式', MOVES[o.v].n, MOVES[o.v].d + `（內力 ${MOVES[o.v].cost}）`]
+    : o.k === 'art' ? ['心法', ARTS[o.v].n, ARTS[o.v].d + `（心法 ${S.arts.length}/3）`]
+    : o.k === 'ml' ? ['招式精進', `${MOVES[o.v].n} → ${MLN[mlv(o.v) + 1]}`, '威力 +10%']
+    : o.k === 'weapon' ? ['兵器', o.v[0], `攻擊 +${o.v[1]}（取代${S.weapon}）`]
+    : o.k === 'armor' ? ['護甲', o.v[0], `防禦 +${o.v[1]}（取代${S.armor}）`]
+    : ['修為', { hp:'強身健體', atk:'力貫千鈞', def:'銅皮鐵骨', spd:'凌波身法', mp:'內息綿長', pot:'金創藥' }[o.k], { hp:`生命上限 +${o.v}`, atk:`攻擊 +${o.v}`, def:`防禦 +${o.v}`, spd:`身法 +${o.v}（暴擊與閃避）`, mp:`內力上限 +${o.v}`, pot:`金創藥 +${o.v}` }[o.k]];
   $('sceneIn').innerHTML = wxArt(e.kind === 'boss' ? 'moon' : CHAPTERS[S.ch].art, S.kills) +
     `<h2>${e.kind === 'boss' ? '頭目伏誅！' : '勝利！'}</h2>${ups.length ? `<div class="lvup">升級！等級 ${S.lv}</div><div style="text-align:center" class="muted">生命、攻擊、防禦、身法、內力都提升了</div>` : ''}
     <div class="story">擊敗 ${e.name}　經驗 +${exp}　銀兩 +${gold}</div><div class="muted" style="margin-bottom:8px">選一項獎勵：</div><div class="col" id="rw"></div>`;
@@ -574,9 +659,12 @@ function rewardScreen(e, exp, gold, ups) {
     const [t, n, d] = lab(o), b = document.createElement('button'); b.className = 'reward';
     b.innerHTML = `<div class="t">${t}</div><b>${n}</b><small>${d}</small>`;
     b.onclick = () => {
-      if (o.k === 'move') S.moves.push(o.v);
+      if (o.k === 'art') return gainArt(o.v, r => { saveS(); scene('心法', r, [{ label:'繼續', fn: () => { closeScene(); nextStep(); } }], 'meditate'); });
+      if (o.k === 'move') learn(o.v);
+      else if (o.k === 'ml') masterUp(o.v);
       else if (o.k === 'weapon') { S.atk += o.v[1] - (S.wAtk || 0); S.wAtk = o.v[1]; S.weapon = o.v[0]; }
-      else if (o.k === 'hp') { S.hpMax += o.v; S.hp += o.v; } else if (o.k === 'pot') S.pots += o.v; else if (o.k === 'mp') { S.mpMax += o.v; S.mp = S.mpMax; } else S[o.k] += o.v;
+      else if (o.k === 'armor') { S.def += o.v[1] - (S.aDef || 0); S.aDef = o.v[1]; S.armor = o.v[0]; }
+      else if (o.k === 'hp') { S.hpMax += o.v; S.hp += o.v; } else if (o.k === 'pot') S.pots = Math.min(5, S.pots + o.v); else if (o.k === 'mp') { S.mpMax += o.v; S.mp = S.mpMax; } else S[o.k] += o.v;
       closeScene(); nextStep();
     };
     $('rw').appendChild(b);
@@ -586,27 +674,29 @@ function rewardScreen(e, exp, gold, ups) {
 async function loseBattle() {
   B.busy = true; await wait(500);
   $('battle').classList.add('hide');
-  const fame = S.kills * 3 + S.ch * 25 + S.lv * 4;
+  const fame = Math.round((S.kills * 3 + S.ch * 22 + S.lv * 4) * (1 + S.heat * 0.25));
   L.fame += fame; L.runs++; L.best = Math.max(L.best, S.ch + 1); saveL();
-  try { localStorage.removeItem('jh2Run'); } catch(e) {}
-  scene('你倒下了……', `${S.name}倒在了${CHAPTERS[S.ch].n.split('・')[1]}。\n\n等級 ${S.lv}　擊敗 ${S.kills} 人\n江湖上留下了你的名號：名望 <b class="gold">+${fame}</b>\n\n名望可以在「轉世傳承」強化下一世。`, [
+  const unl = SECTS.filter(x => x.need && x.ok() && !(L.sects || []).includes(x.k)); L.sects = (L.sects || []).concat(unl.map(x => x.k)); saveL();
+  try { localStorage.removeItem('jh3Run'); } catch(e) {}
+  scene('你倒下了……', `${S.name}倒在了${CHAPTERS[S.ch].n.split('・')[1]}。\n\n等級 ${S.lv}　擊敗 ${S.kills} 人\n江湖上留下了你的名號：名望 <b class="gold">+${fame}</b>\n\n名望可以在「轉世傳承」強化下一世。${unl.length ? `\n\n<b class="gold">解鎖新門派：${unl.map(x => x.n).join('、')}</b>` : ''}`, [
     { label:'轉世傳承', fn: () => { closeScene(); legacy(); } }, { label:'回到標題', fn: () => { closeScene(); title_(); } }], 'moon');
 }
 function victory() {
-  const fame = 200 + S.kills * 3 + S.lv * 5;
-  L.fame += fame; L.runs++; L.wins++; L.best = 6; saveL();
-  try { localStorage.removeItem('jh2Run'); } catch(e) {}
-  scene('🏆 天下第一', `華山之巔，天魔教主倒在你劍下。\n群雄齊聲：「${S.name}，天下第一！」\n\n等級 ${S.lv}　擊敗 ${S.kills} 人　招式 ${S.moves.length} 種\n名望 <b class="gold">+${fame}</b>（共通關 ${L.wins} 次）`, [
+  const fame = Math.round((220 + S.kills * 3 + S.lv * 5) * (1 + S.heat * 0.25));
+  const newHeat = S.heat >= (L.heat || 0) && S.heat < 10;
+  L.fame += fame; L.runs++; L.wins++; L.best = CHAPTERS.length + 1; if (newHeat) L.heat = S.heat + 1; L.sects = SECTS.filter(x => x.ok()).map(x => x.k); saveL();
+  try { localStorage.removeItem('jh3Run'); } catch(e) {}
+  scene('🏆 天下第一', `華山之巔，天魔教主倒在你劍下。\n群雄齊聲：「${S.name}，天下第一！」\n\n等級 ${S.lv}　擊敗 ${S.kills} 人　招式 ${S.moves.length} 種\n名望 <b class="gold">+${fame}</b>（共通關 ${L.wins} 次）${newHeat ? `\n\n<b class="bad">🔥 解鎖難度：${HEAT[S.heat + 1]}</b>\n敵人更強，名望更多。` : ''}${L.wins === 1 ? '\n<b class="gold">解鎖新門派：丐幫</b>' : ''}`, [
     { label:'轉世傳承', fn: () => { closeScene(); legacy(); } }, { label:'回到標題', fn: () => { closeScene(); title_(); } }], 'duel');
 }
 
 // ================= 奇遇／商店／客棧 =================
 const EVENTS = [
   () => ({ t:'老乞丐', art:'temple', s:'破廟裡的老乞丐向你伸出髒兮兮的手。', c:[
-    { l:'給他 15 兩', n:'或許有回報', ok: S.gold >= 15, f:() => { S.gold -= 15; if (Math.random() < 0.6) { const m = pick(MOVE_POOL.filter(x => !S.moves.includes(x))); if (m) { S.moves.push(m); return `老乞丐拿樹枝在地上比劃了幾下——竟是一套「${MOVES[m].n}」！\n\n<b class="gold">學會新招式：${MOVES[m].n}</b>`; } } S.atk += 1; return '老乞丐咧嘴一笑，拍了拍你的肩膀。你覺得手臂一熱。\n\n攻擊 +1'; } },
+    { l:'給他 15 兩', n:'或許有回報', ok: S.gold >= 15, f:() => { S.gold -= 15; if (Math.random() < 0.6) { const m = pick(MOVE_POOL.filter(x => !S.moves.includes(x))); if (m) { learn(m); return `老乞丐拿樹枝在地上比劃了幾下——竟是一套「${MOVES[m].n}」！\n\n<b class="gold">學會新招式：${MOVES[m].n}</b>`; } } S.atk += 1; return '老乞丐咧嘴一笑，拍了拍你的肩膀。你覺得手臂一熱。\n\n攻擊 +1'; } },
     { l:'離開', f:() => '你轉身離開。' }] }),
   () => ({ t:'山洞殘卷', art:'cave', s:'山洞深處有一卷殘破的秘笈，字跡模糊。', c:[
-    { l:'硬著頭皮練', n:'七成學會新招，三成走火（扣血）', f:() => { if (Math.random() < 0.7) { const m = pick(MOVE_POOL.filter(x => !S.moves.includes(x))); if (m) { S.moves.push(m); return `你參透了殘卷！\n\n<b class="gold">學會新招式：${MOVES[m].n}</b>`; } S.mpMax += 15; return '殘卷上的招式你都會了，但內力運行更順暢。\n\n內力上限 +15'; } const d = Math.round(S.hpMax * 0.25); S.hp = Math.max(1, S.hp - d); return `氣血翻湧，你噴出一口血。\n\n生命 -${d}`; } },
+    { l:'硬著頭皮練', n:'七成學會新招，三成走火（扣血）', f:() => { if (Math.random() < 0.7) { const m = pick(MOVE_POOL.filter(x => !S.moves.includes(x))); if (m) { learn(m); return `你參透了殘卷！\n\n<b class="gold">學會新招式：${MOVES[m].n}</b>`; } S.mpMax += 15; return '殘卷上的招式你都會了，但內力運行更順暢。\n\n內力上限 +15'; } const d = Math.round(S.hpMax * 0.25); S.hp = Math.max(1, S.hp - d); return `氣血翻湧，你噴出一口血。\n\n生命 -${d}`; } },
     { l:'拿去賣錢', n:'+50 兩', f:() => { S.gold += 50; return '書肆老闆給了你五十兩。'; } }] }),
   () => ({ t:'懸崖靈芝', art:'cliff', s:'峭壁上長著一株百年靈芝。', c:[
     { l:'攀上去採', n:'身法越高越容易成功', f:() => { if (Math.random() < 0.35 + S.spd / 40) { S.hpMax += 20; S.hp += 20; return '你如壁虎般攀上，服下靈芝。\n\n<b class="gold">生命上限 +20</b>'; } const d = Math.round(S.hpMax * 0.2); S.hp = Math.max(1, S.hp - d); return `手一滑摔了下來。\n\n生命 -${d}`; } },
@@ -616,7 +706,7 @@ const EVENTS = [
     { l:'在瀑布下打坐', n:'內力上限 +12', f:() => { S.mpMax += 12; S.mp = S.mpMax; return '水流沖刷之下，內息更加綿長。\n\n內力上限 +12'; } }] }),
   () => ({ t:'路見不平', art:'village', s:'惡霸正在欺負賣菜的老婆婆。', c:[
     { l:'出手教訓', n:'打一場，贏了多拿銀兩', f:() => { closeScene(); const e = makeEnemy('normal'); e.name = '惡霸'; battle(e); return null; } },
-    { l:'塞錢給婆婆', n:'-10 兩，聲望好事', ok: S.gold >= 10, f:() => { S.gold -= 10; S.pots++; return '婆婆千恩萬謝，硬塞給你一瓶祖傳傷藥。\n\n金創藥 +1'; } }] }),
+    { l:'塞錢給婆婆', n:'-10 兩，聲望好事', ok: S.gold >= 10, f:() => { S.gold -= 10; S.pots = Math.min(5, S.pots + 1); return '婆婆千恩萬謝，硬塞給你一瓶祖傳傷藥。\n\n金創藥 +1'; } }] }),
   () => ({ t:'隱世高人', art:'hut', s:'茅屋前，一個老者正在劈柴，每一斧都分毫不差。', c:[
     { l:'上前請教', n:'可能獲得指點', f:() => { const r = Math.random(); if (r < 0.5) { S.spd += 3; S.def += 1; return '老者教你步法與卸力的訣竅。\n\n身法 +3　防禦 +1'; } return '老者只說了一句：「柴劈完了，你走吧。」'; } },
     { l:'幫他劈柴', n:'生命回滿', f:() => { S.hp = S.hpMax; return '劈了一下午柴，吃了一頓熱飯，睡得很香。\n\n生命全滿'; } }] }),
@@ -627,22 +717,38 @@ const EVENTS = [
     { l:'把酒言歡', n:'回復生命', f:() => { const h = Math.round(S.hpMax * 0.35); S.hp = Math.min(S.hpMax, S.hp + h); return `你們喝到天亮。\n\n生命 +${h}`; } },
     { l:'切磋武藝', n:'經驗 +25', f:() => { S.exp += 25; let t = '你們過了幾十招，各有所得。\n\n經驗 +25'; while (S.exp >= expNeed()) { S.exp -= expNeed(); S.lv++; S.hpMax += 14; S.hp += 14; S.atk += 2; S.def += 1; S.spd += 1; S.mpMax += 4; t += `\n<b class="gold">升級！等級 ${S.lv}</b>`; } return t; } }] }),
 ];
+EVENTS.push(
+  () => ({ t:'石壁心法', art:'cave', s:'古墓石壁上刻滿了人形與經脈圖，似乎是一門失傳的內功。', c:[
+    { l:'面壁參悟', n:'領悟一門心法，但耗損生命', f:() => { S.hp = Math.max(1, S.hp - Math.round(S.hpMax * 0.15)); const k = pick(Object.keys(ARTS).filter(a => !hasA(a))); gainArt(k, r => { saveS(); scene('石壁心法', '你在石壁前坐了三天三夜，生命 -15%。\n\n' + r, [{ label:'繼續', fn: () => { closeScene(); nextStep(); } }], 'meditate'); }); return null; } },
+    { l:'拓印下來賣錢', n:'+60 兩', f:() => { S.gold += 60; return '古董商出了六十兩。'; } }] }),
+  () => ({ t:'藏經閣', art:'temple', s:'深夜，你溜進了少林藏經閣。燭光下，一排排的武學典籍。', c:[
+    { l:'精研自己的招式', n:'一招精進一重', f:() => { const c = S.moves.filter(m => !NOLV.includes(m) && mlv(m) < 5); if (!c.length) { S.atk += 2; return '你的招式都已練到頂了，只好讀點兵法。\n\n攻擊 +2'; } const m = pick(c); masterUp(m); return `你照著典籍苦練，<b class="gold">${MOVES[m].n}練到${MLN[mlv(m)]}</b>！`; } },
+    { l:'翻找新武功', n:'學會一種新招式', ok: MOVE_POOL.some(m => !S.moves.includes(m)), f:() => { const m = pick(MOVE_POOL.filter(x => !S.moves.includes(x))); learn(m); return `你找到一本《${MOVES[m].n}》圖譜。\n\n<b class="gold">學會 ${MOVES[m].n}</b>`; } }] }),
+  () => ({ t:'擂台比武', art:'arena', s:'鎮上搭起擂台，「連勝者賞銀百兩」。台上的高手正在叫陣。', c:[
+    { l:'上台挑戰', n:'打一場強敵', f:() => { closeScene(); const e = makeEnemy('elite'); e.name = '擂主・' + e.name.split('・').pop(); battle(e); return null; } },
+    { l:'在台下觀摩', n:'經驗 +20', f:() => { S.exp += 20; let t = '你看出了不少門道。\n\n經驗 +20'; while (S.exp >= expNeed()) { S.exp -= expNeed(); S.lv++; S.hpMax += 14; S.hp += 14; S.atk += 2; S.def += 1; S.spd += 1; S.mpMax += 4; t += `\n<b class="gold">升級！等級 ${S.lv}</b>`; } return t; } }] }),
+);
 function doEvent() {
   const E = pick(EVENTS)();
   scene(E.t, E.s, E.c.map(c => ({ label: c.l, note: c.n, dis: c.ok === false, fn: () => { const r = c.f(); if (r === null) return; saveS(); scene(E.t, r, [{ label:'繼續', fn: () => { closeScene(); nextStep(); } }], E.art); } })), E.art);
 }
 function shop() {
-  const items = [
-    { n:'金創藥', d:'戰鬥中回復 40% 生命', p:30, f:() => S.pots++ },
-    { n:'秘笈', d:'隨機學會一種新招式', p:80, ok: MOVE_POOL.some(m => !S.moves.includes(m)), f:() => { const m = pick(MOVE_POOL.filter(x => !S.moves.includes(x))); S.moves.push(m); return `學會「${MOVES[m].n}」`; } },
+  const bought = {};
+  const mk = () => { const items = [
+    { n:'金創藥', d:`戰鬥中回復 40% 生命（最多帶 5 瓶，現有 ${S.pots}）`, p:30, ok: S.pots < 5, f:() => S.pots++ },
+    { n:'秘笈', d:'隨機學會一種新招式', p:80, ok: MOVE_POOL.some(m => !S.moves.includes(m)), f:() => { const m = pick(MOVE_POOL.filter(x => !S.moves.includes(x))); learn(m); return `學會「${MOVES[m].n}」`; } },
     { n:'磨刀石', d:'攻擊 +2', p:50, f:() => S.atk += 2 },
     { n:'護身甲', d:'防禦 +2', p:50, f:() => S.def += 2 },
     { n:'大補丸', d:'生命上限 +20', p:60, f:() => { S.hpMax += 20; S.hp += 20; } },
+    { n:'名師指點', d:'隨機一招精進一重', p:70, ok: S.moves.some(m => !NOLV.includes(m) && mlv(m) < 5), f:() => { const m = pick(S.moves.filter(m => !NOLV.includes(m) && mlv(m) < 5)); masterUp(m); return `${MOVES[m].n}練到${MLN[mlv(m)]}`; } },
+    { n:'心法秘笈', d:'領悟一門心法（最多三門）', p:160, ok: S.arts.length < 3, f:() => { const k = pick(Object.keys(ARTS).filter(a => !hasA(a))); S.arts.push(k); return `領悟 ${ARTS[k].n}`; } },
   ];
+  for (const it of items) if (it.p) it.p = Math.round(it.p * (1 + S.ch * 0.12));
+  return items; };
   const draw = (msgT = '') => {
     $('sceneIn').innerHTML = wxArt('village', 9) + `<h2>雜貨鋪</h2><div class="story">掌櫃笑瞇瞇：「客官要點什麼？」\n你有 <b class="gold">${S.gold}</b> 兩${msgT ? '\n\n' + msgT : ''}</div><div class="col" id="shopL"></div>`;
-    for (const it of items) { const b = document.createElement('button'); b.className = 'choice'; b.innerHTML = `${it.n}　<span class="gold">${it.p} 兩</span><small>${it.d}</small>`; b.disabled = S.gold < it.p || it.ok === false;
-      b.onclick = () => { S.gold -= it.p; const r = it.f(); saveS(); draw(`<span class="good">買了${it.n}${typeof r === 'string' ? '：' + r : ''}</span>`); }; $('shopL').appendChild(b); }
+    for (const it of mk()) { const b = document.createElement('button'); b.className = 'choice'; b.innerHTML = `${it.n}　<span class="gold">${it.p} 兩</span><small>${it.d}</small>`; b.disabled = S.gold < it.p || it.ok === false || (bought[it.n] && it.n !== '金創藥');
+      b.onclick = () => { S.gold -= it.p; bought[it.n] = 1; const r = it.f(); saveS(); draw(`<span class="good">買了${it.n}${typeof r === 'string' ? '：' + r : ''}</span>`); }; $('shopL').appendChild(b); }
     const x = document.createElement('button'); x.textContent = '離開'; x.onclick = () => { closeScene(); nextStep(); }; $('shopL').appendChild(x);
   };
   draw(); $('scene').classList.remove('hide'); $('scene').scrollTop = 0;
@@ -684,10 +790,25 @@ function title_() {
   $('bCont').classList.toggle('hide', !loadS());
 }
 $('bNew').onclick = () => {
-  const go = () => { newRun(); closeScene(); const C = CHAPTERS[0]; scene('出山', `你叫 <b class="gold">${S.name}</b>，十六歲，剛下山。\n\n${C.story}`, [{ label:'踏入江湖', fn: () => { closeScene(); renderMap(); } }], 'gate'); };
+  const go = () => chooseSect();
   if (loadS()) scene('重新出山', '你還有一段未完的江湖路，重新開始會放棄它。', [{ label:'確定重新開始', fn: go }, { label:'算了', fn: closeScene }]); else go();
 };
+function chooseSect() {
+  let heat = Math.min(L.heat || 0, 10), sect = null;
+  const draw = () => {
+    $('sceneIn').innerHTML = wxArt('gate', 4) + `<h2>拜入門派</h2><div class="story" style="margin-bottom:8px">你十六歲，要拜哪個門派？每派起手招式不同，打倒第一個頭目後可以學到本門絕學。</div><div class="col" id="sc"></div>` +
+      (L.heat ? `<h2 style="margin-top:16px">難度</h2><div class="muted" style="margin-bottom:6px">越險惡，敵人越強，名望越多</div><div class="row" style="display:flex;gap:8px;align-items:center"><button class="ghost" id="hm">－</button><b style="flex:1;text-align:center" class="${heat ? 'bad' : ''}">${HEAT[heat]}${heat ? `<br><small class="muted">敵人 +${heat * 10}%・名望 +${heat * 25}%</small>` : ''}</b><button class="ghost" id="hp">＋</button></div>` : '') +
+      `<button id="go" style="width:100%;margin-top:16px" ${sect ? '' : 'disabled'}>出山</button>`;
+    for (const X of SECTS) { const b = document.createElement('button'); b.className = 'reward'; const ok = X.ok(); b.disabled = !ok; if (sect === X.k) b.style.borderColor = '#d9b25f';
+      b.innerHTML = `<div class="t">${ok ? X.moves.filter(m => !NOLV.includes(m)).map(m => MOVES[m].n).join('、') + '・絕學 ' + MOVES[X.sig].n : '🔒 ' + X.need}</div><b>${sect === X.k ? '✔ ' : ''}${X.n}</b><small>${X.d}</small>`;
+      b.onclick = () => { sect = X.k; draw(); }; $('sc').appendChild(b); }
+    if ($('hm')) { $('hm').onclick = () => { heat = Math.max(0, heat - 1); draw(); }; $('hp').onclick = () => { heat = Math.min(L.heat || 0, heat + 1); draw(); }; }
+    $('go').onclick = () => { newRun(sect, heat); const C = CHAPTERS[0]; scene('出山', `你叫 <b class="gold">${S.name}</b>，${SECTS.find(x => x.k === sect).n}弟子，十六歲，剛下山。\n\n${C.story}`, [{ label:'踏入江湖', fn: () => { closeScene(); renderMap(); } }], 'gate'); };
+  };
+  draw(); $('scene').classList.remove('hide'); $('scene').scrollTop = 0;
+}
 $('bCont').onclick = () => { S = loadS(); if (S) renderMap(); };
+if (!SECTS) {}
 $('bLegacy').onclick = legacy;
 title_();
 </script>
