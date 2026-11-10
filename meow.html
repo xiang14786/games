@@ -12,68 +12,84 @@
 <title>喵喵找位子</title>
 <style>
   * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
-  html,body { margin:0; min-height:100%; background:#12141b; color:#e8eaf0;
+  html,body { margin:0; min-height:100%; color:#fff4e8; background-color:#2a1d2e;
+    background-image:radial-gradient(circle at 20% 0%, #4a2f4f 0, transparent 55%), radial-gradient(circle at 100% 100%, #3a2a1e 0, transparent 50%);
+    background-attachment:fixed;
     font-family:-apple-system,"PingFang TC","Noto Sans TC","Microsoft JhengHei",sans-serif;
     user-select:none; -webkit-user-select:none; overscroll-behavior:none; }
-  .wrap { max-width:520px; margin:0 auto; padding:16px 14px 30px; }
+  body::before { content:''; position:fixed; inset:0; pointer-events:none; opacity:.07;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='90' height='90'%3E%3Cg fill='%23fff'%3E%3Cellipse cx='25' cy='30' rx='7' ry='6'/%3E%3Ccircle cx='16' cy='20' r='3.2'/%3E%3Ccircle cx='23' cy='15' r='3.2'/%3E%3Ccircle cx='31' cy='16' r='3.2'/%3E%3Ccircle cx='36' cy='23' r='3.2'/%3E%3Cellipse cx='68' cy='72' rx='7' ry='6'/%3E%3Ccircle cx='59' cy='62' r='3.2'/%3E%3Ccircle cx='66' cy='57' r='3.2'/%3E%3Ccircle cx='74' cy='58' r='3.2'/%3E%3Ccircle cx='79' cy='65' r='3.2'/%3E%3C/g%3E%3C/svg%3E"); }
+  .wrap { position:relative; max-width:520px; margin:0 auto; padding:calc(env(safe-area-inset-top) + 14px) 14px 30px; }
   .screen.hide { display:none; }
-  h1 { margin:6px 0 4px; font-size:40px; text-align:center; color:#ffb86b; }
-  .sub { text-align:center; color:#9aa3b5; font-size:17px; margin-bottom:18px; }
-  .card { background:#1c2029; border-radius:16px; padding:16px; margin-bottom:12px; }
-  .card h3 { margin:0 0 6px; font-size:22px; }
-  .card p { margin:0 0 12px; color:#9aa3b5; font-size:16px; line-height:1.6; }
-  button { background:#ffb86b; color:#24160a; border:0; border-radius:12px; padding:12px 20px;
-    font-size:19px; font-weight:800; cursor:pointer; font-family:inherit; }
-  button.ghost { background:#2a303c; color:#e8eaf0; }
+  .hero { text-align:center; margin:4px 0 14px; }
+  .hero svg { width:120px; height:96px; filter:drop-shadow(0 6px 10px rgba(0,0,0,.35)); animation:bob 2.4s ease-in-out infinite; }
+  @keyframes bob { 50% { transform:translateY(-5px) rotate(-2deg); } }
+  h1 { margin:2px 0 2px; font-size:42px; text-align:center; font-weight:900; letter-spacing:2px;
+    background:linear-gradient(180deg,#ffe3b8,#ffb36b); -webkit-background-clip:text; background-clip:text; color:transparent;
+    filter:drop-shadow(0 3px 0 #8a4a1e); }
+  .sub { text-align:center; color:#d9c4d6; font-size:16px; margin-bottom:16px; }
+  .card { background:linear-gradient(160deg, rgba(255,255,255,.1), rgba(255,255,255,.04)); border:1px solid rgba(255,220,190,.18);
+    border-radius:22px; padding:16px; margin-bottom:14px; box-shadow:0 8px 24px rgba(0,0,0,.25); }
+  .card h3 { margin:0 0 6px; font-size:21px; }
+  .card p { margin:0 0 12px; color:#d9c4d6; font-size:15px; line-height:1.6; }
+  button { background:linear-gradient(180deg,#ffc98a,#ff9e5a); color:#3a1a05; border:0; border-radius:16px; padding:12px 20px;
+    font-size:18px; font-weight:900; cursor:pointer; font-family:inherit; box-shadow:0 4px 0 #b8622a; }
+  button:active { transform:translateY(3px); box-shadow:0 1px 0 #b8622a; }
+  button.ghost { background:rgba(255,255,255,.1); color:#fff4e8; box-shadow:0 4px 0 rgba(0,0,0,.3); border:1px solid rgba(255,255,255,.15); }
   button.sm { padding:9px 14px; font-size:16px; }
   button:disabled { opacity:.35; }
   .row { display:flex; gap:8px; flex-wrap:wrap; }
-  .rules { color:#b9bfcc; font-size:16px; line-height:1.8; }
-  .rules b { color:#ffb86b; }
+  .rules { color:#ead8e6; font-size:15px; line-height:1.9; }
+  .rules b { color:#ffc98a; }
   .top { display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; gap:8px; }
-  .title { font-size:20px; font-weight:800; }
+  .title { font-size:20px; font-weight:900; background:rgba(255,255,255,.08); border-radius:999px; padding:6px 16px; }
   .hearts { font-size:24px; letter-spacing:2px; }
-  .timer { font-size:20px; font-variant-numeric:tabular-nums; color:#9aa3b5; min-width:60px; text-align:right; }
-  #board { display:grid; width:100%; aspect-ratio:1; border:3px solid #0a0b0f; border-radius:10px; overflow:hidden;
-    touch-action:none; background:#0a0b0f; }
-  .cell { position:relative; display:flex; align-items:center; justify-content:center; border:1px solid rgba(0,0,0,.25);
-    font-size:clamp(20px,7vw,34px); line-height:1; }
-  .cell.x::after { content:'✕'; color:rgba(20,20,30,.55); font-size:.7em; font-weight:900; }
-  .cell.cat { font-size:clamp(22px,8vw,38px); }
+  .timer { font-size:20px; font-variant-numeric:tabular-nums; color:#d9c4d6; min-width:60px; text-align:right; font-weight:800; }
+  #board { display:grid; width:100%; aspect-ratio:1; border:5px solid #5a3a2a; border-radius:18px; overflow:hidden;
+    touch-action:none; background:#5a3a2a; box-shadow:0 0 0 3px #8a5a3a, 0 14px 30px rgba(0,0,0,.45); gap:0; }
+  .cell { position:relative; display:flex; align-items:center; justify-content:center; border:1px solid rgba(60,30,20,.18);
+    font-size:clamp(18px,7vw,34px); line-height:1; box-shadow:inset 0 2px 0 rgba(255,255,255,.28), inset 0 -2px 0 rgba(0,0,0,.08); }
+  .cell.x::after { content:'✕'; color:rgba(70,35,30,.5); font-size:.6em; font-weight:900; }
+  .cell.cat { font-size:clamp(20px,8vw,38px); }
+  .cell { isolation:isolate; }
+  .cell.cat::before { content:''; position:absolute; inset:12%; border-radius:50%; background:rgba(255,255,255,.5); box-shadow:0 2px 6px rgba(0,0,0,.2); z-index:-1; }
   .cell.bad { animation:bad .5s; }
   .cell.pop { animation:pop .3s; }
-  .cell.hint { box-shadow:inset 0 0 0 4px #fff; }
+  .cell.hint { box-shadow:inset 0 0 0 4px #fff, 0 0 12px #fff; z-index:2; }
   @keyframes bad { 0%,100%{filter:none} 30%{filter:brightness(.4) sepia(1) hue-rotate(-50deg) saturate(6)} }
-  @keyframes pop { 0%{transform:scale(.3)} 70%{transform:scale(1.2)} 100%{transform:scale(1)} }
+  @keyframes pop { 0%{transform:scale(.3)} 70%{transform:scale(1.25)} 100%{transform:scale(1)} }
   .shake { animation:shake .35s; }
   @keyframes shake { 25%{transform:translateX(-6px)} 75%{transform:translateX(6px)} }
-  .tools { display:flex; gap:8px; margin-top:12px; justify-content:space-between; flex-wrap:wrap; }
-  .toggle { display:flex; align-items:center; gap:8px; color:#9aa3b5; font-size:16px; margin-top:12px; }
-  .toggle input { width:22px; height:22px; }
-  .tip { color:#7d8496; font-size:15px; margin-top:10px; line-height:1.6; text-align:center; }
-  .ov { position:fixed; inset:0; background:rgba(8,9,13,.88); display:flex; align-items:center; justify-content:center; z-index:9; padding:20px; }
+  .tools { display:flex; gap:8px; margin-top:14px; justify-content:space-between; flex-wrap:wrap; }
+  .tools button { flex:1; }
+  .toggle { display:flex; align-items:center; gap:8px; color:#d9c4d6; font-size:15px; margin-top:14px; }
+  .toggle input { width:22px; height:22px; accent-color:#ff9e5a; }
+  .tip { color:#b8a2b4; font-size:14px; margin-top:10px; line-height:1.6; text-align:center; }
+  .ov { position:fixed; inset:0; background:rgba(25,15,25,.82); backdrop-filter:blur(4px); display:flex; align-items:center; justify-content:center; z-index:9; padding:20px; }
   .ov.hide { display:none; }
-  .box { background:#1c2029; border-radius:18px; padding:26px 22px; text-align:center; max-width:360px; width:100%; }
+  .box { background:linear-gradient(170deg,#4a3050,#2f2034); border:2px solid rgba(255,200,150,.3); border-radius:26px; padding:26px 22px; text-align:center; max-width:360px; width:100%; box-shadow:0 20px 50px rgba(0,0,0,.5); animation:pop .35s; }
   .box h2 { margin:0 0 10px; font-size:30px; }
-  .box p { margin:0 0 18px; font-size:18px; color:#b9bfcc; line-height:1.7; }
+  .box p { margin:0 0 18px; font-size:17px; color:#ead8e6; line-height:1.7; }
   .box .row { justify-content:center; }
   .sizes button { flex:1; min-width:64px; }
-  .done { color:#7cc47f; font-weight:800; }
-  .area { display:flex; justify-content:space-between; align-items:center; font-size:15px; color:#9aa3b5; margin:-4px 0 10px; }
-  .prog { height:10px; background:#0e1016; border-radius:6px; overflow:hidden; margin:6px 0 12px; }
+  .done { color:#9be29a; font-weight:800; }
+  .area { display:flex; justify-content:space-between; align-items:center; font-size:15px; color:#d9c4d6; margin:-4px 0 10px; }
+  .prog { height:10px; background:rgba(0,0,0,.35); border-radius:6px; overflow:hidden; margin:6px 0 12px; }
   .prog i { display:block; height:100%; background:linear-gradient(90deg,#ffb86b,#ff7b9c); }
   .coll { display:grid; grid-template-columns:repeat(5,1fr); gap:8px; }
-  .coll button { padding:8px 2px; font-size:28px; line-height:1.1; background:#262b36; border:2px solid transparent; }
+  .coll button { padding:8px 2px; font-size:28px; line-height:1.1; background:rgba(255,255,255,.08); border:2px solid transparent; box-shadow:none; }
   .coll button small { display:block; font-size:11px; color:#9aa3b5; font-weight:600; margin-top:2px; }
   .coll button.on { border-color:#ffb86b; }
   .coll button:disabled { opacity:.35; }
+  .conf { position:fixed; top:-20px; font-size:22px; z-index:20; pointer-events:none; animation:fall linear forwards; }
+  @keyframes fall { to { transform:translateY(110vh) rotate(540deg); } }
 </style>
 </head>
 <body>
 <div class="wrap">
   <!-- 主選單 -->
   <div class="screen" id="home">
-    <h1>🐱 喵喵找位子</h1>
+    <div class="hero"><svg viewBox="0 0 120 96"><path d="M22 40 L18 8 L44 26 Z" fill="#ffb36b"/><path d="M98 40 L102 8 L76 26 Z" fill="#ffb36b"/><path d="M24 34 L22 16 L38 28 Z" fill="#ffd9e6"/><path d="M96 34 L98 16 L82 28 Z" fill="#ffd9e6"/><ellipse cx="60" cy="56" rx="44" ry="36" fill="#ffb36b"/><path d="M40 30 Q60 22 80 30 Q70 34 60 33 Q50 34 40 30Z" fill="#e8873d"/><ellipse cx="44" cy="56" rx="6" ry="8" fill="#2a1a12"/><ellipse cx="76" cy="56" rx="6" ry="8" fill="#2a1a12"/><circle cx="46" cy="53" r="2" fill="#fff"/><circle cx="78" cy="53" r="2" fill="#fff"/><path d="M56 66 L64 66 L60 70Z" fill="#ff7b9c"/><path d="M60 70 Q55 76 50 72 M60 70 Q65 76 70 72" stroke="#2a1a12" stroke-width="2" fill="none" stroke-linecap="round"/><ellipse cx="34" cy="68" rx="7" ry="4" fill="#ff8fa8" opacity=".6"/><ellipse cx="86" cy="68" rx="7" ry="4" fill="#ff8fa8" opacity=".6"/><path d="M14 62 L32 64 M14 70 L32 68 M106 62 L88 64 M106 70 L88 68" stroke="#fff" stroke-width="1.6" stroke-linecap="round" opacity=".8"/></svg></div><h1>喵喵找位子</h1>
     <div class="sub">每隻貓都想要自己的地盤</div>
     <div class="card">
       <h3>🏆 闖關模式</h3>
@@ -88,7 +104,7 @@
       <div class="row"><button id="bDaily" style="flex:1">一般 8×8</button><button id="bDailyH" style="flex:1;background:#ff7b9c">困難 10×10</button></div>
     </div>
     <div class="card">
-      <h3>🐾 貓咪圖鑑 <span id="collInfo" style="font-size:15px;color:#9aa3b5;font-weight:600"></span></h3>
+      <h3>🐾 貓咪圖鑑 <span id="collInfo" style="font-size:15px;color:#d9c4d6;font-weight:600"></span></h3>
       <p>每過 5 關收集一隻新貓咪，點一下就換成盤面上的貓。</p>
       <div class="coll" id="coll"></div>
     </div>
@@ -271,7 +287,7 @@ function buildBoard() {
     const r = i/n|0, c = i%n, g = G.reg[i];
     const d = document.createElement('div'); d.className = 'cell'; d.dataset.i = i;
     d.style.background = COLORS[g];
-    const th = '3px solid #0a0b0f';
+    const th = '3px solid #4a2c20';
     if (r > 0 && G.reg[i-n] !== g) d.style.borderTop = th;
     if (c > 0 && G.reg[i-1] !== g) d.style.borderLeft = th;
     if (r < n-1 && G.reg[i+n] !== g) d.style.borderBottom = th;
@@ -391,8 +407,10 @@ function win() {
   }
   if (G.mode === 'free') btns.push(['再來一題', () => playFree(G.n)]);
   persist();
+  confetti();
   setTimeout(() => overlay('🎉 全部入座！', `${'⭐'.repeat(stars)}${'☆'.repeat(3-stars)}<br>用時 <b>${fmt(G.t)}</b>　失誤 ${G.mistakes}　提示 ${G.hints}<br>${G.n}×${G.n} 最快 ${store.best[key] ? fmt(store.best[key]) : '—'}${rec}${extra}`, btns), 450);
 }
+function confetti() { for (let i = 0; i < 26; i++) { const d = document.createElement('div'); d.className = 'conf'; d.textContent = ['🐾', '⭐', '🎉', '💛', catIcon()][i % 5]; d.style.left = Math.random() * 100 + 'vw'; d.style.animationDuration = (1.6 + Math.random() * 1.6) + 's'; d.style.animationDelay = Math.random() * 0.4 + 's'; document.body.appendChild(d); setTimeout(() => d.remove(), 3800); } }
 function lose() {
   G.done = true; clearInterval(timerH);
   setTimeout(() => overlay('😿 愛心用完了', '再仔細推理一次吧！', [['回選單', home, true], ['重來這題', () => start(G.mode, G.n, G.seed, G.title)]]), 500);

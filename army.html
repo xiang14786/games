@@ -2,7 +2,7 @@
 <html lang="zh-Hant">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
@@ -12,432 +12,406 @@
 <title>弓兵大進擊</title>
 <style>
   * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
-  html,body { margin:0; height:100%; background:#0f1117; overflow:hidden; color:#e8eaf0;
+  html,body { margin:0; height:100%; background:#2e5d2a; overflow:hidden; color:#fff;
     font-family:-apple-system,"PingFang TC","Noto Sans TC","Microsoft JhengHei",sans-serif;
     touch-action:none; user-select:none; -webkit-user-select:none; overscroll-behavior:none; }
-  #wrap { position:relative; width:100%; height:100%; max-width:520px; margin:0 auto; }
+  #wrap { position:relative; width:100%; height:100%; max-width:520px; margin:0 auto; overflow:hidden; }
   canvas { display:block; width:100%; height:100%; }
-  #hud { position:absolute; top:8px; left:12px; right:12px; pointer-events:none; text-shadow:0 2px 5px #000; }
-  #hud .r1 { display:flex; justify-content:space-between; font-size:20px; font-weight:800; }
-  .gold { color:#f7c948; }
-  #prog { margin-top:6px; height:8px; background:rgba(255,255,255,.12); border-radius:5px; overflow:hidden; }
-  #prog i { display:block; height:100%; width:0; background:#5fa8ff; }
-  .ov { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px;
-    background:rgba(9,10,15,.92); padding:20px; text-align:center; overflow-y:auto; touch-action:pan-y; }
-  .ov.hide { display:none; }
-  h1 { margin:0; font-size:42px; color:#5fa8ff; }
-  h2 { margin:0; font-size:32px; }
-  p { margin:0; font-size:18px; color:#b9bfcc; line-height:1.7; }
-  button { background:#5fa8ff; color:#08162a; border:0; border-radius:14px; padding:14px 30px; font-size:21px; font-weight:800;
-    cursor:pointer; font-family:inherit; }
-  button.ghost { background:#262c38; color:#e8eaf0; }
-  button:disabled { opacity:.35; }
-  .row { display:flex; gap:10px; flex-wrap:wrap; justify-content:center; }
-  .item { width:100%; max-width:420px; background:#1b2029; border-radius:14px; padding:12px 14px; display:flex; align-items:center; gap:12px; text-align:left; }
-  .item .ic { font-size:32px; width:42px; text-align:center; }
-  .item .tx { flex:1; }
-  .item .nm { font-size:19px; font-weight:800; }
-  .item .ds { font-size:15px; color:#9aa3b5; }
-  .item button { padding:10px 12px; font-size:16px; min-width:92px; }
-  #shop { justify-content:flex-start; padding-top:22px; }
+  .hide { display:none !important; }
+  #hud { position:absolute; top:calc(env(safe-area-inset-top) + 8px); left:10px; right:10px; display:flex; flex-direction:column; gap:6px; pointer-events:none; }
+  #hud .top { display:flex; align-items:center; gap:8px; }
+  .pill { background:rgba(20,30,15,.6); border:2px solid rgba(255,255,255,.25); border-radius:999px; padding:5px 12px; font-weight:900; font-size:17px; }
+  .gold { color:#ffd84d; }
+  #prog { flex:1; height:12px; background:rgba(0,0,0,.35); border-radius:8px; overflow:hidden; border:2px solid rgba(255,255,255,.25); position:relative; }
+  #prog i { display:block; height:100%; background:linear-gradient(90deg,#7fe07a,#ffe14d); }
+  #prog b { position:absolute; right:-2px; top:-7px; font-size:16px; }
+  #buffs { display:flex; gap:6px; }
+  .buff { background:rgba(20,30,15,.65); border-radius:10px; padding:3px 8px; font-size:13px; font-weight:800; display:flex; align-items:center; gap:5px; }
+  .buff .bar { width:40px; height:5px; background:rgba(255,255,255,.2); border-radius:3px; overflow:hidden; }
+  .buff .bar i { display:block; height:100%; background:#ffd84d; }
+  #msg { position:absolute; top:30%; left:0; right:0; text-align:center; font-size:30px; font-weight:900; color:#fff; text-shadow:0 3px 0 #6a3a00, 0 0 18px rgba(0,0,0,.5); opacity:0; transition:opacity .3s; pointer-events:none; }
+  .ov { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; padding:22px; text-align:center;
+    background:linear-gradient(180deg, rgba(20,40,15,.25), rgba(10,20,8,.85)); overflow-y:auto; touch-action:pan-y; }
+  .logo { font-size:50px; font-weight:900; line-height:1.05; color:#ffe14d; text-shadow:0 4px 0 #a0521d, 0 8px 0 #5a2a0a, 0 12px 20px rgba(0,0,0,.4); letter-spacing:2px; }
+  .lvbadge { background:linear-gradient(180deg,#ffe58a,#f0a020); color:#4a2500; font-weight:900; border-radius:999px; padding:6px 20px; font-size:20px; box-shadow:0 4px 0 #9a5a10; }
+  .sub { font-size:15px; color:#e8f0dc; line-height:1.8; }
+  .card { background:rgba(255,255,255,.1); border:2px solid rgba(255,255,255,.18); border-radius:18px; padding:12px 14px; width:100%; max-width:380px; text-align:left; }
+  .card h3 { margin:0 0 6px; font-size:17px; }
+  .tips { display:grid; grid-template-columns:auto 1fr; gap:4px 10px; font-size:14px; color:#eef5e4; align-items:center; }
+  .tips b { font-size:20px; text-align:center; }
+  button.big { background:linear-gradient(180deg,#8ff06a,#3fae2a); color:#0f2a08; border:0; border-radius:20px; padding:15px 50px; font-size:24px; font-weight:900; font-family:inherit; box-shadow:0 6px 0 #22661a, 0 10px 16px rgba(0,0,0,.3); }
+  button.big:active { transform:translateY(4px); box-shadow:0 2px 0 #22661a; }
+  button.alt { background:rgba(255,255,255,.14); color:#fff; border:2px solid rgba(255,255,255,.3); border-radius:16px; padding:10px 22px; font-size:17px; font-weight:800; font-family:inherit; }
+  .ups { display:grid; grid-template-columns:1fr 1fr; gap:10px; width:100%; max-width:380px; }
+  .up { background:linear-gradient(180deg,#fff7e0,#f3d79a); color:#4a2a08; border-radius:16px; padding:10px; text-align:center; box-shadow:0 4px 0 #b88a3a; border:0; font-family:inherit; }
+  .up .ic { font-size:32px; }
+  .up .n { font-weight:900; font-size:16px; }
+  .up .d { font-size:12px; opacity:.8; margin:2px 0 6px; min-height:30px; }
+  .up .c { background:#3fae2a; color:#fff; border-radius:10px; padding:5px; font-weight:900; font-size:15px; }
+  .up:disabled .c { background:#9a9a9a; }
+  .up .lvl { font-size:12px; font-weight:800; color:#a0521d; }
+  .stars { font-size:44px; letter-spacing:6px; }
+  .big-num { font-size:40px; font-weight:900; color:#ffe14d; text-shadow:0 3px 0 #a0521d; }
 </style>
 </head>
 <body>
 <div id="wrap">
   <canvas id="c"></canvas>
-  <div id="hud" style="display:none">
-    <div class="r1"><span id="hLv">第 1 關</span><span class="gold">● <span id="hGold">0</span></span></div>
-    <div id="prog"><i id="progBar"></i></div>
+  <div id="hud" class="hide">
+    <div class="top"><div class="pill" id="hLv">第 1 關</div><div id="prog"><i></i><b>🏰</b></div><div class="pill gold" id="hGold">🪙 0</div></div>
+    <div id="buffs"></div>
   </div>
+  <div id="msg"></div>
 
   <div class="ov" id="menu">
-    <h1>弓兵大進擊</h1>
-    <p>手指<b>左右拖曳</b>移動隊伍，弓兵會自動射箭<br>
-      <span style="color:#5fa8ff">藍門</span>加兵、<span style="color:#ff6b6b">紅門</span>扣兵 —— <b>射門可以讓數字變大！</b><br>
-      射爆 <span class="gold">兵桶</span> 可以救出更多弓兵<br>撞到敵軍會一換一，最後打倒 BOSS 過關</p>
-    <p style="font-size:22px">第 <b id="mLv">1</b> 關　<span class="gold">● <span id="mGold">0</span></span></p>
-    <div class="row"><button id="mStart">出征</button><button class="ghost" id="mShop">升級</button></div>
+    <div class="logo">弓兵<br>大進擊</div>
+    <div class="lvbadge" id="mLv">第 1 關</div>
+    <div class="card"><h3>📜 怎麼玩</h3><div class="tips">
+      <b>👆</b><span>手指左右拖曳，帶領弓兵部隊</span>
+      <b>🚪</b><span>穿過好的門讓兵變多。<b style="font-size:14px;color:#ffe14d">射門可以把數字變大</b>，壞門也能射成好門！</span>
+      <b>🪖</b><span>紅色敵軍會衝過來，趁他們靠近前射倒越多越好</span>
+      <b>🛢️</b><span>射破木桶拿強化：連射、火箭、援軍…</span>
+      <b>🪵</b><span>避開尖刺陷阱，碰到會一直掉兵</span>
+      <b>👹</b><span>最後打倒魔王！看到紅色警示就快閃開</span>
+    </div></div>
+    <button class="big" id="mGo">出征！</button>
+    <button class="alt" id="mUp">⬆️ 升級部隊 <span class="gold" id="mGold"></span></button>
+  </div>
+
+  <div class="ov hide" id="upg">
+    <div style="font-size:30px;font-weight:900">⬆️ 升級部隊</div>
+    <div class="gold" style="font-size:22px;font-weight:900" id="uGold"></div>
+    <div class="ups" id="uList"></div>
+    <div style="display:flex;gap:10px"><button class="big" id="uGo" style="padding:13px 34px;font-size:21px">出征！</button><button class="alt" id="uBack">返回</button></div>
   </div>
 
   <div class="ov hide" id="end">
-    <h2 id="eT"></h2>
-    <p id="eP"></p>
-    <div class="row"><button id="eNext"></button><button class="ghost" id="eShop">升級</button></div>
-  </div>
-
-  <div class="ov hide" id="shop">
-    <h2>軍營升級</h2>
-    <p style="font-size:22px"><span class="gold">● <span id="sGold">0</span></span></p>
-    <div id="sList" style="display:flex;flex-direction:column;gap:10px;width:100%;align-items:center"></div>
-    <div class="row"><button id="sStart">出征</button><button class="ghost" id="sBack">返回</button></div>
+    <div style="font-size:34px;font-weight:900" id="eT"></div>
+    <div class="stars" id="eStars"></div>
+    <div class="big-num" id="eGold"></div>
+    <div class="sub" id="eSub"></div>
+    <button class="big" id="eNext">下一關</button>
+    <div style="display:flex;gap:10px"><button class="alt" id="eUp">⬆️ 升級</button><button class="alt" id="eMenu">主選單</button></div>
   </div>
 </div>
 <script>
-// ===== 存檔 =====
-let save = { level:1, gold:0, up:{ troops:0, atk:0, rate:0, coin:0 } };
-try { const s = JSON.parse(localStorage.getItem('archerRush')); if (s) { save.level = s.level||1; save.gold = s.gold||0; Object.assign(save.up, s.up||{}); } } catch(e) {}
-function persist() { try { localStorage.setItem('archerRush', JSON.stringify(save)); } catch(e) {} }
+const $ = id => document.getElementById(id);
+const rand = (a, b) => a + Math.random() * (b - a), clamp = (v, a, b) => Math.max(a, Math.min(b, v)), pick = a => a[Math.floor(Math.random() * a.length)];
+function mulberry32(a) { return function () { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
 
+// ===== 存檔 =====
+let SV = { level: 1, gold: 0, stars: {}, up: { troops: 0, atk: 0, rate: 0, coin: 0 } };
+try { const o = JSON.parse(localStorage.getItem('archerRush2')) || JSON.parse(localStorage.getItem('archerRush')); if (o) { SV.level = o.level || 1; SV.gold = o.gold || 0; SV.stars = o.stars || {}; Object.assign(SV.up, o.up || {}); } } catch (e) {}
+const persist = () => { try { localStorage.setItem('archerRush2', JSON.stringify(SV)); } catch (e) {} };
 const UPS = [
-  { k:'troops', ic:'🛡️', nm:'起始兵力', max:20, base:40,  mul:1.3,  ds:l=>`開局 ${5+l*4} 名弓兵` },
-  { k:'atk',    ic:'🏹', nm:'攻擊力',   max:25, base:50,  mul:1.3,  ds:l=>`傷害 +${l*12}%` },
-  { k:'rate',   ic:'⚡', nm:'射速',     max:12, base:70,  mul:1.38, ds:l=>`射速 +${l*8}%` },
-  { k:'coin',   ic:'💰', nm:'戰利品',   max:12, base:90,  mul:1.38, ds:l=>`金幣 +${l*15}%` },
+  { k: 'troops', ic: '🪖', n: '起始兵力', max: 25, d: l => `開局 ${10 + l * 3} 人` },
+  { k: 'atk', ic: '🏹', n: '箭矢威力', max: 25, d: l => `傷害 ×${(1 + l * 0.15).toFixed(2)}` },
+  { k: 'rate', ic: '⚡', n: '射擊速度', max: 15, d: l => `射速 +${l * 8}%` },
+  { k: 'coin', ic: '💰', n: '戰利品', max: 15, d: l => `金幣 +${l * 15}%` },
 ];
-const upCost = (u, l) => Math.round(u.base * Math.pow(u.mul, l));
+const upCost = l => Math.round(30 * Math.pow(1.27, l));
+const ATK = () => 1 + SV.up.atk * 0.15, RATE = () => 1 + SV.up.rate * 0.08, COIN = () => 1 + SV.up.coin * 0.15;
 
 // ===== 畫布 =====
-const cv = document.getElementById('c'), ctx = cv.getContext('2d');
+const cv = $('c'), ctx = cv.getContext('2d');
 const W = 400; let H = 760, PY = 600;
-function resize() {
-  const r = cv.getBoundingClientRect(), dpr = window.devicePixelRatio || 1, s = r.width / W;
-  H = r.height / s; PY = H - 170;
-  cv.width = r.width * dpr; cv.height = r.height * dpr;
-  ctx.setTransform(dpr*s, 0, 0, dpr*s, 0, 0);
-  if (!running) draw();
-}
-window.addEventListener('resize', resize);
+const RL = 50, RR = 350, MID = 200;
+function resize() { const r = cv.getBoundingClientRect(), dpr = window.devicePixelRatio || 1, s = r.width / W; H = r.height / s; PY = H - 170; cv.width = r.width * dpr; cv.height = r.height * dpr; ctx.setTransform(dpr * s, 0, 0, dpr * s, 0, 0); }
+window.addEventListener('resize', resize); resize();
 
-function mulberry32(a) { return function() { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
-const L0 = 30, L1 = W - 30; // 路面左右邊界
-const MID = W / 2;
-
-// ===== 關卡產生 =====
+// ===== 關卡 =====
+// 數值設計：預期兵力約 n，敵軍、門、魔王都跟著預期兵力走，確保一路有選擇但不會無解
 function genLevel(L) {
-  const rnd = mulberry32(L * 9973 + 7);
-  const R = (a,b) => a + rnd()*(b-a);
-  const diff = 1 + (L-1) * 0.22;
-  const segs = 7 + Math.min(L, 13);
-  const ev = []; let d = 260;
+  const rnd = mulberry32(L * 7919 + 3), R = (a, b) => a + rnd() * (b - a), I = (a, b) => Math.floor(R(a, b + 1));
+  const segs = Math.min(9 + Math.floor(L / 2), 18), ev = [];
+  let exp = 10 + SV.up.troops * 3; // 預期兵力
+  const ehp = 1 + Math.floor((L - 1) / 4) * 0.5; // 敵兵血量
+  let d = 220;
   for (let i = 0; i < segs; i++) {
-    let t = rnd();
-    if (i === 0) t = 0;
-    const ramp = 0.25 + 0.95 * i / segs; // 關卡前段比較溫和
-    if (t < 0.38) {
-      const good = () => rnd() < 0.15 ? { op:'mul', v:2 } : { op:'add', v: Math.round(R(4, 12) * Math.sqrt(diff)) };
-      const bad = () => rnd() < 0.2 ? { op:'div', v:2 } : { op:'add', v: -Math.round(R(5, 16) * diff * ramp) };
-      const pair = rnd() < 0.7 ? [good(), bad()] : [good(), good()];
+    const r = rnd(), late = i / segs;
+    let t = i === 0 ? 'gate' : r < 0.36 ? 'gate' : r < 0.66 ? 'crowd' : r < 0.82 ? 'barrel' : 'spike';
+    if (t === 'gate') {
+      const good = () => rnd() < 0.12 && exp < 60 ? { op: 'mul', v: 2 } : { op: 'add', v: Math.max(3, Math.round(exp * R(0.2, 0.45))) };
+      const bad = () => rnd() < 0.25 ? { op: 'div', v: 2 } : { op: 'add', v: -Math.max(3, Math.round(exp * R(0.3, 0.6))) };
+      const pair = rnd() < 0.72 ? [good(), bad()] : [good(), good()];
       if (rnd() < 0.5) pair.reverse();
-      ev.push({ d, t:'gate', pair });
-    } else if (t < 0.62) {
-      ev.push({ d, t:'crowd', n: Math.round(R(12, 26) * Math.pow(diff, 1.4) * ramp), x: R(L0 + 60, L1 - 60) });
-    } else if (t < 0.8) {
-      ev.push({ d, t:'barrel', hp: Math.round(R(18, 34) * diff), reward: Math.round(R(4, 9) * Math.sqrt(diff)), side: rnd() < .5 ? 0 : 1 });
+      ev.push({ d, t, pair });
+      const g = pair.reduce((a, b) => (b.op === 'mul' ? exp : b.op === 'add' ? b.v : -1e9) > (a.op === 'mul' ? exp : a.op === 'add' ? a.v : -1e9) ? b : a);
+      exp = g.op === 'mul' ? exp * 2 : exp + Math.max(0, g.v);
+    } else if (t === 'crowd') {
+      const n = Math.max(4, Math.round(exp * R(0.45, 0.75) * (0.85 + late * 0.5) * (1 + L * 0.03)));
+      ev.push({ d, t, n, hp: ehp, x: R(RL + 50, RR - 50), boss: false });
+      exp = Math.max(8, exp - n * 0.35);
+    } else if (t === 'barrel') {
+      ev.push({ d, t, side: rnd() < 0.5 ? 0 : 1, hp: Math.round(14 * (1 + L * 0.15) * (0.6 + exp / 60)), buff: pick(['multi', 'fire', 'rapid', 'troops', 'multi', 'troops']) });
     } else {
-      ev.push({ d, t:'wall', n: Math.round(R(6, 16) * diff * ramp), side: rnd() < .5 ? 0 : 1 });
+      ev.push({ d, t, side: I(0, 2) });
     }
-    d += R(300, 380);
+    d += R(270, 340);
   }
-  return { ev, end: d, bossHp: Math.round(380 * Math.pow(diff, 1.6)), bossHit: 1 + Math.floor(L / 3), diff };
+  const bossHp = Math.round((140 + L * 45) * Math.pow(1.06, L) * (0.6 + exp / 80));
+  return { ev, end: d, bossHp, ehp, exp };
 }
 
 // ===== 狀態 =====
-let running = false, S = null, frame = 0;
-function newGame() {
-  const L = save.level, lv = genLevel(L);
-  S = { L, lv, evI: 0, dist: 0, speed: 2.3, x: MID, tx: MID, n: 5 + save.up.troops * 4,
-    objs: [], arrows: [], pops: [], fx: [], fireT: 0, kills: 0, earned: 0, boss: null, bossT: 0, over: false, form: [] };
+let running = false, S = null, frame = 0, shake = 0;
+function newRun() {
+  const L = SV.level, lv = genLevel(L);
+  S = { L, lv, evI: 0, dist: 0, speed: 2.5, x: MID, tx: MID, n: 10 + SV.up.troops * 3, peak: 0, objs: [], arrows: [], fx: [], pops: [], fireT: 0, earned: 0, boss: null, buffs: {}, over: false, form: [], formN: 0 };
+  S.peak = S.n;
 }
-const atkMul = () => 1 + save.up.atk * 0.12;
-const rateMul = () => 1 + save.up.rate * 0.08;
-const coinMul = () => 1 + save.up.coin * 0.15;
-const formR = () => 10 + Math.sqrt(Math.min(S.n, 400)) * 6.2;
-
-function formation(n) {
-  const pts = [], m = Math.min(n, 160);
-  for (let i = 0; i < m; i++) { const a = i * 2.39996, r = 7.2 * Math.sqrt(i); pts.push([Math.cos(a)*r, Math.sin(a)*r*0.8]); }
-  return pts;
-}
-
+const formR = () => 8 + Math.sqrt(Math.min(S.n, 300)) * 5.6;
+function formation(n) { const pts = [], m = Math.min(n, 150); for (let i = 0; i < m; i++) { const a = i * 2.39996, r = 5.8 * Math.sqrt(i); pts.push([Math.cos(a) * r, Math.sin(a) * r * 0.75]); } return pts; }
+const gLabel = g => g.op === 'mul' ? '×' + g.v : g.op === 'div' ? '÷' + g.v : (g.v >= 0 ? '+' : '') + g.v;
+const gGood = g => g.op === 'mul' || (g.op === 'add' && g.v > 0);
+function pop(t, x, y, col, big) { S.pops.push({ t, x, y, life: 55, col, big }); }
+function msg(t) { const m = $('msg'); m.textContent = t; m.style.opacity = 1; clearTimeout(msg.h); msg.h = setTimeout(() => m.style.opacity = 0, 1300); }
 function spawn(e) {
-  const y = -60;
-  if (e.t === 'gate') {
-    e.pair.forEach((g, i) => S.objs.push({ t:'gate', x: i ? MID : L0, w: (L1-L0)/2, y, h: 44, g, prog: 0, pairId: e.d }));
-  } else if (e.t === 'crowd') {
-    S.objs.push({ t:'crowd', x: e.x, y, hp: e.n * 3, n: e.n });
-  } else if (e.t === 'barrel') {
-    S.objs.push({ t:'barrel', x: e.side ? MID + 50 : L0 + 50, w: 80, y, h: 60, hp: e.hp, max: e.hp, reward: e.reward });
-  } else if (e.t === 'wall') {
-    S.objs.push({ t:'wall', x: e.side ? MID : L0, w: (L1-L0)/2, y, h: 36, n: e.n, prog: 0 });
-  }
+  const y = -70;
+  if (e.t === 'gate') e.pair.forEach((g, i) => S.objs.push({ t: 'gate', x: i ? MID : RL, w: (RR - RL) / 2, y, h: 48, g: { ...g }, hits: 0, pid: e.d }));
+  else if (e.t === 'crowd') S.objs.push({ t: 'crowd', x: e.x, y, n: e.n, hp: e.hp, pool: e.n * e.hp, vx: 0 });
+  else if (e.t === 'barrel') S.objs.push({ t: 'barrel', x: e.side ? MID + 70 : MID - 70, y, w: 70, h: 58, hp: e.hp, max: e.hp, buff: e.buff });
+  else if (e.t === 'spike') { const w = (RR - RL) / 3; S.objs.push({ t: 'spike', x: RL + e.side * w, w, y, h: 70 }); }
 }
-function crowdR(o) { return 14 + Math.sqrt(o.n) * 6.5; }
+const crowdR = o => 10 + Math.sqrt(o.n) * 5.6;
+const BUFF = { multi: ['🏹', '三連射'], fire: ['🔥', '火焰箭'], rapid: ['⚡', '急速射擊'], troops: ['🪖', '援軍'] };
 
-function gateLabel(g) { return g.op === 'mul' ? '×' + g.v : g.op === 'div' ? '÷' + g.v : (g.v >= 0 ? '+' : '') + g.v; }
-function gateGood(g) { return g.op === 'mul' || (g.op === 'add' && g.v > 0); }
-
-function pop(text, x, y, col) { S.pops.push({ text, x, y, t: 50, col }); }
-
-// ===== 更新 =====
 function update() {
   frame++;
-  const lv = S.lv;
-  // 移動
-  const fr = formR();
-  S.tx = Math.max(L0 + Math.min(fr, 60), Math.min(L1 - Math.min(fr, 60), S.tx));
-  S.x += (S.tx - S.x) * 0.25;
-
-  // 捲動 & 生成
+  const lv = S.lv, fr = formR();
+  S.tx = clamp(S.tx, RL + Math.min(fr, 70), RR - Math.min(fr, 70)); S.x += (S.tx - S.x) * 0.3;
+  if (S.formN !== Math.min(S.n, 150)) { S.form = formation(S.n); S.formN = Math.min(S.n, 150); }
+  for (const k in S.buffs) { S.buffs[k]--; if (S.buffs[k] <= 0) delete S.buffs[k]; }
+  // 捲動
   if (!S.boss) {
     S.dist += S.speed;
     while (S.evI < lv.ev.length && lv.ev[S.evI].d <= S.dist) spawn(lv.ev[S.evI++]);
-    for (const o of S.objs) o.y += S.speed + (o.t === 'crowd' ? 0.9 : 0);
-    if (S.dist > lv.end && S.objs.length === 0) {
-      S.boss = { x: MID, y: -90, hp: lv.bossHp, max: lv.bossHp, r: 58 };
-    }
-  } else {
-    const b = S.boss;
-    if (b.y + b.r * 0.8 < PY - fr) b.y += 0.6;
-    else { S.bossT++; if (S.bossT % 30 === 0) { const hh = Math.max(lv.bossHit, Math.ceil(S.n * 0.05)); S.n -= hh; pop('-' + hh, S.x, PY - 20, '#ff6b6b'); shake = 6; } }
-    b.x += (S.x - b.x) * 0.004;
-  }
-
+    for (const o of S.objs) { o.y += S.speed; if (o.t === 'crowd' && o.y > 40) { o.y += 1.4; o.x += clamp(S.x - o.x, -1, 1) * 0.6; } }
+    if (S.dist > lv.end && !S.objs.some(o => !o.dead && o.t === 'crowd')) { S.boss = { x: MID, y: -120, hp: lv.bossHp, max: lv.bossHp, r: 62, t: 0, warn: null, phase: 0 }; msg('👹 魔王出現！'); }
+  } else bossUpdate();
   // 射擊
-  S.fireT -= rateMul();
+  S.fireT -= RATE() * (S.buffs.rapid ? 1.7 : 1);
   if (S.fireT <= 0 && S.n > 0) {
-    S.fireT = 14;
-    const k = Math.min(S.n, 12);
-    const dmg = Math.pow(S.n, 0.85) * 0.45 * atkMul() / k;
-    const f = S.form;
-    for (let i = 0; i < k; i++) {
-      const p = f[Math.floor(Math.random() * f.length)] || [0,0];
-      S.arrows.push({ x: S.x + p[0], y: PY + p[1] - 8, dmg });
-    }
+    S.fireT = 18;
+    const k = Math.min(36, Math.ceil(Math.sqrt(S.n) * 1.5)) * (S.buffs.multi ? 2 : 1), dmg = ATK() * (S.buffs.fire ? 2 : 1);
+    for (let i = 0; i < k; i++) { const p = S.form[Math.floor(Math.random() * S.form.length)] || [0, 0]; S.arrows.push({ x: S.x + p[0] + (S.buffs.multi ? rand(-6, 6) : 0), y: PY + p[1] - 10, dmg, fire: !!S.buffs.fire, vx: S.buffs.multi ? rand(-0.6, 0.6) : 0 }); }
   }
-
   // 箭
   for (const a of S.arrows) {
-    a.y -= 15;
-    if (a.dead) continue;
-    if (S.boss) {
-      const b = S.boss;
-      if (Math.abs(a.x - b.x) < b.r && a.y < b.y + b.r * 0.6 && a.y > b.y - b.r) { a.dead = true; b.hp -= a.dmg; hitFx(a.x, a.y); if (b.hp <= 0) return win(); }
-      continue;
-    }
+    a.y -= 13; a.x += a.vx; if (a.dead) continue;
+    if (S.boss) { const b = S.boss; if (Math.abs(a.x - b.x) < b.r && a.y < b.y + b.r * 0.6 && a.y > b.y - b.r) { a.dead = true; b.hp -= a.dmg; if (Math.random() < 0.3) hitFx(a.x, a.y, a.fire); if (b.hp <= 0) return win(); } continue; }
     let best = null, by = -1e9;
     for (const o of S.objs) {
-      if (o.dead) continue;
+      if (o.dead || o.y < -40) continue;
       let hit = false, bottom;
-      if (o.t === 'crowd') { const r = crowdR(o); hit = Math.abs(a.x - o.x) < r && a.y < o.y + r*0.7 && a.y > o.y - r*0.7; bottom = o.y + r*0.7; }
-      else if (o.t === 'barrel') { hit = Math.abs(a.x - o.x) < o.w/2 && a.y < o.y + o.h/2 && a.y > o.y - o.h/2; bottom = o.y + o.h/2; }
-      else { hit = a.x > o.x && a.x < o.x + o.w && a.y < o.y + o.h/2 && a.y > o.y - o.h/2; bottom = o.y + o.h/2; }
+      if (o.t === 'crowd') { const r = crowdR(o); hit = Math.abs(a.x - o.x) < r && Math.abs(a.y - o.y) < r * 0.8; bottom = o.y + r; }
+      else if (o.t === 'barrel') { hit = Math.abs(a.x - o.x) < o.w / 2 && Math.abs(a.y - o.y) < o.h / 2; bottom = o.y + o.h / 2; }
+      else if (o.t === 'gate') { hit = a.x > o.x && a.x < o.x + o.w && Math.abs(a.y - o.y) < o.h / 2; bottom = o.y + o.h / 2; }
       if (hit && bottom > by) { best = o; by = bottom; }
     }
     if (!best) continue;
-    a.dead = true; hitFx(a.x, a.y);
-    const o = best;
-    if (o.t === 'crowd') {
-      o.hp -= a.dmg; const nn = Math.max(0, Math.ceil(o.hp / 3));
-      if (nn < o.n) { S.kills += o.n - nn; o.n = nn; }
-      if (o.n <= 0) o.dead = true;
-    } else if (o.t === 'barrel') {
-      o.hp -= a.dmg;
-      if (o.hp <= 0) { o.dead = true; S.n += o.reward; pop('+' + o.reward + ' 弓兵', o.x, o.y, '#5fa8ff'); burst(o.x, o.y, '#c68a4a'); }
-    } else if (o.t === 'gate') {
-      if (o.g.op === 'add') { o.prog += 1; if (o.prog >= 7) { o.prog = 0; o.g.v++; } }
-    } else if (o.t === 'wall') {
-      o.prog += a.dmg; const step = 1.2 * lv.diff; while (o.prog >= step && o.n > 0) { o.prog -= step; o.n--; }
-      if (o.n <= 0) { o.dead = true; burst(o.x + o.w/2, o.y, '#8a6a4a'); }
+    a.dead = true;
+    if (best.t === 'crowd') { best.pool -= a.dmg; const nn = Math.max(0, Math.ceil(best.pool / best.hp - 1e-9)); if (nn < best.n) { S.earned += (best.n - nn) * 0.5; best.n = nn; hitFx(a.x, a.y, a.fire); } if (best.n <= 0) { best.dead = true; burst(best.x, best.y, '#d64040', 16); } }
+    else if (best.t === 'barrel') { best.hp -= a.dmg; if (best.hp <= 0) { best.dead = true; breakBarrel(best); } }
+    else if (best.t === 'gate') {
+      // 射門：每射中一定數量，數字 +1（乘除門會變好）
+      best.hits += a.dmg; const need = 3 + S.n * 0.1 + S.L * 0.2; if (best.ov === undefined) best.ov = best.g.v;
+      while (best.hits >= need) { best.hits -= need; const g = best.g; if (g.op === 'add') { if (g.v < best.ov + Math.max(8, Math.abs(best.ov) * 1.2)) g.v++; } else if (g.op === 'div') { best.dv = (best.dv || 0) + 1; if (best.dv >= 12) { g.op = 'add'; g.v = 0; } } else if (g.op === 'mul') { best.mv = (best.mv || 0) + 1; if (best.mv >= 40 && g.v < 3) { g.v++; best.mv = 0; } } best.flash = 6; }
     }
   }
-  S.arrows = S.arrows.filter(a => !a.dead && a.y > -40);
-
-  // 碰撞
-  const top = PY - fr * 0.8;
+  S.arrows = S.arrows.filter(a => !a.dead && a.y > -60);
+  // 碰撞：門、敵軍、尖刺
+  const top = PY - fr * 0.75, bot = PY + fr * 0.75;
   for (const o of S.objs) {
     if (o.dead) continue;
-    if (o.t === 'gate' && o.y >= PY - 10) {
-      const inMe = S.x >= o.x && S.x < o.x + o.w;
-      for (const p of S.objs) if (p.t === 'gate' && p.pairId === o.pairId) p.dead = true;
-      const g = inMe ? o.g : S.objs.find(p => p.t === 'gate' && p.pairId === o.pairId && p !== o).g;
-      const before = S.n;
-      if (g.op === 'add') S.n += g.v; else if (g.op === 'mul') S.n *= g.v; else S.n = Math.ceil(S.n / g.v);
-      const dd = S.n - before;
-      pop((dd >= 0 ? '+' : '') + dd, S.x, PY - 50, dd >= 0 ? '#5fa8ff' : '#ff6b6b');
-      if (dd < 0) shake = 6;
+    if (o.t === 'gate' && !o.used && o.y + o.h / 2 > top && o.y - o.h / 2 < PY) {
+      if (S.x >= o.x && S.x < o.x + o.w) {
+        for (const q of S.objs) if (q.t === 'gate' && q.pid === o.pid) q.used = true;
+        const g = o.g, before = S.n;
+        S.n = Math.max(0, g.op === 'add' ? S.n + g.v : g.op === 'mul' ? S.n * g.v : g.op === 'div' ? Math.ceil(S.n / g.v) : S.n);
+        S.n = Math.min(S.n, 999);
+        pop((S.n >= before ? '+' : '') + (S.n - before), S.x, PY - fr - 20, S.n >= before ? '#7dff6a' : '#ff6b6b', true);
+        burst(S.x, PY - 10, gGood(g) ? '#7dff6a' : '#ff6b6b', 14);
+        o.dead = true;
+      }
     } else if (o.t === 'crowd') {
       const r = crowdR(o);
-      if (o.y + r * 0.7 >= top && Math.abs(o.x - S.x) < r + fr * 0.8) {
-        o.dead = true; S.n -= o.n; S.kills += Math.min(o.n, S.n + o.n);
-        pop('-' + o.n, S.x, PY - 50, '#ff6b6b'); burst(S.x, top, '#ff6b6b'); shake = 8;
+      if (Math.abs(o.x - S.x) < r + fr * 0.8 && o.y + r * 0.6 > top && o.y - r * 0.6 < bot) {
+        const k = Math.min(o.n, S.n, Math.max(1, Math.ceil(Math.min(o.n, S.n) * 0.12)));
+        o.n -= k; o.pool = o.n * o.hp; S.n -= k; shake = 4;
+        if (frame % 3 === 0) burst(S.x + rand(-fr, fr) * 0.5, PY - fr * 0.6, '#ffffff', 3);
+        if (o.n <= 0) { o.dead = true; burst(o.x, o.y, '#d64040', 10); }
       }
-    } else if (o.t === 'wall') {
-      if (o.y + o.h/2 >= top && S.x + fr*0.6 > o.x && S.x - fr*0.6 < o.x + o.w) {
-        o.dead = true; S.n -= o.n; pop('-' + o.n, S.x, PY - 50, '#ff6b6b'); burst(S.x, top, '#8a6a4a'); shake = 8;
-      }
+    } else if (o.t === 'spike') {
+      if (o.y + o.h / 2 > top && o.y - o.h / 2 < bot && S.x + fr * 0.6 > o.x && S.x - fr * 0.6 < o.x + o.w && frame % 4 === 0) { const k = Math.max(1, Math.ceil(S.n * 0.03)); S.n -= k; pop('-' + k, S.x, PY - 30, '#ff6b6b'); shake = 3; }
     }
-    if (o.y > H + 80) o.dead = true;
   }
-  S.objs = S.objs.filter(o => !o.dead);
-  S.n = Math.max(0, Math.floor(S.n));
-  if (S.n <= 0) return lose();
-  S.form = formation(S.n);
-
-  for (const p of S.pops) { p.y -= 1; p.t--; }
-  S.pops = S.pops.filter(p => p.t > 0);
-  for (const f of S.fx) { f.x += f.vx; f.y += f.vy; f.vy += 0.2; f.t--; }
-  S.fx = S.fx.filter(f => f.t > 0);
+  S.objs = S.objs.filter(o => !o.dead && o.y < H + 120);
+  S.n = Math.min(S.n, 999); S.peak = Math.max(S.peak, S.n);
+  for (const f of S.fx) { f.x += f.vx; f.y += f.vy; f.vy += 0.15; f.life--; } S.fx = S.fx.filter(f => f.life > 0);
+  for (const p of S.pops) { p.y -= 0.8; p.life--; } S.pops = S.pops.filter(p => p.life > 0);
   if (shake > 0) shake *= 0.85;
+  if (S.n <= 0) lose();
 }
-let shake = 0;
-function hitFx(x, y) { if (S.fx.length < 120 && Math.random() < 0.4) S.fx.push({ x, y, vx: (Math.random()-.5)*3, vy: -Math.random()*2, t: 10, c:'#ffd27a' }); }
-function burst(x, y, c) { for (let i = 0; i < 18; i++) S.fx.push({ x, y, vx: (Math.random()-.5)*7, vy: -Math.random()*6, t: 30, c }); }
+function bossUpdate() {
+  const b = S.boss; b.t++;
+  if (b.y < 200) { b.y += 1.5; return; }
+  b.x += Math.sin(b.t / 90) * 0.6;
+  // 攻擊：先預告（紅色區域），1 秒後砸下
+  if (!b.warn && b.t % 150 === 60) { const lane = Math.floor(Math.random() * 3), w = (RR - RL) / 3; b.warn = { x: RL + lane * w, w, t: 60 }; if (b.hp < b.max * 0.5 && Math.random() < 0.5) b.warn2 = { x: RL + ((lane + 1 + Math.floor(Math.random() * 2)) % 3) * w, w, t: 60 }; }
+  for (const k of ['warn', 'warn2']) {
+    const w = b[k]; if (!w) continue; w.t--;
+    if (w.t <= 0) {
+      if (S.x > w.x - 10 && S.x < w.x + w.w + 10) { const k2 = Math.max(2, Math.ceil(S.n * 0.3)); S.n -= k2; pop('-' + k2, S.x, PY - 30, '#ff6b6b', true); }
+      shake = 10; burst(w.x + w.w / 2, PY, '#8a5a2a', 22, 5); b[k] = null;
+    }
+  }
+  // 召喚小兵
+  if (b.t % 420 === 300) { S.objs.push({ t: 'crowd', x: rand(RL + 50, RR - 50), y: b.y + 50, n: Math.max(4, Math.round(S.n * 0.25)), hp: S.lv.ehp, pool: 0, vx: 0 }); const o = S.objs[S.objs.length - 1]; o.pool = o.n * o.hp; msg('魔王召喚了手下！'); }
+  for (const o of S.objs) if (o.t === 'crowd') { o.y += 2.2; o.x += clamp(S.x - o.x, -1, 1) * 0.6; }
+}
+function breakBarrel(o) {
+  burst(o.x, o.y, '#a0682a', 18, 4);
+  if (o.buff === 'troops') { const k = Math.max(5, Math.round(S.n * 0.25)); S.n += k; pop('援軍 +' + k, o.x, o.y, '#7dff6a', true); }
+  else { S.buffs[o.buff] = 480; msg(BUFF[o.buff][0] + ' ' + BUFF[o.buff][1] + '！'); }
+}
+function hitFx(x, y, fire) { S.fx.push({ x, y, vx: rand(-1, 1), vy: rand(-2, 0), life: 14, col: fire ? '#ff9a2e' : '#fff', r: 2 }); }
+function burst(x, y, col, n, sp = 3) { for (let i = 0; i < n; i++) { const a = rand(0, 6.28), v = rand(0.5, sp); S.fx.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 1, life: rand(18, 34), col, r: rand(2, 4) }); } }
 
 // ===== 繪圖 =====
-function rr(x,y,w,h,r){ ctx.beginPath(); if (ctx.roundRect) ctx.roundRect(x,y,w,h,r); else ctx.rect(x,y,w,h); }
-function txt(t, x, y, size, col, stroke = true) {
-  ctx.font = `900 ${size}px -apple-system,"PingFang TC",sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-  if (stroke) { ctx.lineWidth = 5; ctx.strokeStyle = 'rgba(0,0,0,.75)'; ctx.strokeText(t, x, y); }
-  ctx.fillStyle = col; ctx.fillText(t, x, y);
-}
-function soldier(x, y, body, head) {
-  ctx.fillStyle = body; ctx.beginPath(); ctx.arc(x, y, 6.5, 0, 7); ctx.fill();
-  ctx.fillStyle = head; ctx.beginPath(); ctx.arc(x, y - 2.5, 3.6, 0, 7); ctx.fill();
-}
-
-function draw() {
-  ctx.save();
-  if (shake > 0.5) ctx.translate((Math.random()-.5)*shake, (Math.random()-.5)*shake);
-  // 地圖：兩側深色水面 + 石板路
-  ctx.fillStyle = '#0f2236'; ctx.fillRect(-10, -10, W+20, H+20);
-  ctx.fillStyle = '#2b2f3a'; ctx.fillRect(L0, -10, L1-L0, H+20);
+const TREES = Array.from({ length: 18 }, (_, i) => ({ side: i % 2, y: i * 60, s: rand(0.8, 1.2), k: Math.random() }));
+function rr(x, y, w, h, r) { ctx.beginPath(); ctx.roundRect ? ctx.roundRect(x, y, w, h, r) : ctx.rect(x, y, w, h); }
+function drawGround() {
+  ctx.fillStyle = '#5fae46'; ctx.fillRect(0, 0, W, H);
   const off = S ? S.dist % 40 : 0;
-  ctx.strokeStyle = 'rgba(255,255,255,.05)'; ctx.lineWidth = 1;
-  for (let y = -40 + off; y < H; y += 40) { ctx.beginPath(); ctx.moveTo(L0, y); ctx.lineTo(L1, y); ctx.stroke();
-    for (let x = L0 + ((Math.floor((y - off)/40)) % 2 ? 0 : 30); x < L1; x += 60) { ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x, y + 40); ctx.stroke(); } }
-  ctx.fillStyle = '#474d5c'; ctx.fillRect(L0 - 10, -10, 10, H+20); ctx.fillRect(L1, -10, 10, H+20);
-  ctx.fillStyle = 'rgba(95,168,255,.06)'; for (let y = (frame*0.6)%30 - 30; y < H; y += 30) { ctx.fillRect(4, y, 14, 2); ctx.fillRect(W - 18, y + 12, 14, 2); }
+  ctx.fillStyle = '#58a240'; for (let y = -40 + off; y < H; y += 40) { ctx.fillRect(0, y, RL - 6, 20); ctx.fillRect(RR + 6, y + 20, W - RR, 20); }
+  // 路
+  ctx.fillStyle = '#d9b77a'; ctx.fillRect(RL - 6, 0, RR - RL + 12, H);
+  ctx.fillStyle = '#c9a466'; ctx.fillRect(RL - 6, 0, 6, H); ctx.fillRect(RR, 0, 6, H);
+  ctx.fillStyle = 'rgba(160,120,70,.35)'; for (let y = -60 + (S ? S.dist % 60 : 0); y < H; y += 60) { ctx.beginPath(); ctx.ellipse(120, y, 6, 3, 0, 0, 7); ctx.ellipse(280, y + 30, 5, 2.5, 0, 0, 7); ctx.ellipse(200, y + 15, 4, 2, 0, 0, 7); ctx.fill(); }
+  // 樹
+  const toff = S ? (S.dist * 1) % 1080 : 0;
+  for (const t of TREES) { let y = (t.y + toff) % 1080 - 60; const x = t.side ? RR + 26 : RL - 26; ctx.fillStyle = 'rgba(0,0,0,.18)'; ctx.beginPath(); ctx.ellipse(x + 4, y + 18, 18 * t.s, 7, 0, 0, 7); ctx.fill(); ctx.fillStyle = t.k < 0.5 ? '#2f7d32' : '#3d8f3a'; ctx.beginPath(); ctx.arc(x, y, 20 * t.s, 0, 7); ctx.fill(); ctx.fillStyle = 'rgba(255,255,255,.12)'; ctx.beginPath(); ctx.arc(x - 6, y - 6, 9 * t.s, 0, 7); ctx.fill(); }
+}
+function archer(x, y, col, s, ph, enemy) {
+  ctx.fillStyle = 'rgba(0,0,0,.2)'; ctx.beginPath(); ctx.ellipse(x, y + 6 * s, 5 * s, 2 * s, 0, 0, 7); ctx.fill();
+  const bob = Math.sin(ph) * 1.2 * s;
+  ctx.fillStyle = col; rr(x - 4 * s, y - 4 * s + bob, 8 * s, 9 * s, 3 * s); ctx.fill();
+  ctx.fillStyle = '#ffd7a8'; ctx.beginPath(); ctx.arc(x, y - 7 * s + bob, 3.6 * s, 0, 7); ctx.fill();
+  ctx.fillStyle = enemy ? '#555' : '#2b5aa8'; ctx.beginPath(); ctx.arc(x, y - 8.4 * s + bob, 3.8 * s, Math.PI, 0); ctx.fill();
+  if (!enemy) { ctx.strokeStyle = '#7a4a1a'; ctx.lineWidth = 1.2 * s; ctx.beginPath(); ctx.arc(x + 5 * s, y - 2 * s + bob, 4.5 * s, -1.3, 1.3); ctx.stroke(); }
+  else { ctx.strokeStyle = '#bbb'; ctx.lineWidth = 1.4 * s; ctx.beginPath(); ctx.moveTo(x + 5 * s, y + 2 * s); ctx.lineTo(x + 5 * s, y - 9 * s); ctx.stroke(); }
+}
+function draw() {
+  ctx.save(); if (shake > 0.5) ctx.translate(rand(-shake, shake), rand(-shake, shake));
+  drawGround();
   if (!S) { ctx.restore(); return; }
-
-  // 物件
   for (const o of S.objs) {
-    if (o.t === 'gate') {
-      const good = gateGood(o.g), c = good ? '#3d86e6' : '#d64545';
-      ctx.globalAlpha = 0.85; ctx.fillStyle = c; rr(o.x + 4, o.y - o.h/2, o.w - 8, o.h, 8); ctx.fill(); ctx.globalAlpha = 1;
-      ctx.strokeStyle = good ? '#9cc8ff' : '#ff9a9a'; ctx.lineWidth = 3; rr(o.x + 4, o.y - o.h/2, o.w - 8, o.h, 8); ctx.stroke();
-      txt(gateLabel(o.g), o.x + o.w/2, o.y + 1, 30, '#fff');
-    } else if (o.t === 'wall') {
-      ctx.fillStyle = '#7a5532'; rr(o.x + 4, o.y - o.h/2, o.w - 8, o.h, 4); ctx.fill();
-      ctx.strokeStyle = '#4a321c'; ctx.lineWidth = 3;
-      for (let x = o.x + 20; x < o.x + o.w - 8; x += 26) { ctx.beginPath(); ctx.moveTo(x, o.y - o.h/2); ctx.lineTo(x, o.y + o.h/2); ctx.stroke(); }
-      ctx.fillStyle = '#9aa0ab'; ctx.fillRect(o.x + 4, o.y - 4, o.w - 8, 6);
-      txt('-' + o.n, o.x + o.w/2, o.y + 1, 26, '#ffd0d0');
+    if (o.t === 'spike') {
+      ctx.fillStyle = '#6b4a2a'; rr(o.x + 2, o.y - o.h / 2, o.w - 4, o.h, 8); ctx.fill();
+      ctx.fillStyle = '#c9ccd4'; for (let i = 0; i < 5; i++) for (let j = 0; j < 3; j++) { const sx = o.x + 10 + i * (o.w - 20) / 4, sy = o.y - o.h / 2 + 14 + j * 20; ctx.beginPath(); ctx.moveTo(sx - 6, sy + 6); ctx.lineTo(sx, sy - 8); ctx.lineTo(sx + 6, sy + 6); ctx.fill(); }
+      ctx.strokeStyle = '#ff4d4d'; ctx.lineWidth = 2; ctx.setLineDash([6, 4]); rr(o.x + 2, o.y - o.h / 2, o.w - 4, o.h, 8); ctx.stroke(); ctx.setLineDash([]);
+    } else if (o.t === 'gate') {
+      const good = gGood(o.g), c1 = good ? '#3fa0ff' : '#ff4d5a', c2 = good ? '#1a5fbf' : '#b0202c';
+      ctx.fillStyle = 'rgba(0,0,0,.2)'; rr(o.x + 6, o.y - o.h / 2 + 6, o.w - 8, o.h, 10); ctx.fill();
+      const g = ctx.createLinearGradient(0, o.y - o.h / 2, 0, o.y + o.h / 2); g.addColorStop(0, c1); g.addColorStop(1, c2);
+      ctx.globalAlpha = 0.85; ctx.fillStyle = g; rr(o.x + 4, o.y - o.h / 2, o.w - 8, o.h, 10); ctx.fill(); ctx.globalAlpha = 1;
+      if (o.flash) { o.flash--; ctx.fillStyle = 'rgba(255,255,255,.45)'; rr(o.x + 4, o.y - o.h / 2, o.w - 8, o.h, 10); ctx.fill(); }
+      ctx.fillStyle = '#8a5a2a'; ctx.fillRect(o.x + 2, o.y - o.h / 2 - 6, 8, o.h + 12); ctx.fillRect(o.x + o.w - 10, o.y - o.h / 2 - 6, 8, o.h + 12);
+      ctx.fillStyle = '#fff'; ctx.font = '900 30px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.lineWidth = 5; ctx.strokeStyle = c2; ctx.strokeText(gLabel(o.g), o.x + o.w / 2, o.y + 1); ctx.fillText(gLabel(o.g), o.x + o.w / 2, o.y + 1); ctx.textBaseline = 'alphabetic';
+      if (o.g.op === 'div' && o.dv) { ctx.fillStyle = 'rgba(255,255,255,.8)'; ctx.fillRect(o.x + 14, o.y + o.h / 2 - 6, (o.w - 28) * o.dv / 12, 3); }
     } else if (o.t === 'barrel') {
-      ctx.fillStyle = '#9a6634'; rr(o.x - o.w/2, o.y - o.h/2, o.w, o.h, 14); ctx.fill();
-      ctx.fillStyle = '#5c3b1c'; ctx.fillRect(o.x - o.w/2, o.y - 14, o.w, 6); ctx.fillRect(o.x - o.w/2, o.y + 10, o.w, 6);
-      soldier(o.x - 14, o.y - o.h/2 - 4, '#3d86e6', '#9cc8ff'); soldier(o.x + 14, o.y - o.h/2 - 4, '#3d86e6', '#9cc8ff');
-      txt(Math.ceil(o.hp), o.x, o.y + 2, 26, '#fff');
-      txt('+' + o.reward, o.x, o.y + o.h/2 + 14, 17, '#9cc8ff');
+      ctx.fillStyle = 'rgba(0,0,0,.2)'; ctx.beginPath(); ctx.ellipse(o.x + 4, o.y + o.h / 2, o.w / 2, 8, 0, 0, 7); ctx.fill();
+      const g = ctx.createLinearGradient(o.x - o.w / 2, 0, o.x + o.w / 2, 0); g.addColorStop(0, '#8a5222'); g.addColorStop(0.5, '#c88443'); g.addColorStop(1, '#8a5222');
+      ctx.fillStyle = g; rr(o.x - o.w / 2, o.y - o.h / 2, o.w, o.h, 14); ctx.fill();
+      ctx.fillStyle = '#555'; ctx.fillRect(o.x - o.w / 2, o.y - o.h / 2 + 10, o.w, 5); ctx.fillRect(o.x - o.w / 2, o.y + o.h / 2 - 15, o.w, 5);
+      ctx.font = '26px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(BUFF[o.buff][0], o.x, o.y); ctx.textBaseline = 'alphabetic';
+      ctx.fillStyle = '#300'; rr(o.x - 28, o.y - o.h / 2 - 12, 56, 7, 3); ctx.fill(); ctx.fillStyle = '#ffd84d'; rr(o.x - 28, o.y - o.h / 2 - 12, 56 * Math.max(0, o.hp / o.max), 7, 3); ctx.fill();
     } else if (o.t === 'crowd') {
-      const pts = formation(o.n);
-      for (const p of pts) soldier(o.x + p[0], o.y + p[1], '#d64545', '#ff9a9a');
-      txt(o.n, o.x, o.y - crowdR(o) * 0.8 - 14, 24, '#ffb0b0');
+      const r = crowdR(o), f = formation(o.n);
+      for (let i = f.length - 1; i >= 0; i--) archer(o.x + f[i][0], o.y + f[i][1], '#d64040', 1, frame * 0.3 + i, true);
+      badge(o.x, o.y - r - 12, o.n, '#d64040');
     }
   }
-
-  // BOSS
+  // 魔王
   if (S.boss) {
-    const b = S.boss, wob = Math.sin(frame * 0.1) * 3;
-    ctx.fillStyle = 'rgba(0,0,0,.3)'; ctx.beginPath(); ctx.ellipse(b.x, b.y + b.r*0.75, b.r, b.r*0.3, 0, 0, 7); ctx.fill();
-    ctx.fillStyle = '#5a2a6e'; ctx.beginPath(); ctx.arc(b.x, b.y + wob, b.r, 0, 7); ctx.fill();
-    ctx.fillStyle = '#7d3b96'; ctx.beginPath(); ctx.arc(b.x, b.y - 14 + wob, b.r * 0.55, 0, 7); ctx.fill();
-    ctx.fillStyle = '#ffdf5a'; ctx.beginPath(); ctx.moveTo(b.x - 26, b.y - 40 + wob); ctx.lineTo(b.x - 34, b.y - 66 + wob); ctx.lineTo(b.x - 14, b.y - 46 + wob); ctx.fill();
-    ctx.beginPath(); ctx.moveTo(b.x + 26, b.y - 40 + wob); ctx.lineTo(b.x + 34, b.y - 66 + wob); ctx.lineTo(b.x + 14, b.y - 46 + wob); ctx.fill();
-    ctx.fillStyle = '#ff4040'; ctx.beginPath(); ctx.arc(b.x - 11, b.y - 18 + wob, 5, 0, 7); ctx.arc(b.x + 11, b.y - 18 + wob, 5, 0, 7); ctx.fill();
-    const bw = 170; ctx.fillStyle = 'rgba(0,0,0,.6)'; rr(b.x - bw/2, b.y - b.r - 44, bw, 14, 7); ctx.fill();
-    ctx.fillStyle = '#ff5a4a'; rr(b.x - bw/2, b.y - b.r - 44, bw * Math.max(0, b.hp / b.max), 14, 7); ctx.fill();
-    txt(Math.ceil(b.hp), b.x, b.y - b.r - 64, 28, '#fff');
+    const b = S.boss;
+    for (const k of ['warn', 'warn2']) { const w = b[k]; if (!w) continue; ctx.fillStyle = `rgba(255,40,40,${0.18 + 0.2 * Math.abs(Math.sin(w.t / 5))})`; ctx.fillRect(w.x, b.y + 40, w.w, H - b.y); ctx.strokeStyle = '#ff3030'; ctx.lineWidth = 3; ctx.setLineDash([10, 6]); ctx.strokeRect(w.x + 2, b.y + 40, w.w - 4, H - b.y - 40); ctx.setLineDash([]); ctx.fillStyle = '#fff'; ctx.font = '900 28px sans-serif'; ctx.textAlign = 'center'; ctx.fillText('⚠', w.x + w.w / 2, PY - 80); }
+    const sq = b.warn && b.warn.t < 15 ? 1.1 : 1;
+    ctx.save(); ctx.translate(b.x, b.y); ctx.scale(sq, 1 / sq);
+    ctx.fillStyle = 'rgba(0,0,0,.25)'; ctx.beginPath(); ctx.ellipse(0, b.r * 0.8, b.r, 14, 0, 0, 7); ctx.fill();
+    ctx.fillStyle = '#7a4fb3'; ctx.beginPath(); ctx.arc(0, 0, b.r, 0, 7); ctx.fill();
+    ctx.fillStyle = '#9b6bd6'; ctx.beginPath(); ctx.arc(-14, -16, b.r * 0.45, 0, 7); ctx.fill();
+    ctx.fillStyle = '#f3e3c3'; for (const s of [-1, 1]) { ctx.beginPath(); ctx.moveTo(s * 30, -b.r + 14); ctx.lineTo(s * 44, -b.r - 22); ctx.lineTo(s * 16, -b.r + 6); ctx.fill(); }
+    ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(-20, -6, 12, 0, 7); ctx.arc(20, -6, 12, 0, 7); ctx.fill();
+    ctx.fillStyle = '#c00'; ctx.beginPath(); ctx.arc(-18, -4, 6, 0, 7); ctx.arc(18, -4, 6, 0, 7); ctx.fill();
+    ctx.strokeStyle = '#2a1340'; ctx.lineWidth = 5; ctx.beginPath(); ctx.moveTo(-34, -22); ctx.lineTo(-8, -14); ctx.moveTo(34, -22); ctx.lineTo(8, -14); ctx.stroke();
+    ctx.fillStyle = '#2a1340'; rr(-24, 18, 48, 16, 8); ctx.fill(); ctx.fillStyle = '#fff'; for (let i = 0; i < 5; i++) { ctx.beginPath(); ctx.moveTo(-20 + i * 10, 18); ctx.lineTo(-15 + i * 10, 26); ctx.lineTo(-10 + i * 10, 18); ctx.fill(); }
+    ctx.restore();
+    ctx.fillStyle = '#300'; rr(b.x - 70, b.y - b.r - 30, 140, 12, 6); ctx.fill(); ctx.fillStyle = '#ff4d5a'; rr(b.x - 70, b.y - b.r - 30, 140 * Math.max(0, b.hp / b.max), 12, 6); ctx.fill();
+    ctx.fillStyle = '#fff'; ctx.font = 'bold 12px sans-serif'; ctx.textAlign = 'center'; ctx.fillText(Math.max(0, Math.ceil(b.hp)), b.x, b.y - b.r - 21);
   }
-
   // 箭
-  ctx.strokeStyle = '#ffe9a8'; ctx.lineWidth = 2.2;
-  ctx.beginPath(); for (const a of S.arrows) { ctx.moveTo(a.x, a.y); ctx.lineTo(a.x, a.y + 14); } ctx.stroke();
-  ctx.fillStyle = '#fff'; for (const a of S.arrows) { ctx.beginPath(); ctx.moveTo(a.x, a.y - 4); ctx.lineTo(a.x - 3, a.y + 2); ctx.lineTo(a.x + 3, a.y + 2); ctx.fill(); }
-
-  // 我方部隊
+  for (const a of S.arrows) { ctx.strokeStyle = a.fire ? '#ff8a1e' : '#6b4320'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(a.x, a.y + 12); ctx.stroke(); ctx.fillStyle = a.fire ? '#ffd84d' : '#ddd'; ctx.beginPath(); ctx.moveTo(a.x - 2.5, a.y + 2); ctx.lineTo(a.x, a.y - 3); ctx.lineTo(a.x + 2.5, a.y + 2); ctx.fill(); }
+  // 我方
   const f = S.form;
-  for (let i = f.length - 1; i >= 0; i--) soldier(S.x + f[i][0], PY + f[i][1], '#3d86e6', '#9cc8ff');
-  ctx.fillStyle = '#ffd34d'; ctx.beginPath(); ctx.arc(S.x, PY - 3, 4, 0, 7); ctx.fill(); // 隊長頭盔
-  txt(S.n, S.x, PY + formR() * 0.8 + 22, 26, '#ffffff');
-
-  for (const p of S.fx) { ctx.globalAlpha = Math.min(1, p.t / 10); ctx.fillStyle = p.c; ctx.fillRect(p.x, p.y, 4, 4); }
+  for (let i = f.length - 1; i >= 0; i--) archer(S.x + f[i][0], PY + f[i][1], '#3f7fe0', 1.05, frame * 0.35 + i, false);
+  badge(S.x, PY - formR() * 0.75 - 22, S.n, '#2b6fd6');
+  for (const p of S.fx) { ctx.globalAlpha = clamp(p.life / 20, 0, 1); ctx.fillStyle = p.col; ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, 7); ctx.fill(); }
   ctx.globalAlpha = 1;
-  for (const p of S.pops) { ctx.globalAlpha = Math.min(1, p.t / 20); txt(p.text, p.x, p.y, 28, p.col); }
+  for (const p of S.pops) { ctx.globalAlpha = clamp(p.life / 20, 0, 1); ctx.font = `900 ${p.big ? 28 : 18}px sans-serif`; ctx.textAlign = 'center'; ctx.lineWidth = 4; ctx.strokeStyle = 'rgba(0,0,0,.6)'; ctx.strokeText(p.t, p.x, p.y); ctx.fillStyle = p.col; ctx.fillText(p.t, p.x, p.y); }
   ctx.globalAlpha = 1;
   ctx.restore();
-
   // HUD
-  document.getElementById('hGold').textContent = save.gold;
-  const pr = S.boss ? 1 : Math.min(1, S.dist / S.lv.end);
-  document.getElementById('progBar').style.width = (pr * 100) + '%';
-  document.getElementById('progBar').style.background = S.boss ? '#ff5a4a' : '#5fa8ff';
+  $('hLv').textContent = `第 ${S.L} 關`; $('hGold').textContent = '🪙 ' + Math.floor(S.earned * COIN());
+  $('prog').firstChild.style.width = (S.boss ? 100 : Math.min(100, S.dist / S.lv.end * 100)) + '%';
+  let bh = ''; for (const k in S.buffs) bh += `<div class="buff">${BUFF[k][0]} ${BUFF[k][1]}<div class="bar"><i style="width:${S.buffs[k] / 4.8}%"></i></div></div>`;
+  if ($('buffs').innerHTML !== bh) $('buffs').innerHTML = bh;
 }
+function badge(x, y, n, col) { ctx.font = '900 18px sans-serif'; const t = String(n), w = ctx.measureText(t).width + 18; ctx.fillStyle = col; rr(x - w / 2, y - 13, w, 24, 12); ctx.fill(); ctx.strokeStyle = '#fff'; ctx.lineWidth = 2.5; ctx.stroke(); ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.fillText(t, x, y + 6); }
 
-// ===== 迴圈 & 畫面 =====
+// ===== 流程 =====
 let last = 0, acc = 0;
-function loop(t) {
-  if (!running) return;
-  acc += Math.min(t - last, 100); last = t;
-  while (acc >= 1000/60 && running) { update(); acc -= 1000/60; }
-  draw();
-  if (running) requestAnimationFrame(loop);
-}
-const $ = id => document.getElementById(id);
-function show(id) { ['menu','end','shop'].forEach(x => $(x).classList.toggle('hide', x !== id)); $('hud').style.display = id ? 'none' : 'block'; }
-
-function startGame() {
-  newGame(); S.form = formation(S.n);
-  $('hLv').textContent = '第 ' + S.L + ' 關';
-  show(null); running = true; last = performance.now(); acc = 0; requestAnimationFrame(loop);
-}
+function loop(t) { if (!running) return; acc += Math.min(100, t - last); last = t; while (acc >= 1000 / 60) { update(); acc -= 1000 / 60; if (!running) break; } draw(); requestAnimationFrame(loop); }
+function show(id) { ['menu', 'upg', 'end'].forEach(x => $(x).classList.toggle('hide', x !== id)); $('hud').classList.toggle('hide', id !== null); }
+function start() { newRun(); show(null); running = true; last = performance.now(); acc = 0; requestAnimationFrame(loop); msg(`第 ${S.L} 關 出征！`); }
 function win() {
-  running = false;
-  const g = Math.round((S.kills + S.n * 2 + 60 * S.L) * coinMul());
-  save.gold += g; save.level++; persist();
-  draw();
-  $('eT').textContent = '🎉 勝利！'; $('eT').style.color = '#7ee0a8';
-  $('eP').innerHTML = `擊倒 BOSS！剩下 <b>${S.n}</b> 名弓兵<br>擊殺 ${S.kills}　獲得 <span class="gold">● ${g}</span>`;
-  $('eNext').textContent = '下一關'; show('end');
+  running = false; draw();
+  const ratio = S.n / Math.max(1, S.peak), stars = ratio >= 0.6 ? 3 : ratio >= 0.3 ? 2 : 1;
+  const g = Math.round((40 + S.L * 12 + S.n * 0.8 + S.earned) * COIN() * (0.7 + stars * 0.15));
+  SV.gold += g; SV.stars[S.L] = Math.max(SV.stars[S.L] || 0, stars); SV.level = S.L + 1; persist();
+  $('eT').textContent = '🏆 勝利！'; $('eStars').textContent = '⭐'.repeat(stars) + '☆'.repeat(3 - stars);
+  $('eGold').textContent = '+🪙 ' + g; $('eSub').innerHTML = `剩下 <b>${S.n}</b> 名弓兵（最多時 ${S.peak} 名）<br>${stars < 3 ? '打魔王時保住越多兵，星星越多' : '完美！'}`;
+  $('eNext').textContent = '下一關'; setTimeout(() => show('end'), 600);
 }
 function lose() {
-  running = false;
-  const g = Math.round((S.kills + 15 * S.L) * coinMul() * 0.6);
-  save.gold += g; persist();
-  draw();
-  $('eT').textContent = '全軍覆沒…'; $('eT').style.color = '#ff6b6b';
-  $('eP').innerHTML = `擊殺 ${S.kills}，撤退時撿到 <span class="gold">● ${g}</span><br>去軍營升級再來挑戰吧！`;
-  $('eNext').textContent = '再試一次'; show('end');
+  running = false; draw();
+  const g = Math.round((10 + S.earned + S.L * 3) * COIN()); SV.gold += g; persist();
+  $('eT').textContent = '💀 全軍覆沒'; $('eStars').textContent = ''; $('eGold').textContent = '+🪙 ' + g;
+  const prog = S.boss ? `打到魔王了！魔王剩 ${Math.ceil(S.boss.hp / S.boss.max * 100)}% 血` : `走到 ${Math.round(S.dist / S.lv.end * 100)}%`;
+  $('eSub').innerHTML = `${prog}<br>升級一下部隊再來挑戰吧！`;
+  $('eNext').textContent = '再挑戰'; setTimeout(() => show('end'), 600);
 }
-function menu() { $('mLv').textContent = save.level; $('mGold').textContent = save.gold; show('menu'); }
-function renderShop() {
-  $('sGold').textContent = save.gold;
-  const list = $('sList'); list.innerHTML = '';
-  for (const u of UPS) {
-    const l = save.up[u.k], maxed = l >= u.max, cost = upCost(u, l);
-    const d = document.createElement('div'); d.className = 'item';
-    d.innerHTML = `<div class="ic">${u.ic}</div><div class="tx"><div class="nm">${u.nm}　<span style="color:#9aa3b5;font-size:15px">Lv.${l}</span></div><div class="ds">${u.ds(l)}${maxed ? '' : '　→ ' + u.ds(l+1)}</div></div>`;
-    const b = document.createElement('button');
-    b.textContent = maxed ? '已滿級' : '● ' + cost; b.disabled = maxed || save.gold < cost;
-    b.onclick = () => { if (!maxed && save.gold >= cost) { save.gold -= cost; save.up[u.k]++; persist(); renderShop(); } };
-    d.appendChild(b); list.appendChild(d);
-  }
+function menu() { running = false; S = null; show('menu'); $('mLv').textContent = `第 ${SV.level} 關`; $('mGold').textContent = '🪙 ' + SV.gold; draw(); }
+function renderUp() {
+  $('uGold').textContent = '🪙 ' + SV.gold;
+  $('uList').innerHTML = UPS.map(u => { const l = SV.up[u.k], max = l >= u.max, c = upCost(l); return `<button class="up" data-u="${u.k}" ${max || SV.gold < c ? 'disabled' : ''}><div class="ic">${u.ic}</div><div class="n">${u.n}</div><div class="lvl">Lv ${l}${max ? '（滿）' : ''}</div><div class="d">${u.d(l)}${max ? '' : `<br>→ ${u.d(l + 1)}`}</div><div class="c">${max ? '已滿' : '🪙 ' + c}</div></button>`; }).join('');
+  document.querySelectorAll('[data-u]').forEach(b => b.onclick = () => { const k = b.dataset.u, c = upCost(SV.up[k]); if (SV.gold < c) return; SV.gold -= c; SV.up[k]++; persist(); renderUp(); });
 }
-function openShop() { renderShop(); show('shop'); }
-$('mStart').onclick = startGame; $('eNext').onclick = startGame; $('sStart').onclick = startGame;
-$('mShop').onclick = openShop; $('eShop').onclick = openShop; $('sBack').onclick = menu;
-
-// ===== 操作：相對拖曳 =====
-let dragX = null, startTx = 0;
-function toWorld(cx) { const r = cv.getBoundingClientRect(); return (cx - r.left) / r.width * W; }
-cv.addEventListener('touchstart', e => { e.preventDefault(); if (!S) return; dragX = toWorld(e.touches[0].clientX); startTx = S.tx; }, {passive:false});
-cv.addEventListener('touchmove', e => { e.preventDefault(); if (!S || dragX === null) return; S.tx = startTx + (toWorld(e.touches[0].clientX) - dragX) * 1.3; }, {passive:false});
-cv.addEventListener('touchend', e => { e.preventDefault(); dragX = null; }, {passive:false});
-cv.addEventListener('mousedown', e => { if (!S) return; dragX = toWorld(e.clientX); startTx = S.tx; });
-window.addEventListener('mousemove', e => { if (S && dragX !== null) S.tx = startTx + (toWorld(e.clientX) - dragX) * 1.3; });
-window.addEventListener('mouseup', () => dragX = null);
-window.addEventListener('keydown', e => { if (!S) return; if (e.key === 'ArrowLeft') S.tx -= 40; if (e.key === 'ArrowRight') S.tx += 40; });
-
-resize(); menu();
+$('mGo').onclick = start; $('uGo').onclick = start; $('eNext').onclick = start;
+$('mUp').onclick = () => { renderUp(); show('upg'); }; $('eUp').onclick = () => { renderUp(); show('upg'); };
+$('uBack').onclick = menu; $('eMenu').onclick = menu;
+// 拖曳：手指移動多少，部隊就移動多少
+let drag = null;
+const toLocal = cx => { const r = cv.getBoundingClientRect(); return (cx - r.left) / r.width * W; };
+cv.addEventListener('touchstart', e => { e.preventDefault(); if (S) drag = { x: toLocal(e.touches[0].clientX), sx: S.tx }; }, { passive: false });
+cv.addEventListener('touchmove', e => { e.preventDefault(); if (drag && S) S.tx = drag.sx + (toLocal(e.touches[0].clientX) - drag.x) * 1.3; }, { passive: false });
+cv.addEventListener('touchend', () => drag = null);
+cv.addEventListener('mousedown', e => { if (S) drag = { x: toLocal(e.clientX), sx: S.tx }; });
+window.addEventListener('mousemove', e => { if (drag && S) S.tx = drag.sx + (toLocal(e.clientX) - drag.x) * 1.3; });
+window.addEventListener('mouseup', () => drag = null);
+window.addEventListener('keydown', e => { if (!S) return; if (e.key === 'ArrowLeft') S.tx -= 30; if (e.key === 'ArrowRight') S.tx += 30; });
+menu();
 </script>
 <a href="./" id="gbHome" style="position:fixed;top:calc(4px + env(safe-area-inset-top));left:50%;transform:translateX(-50%);z-index:9999;background:rgba(0,0,0,.45);color:#fff;text-decoration:none;font:600 13px -apple-system,sans-serif;padding:4px 12px;border-radius:12px;opacity:.6">⌂ 遊戲盒</a>
 <script>if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});</script>
