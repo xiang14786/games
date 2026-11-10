@@ -292,8 +292,39 @@ function radar(a) {
   return `<svg viewBox="0 0 300 270" style="width:100%;max-width:340px;display:block;margin:0 auto">${g}</svg>`;
 }
 
+
+// ===================== 傳奇背號彩蛋（背號＋位置）=====================
+const EGGS = [
+  { n:23, pos:'GFC', who:'Michael Jordan／LeBron James', t:'籃球之神', pot:99, b:{} },
+  { n:24, pos:'GFC', who:'Kobe Bryant', t:'曼巴精神', pot:99, b:{ shoot:6 }, x:'clutch' },
+  { n:8,  pos:'GF', who:'Kobe Bryant（8 號時期）', t:'小飛俠', pot:95, b:{ shoot:6, drive:6 } },
+  { n:30, pos:'G', who:'Stephen Curry', t:'無限射程', pot:96, b:{ three:15 } },
+  { n:3,  pos:'G', who:'Allen Iverson', t:'戰神', pot:94, b:{ drive:10, ath:6 } },
+  { n:32, pos:'G', who:'Magic Johnson', t:'魔術師', pot:95, b:{ pass:15 } },
+  { n:12, pos:'G', who:'John Stockton', t:'助攻機器', pot:92, b:{ pass:12, def:4 } },
+  { n:13, pos:'G', who:'James Harden', t:'大鬍子', pot:94, b:{ three:8, drive:8 } },
+  { n:77, pos:'G', who:'Luka Dončić', t:'東歐金童', pot:95, b:{ pass:8, three:8 } },
+  { n:11, pos:'G', who:'Kyrie Irving', t:'魔術手', pot:93, b:{ drive:12 } },
+  { n:0,  pos:'G', who:'Russell Westbrook', t:'大三元機器', pot:93, b:{ ath:10, reb:6 } },
+  { n:1,  pos:'G', who:'Tracy McGrady／Derrick Rose', t:'飆風', pot:93, b:{ drive:8, ath:8 } },
+  { n:33, pos:'F', who:'Larry Bird', t:'大鳥', pot:95, b:{ shoot:8, three:8 } },
+  { n:35, pos:'F', who:'Kevin Durant', t:'死神', pot:96, b:{ shoot:12, three:6 } },
+  { n:34, pos:'F', who:'Giannis Antetokounmpo', t:'字母哥', pot:96, b:{ drive:10, ath:10 } },
+  { n:2,  pos:'F', who:'Kawhi Leonard', t:'機器人', pot:94, b:{ def:10, shoot:6 } },
+  { n:15, pos:'F', who:'Vince Carter', t:'半人半神', pot:93, b:{ ath:12, drive:6 } },
+  { n:91, pos:'F', who:'Dennis Rodman', t:'籃板蟲', pot:90, b:{ reb:18, def:8 } },
+  { n:21, pos:'FC', who:'Tim Duncan', t:'石佛', pot:95, b:{ def:8, reb:8, shoot:4 } },
+  { n:34, pos:'C', who:"Shaquille O'Neal", t:'大鯊魚', pot:97, b:{ drive:12, reb:8, ath:6 } },
+  { n:33, pos:'C', who:'Kareem Abdul-Jabbar', t:'天勾', pot:96, b:{ shoot:12, reb:6 } },
+  { n:13, pos:'C', who:'Wilt Chamberlain', t:'籃球巨人', pot:97, b:{ reb:12, drive:8 } },
+  { n:6,  pos:'C', who:'Bill Russell', t:'指環王', pot:94, b:{ def:14, reb:8 }, x:'chem' },
+  { n:50, pos:'C', who:'David Robinson', t:'海軍上將', pot:93, b:{ def:10, ath:6 } },
+];
+const eggOf = (n, pos) => EGGS.find(e => e.n === n && e.pos.includes(pos));
+const eggKey = e => e.n + e.pos;
+
 // ===================== 存檔 =====================
-let C = null, LEG = { lives:[], talents:[], inherit:null, ach:{} };
+let C = null, LEG = { lives:[], talents:[], inherit:null, ach:{}, eggs:{} };
 try { const l = JSON.parse(localStorage.getItem('hoop3Legacy')); if (l) LEG = Object.assign(LEG, l); } catch(e) {}
 const saveLeg = () => { try { localStorage.setItem('hoop3Legacy', JSON.stringify(LEG)); } catch(e) {} };
 const saveRun = () => { try { localStorage.setItem('hoop3Run', JSON.stringify(C)); } catch(e) {} };
@@ -363,11 +394,15 @@ $('bStart').onclick = () => {
   if (has('DRAFT1')) { a.drive += 5; a.ath += 5; }
   C.players.ME = { id:'ME', name: C.name, pos: selPos, age:16, a, pot: ri(74, 88) + (has('UNDRAFTED') ? 3 : 0) + (has('MVP') ? 4 : 0), team: C.team, st: line(), car: line(), me: true };
   genLeague(false); newSeason();
-  const legend = num === 23 || num === 24;
-  if (legend) { ME().pot = 99; C.legend = true; }
+  const egg = eggOf(num, selPos), legend = !!egg;
+  if (egg) {
+    ME().pot = egg.pot; C.egg = eggKey(egg); C.eggX = egg.x || null;
+    for (const [k, v] of Object.entries(egg.b)) ME().a[k] = Math.min(99, ME().a[k] + v);
+    LEG.eggs = LEG.eggs || {}; LEG.eggs[eggKey(egg)] = (LEG.eggs[eggKey(egg)] || 0) + 1; saveLeg();
+  }
   const coach = LEG.lives[0];
-  C.note = (legend ? `<b class="gold">✨ 傳奇背號 ${num} 號！</b>你感覺到身上流著某種傳奇的血液……潛力上限 <b class="gold">99</b>。<br><br>` : '') + (coach ? `你進了${C.team}籃球隊。教練是 <b class="gold">${coach.name}</b>——前世的你。「我當年沒做到的，就交給你了。」` : `你進了${C.team}籃球隊，穿上 ${C.num} 號球衣。高中三年，目標是選秀會。`);
-  saveRun(); showHub(); if (legend) toast('✨ 傳奇背號！', '潛力上限 99');
+  C.note = (legend ? `<b class="gold">✨ 傳奇背號：${num} 號${POS[selPos].n}「${egg.t}」</b><br>致敬 ${egg.who}。潛力上限 <b class="gold">${egg.pot}</b>${Object.keys(egg.b).length ? '，' + Object.entries(egg.b).map(([k, v]) => `${ATTR[k]} +${v}`).join('、') : ''}${egg.x === 'clutch' ? '，關鍵時刻更冷血' : egg.x === 'chem' ? '，團隊默契成長加倍' : ''}。<br><br>` : '') + (coach ? `你進了${C.team}籃球隊。教練是 <b class="gold">${coach.name}</b>——前世的你。「我當年沒做到的，就交給你了。」` : `你進了${C.team}籃球隊，穿上 ${C.num} 號球衣。高中三年，目標是選秀會。`);
+  saveRun(); showHub(); if (legend) toast(`✨ 傳奇背號「${egg.t}」！`, `致敬 ${egg.who}・潛力 ${egg.pot}`);
 };
 
 // ===================== 賽季 =====================
@@ -480,7 +515,7 @@ function autoClutch(G, off, def, d) {
   posses(G, off, def, { court: oc, shooter: 'ME', type, bonus: clutchBonus() });
   if (G.s[off.n] > G.s[def.n] && before <= G.s[def.n]) G.clutchHit = true;
 }
-const clutchBonus = () => C.iq / 500 + (has('HS_CHAMP') ? 0.08 : 0) + (has('CLUTCH') ? 0.12 : 0) + (C.chem - 50) * 0.001;
+const clutchBonus = () => (C.eggX === 'clutch' ? 0.1 : 0) + C.iq / 500 + (has('HS_CHAMP') ? 0.08 : 0) + (has('CLUTCH') ? 0.12 : 0) + (C.chem - 50) * 0.001;
 function finalize(G) {
   const h = G.home, a = G.away, hs = G.s[h.n], as = G.s[a.n];
   const win = hs > as ? h : a, lose = win === h ? a : h;
@@ -609,7 +644,7 @@ function train(k) {
   if (C.injury) { C.injury--; C.fatigue = Math.max(0, C.fatigue - 35); t = '🩹 你在防護室做復健。'; }
   else if (k === 'rest') { C.fatigue = Math.max(0, C.fatigue - 45); C.morale = Math.min(100, C.morale + 3); t = '😴 好好休息了一週，士氣 +3。'; }
   else if (k === 'iq') { C.iq = Math.min(100, C.iq + 7); C.fatigue += 4; t = '📼 你把對手的錄影看了三遍。\n球商 +7（關鍵時刻更準、教練更信任）'; C.trust = Math.min(100, C.trust + 2); }
-  else if (k === 'team') { const add = has('CHAMP') ? 16 : 10; C.chem = Math.min(100, C.chem + add); C.fatigue += 6; growAttr('pass', 2); t = `🤝 你和隊友練了一整週的戰術跑位。\n團隊默契 +${add}，傳球小幅提升`; }
+  else if (k === 'team') { const add = (has('CHAMP') ? 16 : 10) * (C.eggX === 'chem' ? 2 : 1); C.chem = Math.min(100, C.chem + add); C.fatigue += 6; growAttr('pass', 2); t = `🤝 你和隊友練了一整週的戰術跑位。\n團隊默契 +${add}，傳球小幅提升`; }
   else {
     const tired = C.fatigue >= 65 ? 0.6 : 1;
     const before = ovr();
@@ -963,6 +998,7 @@ $('bNew').onclick = () => {
 $('bCont').onclick = () => { C = loadRun(); if (C) { PID = Math.max(PID, ...Object.keys(C.players).filter(k => k[0] === 'P').map(k => +k.slice(1) + 1)); showHub(); } };
 $('bHall').onclick = () => {
   $('hallList').innerHTML = `<div class="card"><h3>🏛️ 成就殿堂　<span class="gold">${Object.keys(LEG.ach).length}/${ACH.length}</span></h3>${ACH.map(a => `<div class="ach ${LEG.ach[a[0]] ? '' : 'off'}"><div class="i">${a[1]}</div><div><b>${a[2]}</b>${LEG.ach[a[0]] ? `<span class="muted" style="font-size:12px">　達成 ${LEG.ach[a[0]]} 次</span>` : ''}<div class="muted" style="font-size:13px">${a[3]}</div></div></div>`).join('')}</div>` +
+    `<div class="card"><h3>✨ 傳奇背號圖鑑　<span class="gold">${Object.keys(LEG.eggs || {}).length}/${EGGS.length}</span></h3><div class="muted" style="font-size:13px;margin-bottom:6px">特定背號配上特定位置，會喚醒傳奇的力量</div>${EGGS.map(e => (LEG.eggs || {})[eggKey(e)] ? `<div class="ach"><div class="i">${e.n}</div><div><b>${e.t}</b>　<span class="muted" style="font-size:12px">${[...e.pos].map(p => POS[p].n).join('／')}</span><div class="muted" style="font-size:13px">致敬 ${e.who}・潛力 ${e.pot}</div></div></div>` : `<div class="ach off"><div class="i">?</div><div><b>？？？</b><div class="muted" style="font-size:13px">尚未發現</div></div></div>`).join('')}</div>` +
     (LEG.lives.length ? LEG.lives.map((l, i) => `<div class="card row"><div style="width:72px;height:72px;border-radius:14px;overflow:hidden;flex:none">${avatar(l.look, l.color, l.num)}</div><div><b>第 ${LEG.lives.length - i} 世　${l.name}</b>　<span class="muted">${POS[l.pos].n}</span><br><span style="font-size:14px">${l.summary}</span>${l.highlights && l.highlights.length ? `<div class="muted" style="font-size:13px;margin-top:4px;line-height:1.6">${l.highlights.slice(0, 5).join('<br>')}</div>` : ''}</div></div>`).join('') : '<div class="card muted">還沒有前世。</div>');
   showOnly('sHall');
 };
