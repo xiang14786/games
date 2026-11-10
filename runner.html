@@ -190,8 +190,8 @@ function act(a) {
   const s = st;
   if (a === 'L' && s.lane > -1) s.lane--;
   else if (a === 'R' && s.lane < 1) s.lane++;
-  else if (a === 'U') { if (s.y <= 0.01 && !s.jet) { s.vy = 9.2; s.slide = 0; } }
-  else if (a === 'D') { if (s.y > 0.01 && !s.jet) s.vy = -16; s.slide = 0.62; }
+  else if (a === 'U') { if (s.y <= 0.01 && !(s.jet > 0)) { s.vy = 9.2; s.slide = 0; } }
+  else if (a === 'D') { if (s.y > 0.01 && !(s.jet > 0)) s.vy = -16; s.slide = 0.62; }
   $('hint').style.opacity = 0;
 }
 cv.addEventListener('touchstart', e => { e.preventDefault(); const t = e.changedTouches[0]; touch = { x: t.clientX, y: t.clientY, done: false }; }, { passive: false });
@@ -212,7 +212,7 @@ function update(dt) {
   const tx = s.lane * LANE; s.x += (tx - s.x) * Math.min(1, dt * 16);
   camX += (s.x * 0.55 - camX) * Math.min(1, dt * 6);
   // 跳躍
-  if (s.jet > 0) { s.jet -= dt; s.y += (3.2 - s.y) * Math.min(1, dt * 4); s.vy = 0; if (s.jet <= 0) { s.vy = 2; toast('著陸！'); } }
+  if (s.jet > 0) { s.jet -= dt; s.y += (3.2 - s.y) * Math.min(1, dt * 4); s.vy = 0; if (s.jet <= 0) { s.jet = 0; s.vy = 2; s.hit = 1; toast('著陸！'); } }
   else { s.vy -= 26 * dt; s.y += s.vy * dt; if (s.y < 0) { s.y = 0; s.vy = 0; } }
   if (s.slide > 0) s.slide -= dt;
   for (const k of ['mag', 'x2', 'board']) if (s[k] > 0) s[k] = Math.max(0, s[k] - dt);
@@ -235,7 +235,7 @@ function update(dt) {
     if (o.k === 'block') bad = s.y < 0.62;
     else if (o.k === 'bar') bad = !(s.slide > 0) && s.y < 1.9;
     else if (o.k === 'train') bad = s.y < 1.75;
-    if (bad && !s.jet && s.hit <= 0) {
+    if (bad && !(s.jet > 0) && s.hit <= 0) {
       if (s.board > 0) { s.board = 0; s.hit = 1.2; o.dead = true; toast('滑板擋下了！'); shake = 10; }
       else return crash();
     }

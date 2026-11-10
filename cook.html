@@ -12,455 +12,558 @@
 <title>瘋狂小餐館</title>
 <style>
   * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
-  html,body { margin:0; height:100%; overflow:hidden; background:#2b1a12; color:#fff;
+  html,body { margin:0; height:100%; overflow:hidden; background:#1e120b; color:#fff;
     font-family:-apple-system,"PingFang TC","Noto Sans TC","Microsoft JhengHei",sans-serif;
     user-select:none; -webkit-user-select:none; touch-action:manipulation; overscroll-behavior:none; }
+  img { -webkit-user-drag:none; user-select:none; pointer-events:none; }
   .hide { display:none !important; }
-  #app { position:relative; max-width:520px; height:100%; margin:0 auto; overflow:hidden; display:flex; flex-direction:column; }
-  /* ---------- HUD ---------- */
-  #hud { position:relative; z-index:5; display:flex; align-items:center; gap:8px; padding:calc(env(safe-area-inset-top) + 8px) 10px 8px; background:linear-gradient(180deg,#5a2d14,#3e1e0c); box-shadow:0 3px 8px rgba(0,0,0,.4); }
-  .chip { background:rgba(0,0,0,.35); border:2px solid rgba(255,220,150,.35); border-radius:999px; padding:4px 12px; font-weight:900; font-size:16px; white-space:nowrap; }
-  #goal { flex:1; position:relative; height:24px; background:rgba(0,0,0,.4); border-radius:999px; border:2px solid rgba(255,220,150,.35); overflow:hidden; }
+  #app { position:relative; max-width:520px; height:100%; margin:0 auto; overflow:hidden; display:flex; flex-direction:column; --wall1:#f6d7a7; --wall2:#f1cb94; --ctr1:#d98a4a; --ctr2:#a85a26; --ctr3:#6b3412; }
+  /* HUD */
+  #hud { position:relative; z-index:5; display:flex; align-items:center; gap:6px; padding:calc(env(safe-area-inset-top) + 6px) 8px 6px; background:linear-gradient(180deg,rgba(40,20,10,.92),rgba(40,20,10,.75)); }
+  .chip { background:rgba(0,0,0,.35); border:2px solid rgba(255,220,150,.35); border-radius:999px; padding:3px 10px; font-weight:900; font-size:15px; white-space:nowrap; display:flex; align-items:center; gap:4px; }
+  .chip img { width:20px; height:20px; }
+  #goal { flex:1; position:relative; height:26px; background:rgba(0,0,0,.45); border-radius:999px; border:2px solid rgba(255,220,150,.35); overflow:hidden; }
   #goal i { position:absolute; left:0; top:0; bottom:0; background:linear-gradient(90deg,#ffd34d,#ff9a2e); transition:width .3s; }
-  #goal span { position:absolute; inset:0 0 3px 0; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:900; text-shadow:0 1px 2px #000; }
-  #goal u { position:absolute; bottom:-1px; font-size:10px; text-decoration:none; transform:translateX(-50%); filter:grayscale(1) brightness(.7); }
-  #goal u.on { filter:none; }
-  #pauseB { width:38px; height:38px; border-radius:50%; border:2px solid rgba(255,220,150,.4); background:rgba(0,0,0,.35); color:#fff; font-size:16px; padding:0; }
-  /* ---------- 用餐區 ---------- */
-  #dining { position:relative; flex:0 0 34%; background:
-      linear-gradient(180deg, rgba(0,0,0,0) 70%, rgba(0,0,0,.25) 100%),
-      repeating-linear-gradient(90deg,#f6d7a7 0 26px,#f1cb94 26px 52px); overflow:hidden; }
-  #dining .win { position:absolute; top:10%; height:42%; width:26%; border-radius:12px 12px 4px 4px; background:linear-gradient(180deg,#8fd3ff,#d9f1ff 70%,#bfe3a0 70%); border:5px solid #8a5228; box-shadow:inset 0 0 0 3px #b8763d; }
-  #dining .win::after { content:''; position:absolute; left:50%; top:0; bottom:0; width:4px; margin-left:-2px; background:#8a5228; }
-  #dining .lamp { position:absolute; top:0; width:4px; height:18%; background:#5a3a20; }
-  #dining .lamp::after { content:''; position:absolute; bottom:-14px; left:-14px; width:32px; height:16px; border-radius:16px 16px 4px 4px; background:#ffcf5a; box-shadow:0 8px 24px rgba(255,210,100,.8); }
-  #seats { position:absolute; left:0; right:0; bottom:0; height:78%; display:flex; justify-content:space-around; align-items:flex-end; padding:0 4px; }
-  .seat { position:relative; width:24%; height:100%; display:flex; flex-direction:column; align-items:center; justify-content:flex-end; }
-  .cust { font-size:min(13vw,62px); line-height:1; transform-origin:50% 100%; transition:transform .25s; margin-bottom:-6px; filter:drop-shadow(0 4px 3px rgba(0,0,0,.25)); }
+  #goal span { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:900; text-shadow:0 1px 2px #000; gap:3px; }
+  #goal span img { width:16px; height:16px; }
+  #goal u { position:absolute; bottom:0; height:7px; width:2px; background:rgba(255,255,255,.5); text-decoration:none; }
+  #goal u::after { content:''; }
+  #goal u.on::after { color:#fff3a0; }
+  #pauseB { width:36px; height:36px; border-radius:50%; border:2px solid rgba(255,220,150,.4); background:rgba(0,0,0,.35); color:#fff; font-size:15px; padding:0; }
+  /* 用餐區 */
+  #dining { position:relative; flex:0 0 31%; overflow:hidden; background:repeating-linear-gradient(90deg,var(--wall1) 0 26px,var(--wall2) 26px 52px); }
+  #dining::before { content:''; position:absolute; left:0; right:0; bottom:0; height:38%; background:linear-gradient(180deg,rgba(0,0,0,.0),rgba(0,0,0,.18)); }
+  #sign { position:absolute; top:6%; left:50%; transform:translateX(-50%); background:linear-gradient(180deg,#6b3a1a,#4a2410); border:3px solid #c8884a; border-radius:12px; padding:3px 16px; font-weight:900; font-size:16px; color:#ffe9b0; white-space:nowrap; box-shadow:0 4px 10px rgba(0,0,0,.3); }
+  .deco { position:absolute; top:4%; width:44px; opacity:.9; }
+  #seats { position:absolute; left:0; right:0; bottom:0; height:80%; display:flex; justify-content:space-around; align-items:flex-end; padding:0 2px; }
+  .seat { position:relative; width:24.5%; height:100%; display:flex; flex-direction:column; align-items:center; justify-content:flex-end; }
+  .cust { position:relative; width:min(17vw,78px); height:min(17vw,78px); margin-bottom:-10px; filter:drop-shadow(0 4px 4px rgba(0,0,0,.3)); }
+  .cust > img { width:100%; height:100%; }
+  .cust .mood { position:absolute; right:-6px; top:-4px; width:28px; height:28px; }
   .cust.in { animation:walkin .5s ease-out; }
-  .cust.angry { animation:angry .4s infinite; }
-  @keyframes walkin { from { transform:translateX(120px); opacity:0; } }
-  @keyframes angry { 50% { transform:rotate(-6deg); } }
-  .bubble { position:absolute; bottom:calc(min(13vw,62px) + 4px); background:#fff; border-radius:14px; padding:4px 5px; display:flex; flex-wrap:wrap; gap:2px; justify-content:center; max-width:100%; box-shadow:0 3px 0 rgba(0,0,0,.18); }
+  .cust.angry { animation:angry .35s infinite; }
+  .cust.out { animation:walkout .7s forwards; }
+  @keyframes walkin { from { transform:translateX(100px); opacity:0; } }
+  @keyframes walkout { to { transform:translateY(30px); opacity:0; } }
+  @keyframes angry { 50% { transform:rotate(-7deg); } }
+  .bubble { position:absolute; bottom:calc(min(17vw,78px) - 2px); background:#fff; border-radius:14px; padding:3px; display:flex; flex-wrap:wrap; gap:1px; justify-content:center; max-width:104%; box-shadow:0 3px 0 rgba(0,0,0,.18); z-index:3; }
   .bubble::after { content:''; position:absolute; bottom:-7px; left:50%; margin-left:-7px; border:7px solid transparent; border-top-color:#fff; border-bottom:0; }
-  .bubble .it { width:min(9vw,40px); height:min(9vw,40px); position:relative; }
-  .bubble .it.done { opacity:.35; }
-  .bubble .it.done::after { content:'✔'; position:absolute; inset:0; display:flex; align-items:center; justify-content:center; color:#2a9d3a; font-weight:900; font-size:22px; }
-  .pat { width:80%; height:7px; background:rgba(0,0,0,.25); border-radius:4px; overflow:hidden; margin-top:2px; position:relative; z-index:2; }
+  .dish { position:relative; width:min(10vw,44px); height:min(10vw,44px); }
+  .dish > img.m { width:100%; height:100%; }
+  .dish .chips { position:absolute; left:-2px; right:-2px; bottom:-3px; display:flex; justify-content:center; }
+  .dish .chips img { width:42%; height:auto; margin:0 -6%; filter:drop-shadow(0 1px 1px rgba(0,0,0,.4)); }
+  .dish.done { opacity:.3; }
+  .dish.done::after { content:'✔'; position:absolute; inset:0; display:flex; align-items:center; justify-content:center; color:#1f9d35; font-weight:900; font-size:24px; }
+  .pat { width:84%; height:7px; background:rgba(0,0,0,.3); border-radius:4px; overflow:hidden; margin-top:4px; position:relative; z-index:4; }
   .pat i { display:block; height:100%; border-radius:4px; }
-  .seat .heart { position:absolute; bottom:60%; font-size:30px; animation:up 1s forwards; pointer-events:none; z-index:6; }
-  .seat .coin { position:absolute; bottom:70%; font-weight:900; color:#ffd34d; font-size:20px; text-shadow:0 2px 0 #7a3b00; animation:up 1.1s forwards; pointer-events:none; z-index:6; white-space:nowrap; }
+  .pop { position:absolute; bottom:62%; font-weight:900; color:#ffd34d; font-size:19px; text-shadow:0 2px 0 #7a3b00, 0 0 6px rgba(0,0,0,.4); animation:up 1.1s forwards; pointer-events:none; z-index:6; white-space:nowrap; display:flex; align-items:center; gap:2px; }
+  .pop img { width:22px; height:22px; }
   @keyframes up { to { transform:translateY(-50px); opacity:0; } }
-  #counterTop { position:relative; z-index:3; height:22px; flex:0 0 auto; background:linear-gradient(180deg,#d98a4a,#a85a26); box-shadow:0 4px 0 #6b3412, 0 8px 12px rgba(0,0,0,.35); }
-  /* ---------- 廚房 ---------- */
-  #kitchen { position:relative; flex:1; background:
-      linear-gradient(45deg, rgba(0,0,0,.04) 25%, transparent 25%, transparent 75%, rgba(0,0,0,.04) 75%),
-      linear-gradient(45deg, rgba(0,0,0,.04) 25%, transparent 25%, transparent 75%, rgba(0,0,0,.04) 75%), #e9e2d6;
-    background-size:40px 40px; background-position:0 0, 20px 20px; padding:10px 8px calc(env(safe-area-inset-bottom) + 8px); display:flex; flex-direction:column; gap:8px; }
-  .krow { display:flex; gap:8px; align-items:stretch; }
-  .st { position:relative; background:linear-gradient(180deg,#c8cdd6,#9aa2ae); border-radius:14px; box-shadow:0 4px 0 #6d7480, inset 0 2px 0 rgba(255,255,255,.5); display:flex; align-items:center; justify-content:center; }
-  .st:active, .tap:active { transform:translateY(2px); }
-  .bin { width:min(16vw,70px); flex:0 0 auto; flex-direction:column; font-size:11px; font-weight:900; color:#3a2a1a; padding:4px 2px; background:linear-gradient(180deg,#f0d8a8,#d8b070); box-shadow:0 4px 0 #9a7034, inset 0 2px 0 rgba(255,255,255,.5); }
-  .bin svg { width:90%; height:auto; }
-  .bin.lock { filter:grayscale(1); opacity:.4; }
-  #grill { flex:1; background:linear-gradient(180deg,#4a4a52,#2a2a30); box-shadow:0 4px 0 #111, inset 0 0 0 3px #666; padding:6px; gap:6px; justify-content:space-around; }
-  .gslot { position:relative; flex:1; max-width:76px; aspect-ratio:1; border-radius:10px; background:repeating-linear-gradient(0deg,#1a1a1e 0 6px,#3a3a40 6px 8px); display:flex; align-items:center; justify-content:center; }
-  .gslot.hot { box-shadow:0 0 14px rgba(255,120,40,.6) inset; }
-  .gslot svg { width:86%; }
-  .ring { position:absolute; inset:-3px; border-radius:12px; pointer-events:none; }
-  .smoke { position:absolute; top:-6px; font-size:16px; animation:smoke 1s infinite; }
-  @keyframes smoke { from { transform:translateY(0); opacity:.9; } to { transform:translateY(-18px); opacity:0; } }
-  #plates { flex:1; background:transparent; box-shadow:none; gap:6px; justify-content:space-around; }
-  .plate { position:relative; flex:1; max-width:84px; aspect-ratio:1.1; border-radius:50%; background:radial-gradient(circle,#ffffff 52%,#e4e8ee 53%,#ffffff 64%,#cfd5de 66%); box-shadow:0 4px 0 #9aa2ae; display:flex; align-items:center; justify-content:center; }
-  .plate svg { width:80%; margin-top:-8%; }
-  .plate.ready { box-shadow:0 4px 0 #9aa2ae, 0 0 0 3px #4cd964; }
-  #trash { width:min(14vw,58px); flex:0 0 auto; font-size:26px; background:linear-gradient(180deg,#9aa2ae,#6d7480); }
+  #counterTop { position:relative; z-index:3; height:20px; flex:0 0 auto; background:linear-gradient(180deg,var(--ctr1),var(--ctr2)); box-shadow:0 4px 0 var(--ctr3), 0 8px 12px rgba(0,0,0,.35); }
+  /* 廚房 */
+  #kitchen { position:relative; flex:1; min-height:0; padding:8px 7px calc(env(safe-area-inset-bottom) + 6px); display:flex; flex-direction:column; gap:7px;
+    background:linear-gradient(45deg, rgba(0,0,0,.05) 25%, transparent 25%, transparent 75%, rgba(0,0,0,.05) 75%), linear-gradient(45deg, rgba(0,0,0,.05) 25%, transparent 25%, transparent 75%, rgba(0,0,0,.05) 75%), #ece4d6;
+    background-size:36px 36px; background-position:0 0, 18px 18px; }
+  .krow { display:flex; gap:7px; min-height:0; }
+  .panel { position:relative; border-radius:14px; display:flex; flex-direction:column; align-items:center; padding:4px; min-width:0; }
+  .panel .lbl { font-size:11px; font-weight:900; color:#fff; text-shadow:0 1px 2px rgba(0,0,0,.6); margin-bottom:2px; white-space:nowrap; }
+  .panel .slots { flex:1; width:100%; display:flex; gap:4px; justify-content:center; align-items:center; }
+  .slot { position:relative; flex:1; max-width:74px; aspect-ratio:1; border-radius:12px; display:flex; align-items:center; justify-content:center; }
+  .slot > img { width:82%; height:82%; transition:filter .4s; }
+  .slot .ring { position:absolute; inset:-2px; pointer-events:none; }
+  .slot .smoke { position:absolute; top:-4px; right:2px; width:26px; animation:smk 1s infinite; }
+  @keyframes smk { from { transform:translateY(0); opacity:.95; } to { transform:translateY(-14px); opacity:.2; } }
+  .slot .add { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; opacity:.4; }
+  .slot .add img { width:58%; height:58%; filter:grayscale(.3); }
+  .slot .bar { position:absolute; left:10%; right:10%; bottom:2px; height:5px; background:rgba(0,0,0,.35); border-radius:3px; overflow:hidden; }
+  .slot .bar i { display:block; height:100%; background:#4cd964; }
+  .slot .cnt { position:absolute; right:-4px; top:-4px; background:#e8402a; border-radius:10px; padding:0 6px; font-size:13px; font-weight:900; }
+  .grill { background:linear-gradient(180deg,#4a4a52,#26262c); box-shadow:0 4px 0 #111, inset 0 0 0 2px #666; }
+  .grill .slot { background:repeating-linear-gradient(0deg,#17171b 0 6px,#3a3a40 6px 8px); box-shadow:inset 0 0 10px rgba(255,100,30,.35); }
+  .fryer { background:linear-gradient(180deg,#9aa2ae,#6d7480); box-shadow:0 4px 0 #444; }
+  .fryer .slot { background:radial-gradient(circle,#f3c24a,#c8901e); box-shadow:inset 0 0 0 3px #5a5a60; }
+  .pot { background:linear-gradient(180deg,#b8c0cc,#7d8592); box-shadow:0 4px 0 #4a4f58; }
+  .pot .slot { border-radius:50%; background:radial-gradient(circle,#9fd8ff,#4a9ad0); box-shadow:inset 0 0 0 4px #5a6270; }
+  .oven { background:linear-gradient(180deg,#c0644a,#7a3524); box-shadow:0 4px 0 #4a1a10; }
+  .oven .slot { border-radius:40% 40% 10px 10px; background:radial-gradient(circle at 50% 70%,#ffb347,#a83a10 70%,#3a1408); }
+  .griddle { background:linear-gradient(180deg,#5a5a62,#303036); box-shadow:0 4px 0 #18181c; }
+  .griddle .slot { border-radius:50%; background:radial-gradient(circle,#2a2a30,#1a1a1e); box-shadow:inset 0 0 0 3px #555; }
+  .steamer { background:linear-gradient(180deg,#c89a5a,#8a6030); box-shadow:0 4px 0 #5a3a18; }
+  .src { flex:0 0 auto; width:min(15vw,62px); border-radius:12px; background:linear-gradient(180deg,#fff3d6,#e8c88a); box-shadow:0 4px 0 #a8804a, inset 0 2px 0 #fff; display:flex; flex-direction:column; align-items:center; justify-content:center; font-size:11px; font-weight:900; color:#5a3a12; padding:3px 2px; }
+  .src img { width:72%; height:auto; aspect-ratio:1; }
+  .srcs { display:grid; gap:6px; }
+  #plates { flex:1; display:flex; gap:5px; justify-content:space-around; align-items:center; }
+  .plate { position:relative; flex:1; max-width:84px; aspect-ratio:1; border-radius:50%; background:radial-gradient(circle,#fff 50%,#e4e8ee 52%,#fff 63%,#cfd5de 66%); box-shadow:0 4px 0 #9aa2ae; display:flex; align-items:center; justify-content:center; }
+  .plate .dish { width:78%; height:78%; }
+  .plate .base { width:70%; height:70%; position:relative; }
+  .plate .base > img { width:100%; height:100%; }
+  .plate .parts { position:absolute; left:-12%; right:-12%; bottom:-10%; display:flex; justify-content:center; }
+  .plate .parts img { width:40%; margin:0 -5%; filter:drop-shadow(0 1px 2px rgba(0,0,0,.35)); }
+  .plate.ready { box-shadow:0 4px 0 #9aa2ae, 0 0 0 3px #4cd964, 0 0 14px #4cd964; }
+  .disp { background:linear-gradient(180deg,#d6dbe3,#9aa2ae); box-shadow:0 4px 0 #6d7480; flex:1; }
+  .disp .lbl { color:#2a3040; text-shadow:none; }
+  .disp .slot { background:rgba(0,0,0,.12); max-width:52px; }
+  .lockp { filter:grayscale(1) brightness(.85); opacity:.5; }
+  .lockt { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-weight:900; color:#222; font-size:12px; text-align:center; text-shadow:0 0 4px #fff; pointer-events:none; }
+  #trash { flex:0 0 auto; width:min(13vw,54px); border-radius:14px; background:linear-gradient(180deg,#9aa2ae,#6d7480); box-shadow:0 4px 0 #444; display:flex; align-items:center; justify-content:center; }
+  #trash img { width:80%; }
   #trash.on { background:linear-gradient(180deg,#ff8a8a,#d94040); box-shadow:0 4px 0 #8a1a1a; animation:pulse .6s infinite alternate; }
-  @keyframes pulse { to { transform:scale(1.08); } }
-  .mach { flex:1; flex-direction:column; padding:6px 4px; gap:4px; min-height:92px; }
-  .mach .lbl { font-size:11px; font-weight:900; color:#2a3040; }
-  .mach .slots { display:flex; gap:5px; justify-content:center; width:100%; }
-  .cup { position:relative; width:min(11vw,46px); height:min(13vw,56px); border-radius:8px; background:rgba(0,0,0,.12); display:flex; align-items:flex-end; justify-content:center; }
-  .cup svg { width:100%; height:100%; }
-  .cup .bar { position:absolute; left:4px; right:4px; bottom:-6px; height:4px; background:rgba(0,0,0,.25); border-radius:2px; overflow:hidden; }
-  .cup .bar i { display:block; height:100%; background:#4cd964; }
-  .mach.lock { filter:grayscale(1); opacity:.4; }
-  .mach .lockt { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-weight:900; color:#222; font-size:13px; text-align:center; }
-  .fly { position:fixed; z-index:50; pointer-events:none; transition:transform .35s cubic-bezier(.3,.7,.4,1), opacity .35s; }
+  @keyframes pulse { to { transform:scale(1.07); } }
+  .tap:active { transform:translateY(2px); }
   .shake { animation:shk .3s; }
   @keyframes shk { 25% { transform:translateX(-5px); } 75% { transform:translateX(5px); } }
-  #combo { position:absolute; top:40%; left:0; right:0; text-align:center; font-size:30px; font-weight:900; color:#ffd34d; text-shadow:0 3px 0 #7a3b00, 0 0 12px rgba(0,0,0,.4); pointer-events:none; opacity:0; transition:opacity .2s; z-index:8; }
-  /* ---------- 選單 ---------- */
-  .ov { position:absolute; inset:0; z-index:20; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; padding:20px; text-align:center;
-    background:radial-gradient(circle at 50% 30%, rgba(90,45,20,.85), rgba(30,15,8,.96)); overflow-y:auto; touch-action:pan-y; }
-  .logo { font-size:48px; font-weight:900; line-height:1.05; color:#ffe14d; text-shadow:0 4px 0 #c0392b, 0 8px 0 #6b1a10, 0 12px 20px rgba(0,0,0,.5); }
-  .logo small { display:block; font-size:18px; color:#ffd9b0; text-shadow:none; letter-spacing:4px; margin-top:8px; }
-  .card { background:rgba(255,255,255,.08); border:2px solid rgba(255,220,150,.2); border-radius:18px; padding:12px 14px; width:100%; max-width:380px; text-align:left; font-size:14px; line-height:1.7; color:#ffeedd; }
+  .fly { position:fixed; z-index:50; pointer-events:none; width:46px; height:46px; transition:transform .35s cubic-bezier(.3,.7,.4,1), opacity .35s; }
+  .fly img { width:100%; height:100%; }
+  #combo { position:absolute; top:36%; left:0; right:0; text-align:center; font-size:28px; font-weight:900; color:#ffd34d; text-shadow:0 3px 0 #7a3b00, 0 0 12px rgba(0,0,0,.4); pointer-events:none; opacity:0; transition:opacity .2s; z-index:8; }
+  /* 選單 */
+  .ov { position:absolute; inset:0; z-index:20; display:flex; flex-direction:column; align-items:center; justify-content:flex-start; gap:12px; padding:calc(env(safe-area-inset-top) + 24px) 16px 24px; text-align:center;
+    background:radial-gradient(circle at 50% 20%, rgba(110,55,25,.95), rgba(25,12,6,.98)); overflow-y:auto; touch-action:pan-y; }
+  .ov.mid { justify-content:center; }
+  .logo { font-size:44px; font-weight:900; line-height:1.05; color:#ffe14d; text-shadow:0 4px 0 #c0392b, 0 8px 0 #6b1a10, 0 12px 20px rgba(0,0,0,.5); }
+  .logo small { display:block; font-size:16px; color:#ffd9b0; text-shadow:none; letter-spacing:4px; margin-top:8px; }
+  .heroimgs { display:flex; gap:4px; justify-content:center; }
+  .heroimgs img { width:54px; animation:bob 2s ease-in-out infinite; }
+  .heroimgs img:nth-child(2n) { animation-delay:-1s; }
+  @keyframes bob { 50% { transform:translateY(-6px) rotate(-4deg); } }
+  .card { background:rgba(255,255,255,.08); border:2px solid rgba(255,220,150,.2); border-radius:18px; padding:12px 14px; width:100%; max-width:390px; text-align:left; font-size:14px; line-height:1.75; color:#ffeedd; }
   .card h3 { margin:0 0 6px; font-size:17px; color:#ffe14d; }
-  button.big { background:linear-gradient(180deg,#ffd34d,#ff9a2e); color:#4a1e00; border:0; border-radius:20px; padding:14px 46px; font-size:24px; font-weight:900; font-family:inherit; box-shadow:0 6px 0 #a8501a, 0 10px 18px rgba(0,0,0,.35); }
+  .card img.i { width:20px; height:20px; vertical-align:-4px; }
+  button.big { background:linear-gradient(180deg,#ffd34d,#ff9a2e); color:#4a1e00; border:0; border-radius:20px; padding:13px 44px; font-size:23px; font-weight:900; font-family:inherit; box-shadow:0 6px 0 #a8501a, 0 10px 18px rgba(0,0,0,.35); }
   button.big:active { transform:translateY(4px); box-shadow:0 2px 0 #a8501a; }
-  button.alt { background:rgba(255,255,255,.12); color:#fff; border:2px solid rgba(255,220,150,.35); border-radius:16px; padding:10px 22px; font-size:17px; font-weight:800; font-family:inherit; }
-  .lvgrid { display:grid; grid-template-columns:repeat(5,1fr); gap:8px; width:100%; max-width:380px; }
+  button.big:disabled { filter:grayscale(1); opacity:.6; }
+  button.alt { background:rgba(255,255,255,.12); color:#fff; border:2px solid rgba(255,220,150,.35); border-radius:16px; padding:9px 18px; font-size:16px; font-weight:800; font-family:inherit; }
+  .rests { display:flex; flex-direction:column; gap:10px; width:100%; max-width:390px; }
+  .rest { display:flex; align-items:center; gap:10px; border-radius:18px; padding:10px 12px; border:2px solid rgba(255,255,255,.2); color:#fff; font-family:inherit; text-align:left; box-shadow:0 5px 0 rgba(0,0,0,.35); }
+  .rest .pics { display:flex; flex:none; }
+  .rest .pics img { width:40px; height:40px; margin-right:-10px; filter:drop-shadow(0 2px 2px rgba(0,0,0,.4)); }
+  .rest b { font-size:18px; display:block; }
+  .rest small { font-size:12px; opacity:.85; }
+  .rest .pr { margin-left:auto; text-align:right; font-weight:900; font-size:14px; white-space:nowrap; }
+  .rest:disabled { filter:grayscale(1); opacity:.55; }
+  .lvgrid { display:grid; grid-template-columns:repeat(5,1fr); gap:8px; width:100%; max-width:390px; }
   .lv { aspect-ratio:1; border-radius:14px; border:0; background:linear-gradient(180deg,#ffe8b0,#f0b860); color:#5a2a00; font-weight:900; font-size:20px; box-shadow:0 4px 0 #a8701a; font-family:inherit; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:0; }
-  .lv small { font-size:10px; letter-spacing:-1px; }
+  .lv small { font-size:10px; letter-spacing:-1px; color:#c06a00; }
   .lv:disabled { background:#5a4a3a; color:#8a7a6a; box-shadow:0 4px 0 #2a1a0a; }
   .lv.cur { background:linear-gradient(180deg,#9cff7a,#3fbf3a); color:#0f3a08; box-shadow:0 4px 0 #22661a; }
-  .ups { display:grid; grid-template-columns:1fr 1fr; gap:10px; width:100%; max-width:380px; }
+  .ups { display:grid; grid-template-columns:1fr 1fr; gap:10px; width:100%; max-width:390px; }
   .up { background:linear-gradient(180deg,#fff7e0,#f3d79a); color:#4a2a08; border-radius:16px; padding:10px 6px; text-align:center; box-shadow:0 4px 0 #b88a3a; border:0; font-family:inherit; }
-  .up .ic { font-size:30px; }
+  .up .ic { font-size:28px; }
   .up .n { font-weight:900; font-size:15px; }
   .up .d { font-size:11px; opacity:.85; margin:2px 0 6px; min-height:28px; }
   .up .c { background:#3fae2a; color:#fff; border-radius:10px; padding:5px; font-weight:900; font-size:14px; }
   .up:disabled .c { background:#9a9a9a; }
-  .stars { font-size:46px; letter-spacing:6px; }
-  .bignum { font-size:38px; font-weight:900; color:#ffe14d; text-shadow:0 3px 0 #a0521d; }
-  .tabs { display:flex; gap:8px; }
+  .stars { font-size:44px; letter-spacing:6px; }
+  .bignum { font-size:36px; font-weight:900; color:#ffe14d; text-shadow:0 3px 0 #a0521d; display:flex; align-items:center; gap:6px; }
+  .bignum img { width:40px; }
+  .tabs { display:flex; gap:8px; flex-wrap:wrap; justify-content:center; }
+  .newdish { display:flex; gap:10px; flex-wrap:wrap; justify-content:center; margin-top:6px; }
+  .newdish div { text-align:center; font-size:12px; font-weight:800; }
+  .newdish .dish { width:52px; height:52px; margin:0 auto; }
+  .credit { font-size:11px; color:rgba(255,255,255,.4); }
 </style>
 </head>
 <body>
 <div id="app">
   <div id="hud" class="hide">
-    <div class="chip" id="hLv">第 1 關</div>
-    <div id="goal"><i></i><span id="gTxt"></span><u style="left:33%">⭐</u><u style="left:66%">⭐</u><u style="left:98%">⭐</u></div>
-    <div class="chip" id="hCust">👥 0</div>
+    <div class="chip" id="hLv">1-1</div>
+    <div id="goal"><i></i><span id="gTxt"></span><u></u><u></u><u></u></div>
+    <div class="chip" id="hCust"></div>
     <button id="pauseB">⏸</button>
   </div>
-  <div id="dining">
-    <div class="lamp" style="left:22%"></div><div class="lamp" style="left:76%"></div>
-    <div class="win" style="left:6%"></div><div class="win" style="left:37%"></div><div class="win" style="left:68%"></div>
-    <div id="seats"></div>
-  </div>
+  <div id="dining"><div id="sign"></div><img class="deco" id="decoL" style="left:4%"><img class="deco" id="decoR" style="right:4%"><div id="seats"></div></div>
   <div id="counterTop"></div>
-  <div id="kitchen">
-    <div class="krow" style="flex:1.1">
-      <div class="st bin tap" id="bPatty"></div>
-      <div class="st" id="grill"></div>
-      <div class="st tap" id="trash">🗑️</div>
-    </div>
-    <div class="krow" style="flex:1.1">
-      <div class="st bin tap" id="bBun"></div>
-      <div class="st" id="plates"></div>
-      <div style="display:flex;flex-direction:column;gap:6px"><div class="st bin tap" id="bCheese" style="flex:1"></div><div class="st bin tap" id="bLettuce" style="flex:1"></div></div>
-    </div>
-    <div class="krow" style="flex:1">
-      <div class="st mach tap" id="mSoda"><div class="lbl">🥤 汽水機（點機器裝杯）</div><div class="slots" id="sSoda"></div></div>
-      <div class="st mach tap" id="mFry"><div class="lbl">🍟 炸鍋</div><div class="slots" id="sFry"></div></div>
-      <div class="st mach tap" id="mIce"><div class="lbl">🍦 冰淇淋</div><div class="slots" id="sIce"></div></div>
-    </div>
-  </div>
+  <div id="kitchen"></div>
   <div id="combo"></div>
 
   <div class="ov" id="menu">
-    <div class="logo">瘋狂<br>小餐館<small>COOKING RUSH</small></div>
-    <div class="card"><h3>👨‍🍳 怎麼玩</h3>
-      ① 點<b>生肉</b>放上烤盤，烤成褐色就點它（別烤焦！）<br>
-      ② 點<b>麵包</b>放到盤子，烤好的肉會自動疊上去，再加<b>起司、生菜</b><br>
-      ③ 點做好的<b>餐點</b>，就會送給點這道菜的客人<br>
-      ④ 客人等太久會生氣走掉，越快上菜小費越多！<br>
-      ⑤ 做錯了就按 🗑️ 再點那份餐丟掉
-    </div>
+    <div class="heroimgs"><img src="assets/fe/burger.png"><img src="assets/fe/sushi.png"><img src="assets/fe/pizza.png"><img src="assets/fe/pancakes.png"><img src="assets/fe/bubbletea.png"></div>
+    <div class="logo">瘋狂小餐館<small>COOKING RUSH</small></div>
     <div class="chip" id="mCoin" style="font-size:18px"></div>
-    <button class="big" id="mPlay">開店！</button>
-    <div class="tabs"><button class="alt" id="mLevels">📋 選關卡</button><button class="alt" id="mUps">🔧 升級廚房</button></div>
+    <div class="rests" id="rests"></div>
+    <div class="tabs"><button class="alt" id="mUps">🔧 升級廚房</button><button class="alt" id="mHow">❓ 怎麼玩</button></div>
+    <div class="credit">美術：Microsoft Fluent Emoji（MIT 授權）</div>
   </div>
-  <div class="ov hide" id="levels"><div style="font-size:28px;font-weight:900">📋 關卡</div><div class="lvgrid" id="lvGrid"></div><button class="alt" id="lvBack">返回</button></div>
-  <div class="ov hide" id="upsOv"><div style="font-size:28px;font-weight:900">🔧 升級廚房</div><div class="chip" id="uCoin" style="font-size:18px"></div><div class="ups" id="upList"></div><button class="alt" id="upBack">返回</button></div>
-  <div class="ov hide" id="intro"><div class="logo" style="font-size:38px" id="iT"></div><div class="card" id="iGoal"></div><button class="big" id="iGo">開始營業</button><button class="alt" id="iBack">返回</button></div>
-  <div class="ov hide" id="pauseOv"><div style="font-size:32px;font-weight:900">休息一下</div><button class="big" id="pResume">繼續</button><button class="alt" id="pQuit">離開關卡</button></div>
-  <div class="ov hide" id="end"><div style="font-size:34px;font-weight:900" id="eT"></div><div class="stars" id="eStars"></div><div class="bignum" id="eCoin"></div><div class="card" id="eInfo"></div><button class="big" id="eNext">下一關</button><div class="tabs"><button class="alt" id="eRetry">再玩一次</button><button class="alt" id="eUps">🔧 升級</button><button class="alt" id="eMenu">主選單</button></div></div>
+  <div class="ov hide" id="how"><div class="logo" style="font-size:32px">怎麼玩</div><div class="card" id="howCard"></div><button class="big" id="howBack">知道了</button></div>
+  <div class="ov hide" id="levels"><div class="logo" style="font-size:30px" id="lvTitle"></div><div class="lvgrid" id="lvGrid"></div><button class="alt" id="lvBack">返回</button></div>
+  <div class="ov hide" id="upsOv"><div class="logo" style="font-size:30px">🔧 升級廚房</div><div class="chip" id="uCoin" style="font-size:18px"></div><div class="ups" id="upList"></div><button class="alt" id="upBack">返回</button></div>
+  <div class="ov mid hide" id="intro"><div class="logo" style="font-size:34px" id="iT"></div><div class="card" id="iGoal"></div><button class="big" id="iGo">開始營業</button><button class="alt" id="iBack">返回</button></div>
+  <div class="ov mid hide" id="pauseOv"><div class="logo" style="font-size:32px">休息一下</div><button class="big" id="pResume">繼續</button><button class="alt" id="pQuit">離開關卡</button></div>
+  <div class="ov mid hide" id="end"><div class="logo" style="font-size:32px" id="eT"></div><div class="stars" id="eStars"></div><div class="bignum" id="eCoin"></div><div class="card" id="eInfo"></div><button class="big" id="eNext">下一關</button><div class="tabs"><button class="alt" id="eRetry">再玩一次</button><button class="alt" id="eUps">🔧 升級</button><button class="alt" id="eMenu">主選單</button></div></div>
 </div>
 <script>
 const $ = id => document.getElementById(id);
-const rand = (a, b) => a + Math.random() * (b - a), ri = (a, b) => Math.floor(rand(a, b + 1)), pick = a => a[Math.floor(Math.random() * a.length)], clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const rand = (a, b) => a + Math.random() * (b - a), pick = a => a[Math.floor(Math.random() * a.length)], clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const IMG = k => `assets/fe/${k}.png`, im = (k, c = '') => `<img src="${IMG(k)}" class="${c}" alt="">`;
+const NPEOPLE = 57;
 
-// ===================== 圖 =====================
-function burgerSVG(L, top) {
-  // L: 盤上的料 ['bun','patty','cheese','lettuce']
-  let s = '<svg viewBox="0 0 60 52">';
-  if (L.includes('bun')) s += '<path d="M8 40 Q8 48 16 48 L44 48 Q52 48 52 40 Z" fill="#e0a050"/><rect x="8" y="38" width="44" height="4" rx="2" fill="#f2c27a"/>';
-  if (L.includes('patty')) s += '<rect x="6" y="29" width="48" height="10" rx="5" fill="#6b3a1e"/><path d="M10 33 h6 M22 34 h7 M35 33 h8" stroke="#4a2410" stroke-width="2"/>';
-  if (L.includes('cheese')) s += '<path d="M6 28 L54 28 L50 33 L42 31 L36 36 L28 31 L18 35 L12 31 Z" fill="#ffcf2e"/>';
-  if (L.includes('lettuce')) s += '<path d="M5 27 Q10 22 15 27 Q20 22 25 27 Q30 22 35 27 Q40 22 45 27 Q50 22 55 27 L55 29 L5 29 Z" fill="#5cc94a"/>';
-  if (top) s += '<path d="M7 26 Q7 6 30 6 Q53 6 53 26 Z" fill="#e8a24a"/><path d="M12 22 Q14 12 26 10" stroke="#f6c47c" stroke-width="3" fill="none" stroke-linecap="round"/><g fill="#fff6dc"><ellipse cx="22" cy="14" rx="2" ry="1.2"/><ellipse cx="32" cy="11" rx="2" ry="1.2"/><ellipse cx="40" cy="16" rx="2" ry="1.2"/><ellipse cx="28" cy="18" rx="2" ry="1.2"/></g>';
-  return s + '</svg>';
-}
-function pattySVG(state, t) {
-  // state raw→cook(0..1)→done→burnt
-  const col = state === 'burnt' ? '#22140c' : state === 'done' ? '#7a4220' : lerpCol('#e88a8a', '#8a4a24', t);
-  return `<svg viewBox="0 0 60 40"><ellipse cx="30" cy="22" rx="26" ry="14" fill="${col}"/><path d="M14 18 h8 M28 24 h9 M38 16 h7" stroke="rgba(0,0,0,.25)" stroke-width="2.5" stroke-linecap="round"/>${state === 'done' ? '<path d="M12 14 L48 14 M12 22 L48 22 M12 30 L48 30" stroke="#3a1a08" stroke-width="2" opacity=".5"/>' : ''}</svg>`;
-}
-function lerpCol(a, b, t) { const p = h => [1, 3, 5].map(i => parseInt(h.substr(i, 2), 16)); const A = p(a), B = p(b); return `rgb(${A.map((v, i) => Math.round(v + (B[i] - v) * t)).join(',')})`; }
-function sodaSVG(fill) { const h = 30 * fill; return `<svg viewBox="0 0 40 50"><path d="M30 2 L24 14" stroke="#fff" stroke-width="3"/><path d="M6 12 L34 12 L30 48 L10 48 Z" fill="#fff" stroke="#ccc"/><clipPath id="cc"><path d="M6 12 L34 12 L30 48 L10 48 Z"/></clipPath><rect x="0" y="${48 - h}" width="40" height="${h}" fill="#e8402a" clip-path="url(#cc)"/><rect x="4" y="9" width="32" height="5" rx="2" fill="#e8402a"/><path d="M14 22 v20" stroke="rgba(255,255,255,.4)" stroke-width="3"/></svg>`; }
-function friesSVG() { return '<svg viewBox="0 0 40 50"><g fill="#ffd34d" stroke="#e8a020" stroke-width="1"><rect x="10" y="4" width="5" height="26" rx="1"/><rect x="16" y="2" width="5" height="28" rx="1"/><rect x="22" y="5" width="5" height="25" rx="1"/><rect x="27" y="7" width="5" height="23" rx="1"/></g><path d="M6 20 L34 20 L30 48 L10 48 Z" fill="#e8402a"/><path d="M14 30 Q20 36 26 30" stroke="#ffd34d" stroke-width="3" fill="none"/></svg>'; }
-function iceSVG(fill = 1) { return `<svg viewBox="0 0 40 50"><path d="M10 22 L30 22 L20 48 Z" fill="#e8b060"/><path d="M12 26 L27 26 M14 32 L25 32 M16 38 L23 38" stroke="#b8803a" stroke-width="1.5"/>${fill > 0 ? `<g transform="translate(20 22) scale(${fill}) translate(-20 -22)"><circle cx="20" cy="16" r="11" fill="#ff9ec4"/><circle cx="14" cy="20" r="6" fill="#ff9ec4"/><circle cx="26" cy="20" r="6" fill="#ff9ec4"/><circle cx="20" cy="5" r="3" fill="#e8402a"/><ellipse cx="16" cy="12" rx="3" ry="2" fill="#fff" opacity=".6"/></g>` : ''}</svg>`; }
-const BIN_ART = {
-  patty: `<svg viewBox="0 0 60 44"><rect x="2" y="16" width="56" height="26" rx="6" fill="#9ad0ff" opacity=".6"/><ellipse cx="22" cy="22" rx="16" ry="9" fill="#e88a8a"/><ellipse cx="38" cy="26" rx="16" ry="9" fill="#f09a9a"/></svg>`,
-  bun: `<svg viewBox="0 0 60 44"><rect x="2" y="16" width="56" height="26" rx="6" fill="#c8884a"/><path d="M8 30 Q8 14 24 14 Q40 14 40 30 Z" fill="#e8a24a"/><path d="M22 34 Q22 18 38 18 Q54 18 54 34 Z" fill="#f0b25a"/></svg>`,
-  cheese: `<svg viewBox="0 0 60 30"><path d="M6 6 L54 6 L48 26 L12 26 Z" fill="#ffcf2e"/><circle cx="20" cy="14" r="3" fill="#e8b020"/><circle cx="38" cy="18" r="2.5" fill="#e8b020"/></svg>`,
-  lettuce: `<svg viewBox="0 0 60 30"><path d="M4 22 Q10 4 20 16 Q28 2 36 16 Q46 4 56 22 Z" fill="#5cc94a"/><path d="M30 22 L30 10" stroke="#3a9a2a" stroke-width="2"/></svg>`,
-};
+// ===================== 餐廳資料 =====================
+// cooker：點空格放生料，烤好點一下 → direct 直接上菜／baseOut 放到空盤當底／否則疊到盤子上
+const RESTS = [
+  { id: 'burger', name: '漢堡小館', sub: '漢堡、薯條、汽水', pics: ['burger', 'fries', 'soda'], col: ['#ffb347', '#c0392b'], wall: ['#f6d7a7', '#f1cb94'], ctr: ['#d98a4a', '#a85a26', '#6b3412'], deco: ['soda', 'fries'],
+    cookers: [{ id: 'grill', n: '烤盤', style: 'grill', raw: 'meat', out: 'patty', img: 'meat', t: 4 }],
+    bases: [{ id: 'bun', n: '麵包', img: 'bun' }],
+    tops: [{ id: 'cheese', n: '起司', img: 'cheese' }, { id: 'lettuce', n: '生菜', img: 'lettuce' }, { id: 'tomato', n: '番茄', img: 'tomato' }],
+    disp: [{ id: 'soda', n: '汽水機', t: 2.2 }, { id: 'icecream', n: '霜淇淋機', t: 1.6 }],
+    batch: [{ id: 'fries', n: '炸薯條', t: 3.5, cnt: 3 }],
+    dishes: { burger: { n: '漢堡', base: 'bun', parts: ['patty'], img: 'burger', p: 8 }, cburger: { n: '起司堡', base: 'bun', parts: ['patty', 'cheese'], img: 'burger', chips: ['cheese'], p: 10 }, vburger: { n: '鮮蔬堡', base: 'bun', parts: ['patty', 'lettuce', 'tomato'], img: 'burger', chips: ['lettuce', 'tomato'], p: 12 }, dburger: { n: '豪華堡', base: 'bun', parts: ['patty', 'cheese', 'lettuce', 'tomato'], img: 'burger', chips: ['cheese', 'lettuce', 'tomato'], p: 15 }, soda: { n: '汽水', img: 'soda', p: 4 }, fries: { n: '薯條', img: 'fries', p: 5 }, icecream: { n: '霜淇淋', img: 'icecream', p: 5 } },
+    unlock: [[1, ['burger', 'soda']], [3, ['cburger']], [5, ['fries']], [8, ['vburger']], [11, ['dburger', 'icecream']]] },
+  { id: 'japan', name: '和風食堂', sub: '拉麵、咖哩飯、壽司', pics: ['ramen', 'sushi', 'bento'], col: ['#e85a5a', '#5a1a2a'], wall: ['#f3ead8', '#e6d8bc'], ctr: ['#c8a070', '#8a6038', '#5a3a1a'], deco: ['tea', 'dango'],
+    cookers: [{ id: 'pot', n: '煮麵鍋', style: 'pot', raw: 'noodle', out: 'noodles', img: 'noodle', t: 3.8, rawF: 'brightness(1.25) saturate(.4)' }, { id: 'fryer', n: '天婦羅鍋', style: 'fryer', raw: 'shrimp', out: 'fshrimp', img: 'shrimp', outImg: 'fshrimp', t: 3.5 }],
+    bases: [{ id: 'bowl', n: '湯碗', img: 'bowl' }, { id: 'rice', n: '白飯', img: 'rice' }],
+    tops: [{ id: 'egg', n: '溏心蛋', img: 'egg' }, { id: 'fishcake', n: '魚板', img: 'fishcake' }, { id: 'curry', n: '咖哩', img: 'curry' }],
+    disp: [{ id: 'tea', n: '綠茶', t: 2 }, { id: 'sushi', n: '壽司台', t: 2.6 }],
+    batch: [{ id: 'dango', n: '烤糰子', t: 3.8, cnt: 3 }],
+    dishes: { ramen: { n: '拉麵', base: 'bowl', parts: ['noodles'], img: 'ramen', p: 9 }, dramen: { n: '豪華拉麵', base: 'bowl', parts: ['noodles', 'egg', 'fishcake'], img: 'ramen', chips: ['egg', 'fishcake'], p: 14 }, curryrice: { n: '咖哩飯', base: 'rice', parts: ['curry'], img: 'curryrice', p: 9 }, tendon: { n: '炸蝦飯', base: 'rice', parts: ['fshrimp'], img: 'rice', chips: ['fshrimp'], p: 11 }, bento: { n: '便當', base: 'rice', parts: ['fshrimp', 'egg'], img: 'bento', p: 14 }, tea: { n: '綠茶', img: 'tea', p: 4 }, sushi: { n: '壽司', img: 'sushi', p: 7 }, dango: { n: '糰子', img: 'dango', p: 5 } },
+    unlock: [[1, ['ramen', 'tea']], [3, ['curryrice']], [5, ['sushi']], [7, ['tendon', 'dango']], [10, ['bento', 'dramen']]] },
+  { id: 'pizza', name: '義式披薩屋', sub: '披薩、義大利麵、沙拉', pics: ['pizza', 'noodle', 'salad'], col: ['#3fae5a', '#1a4a2a'], wall: ['#fff3e0', '#f7e2c0'], ctr: ['#8a5a3a', '#5a3a22', '#3a2010'], deco: ['olive', 'tomato'],
+    cookers: [{ id: 'oven', n: '石窯', style: 'oven', raw: 'flatbread', out: 'crust', img: 'flatbread', t: 4.5, baseOut: true, rawF: 'brightness(1.3) saturate(.3)' }, { id: 'pot2', n: '煮麵鍋', style: 'pot', raw: 'noodle', out: 'pasta', img: 'noodle', t: 4, direct: true, rawF: 'brightness(1.25) saturate(.4)' }],
+    bases: [],
+    tops: [{ id: 'tomato', n: '番茄醬', img: 'tomato' }, { id: 'cheese', n: '起司', img: 'cheese' }, { id: 'mushroom', n: '蘑菇', img: 'mushroom' }, { id: 'bacon', n: '培根', img: 'bacon' }, { id: 'olive', n: '橄欖', img: 'olive' }, { id: 'pepper', n: '辣椒', img: 'pepper' }],
+    disp: [{ id: 'juice', n: '果汁', t: 2 }, { id: 'tropical', n: '水果調飲', t: 2.6 }],
+    batch: [{ id: 'salad', n: '沙拉', t: 4, cnt: 2 }],
+    dishes: { pmarg: { n: '瑪格麗特', base: 'crust', parts: ['tomato', 'cheese'], img: 'pizza', p: 10 }, pmush: { n: '蘑菇披薩', base: 'crust', parts: ['tomato', 'cheese', 'mushroom'], img: 'pizza', chips: ['mushroom'], p: 12 }, pbacon: { n: '培根披薩', base: 'crust', parts: ['tomato', 'cheese', 'bacon'], img: 'pizza', chips: ['bacon'], p: 12 }, pspicy: { n: '辣味披薩', base: 'crust', parts: ['tomato', 'cheese', 'bacon', 'pepper'], img: 'pizza', chips: ['bacon', 'pepper'], p: 15 }, psup: { n: '總匯披薩', base: 'crust', parts: ['tomato', 'cheese', 'mushroom', 'bacon', 'olive'], img: 'pizza', chips: ['mushroom', 'bacon', 'olive'], p: 17 }, pasta: { n: '義大利麵', img: 'noodle', p: 9 }, salad: { n: '沙拉', img: 'salad', p: 6 }, juice: { n: '果汁', img: 'juice', p: 4 }, tropical: { n: '水果調飲', img: 'tropical', p: 6 } },
+    unlock: [[1, ['pmarg', 'juice']], [3, ['pasta']], [5, ['pmush', 'salad']], [8, ['pbacon', 'tropical']], [10, ['pspicy']], [12, ['psup']]] },
+  { id: 'cafe', name: '甜點咖啡廳', sub: '鬆餅、可頌、咖啡', pics: ['pancakes', 'coffee', 'cake'], col: ['#ff8fb8', '#7a3a5a'], wall: ['#ffe6ef', '#ffd6e4'], ctr: ['#f0c8d8', '#c88aa8', '#8a4a6a'], deco: ['cupcake', 'donut'],
+    cookers: [{ id: 'griddle', n: '鬆餅機', style: 'griddle', raw: 'pancakes', out: 'pcake', img: 'pancakes', t: 4, baseOut: true, rawF: 'brightness(1.35) saturate(.25)' }, { id: 'oven2', n: '烤箱', style: 'oven', raw: 'croissant', out: 'croissant', img: 'croissant', t: 5, direct: true, rawF: 'brightness(1.4) saturate(.25)' }],
+    bases: [],
+    tops: [{ id: 'butter', n: '奶油', img: 'butter' }, { id: 'honey', n: '蜂蜜', img: 'honey' }, { id: 'strawberry', n: '草莓', img: 'strawberry' }, { id: 'blueberry', n: '藍莓', img: 'blueberry' }],
+    disp: [{ id: 'coffee', n: '咖啡機', t: 2.4 }, { id: 'milk', n: '鮮奶', t: 1.8 }, { id: 'cake', n: '蛋糕櫃', t: 1.4 }],
+    batch: [{ id: 'donut', n: '甜甜圈', t: 4, cnt: 3 }],
+    dishes: { pbutter: { n: '奶油鬆餅', base: 'pcake', parts: ['butter'], img: 'pancakes', chips: ['butter'], p: 9 }, phoney: { n: '蜂蜜鬆餅', base: 'pcake', parts: ['butter', 'honey'], img: 'pancakes', chips: ['honey'], p: 11 }, pstraw: { n: '草莓鬆餅', base: 'pcake', parts: ['strawberry', 'honey'], img: 'pancakes', chips: ['strawberry'], p: 12 }, pberry: { n: '莓果鬆餅', base: 'pcake', parts: ['strawberry', 'blueberry', 'butter'], img: 'pancakes', chips: ['strawberry', 'blueberry'], p: 15 }, croissant: { n: '可頌', img: 'croissant', p: 7 }, coffee: { n: '咖啡', img: 'coffee', p: 5 }, milk: { n: '鮮奶', img: 'milk', p: 4 }, cake: { n: '草莓蛋糕', img: 'cake', p: 7 }, donut: { n: '甜甜圈', img: 'donut', p: 5 } },
+    unlock: [[1, ['pbutter', 'coffee']], [3, ['croissant']], [5, ['phoney', 'milk']], [7, ['donut']], [9, ['pstraw', 'cake']], [12, ['pberry']]] },
+  { id: 'night', name: '台灣夜市', sub: '炸雞、刈包、珍奶', pics: ['chicken', 'bubbletea', 'gua'], col: ['#ffcf3a', '#7a1a1a'], wall: ['#3a2a4a', '#2e2040'], ctr: ['#c83a2a', '#8a1a12', '#4a0a08'], deco: ['dumpling', 'corn'], night: true,
+    cookers: [{ id: 'fryer2', n: '油鍋', style: 'fryer', raw: 'chicken', out: 'fchicken', img: 'chicken', t: 4, direct: true, rawF: 'brightness(1.35) saturate(.3)' }, { id: 'grill2', n: '滷肉鍋', style: 'pot', raw: 'meat', out: 'pork', img: 'meat', t: 3.8 }],
+    bases: [{ id: 'bun2', n: '刈包皮', img: 'flatbread' }],
+    tops: [{ id: 'peanuts', n: '花生粉', img: 'peanuts' }, { id: 'lettuce', n: '酸菜', img: 'lettuce' }, { id: 'cucumber', n: '小黃瓜', img: 'cucumber' }],
+    disp: [{ id: 'bubbletea', n: '珍珠奶茶', t: 2.4 }, { id: 'shavedice', n: '剉冰', t: 2 }],
+    batch: [{ id: 'dumpling', n: '小籠包', t: 4.2, cnt: 3 }],
+    dishes: { fchicken: { n: '炸雞腿', img: 'chicken', p: 9 }, gua: { n: '刈包', base: 'bun2', parts: ['pork', 'peanuts'], img: 'gua', p: 10 }, gua2: { n: '豪華刈包', base: 'bun2', parts: ['pork', 'peanuts', 'lettuce', 'cucumber'], img: 'gua', chips: ['lettuce', 'cucumber'], p: 14 }, gua3: { n: '酸菜刈包', base: 'bun2', parts: ['pork', 'lettuce'], img: 'gua', chips: ['lettuce'], p: 11 }, bubbletea: { n: '珍奶', img: 'bubbletea', p: 5 }, shavedice: { n: '剉冰', img: 'shavedice', p: 5 }, dumpling: { n: '小籠包', img: 'dumpling', p: 6 } },
+    unlock: [[1, ['fchicken', 'bubbletea']], [3, ['gua']], [5, ['dumpling']], [7, ['gua3']], [9, ['shavedice']], [12, ['gua2']]] },
+];
+const LPR = 15;
 
 // ===================== 存檔 =====================
-let SV = { coins: 0, best: {}, unlocked: 1, up: { grill: 0, gslot: 0, plate: 0, soda: 0, fry: 0, decor: 0, tip: 0 } };
-try { const o = JSON.parse(localStorage.getItem('cookRush')); if (o) { Object.assign(SV, o); SV.up = Object.assign({ grill: 0, gslot: 0, plate: 0, soda: 0, fry: 0, decor: 0, tip: 0 }, o.up); } } catch (e) {}
-const persist = () => { try { localStorage.setItem('cookRush', JSON.stringify(SV)); } catch (e) {} };
+let SV = { coins: 0, best: {}, prog: [1, 0, 0, 0, 0], up: { speed: 0, slot: 0, plate: 0, disp: 0, batch: 0, decor: 0, tip: 0 }, seenHow: false };
+try { const o = JSON.parse(localStorage.getItem('cookRush2')); if (o) { Object.assign(SV, o); SV.up = Object.assign({ speed: 0, slot: 0, plate: 0, disp: 0, batch: 0, decor: 0, tip: 0 }, o.up); } else { const old = JSON.parse(localStorage.getItem('cookRush')); if (old) { SV.coins = old.coins || 0; const u = old.up || {}; SV.up.speed = u.grill || 0; SV.up.slot = Math.min(1, u.gslot || 0); SV.up.plate = u.plate || 0; SV.up.disp = u.soda || 0; SV.up.batch = u.fry || 0; SV.up.decor = u.decor || 0; SV.up.tip = u.tip || 0; } } } catch (e) {}
+const persist = () => { try { localStorage.setItem('cookRush2', JSON.stringify(SV)); } catch (e) {} };
 const UPS = [
-  { k: 'grill', ic: '🔥', n: '高級烤盤', max: 5, base: 60, d: l => `烤肉時間 ${(4 - l * 0.4).toFixed(1)} 秒` },
-  { k: 'gslot', ic: '➕', n: '加大烤盤', max: 2, base: 250, d: l => `${3 + l} 個烤位` },
-  { k: 'plate', ic: '🍽️', n: '多一個盤子', max: 1, base: 300, d: l => `${3 + l} 個盤子` },
-  { k: 'soda', ic: '🥤', n: '快速汽水機', max: 4, base: 50, d: l => `裝杯 ${(2.2 - l * 0.35).toFixed(2)} 秒・${2 + Math.min(l, 2) > 3 ? 3 : 2 + (l >= 2 ? 1 : 0)} 杯位` },
-  { k: 'fry', ic: '🍟', n: '大炸鍋', max: 4, base: 70, d: l => `${(3.5 - l * 0.45).toFixed(1)} 秒炸 ${3 + l} 份` },
+  { k: 'speed', ic: '🔥', n: '火力全開', max: 5, base: 60, d: l => `烹煮時間 -${l * 9}%` },
+  { k: 'slot', ic: '➕', n: '加大爐台', max: 1, base: 300, d: l => `每個爐台 +${l} 格` },
+  { k: 'plate', ic: '🍽️', n: '多一個盤子', max: 1, base: 260, d: l => `${3 + l} 個盤子` },
+  { k: 'disp', ic: '🥤', n: '飲料機升級', max: 4, base: 50, d: l => `製作 -${l * 15}%${l >= 2 ? '・多一格' : ''}` },
+  { k: 'batch', ic: '🍟', n: '大份量', max: 3, base: 70, d: l => `一次多做 ${l} 份・更快` },
   { k: 'decor', ic: '🪴', n: '餐廳裝潢', max: 5, base: 80, d: l => `客人耐心 +${l * 10}%` },
   { k: 'tip', ic: '💝', n: '服務訓練', max: 5, base: 90, d: l => `小費 +${l * 15}%` },
 ];
 const upCost = (u, l) => Math.round(u.base * Math.pow(1.6, l));
+const spd = () => 1 - SV.up.speed * 0.09;
 
 // ===================== 關卡 =====================
-// 菜單：B 漢堡、C 起司堡、L 生菜堡、D 豪華堡、soda、fries、ice
-const MENU_UNLOCK = [[1, ['B', 'soda']], [3, ['C']], [6, ['fries']], [9, ['L', 'D']], [13, ['ice']]];
-const NEED = { B: ['bun', 'patty'], C: ['bun', 'patty', 'cheese'], L: ['bun', 'patty', 'lettuce'], D: ['bun', 'patty', 'cheese', 'lettuce'] };
-const PRICE = { B: 8, C: 10, L: 10, D: 14, soda: 4, fries: 5, ice: 5 };
-const NAME = { B: '漢堡', C: '起司堡', L: '生菜堡', D: '豪華堡', soda: '汽水', fries: '薯條', ice: '冰淇淋' };
-function menuAt(L) { const m = []; for (const [l, it] of MENU_UNLOCK) if (L >= l) m.push(...it); return m; }
-const MAXL = 40;
-function levelCfg(L) {
-  const menu = menuAt(L), n = 8 + Math.min(L, 22) + Math.floor(L / 6) * 2;
-  const pat = Math.max(20, 38 - L * 0.4) * (1 + SV.up.decor * 0.1);
-  const gap = Math.max(3, 7 - L * 0.1), maxItems = L < 4 ? 2 : L < 10 ? 3 : 4;
-  const rnd = mulberry(L * 911 + 7), orders = [];
-  for (let i = 0; i < n; i++) {
-    const k = 1 + Math.floor(rnd() * maxItems), o = [];
-    const burgers = menu.filter(x => NEED[x]), sides = menu.filter(x => !NEED[x]);
-    for (let j = 0; j < k; j++) o.push(rnd() < 0.55 || !sides.length ? burgers[Math.floor(rnd() * burgers.length)] : sides[Math.floor(rnd() * sides.length)]);
-    orders.push(o);
-  }
-  const total = orders.reduce((s, o) => s + o.reduce((a, x) => a + PRICE[x], 0), 0);
-  return { L, menu, n, pat, gap, orders, goal: [Math.round(total * 0.5), Math.round(total * 0.8), Math.round(total * 1.15)] };
-}
 function mulberry(a) { return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+function menuAt(R, l) { const m = []; for (const [x, it] of R.unlock) if (l >= x) m.push(...it); return m; }
+function levelCfg(r, l) {
+  const R = RESTS[r], menu = menuAt(R, l), d = r * 5 + l;
+  const n = 8 + l + r * 2, pat = Math.max(20, 38 - d * 0.35) * (1 + SV.up.decor * 0.1), gap = Math.max(3, 7 - d * 0.09), maxItems = l < 3 ? 2 : l < 8 ? 3 : 4;
+  const rnd = mulberry(r * 7777 + l * 911 + 7), orders = [];
+  const asm = menu.filter(k => R.dishes[k].base || cookerFor(R, k)), side = menu.filter(k => !asm.includes(k));
+  for (let i = 0; i < n; i++) { const k = 1 + Math.floor(rnd() * maxItems), o = []; for (let j = 0; j < k; j++) o.push(rnd() < 0.55 || !side.length ? asm[Math.floor(rnd() * asm.length)] : side[Math.floor(rnd() * side.length)]); orders.push(o); }
+  const total = orders.reduce((s, o) => s + o.reduce((a, x) => a + R.dishes[x].p, 0), 0);
+  return { r, l, R, menu, n, pat, gap, orders, goal: [Math.round(total * 0.5), Math.round(total * 0.8), Math.round(total * 1.15)] };
+}
+function cookerFor(R, dish) { return R.cookers.find(c => c.direct && c.out === dish); }
+function usedThing(cfg, thing) {
+  // 這關有沒有用到某個工作站
+  const R = cfg.R;
+  return cfg.menu.some(k => { const D = R.dishes[k]; return k === thing || D.base === thing || (D.parts || []).includes(thing); });
+}
 
 // ===================== 狀態 =====================
-const FACES = ['👩', '👨', '👵', '👴', '👧', '👦', '🧑‍🦰', '👩‍🦱', '🧔', '👱‍♀️', '👨‍🦳', '🧑‍🎤', '👩‍🎓', '👮', '🧑‍🍳', '🤠', '🥸', '🐱'];
 let G = null, running = false, paused = false, trashMode = false;
-function newLevel(L) {
-  const cfg = levelCfg(L), nSeat = 4;
-  G = { cfg, L, t: 0, coins: 0, next: 1.2, spawned: 0, served: 0, lost: 0, seats: Array(nSeat).fill(null), combo: 0, lastServe: -9, grill: Array(3 + SV.up.gslot).fill(null), plates: Array(3 + SV.up.plate).fill(null).map(() => []), soda: Array(SV.up.soda >= 2 ? 3 : 2).fill(null), fry: { cooking: -1, n: 0 }, ice: Array(2).fill(null), burnt: 0 };
-  buildKitchen(); renderSeats();
+function newLevel(r, l) {
+  const cfg = levelCfg(r, l), R = cfg.R, two = R.cookers.length > 1;
+  G = { cfg, R, r, l, t: 0, coins: 0, next: 1.2, spawned: 0, served: 0, lost: 0, burnt: 0, combo: 0, lastServe: -9, seats: Array(4).fill(null),
+    cook: R.cookers.map(c => ({ c, slots: Array((two ? 2 : 3) + SV.up.slot).fill(null) })),
+    plates: Array(3 + SV.up.plate).fill(null).map(() => null),
+    disp: R.disp.map(d => ({ d, slots: Array(SV.up.disp >= 2 ? 3 : 2).fill(null) })),
+    batch: R.batch.map(b => ({ b, cooking: -1, n: 0 })) };
+  applyTheme(R); buildKitchen(); renderSeats(); hud();
 }
-const cookT = () => 4 - SV.up.grill * 0.4, burnT = () => cookT() + 4.5, sodaT = () => 2.2 - SV.up.soda * 0.35, fryT = () => 3.5 - SV.up.fry * 0.45, fryN = () => 3 + SV.up.fry;
+const cookT = c => c.t * spd(), burnT = c => cookT(c) + 4.5;
+const dispT = d => d.t * (1 - SV.up.disp * 0.15), batchT = b => b.t * (1 - SV.up.batch * 0.12), batchN = b => b.cnt + SV.up.batch;
+function applyTheme(R) {
+  const a = $('app').style; a.setProperty('--wall1', R.wall[0]); a.setProperty('--wall2', R.wall[1]); a.setProperty('--ctr1', R.ctr[0]); a.setProperty('--ctr2', R.ctr[1]); a.setProperty('--ctr3', R.ctr[2]);
+  $('sign').textContent = R.name; $('decoL').src = IMG(R.deco[0]); $('decoR').src = IMG(R.deco[1]);
+}
 
-// ===================== 介面建構 =====================
+// ===================== 介面 =====================
+function dishHTML(R, k, cls = '') { const D = R.dishes[k]; return `<div class="dish ${cls}">${im(D.img, 'm')}${D.chips ? `<div class="chips">${D.chips.map(c => im(R.tops.find(t => t.id === c) ? R.tops.find(t => t.id === c).img : partImg(R, c))).join('')}</div>` : ''}</div>`; }
+const COOKED_F = 'sepia(.7) saturate(1.7) brightness(.8) hue-rotate(-12deg)';
+function partHTML(R, p) { const c = R.cookers.find(c => c.out === p); return `<img src="${IMG(partImg(R, p))}" style="${c && !c.outImg && !c.rawF ? 'filter:' + COOKED_F : ''}">`; }
+function partImg(R, p) { const c = R.cookers.find(c => c.out === p); if (c) return c.outImg || c.img; const t = R.tops.find(t => t.id === p); if (t) return t.img; const b = R.bases.find(b => b.id === p); if (b) return b.img; return p; }
 function buildKitchen() {
-  const m = G.cfg.menu;
-  $('bPatty').innerHTML = BIN_ART.patty + '生肉'; $('bBun').innerHTML = BIN_ART.bun + '麵包';
-  $('bCheese').innerHTML = BIN_ART.cheese + '起司'; $('bLettuce').innerHTML = BIN_ART.lettuce + '生菜';
-  $('bCheese').classList.toggle('lock', !m.includes('C')); $('bLettuce').classList.toggle('lock', !m.includes('L'));
-  $('grill').innerHTML = G.grill.map((_, i) => `<div class="gslot tap" data-g="${i}"></div>`).join('');
-  $('plates').innerHTML = G.plates.map((_, i) => `<div class="plate tap" data-p="${i}"></div>`).join('');
-  $('sSoda').innerHTML = G.soda.map((_, i) => `<div class="cup tap" data-s="${i}"></div>`).join('');
-  $('sFry').innerHTML = `<div class="cup tap" data-f="1" style="width:min(14vw,58px)"></div>`;
-  $('sIce').innerHTML = G.ice.map((_, i) => `<div class="cup tap" data-i="${i}"></div>`).join('');
-  for (const [id, k, txt] of [['mSoda', 'soda', '第 1 關'], ['mFry', 'fries', '第 6 關解鎖'], ['mIce', 'ice', '第 13 關解鎖']]) {
-    const el = $(id), lock = !m.includes(k); el.classList.toggle('lock', lock);
-    let lt = el.querySelector('.lockt'); if (lock && !lt) { lt = document.createElement('div'); lt.className = 'lockt'; el.appendChild(lt); } if (lt) { lt.textContent = lock ? '🔒 ' + txt : ''; lt.classList.toggle('hide', !lock); }
-  }
+  const R = G.R, cfg = G.cfg;
+  let h = `<div class="krow" style="flex:1.15">`;
+  G.cook.forEach((ck, ci) => { const used = usedThing(cfg, ck.c.out), un = R.unlock.find(([x, it]) => it.some(k => { const D = R.dishes[k]; return k === ck.c.out || D.base === ck.c.out || (D.parts || []).includes(ck.c.out); })); h += `<div class="panel ${ck.c.style} ${used ? '' : 'lockp'}" style="flex:1"><div class="lbl">${ck.c.n}${used ? '・點空格放料' : ''}</div><div class="slots">${ck.slots.map((_, i) => `<div class="slot tap" data-c="${ci}" data-i="${i}"></div>`).join('')}</div>${used ? '' : `<div class="lockt">🔒 第 ${un ? un[0] : '?'} 關</div>`}</div>`; });
+  h += `<div id="trash" class="tap">${im('trash')}</div></div>`;
+  // 第二排：底料、盤子、配料
+  const tops = R.tops, tc = tops.length > 3 ? 2 : 1;
+  h += `<div class="krow" style="flex:1.15">`;
+  if (R.bases.length) h += `<div class="srcs" style="grid-template-rows:repeat(${R.bases.length},1fr)">${R.bases.map(b => srcHTML('base', b, usedThing(cfg, b.id))).join('')}</div>`;
+  h += `<div id="plates">${G.plates.map((_, i) => `<div class="plate tap" data-p="${i}"></div>`).join('')}</div>`;
+  h += `<div class="srcs" style="grid-template-columns:repeat(${tc},1fr);grid-template-rows:repeat(${Math.ceil(tops.length / tc)},1fr)">${tops.map(t => srcHTML('top', t, usedThing(cfg, t.id), tc > 1)).join('')}</div></div>`;
+  // 第三排：飲料、批次
+  h += `<div class="krow" style="flex:1">`;
+  G.disp.forEach((dp, di) => { const used = usedThing(cfg, dp.d.id), D = R.dishes[dp.d.id], un = R.unlock.find(([, it]) => it.includes(dp.d.id)); h += `<div class="panel disp ${used ? '' : 'lockp'}"><div class="lbl">${dp.d.n}</div><div class="slots">${dp.slots.map((_, i) => `<div class="slot tap" data-d="${di}" data-i="${i}"></div>`).join('')}</div>${used ? '' : `<div class="lockt">🔒 第 ${un[0]} 關</div>`}</div>`; });
+  G.batch.forEach((bt, bi) => { const used = usedThing(cfg, bt.b.id), un = R.unlock.find(([, it]) => it.includes(bt.b.id)); h += `<div class="panel disp fryer ${used ? '' : 'lockp'}"><div class="lbl" style="color:#fff;text-shadow:0 1px 2px #000">${bt.b.n}</div><div class="slots"><div class="slot tap" data-b="${bi}" style="max-width:60px"></div></div>${used ? '' : `<div class="lockt">🔒 第 ${un[0]} 關</div>`}</div>`; });
+  h += `</div>`;
+  $('kitchen').innerHTML = h;
   bindTaps(); renderKitchen();
 }
-function renderSeats() {
-  $('seats').innerHTML = G.seats.map((c, i) => `<div class="seat" data-seat="${i}"></div>`).join('');
-  G.seats.forEach((c, i) => drawSeat(i));
-}
-function itemSVG(k) { return NEED[k] ? burgerSVG(NEED[k], true) : k === 'soda' ? sodaSVG(1) : k === 'fries' ? friesSVG() : iceSVG(1); }
+function srcHTML(kind, x, used, small) { return `<div class="src tap ${used ? '' : 'lockp'}" data-${kind}="${x.id}" style="${small ? 'width:min(12.5vw,52px);font-size:10px' : ''}">${im(x.img)}${x.n}</div>`; }
+function renderSeats() { $('seats').innerHTML = G.seats.map((_, i) => `<div class="seat" data-seat="${i}"></div>`).join(''); G.seats.forEach((_, i) => drawSeat(i)); }
 function drawSeat(i) {
   const el = document.querySelector(`[data-seat="${i}"]`), c = G.seats[i]; if (!el) return;
   if (!c) { el.innerHTML = ''; return; }
-  el.innerHTML = `<div class="bubble">${c.order.map((k, j) => `<div class="it ${c.done[j] ? 'done' : ''}">${itemSVG(k)}</div>`).join('')}</div><div class="cust ${c.fresh ? 'in' : ''}">${c.face}</div><div class="pat"><i></i></div>`;
-  c.fresh = false; updPat(i);
+  el.innerHTML = `<div class="bubble">${c.order.map((k, j) => dishHTML(G.R, k, c.done[j] ? 'done' : '')).join('')}</div><div class="cust ${c.fresh ? 'in' : ''}">${im('p' + c.face)}<img class="mood hide"></div><div class="pat"><i></i></div>`;
+  c.fresh = false; c.mood = null; updPat(i);
 }
 function updPat(i) {
-  const c = G.seats[i]; if (!c) return; const el = document.querySelector(`[data-seat="${i}"]`); if (!el) return;
+  const c = G.seats[i], el = document.querySelector(`[data-seat="${i}"]`); if (!c || !el) return;
   const r = c.p / c.pmax, bar = el.querySelector('.pat i'); if (!bar) return;
   bar.style.width = (r * 100) + '%'; bar.style.background = r > 0.5 ? '#4cd964' : r > 0.25 ? '#ffcc00' : '#ff3b30';
-  const cu = el.querySelector('.cust'); if (cu) { cu.classList.toggle('angry', r < 0.25); const f = r < 0.25 ? '😡' : r < 0.5 ? '😐' : c.face; if (cu.textContent !== f) cu.textContent = f; }
+  const m = r < 0.25 ? 'angry' : r < 0.5 ? 'neutral' : null;
+  if (m !== c.mood) { c.mood = m; const mi = el.querySelector('.mood'); if (mi) { mi.classList.toggle('hide', !m); if (m) mi.src = IMG(m); } el.querySelector('.cust').classList.toggle('angry', m === 'angry'); }
+}
+function plateKind(p) {
+  if (!p) return null; const set = [p.base, ...p.parts].sort().join();
+  for (const k of G.cfg.menu) { const D = G.R.dishes[k]; if (D.base && [D.base, ...D.parts].sort().join() === set) return k; }
+  return null;
 }
 function renderKitchen() {
-  G.grill.forEach((g, i) => {
-    const el = document.querySelector(`[data-g="${i}"]`); if (!el) return;
-    if (!g) { el.innerHTML = ''; el.classList.remove('hot'); return; }
-    const t = g.t, st = t < cookT() ? 'cook' : t < burnT() ? 'done' : 'burnt';
-    const key = st + (st === 'cook' ? Math.floor(t / cookT() * 8) : '');
-    if (el.dataset.k !== key) { el.dataset.k = key; el.innerHTML = pattySVG(st, t / cookT()) + (st === 'burnt' ? '<span class="smoke">💨</span>' : '') + `<svg class="ring" viewBox="0 0 100 100" preserveAspectRatio="none"><rect x="3" y="3" width="94" height="94" rx="12" fill="none" stroke="${st === 'cook' ? '#ffcc00' : st === 'done' ? '#4cd964' : '#ff3b30'}" stroke-width="6" pathLength="100" stroke-dasharray="${st === 'cook' ? Math.round(t / cookT() * 100) : st === 'done' ? Math.round(100 - (t - cookT()) / (burnT() - cookT()) * 100) : 100} 100"/></svg>`; }
-    el.classList.toggle('hot', st !== 'burnt');
-  });
+  G.cook.forEach((ck, ci) => ck.slots.forEach((s, i) => {
+    const el = document.querySelector(`[data-c="${ci}"][data-i="${i}"]`); if (!el) return;
+    if (!s) { if (el.dataset.k !== 'e') { el.dataset.k = 'e'; el.innerHTML = `<div class="add">${im(ck.c.img)}</div>`; } return; }
+    const c = ck.c, t = s.t, st = t < cookT(c) ? 'cook' : t < burnT(c) ? 'done' : 'burnt';
+    const prog = st === 'cook' ? t / cookT(c) : st === 'done' ? 1 - (t - cookT(c)) / (burnT(c) - cookT(c)) : 1;
+    const key = st + Math.floor(prog * 20);
+    if (el.dataset.k === key) return; el.dataset.k = key;
+    const img = st === 'cook' && !c.outImg ? c.img : st === 'cook' ? c.img : (c.outImg || c.img);
+    const f = st === 'burnt' ? 'brightness(.25) saturate(.3)' : st === 'cook' ? (c.rawF ? `${c.rawF}` : `saturate(${1 - prog * 0.3}) brightness(${1.15 - prog * 0.25})`) : (c.outImg || c.rawF ? 'none' : COOKED_F);
+    const cookF = st === 'cook' && c.rawF ? `filter:${c.rawF};opacity:${0.75 + prog * 0.25}` : `filter:${f}`;
+    el.innerHTML = `<img src="${IMG(img)}" style="${cookF}">${st === 'burnt' ? im('fire', 'smoke') : ''}<svg class="ring" viewBox="0 0 100 100"><rect x="4" y="4" width="92" height="92" rx="${ck.c.style === 'pot' || ck.c.style === 'griddle' ? 46 : 14}" fill="none" stroke="${st === 'cook' ? '#ffcc00' : st === 'done' ? '#4cd964' : '#ff3b30'}" stroke-width="7" pathLength="100" stroke-dasharray="${Math.round(prog * 100)} 100" stroke-linecap="round"/></svg>`;
+  }));
   G.plates.forEach((p, i) => {
     const el = document.querySelector(`[data-p="${i}"]`); if (!el) return;
-    const kind = plateKind(p), key = p.join(',');
-    if (el.dataset.k !== key) { el.dataset.k = key; el.innerHTML = p.length ? burgerSVG(p, !!kind) : ''; }
+    const kind = plateKind(p), key = p ? p.base + p.parts.join() : '';
+    if (el.dataset.k !== key) { el.dataset.k = key; el.innerHTML = !p ? '' : kind ? dishHTML(G.R, kind) : `<div class="base">${partHTML(G.R, p.base)}<div class="parts">${p.parts.map(x => partHTML(G.R, x)).join('')}</div></div>`; }
     el.classList.toggle('ready', !!kind);
   });
-  G.soda.forEach((s, i) => { const el = document.querySelector(`[data-s="${i}"]`); if (!el) return; if (s === null) { el.innerHTML = ''; return; } const f = Math.min(1, s / sodaT()); el.innerHTML = sodaSVG(f) + (f < 1 ? `<div class="bar"><i style="width:${f * 100}%"></i></div>` : ''); });
-  const fe = document.querySelector('[data-f]'); if (fe) { const f = G.fry; fe.innerHTML = f.cooking >= 0 ? `<div style="font-size:26px;align-self:center">♨️</div><div class="bar"><i style="width:${Math.min(1, f.cooking / fryT()) * 100}%"></i></div>` : f.n ? friesSVG() + `<b style="position:absolute;right:-4px;top:-6px;background:#e8402a;border-radius:10px;padding:0 6px;font-size:13px">${f.n}</b>` : ''; }
-  G.ice.forEach((s, i) => { const el = document.querySelector(`[data-i="${i}"]`); if (!el) return; if (s === null) { el.innerHTML = ''; return; } const f = Math.min(1, s / 1.3); el.innerHTML = iceSVG(f) + (f < 1 ? `<div class="bar"><i style="width:${f * 100}%"></i></div>` : ''); });
+  G.disp.forEach((dp, di) => dp.slots.forEach((s, i) => {
+    const el = document.querySelector(`[data-d="${di}"][data-i="${i}"]`); if (!el) return;
+    if (s === null) { if (el.dataset.k !== 'e') { el.dataset.k = 'e'; el.innerHTML = `<div class="add">${im(G.R.dishes[dp.d.id].img)}</div>`; } return; }
+    const f = Math.min(1, s / dispT(dp.d)), key = 'f' + Math.floor(f * 20); if (el.dataset.k === key) return; el.dataset.k = key;
+    el.innerHTML = `<img src="${IMG(G.R.dishes[dp.d.id].img)}" style="opacity:${0.35 + f * 0.65};transform:scale(${0.6 + f * 0.4})">${f < 1 ? `<div class="bar"><i style="width:${f * 100}%"></i></div>` : ''}`;
+  }));
+  G.batch.forEach((bt, bi) => {
+    const el = document.querySelector(`[data-b="${bi}"]`); if (!el) return;
+    const key = bt.cooking >= 0 ? 'c' + Math.floor(bt.cooking / batchT(bt.b) * 20) : 'n' + bt.n; if (el.dataset.k === key) return; el.dataset.k = key;
+    const img = G.R.dishes[bt.b.id].img;
+    el.innerHTML = bt.cooking >= 0 ? `<img src="${IMG(img)}" style="filter:brightness(1.3) saturate(.3);opacity:.7"><div class="bar"><i style="width:${Math.min(1, bt.cooking / batchT(bt.b)) * 100}%"></i></div>` : bt.n ? `${im(img)}<b class="cnt">${bt.n}</b>` : `<div class="add">${im(img)}</div>`;
+  });
 }
-function plateKind(p) { if (!p.includes('bun') || !p.includes('patty')) return null; const set = p.slice().sort().join(); for (const k in NEED) if (NEED[k].slice().sort().join() === set) return k; return null; }
 
 // ===================== 操作 =====================
-function shake(el) { el.classList.remove('shake'); void el.offsetWidth; el.classList.add('shake'); }
-function bindTaps() {
-  document.querySelectorAll('[data-g]').forEach(el => el.onpointerdown = e => { e.stopPropagation(); tapGrill(+el.dataset.g, el); });
-  document.querySelectorAll('[data-p]').forEach(el => el.onpointerdown = e => { e.stopPropagation(); tapPlate(+el.dataset.p, el); });
-  document.querySelectorAll('[data-s]').forEach(el => el.onpointerdown = e => { e.stopPropagation(); tapSodaCup(+el.dataset.s, el); });
-  document.querySelectorAll('[data-f]').forEach(el => el.onpointerdown = e => { e.stopPropagation(); tapFries(el); });
-  document.querySelectorAll('[data-i]').forEach(el => el.onpointerdown = e => { e.stopPropagation(); tapIceCup(+el.dataset.i, el); });
-}
 const ok = () => running && !paused;
-$('bPatty').onpointerdown = () => { if (!ok()) return; const i = G.grill.indexOf(null); if (i < 0) return shake($('grill')); G.grill[i] = { t: 0 }; renderKitchen(); };
-$('bBun').onpointerdown = () => { if (!ok()) return; const i = G.plates.findIndex(p => !p.length); if (i < 0) return shake($('plates')); G.plates[i] = ['bun']; renderKitchen(); };
-function addTop(k, el) { if (!ok()) return; const need = k === 'cheese' ? 'C' : 'L'; if (!G.cfg.menu.includes(need)) return shake(el); const i = G.plates.findIndex(p => p.includes('patty') && !p.includes(k)); if (i < 0) return shake(el); G.plates[i].push(k); renderKitchen(); }
-$('bCheese').onpointerdown = () => addTop('cheese', $('bCheese'));
-$('bLettuce').onpointerdown = () => addTop('lettuce', $('bLettuce'));
-$('trash').onpointerdown = () => { if (!ok()) return; trashMode = !trashMode; $('trash').classList.toggle('on', trashMode); };
-function tapGrill(i, el) {
-  if (!ok()) return; const g = G.grill[i]; if (!g) return;
-  if (g.t >= burnT() || trashMode) { G.grill[i] = null; G.burnt++; endTrash(); renderKitchen(); return; }
-  if (g.t < cookT()) return shake(el);
-  const p = G.plates.findIndex(p => p.length === 1 && p[0] === 'bun');
-  if (p < 0) return shake($('bBun'));
-  G.grill[i] = null; G.plates[p].push('patty'); renderKitchen();
+function shake(el) { if (!el) return; el.classList.remove('shake'); void el.offsetWidth; el.classList.add('shake'); }
+function endTrash() { trashMode = false; const t = $('trash'); if (t) t.classList.remove('on'); }
+function bindTaps() {
+  const on = (sel, fn) => document.querySelectorAll(sel).forEach(el => el.onpointerdown = e => { e.preventDefault(); if (ok()) fn(el); });
+  on('[data-c]', el => tapCook(+el.dataset.c, +el.dataset.i, el));
+  on('[data-p]', el => tapPlate(+el.dataset.p, el));
+  on('[data-d]', el => tapDisp(+el.dataset.d, +el.dataset.i, el));
+  on('[data-b]', el => tapBatch(+el.dataset.b, el));
+  on('[data-top]', el => tapTop(el.dataset.top, el));
+  on('[data-base]', el => tapBase(el.dataset.base, el));
+  $('trash').onpointerdown = e => { e.preventDefault(); if (!ok()) return; trashMode = !trashMode; $('trash').classList.toggle('on', trashMode); };
 }
-function endTrash() { trashMode = false; $('trash').classList.remove('on'); }
+function tapCook(ci, i, el) {
+  const ck = G.cook[ci], c = ck.c, s = ck.slots[i];
+  if (!usedThing(G.cfg, c.out)) return shake(el);
+  if (!s) { ck.slots[i] = { t: 0 }; renderKitchen(); return; }
+  if (s.t >= burnT(c) || trashMode) { ck.slots[i] = null; if (s.t >= burnT(c)) G.burnt++; endTrash(); renderKitchen(); return; }
+  if (s.t < cookT(c)) return shake(el);
+  if (c.direct) { if (serve(c.out, el)) { ck.slots[i] = null; renderKitchen(); } return; }
+  if (c.baseOut) { const p = G.plates.findIndex(x => !x); if (p < 0) return shake($('plates')); G.plates[p] = { base: c.out, parts: [] }; ck.slots[i] = null; renderKitchen(); return; }
+  const p = bestPlateFor(c.out); if (p < 0) return shake($('plates'));
+  G.plates[p].parts.push(c.out); ck.slots[i] = null; renderKitchen();
+}
+// 找最適合加這個配料的盤子：盤子的底料有某道（本關）菜需要它，而且目前的料都在那道菜裡
+function bestPlateFor(part) {
+  const needs = pendingNeeds(); let best = -1, score = -1;
+  G.plates.forEach((p, i) => {
+    if (!p || p.parts.includes(part)) return;
+    const fits = G.cfg.menu.filter(k => { const D = G.R.dishes[k]; return D.base === p.base && D.parts.includes(part) && p.parts.every(x => D.parts.includes(x)); });
+    if (!fits.length) return;
+    const sc = p.parts.length * 2 + (fits.some(k => needs.includes(k)) ? 5 : 0);
+    if (sc > score) { score = sc; best = i; }
+  });
+  return best;
+}
+function pendingNeeds() { const n = []; G.seats.forEach(c => { if (c && !c.leaving) c.order.forEach((k, j) => { if (!c.done[j]) n.push(k); }); }); return n; }
+function tapBase(id, el) { if (!usedThing(G.cfg, id)) return shake(el); const p = G.plates.findIndex(x => !x); if (p < 0) return shake($('plates')); G.plates[p] = { base: id, parts: [] }; renderKitchen(); }
+function tapTop(id, el) { if (!usedThing(G.cfg, id)) return shake(el); const p = bestPlateFor(id); if (p < 0) return shake(el); G.plates[p].parts.push(id); renderKitchen(); }
 function tapPlate(i, el) {
-  if (!ok()) return; const p = G.plates[i];
-  if (trashMode) { G.plates[i] = []; endTrash(); renderKitchen(); return; }
+  const p = G.plates[i]; if (!p) return;
+  if (trashMode) { G.plates[i] = null; endTrash(); renderKitchen(); return; }
   const k = plateKind(p); if (!k) return shake(el);
-  if (serve(k, el)) { G.plates[i] = []; renderKitchen(); }
+  if (serve(k, el)) { G.plates[i] = null; renderKitchen(); }
 }
-$('mSoda').onpointerdown = e => { if (!ok() || !G.cfg.menu.includes('soda')) return; if (e.target.closest('[data-s]')) return; const i = G.soda.indexOf(null); if (i < 0) return shake($('mSoda')); G.soda[i] = 0; renderKitchen(); };
-function tapSodaCup(i, el) { if (!ok()) return; const s = G.soda[i]; if (s === null) { G.soda[i] = 0; renderKitchen(); return; } if (trashMode) { G.soda[i] = null; endTrash(); renderKitchen(); return; } if (s < sodaT()) return shake(el); if (serve('soda', el)) { G.soda[i] = null; renderKitchen(); } }
-$('mFry').onpointerdown = e => { if (!ok() || !G.cfg.menu.includes('fries')) return; if (e.target.closest('[data-f]')) return; startFry(); };
-function startFry() { if (G.fry.cooking >= 0 || G.fry.n > 0) return shake($('mFry')); G.fry.cooking = 0; renderKitchen(); }
-function tapFries(el) { if (!ok() || !G.cfg.menu.includes('fries')) return; if (G.fry.n <= 0) return startFry(); if (serve('fries', el)) { G.fry.n--; renderKitchen(); } }
-$('mIce').onpointerdown = e => { if (!ok() || !G.cfg.menu.includes('ice')) return; if (e.target.closest('[data-i]')) return; const i = G.ice.indexOf(null); if (i < 0) return shake($('mIce')); G.ice[i] = 0; renderKitchen(); };
-function tapIceCup(i, el) { if (!ok() || !G.cfg.menu.includes('ice')) return; const s = G.ice[i]; if (s === null) { G.ice[i] = 0; renderKitchen(); return; } if (s < 1.3) return shake(el); if (serve('ice', el)) { G.ice[i] = null; renderKitchen(); } }
-
-// 上菜：送給等最久（耐心最少）且需要這道菜的客人
+function tapDisp(di, i, el) {
+  const dp = G.disp[di], s = dp.slots[i]; if (!usedThing(G.cfg, dp.d.id)) return shake(el);
+  if (s === null) { dp.slots[i] = 0; renderKitchen(); return; }
+  if (trashMode) { dp.slots[i] = null; endTrash(); renderKitchen(); return; }
+  if (s < dispT(dp.d)) return shake(el);
+  if (serve(dp.d.id, el)) { dp.slots[i] = null; renderKitchen(); }
+}
+function tapBatch(bi, el) {
+  const bt = G.batch[bi]; if (!usedThing(G.cfg, bt.b.id)) return shake(el);
+  if (bt.cooking >= 0) return shake(el);
+  if (bt.n <= 0) { bt.cooking = 0; renderKitchen(); return; }
+  if (serve(bt.b.id, el)) { bt.n--; renderKitchen(); }
+}
 function serve(k, fromEl) {
   let best = -1, bp = 1e9;
   G.seats.forEach((c, i) => { if (!c || c.leaving) return; const j = c.order.findIndex((x, jj) => x === k && !c.done[jj]); if (j >= 0 && c.p < bp) { bp = c.p; best = i; } });
   if (best < 0) { shake(fromEl); return false; }
   const c = G.seats[best], j = c.order.findIndex((x, jj) => x === k && !c.done[jj]);
   c.done[j] = true; c.p = Math.min(c.pmax, c.p + c.pmax * 0.08);
-  flyTo(fromEl, document.querySelector(`[data-seat="${best}"] .bubble`), itemSVG(k));
+  flyTo(fromEl, document.querySelector(`[data-seat="${best}"] .bubble`), G.R.dishes[k].img);
   setTimeout(() => { if (G && G.seats[best] === c) { drawSeat(best); if (c.done.every(Boolean)) pay(best); } }, 330);
   return true;
 }
-function flyTo(a, b, html) {
+function flyTo(a, b, img) {
   if (!a || !b) return; const ra = a.getBoundingClientRect(), rb = b.getBoundingClientRect();
-  const f = document.createElement('div'); f.className = 'fly'; f.innerHTML = html; f.style.width = '44px'; f.style.height = '44px'; f.style.left = (ra.left + ra.width / 2 - 22) + 'px'; f.style.top = (ra.top + ra.height / 2 - 22) + 'px';
-  document.body.appendChild(f); requestAnimationFrame(() => { f.style.transform = `translate(${rb.left + rb.width / 2 - ra.left - ra.width / 2}px, ${rb.top + rb.height / 2 - ra.top - ra.height / 2}px) scale(.7)`; f.style.opacity = '.4'; });
+  const f = document.createElement('div'); f.className = 'fly'; f.innerHTML = im(img); f.style.left = (ra.left + ra.width / 2 - 23) + 'px'; f.style.top = (ra.top + ra.height / 2 - 23) + 'px';
+  document.body.appendChild(f); requestAnimationFrame(() => { f.style.transform = `translate(${rb.left + rb.width / 2 - ra.left - ra.width / 2}px, ${rb.top + rb.height / 2 - ra.top - ra.height / 2}px) scale(.75)`; f.style.opacity = '.5'; });
   setTimeout(() => f.remove(), 380);
 }
 function pay(i) {
   const c = G.seats[i]; c.leaving = true;
-  const base = c.order.reduce((s, k) => s + PRICE[k], 0), r = c.p / c.pmax;
+  const base = c.order.reduce((s, k) => s + G.R.dishes[k].p, 0), r = c.p / c.pmax;
   const tip = Math.round(base * r * 0.5 * (1 + SV.up.tip * 0.15));
   if (G.t - G.lastServe < 4) G.combo++; else G.combo = 1; G.lastServe = G.t;
   const cb = G.combo >= 2 ? G.combo * 2 : 0, tot = base + tip + cb;
   G.coins += tot; G.served++;
-  const el = document.querySelector(`[data-seat="${i}"]`);
-  el.querySelector('.cust').textContent = r > 0.5 ? '😍' : '🙂';
-  el.insertAdjacentHTML('beforeend', `<div class="heart">${r > 0.5 ? '💖' : '💛'}</div><div class="coin">+${tot}${tip ? `（小費 ${tip}）` : ''}</div>`);
+  const el = document.querySelector(`[data-seat="${i}"]`), cu = el.querySelector('.cust'), mood = el.querySelector('.mood');
+  mood.src = IMG(r > 0.5 ? 'love' : 'yum'); mood.classList.remove('hide'); cu.classList.remove('angry');
+  const bub = el.querySelector('.bubble'); if (bub) bub.remove();
+  el.insertAdjacentHTML('beforeend', `<div class="pop">${im('coin')}+${tot}${tip ? `<small style="font-size:12px">（小費 ${tip}）</small>` : ''}</div>`);
   if (cb) { const m = $('combo'); m.textContent = `🔥 連續上菜 ×${G.combo}　+${cb}`; m.style.opacity = 1; clearTimeout(pay.h); pay.h = setTimeout(() => m.style.opacity = 0, 900); }
-  setTimeout(() => { if (G && G.seats[i] === c) { G.seats[i] = null; drawSeat(i); } }, 900);
+  setTimeout(() => cu.classList.add('out'), 400);
+  setTimeout(() => { if (G && G.seats[i] === c) { G.seats[i] = null; drawSeat(i); } }, 1000);
   hud();
 }
 
 // ===================== 主迴圈 =====================
 let last = 0;
-function loop(t) {
-  if (!running) return;
-  const dt = Math.min(0.1, (t - last) / 1000); last = t;
-  if (!paused) step(dt);
-  requestAnimationFrame(loop);
-}
+function loop(t) { if (!running) return; const dt = Math.min(0.1, (t - last) / 1000); last = t; if (!paused) step(dt); requestAnimationFrame(loop); }
 function step(dt) {
-  G.t += dt;
-  // 客人
-  G.next -= dt;
+  G.t += dt; G.next -= dt;
   if (G.next <= 0 && G.spawned < G.cfg.n) {
     const free = G.seats.map((c, i) => c ? -1 : i).filter(i => i >= 0);
-    if (free.length) { const i = pick(free), o = G.cfg.orders[G.spawned++], pm = G.cfg.pat + o.length * 6; G.seats[i] = { order: o, done: o.map(() => false), p: pm, pmax: pm, face: pick(FACES), fresh: true }; drawSeat(i); G.next = G.cfg.gap * rand(0.75, 1.25); }
+    if (free.length) { const i = pick(free), o = G.cfg.orders[G.spawned++], pm = G.cfg.pat + o.length * 6; G.seats[i] = { order: o, done: o.map(() => false), p: pm, pmax: pm, face: Math.floor(Math.random() * NPEOPLE), fresh: true }; drawSeat(i); G.next = G.cfg.gap * rand(0.75, 1.25); hud(); }
     else G.next = 0.5;
   }
   G.seats.forEach((c, i) => {
-    if (!c || c.leaving) return;
-    c.p -= dt; updPat(i);
-    if (c.p <= 0) { c.leaving = true; G.lost++; G.combo = 0; const el = document.querySelector(`[data-seat="${i}"]`); el.querySelector('.cust').textContent = '🤬'; el.insertAdjacentHTML('beforeend', '<div class="heart">💔</div>'); setTimeout(() => { if (G && G.seats[i] === c) { G.seats[i] = null; drawSeat(i); } }, 800); hud(); }
+    if (!c || c.leaving) return; c.p -= dt; updPat(i);
+    if (c.p <= 0) { c.leaving = true; G.lost++; G.combo = 0; const el = document.querySelector(`[data-seat="${i}"]`), mood = el.querySelector('.mood'); mood.src = IMG('angry'); mood.classList.remove('hide'); el.insertAdjacentHTML('beforeend', `<div class="pop">${im('broken')}</div>`); setTimeout(() => el.querySelector('.cust') && el.querySelector('.cust').classList.add('out'), 300); setTimeout(() => { if (G && G.seats[i] === c) { G.seats[i] = null; drawSeat(i); } }, 900); hud(); }
   });
-  // 廚具
-  for (const g of G.grill) if (g) g.t += dt;
-  G.soda = G.soda.map(s => s === null ? null : Math.min(s + dt, 99));
-  G.ice = G.ice.map(s => s === null ? null : Math.min(s + dt, 99));
-  if (G.fry.cooking >= 0) { G.fry.cooking += dt; if (G.fry.cooking >= fryT()) { G.fry.cooking = -1; G.fry.n = fryN(); } }
+  for (const ck of G.cook) for (const s of ck.slots) if (s) s.t += dt;
+  for (const dp of G.disp) dp.slots = dp.slots.map(s => s === null ? null : Math.min(s + dt, 99));
+  for (const bt of G.batch) if (bt.cooking >= 0) { bt.cooking += dt; if (bt.cooking >= batchT(bt.b)) { bt.cooking = -1; bt.n = batchN(bt.b); } }
   renderKitchen();
   if (G.spawned >= G.cfg.n && G.seats.every(c => !c)) finish();
 }
 function hud() {
   const g = G.cfg.goal, r = Math.min(1, G.coins / g[2]);
   $('goal').querySelector('i').style.width = (r * 100) + '%';
-  $('gTxt').textContent = `🪙 ${G.coins} / ${g[0]}`;
-  const us = $('goal').querySelectorAll('u'); g.forEach((v, i) => { us[i].style.left = Math.min(97, v / g[2] * 100) + '%'; us[i].classList.toggle('on', G.coins >= v); });
-  $('hCust').textContent = `👥 ${G.cfg.n - G.spawned + G.seats.filter(Boolean).length}`;
-  $('hLv').textContent = `第 ${G.L} 關`;
+  $('gTxt').innerHTML = `${im('coin')} ${G.coins} / ${g[0]}`;
+  const us = $('goal').querySelectorAll('u'); g.forEach((v, i) => { us[i].style.left = Math.min(98, v / g[2] * 100) + '%'; us[i].classList.toggle('on', G.coins >= v); });
+  $('hCust').innerHTML = `👥 ${G.cfg.n - G.spawned + G.seats.filter(Boolean).length}`;
+  $('hLv').textContent = `${G.r + 1}-${G.l}`;
 }
 function finish() {
-  running = false; const g = G.cfg.goal, stars = G.coins >= g[2] ? 3 : G.coins >= g[1] ? 2 : G.coins >= g[0] ? 1 : 0;
-  const win = stars > 0;
-  SV.coins += G.coins; if (win) { SV.best[G.L] = Math.max(SV.best[G.L] || 0, stars); SV.unlocked = Math.max(SV.unlocked, Math.min(MAXL, G.L + 1)); } persist();
+  running = false; const g = G.cfg.goal, stars = G.coins >= g[2] ? 3 : G.coins >= g[1] ? 2 : G.coins >= g[0] ? 1 : 0, win = stars > 0, k = G.r + '-' + G.l;
+  SV.coins += G.coins;
+  if (win) { SV.best[k] = Math.max(SV.best[k] || 0, stars); SV.prog[G.r] = Math.max(SV.prog[G.r], Math.min(LPR, G.l + 1)); if (G.l >= LPR) SV.prog[G.r] = LPR + 1; if (G.l >= 10 && G.r + 1 < RESTS.length && !SV.prog[G.r + 1]) SV.prog[G.r + 1] = 1; }
+  persist();
   $('eT').textContent = win ? '🎉 打烊囉！' : '😵 今天生意不太好…';
   $('eStars').textContent = '⭐'.repeat(stars) + '☆'.repeat(3 - stars);
-  $('eCoin').textContent = '+🪙 ' + G.coins;
-  const nx = MENU_UNLOCK.find(([l]) => l === G.L + 1);
-  $('eInfo').innerHTML = `服務 <b>${G.served}</b> 位客人${G.lost ? `，<b style="color:#ff8a80">氣走 ${G.lost} 位</b>` : '，一位都沒氣走！'}${G.burnt ? `<br>烤焦 ${G.burnt} 塊肉` : ''}<br>目標：⭐ ${g[0]}　⭐⭐ ${g[1]}　⭐⭐⭐ ${g[2]}${win && nx ? `<br><b style="color:#ffe14d">下一關新菜色：${nx[1].map(k => NAME[k]).join('、')}！</b>` : ''}${win ? '' : '<br>升級一下廚房，或做快一點再來挑戰！'}`;
-  $('eNext').textContent = win ? (G.L < MAXL ? '下一關' : '全部通關！') : '再挑戰';
-  $('eNext').disabled = win && G.L >= MAXL;
+  $('eCoin').innerHTML = `${im('moneybag')}+${G.coins}`;
+  const nx = G.R.unlock.find(([l]) => l === G.l + 1), newRest = win && G.l === 10 && G.r + 1 < RESTS.length;
+  $('eInfo').innerHTML = `服務 <b>${G.served}</b> 位客人${G.lost ? `，<b style="color:#ff8a80">氣走 ${G.lost} 位</b>` : '，一位都沒氣走！'}${G.burnt ? `<br>燒焦了 ${G.burnt} 份` : ''}<br>目標：⭐ ${g[0]}　⭐⭐ ${g[1]}　⭐⭐⭐ ${g[2]}` +
+    (win && nx && G.l < LPR ? `<br><b style="color:#9cff7a">下一關新菜色：</b><div class="newdish">${nx[1].map(d => `<div>${dishHTML(G.R, d)}${G.R.dishes[d].n}</div>`).join('')}</div>` : '') +
+    (newRest ? `<br><b style="color:#ffe14d">🎊 解鎖新餐廳：${RESTS[G.r + 1].name}！</b>` : '') + (win ? '' : '<br>升級一下廚房，或做快一點再來挑戰！');
+  $('eNext').textContent = win ? (G.l < LPR ? '下一關' : '回主選單') : '再挑戰';
   setTimeout(() => show('end'), 500);
 }
 
 // ===================== 選單 =====================
-function show(id) { ['menu', 'levels', 'upsOv', 'intro', 'pauseOv', 'end'].forEach(x => $(x).classList.toggle('hide', x !== id)); $('hud').classList.toggle('hide', id !== null && id !== 'pauseOv'); }
-function goMenu() { running = false; show('menu'); $('mCoin').textContent = '🪙 ' + SV.coins + '　・　第 ' + SV.unlocked + ' 關'; }
-function intro(L) {
-  newLevel(L); show('intro');
-  const c = G.cfg, newItems = MENU_UNLOCK.find(([l]) => l === L);
-  $('iT').textContent = `第 ${L} 關`;
-  $('iGoal').innerHTML = `<h3>🎯 今日目標</h3>賺到 <b style="color:#ffe14d">🪙 ${c.goal[0]}</b>（⭐⭐⭐ 需要 ${c.goal[2]}）<br>今天會來 <b>${c.n}</b> 位客人<br>菜單：${c.menu.map(k => NAME[k]).join('、')}` +
-    (newItems ? `<br><br><b style="color:#9cff7a">✨ 新菜色：${newItems[1].map(k => NAME[k]).join('、')}</b><br>${newItems[1].includes('C') ? '肉放上麵包後，點「起司」疊上去。' : newItems[1].includes('fries') ? '點炸鍋開始炸，炸好一次可以出好幾份。' : newItems[1].includes('L') ? '點「生菜」疊上去。豪華堡要起司＋生菜都有！' : newItems[1].includes('ice') ? '點冰淇淋機裝甜筒，等它裝滿。' : ''}` : '');
+function show(id) { ['menu', 'how', 'levels', 'upsOv', 'intro', 'pauseOv', 'end'].forEach(x => $(x).classList.toggle('hide', x !== id)); $('hud').classList.toggle('hide', id !== null && id !== 'pauseOv'); }
+function goMenu() {
+  running = false; show('menu'); $('mCoin').innerHTML = `${im('coin')} ${SV.coins}`;
+  $('rests').innerHTML = RESTS.map((R, r) => { const pr = SV.prog[r] || 0, stars = Object.keys(SV.best).filter(k => k.startsWith(r + '-')).reduce((s, k) => s + SV.best[k], 0);
+    return `<button class="rest" data-r="${r}" style="background:linear-gradient(135deg,${R.col[0]},${R.col[1]})" ${pr ? '' : 'disabled'}><div class="pics">${R.pics.map(p => im(p)).join('')}</div><div style="margin-left:10px"><b>${R.name}</b><small>${pr ? R.sub : `🔒 上一間餐廳過第 10 關解鎖`}</small></div><div class="pr">${pr ? `${Math.min(pr - 1, LPR)}/${LPR}<br>⭐ ${stars}` : ''}</div></button>`; }).join('');
+  document.querySelectorAll('[data-r]').forEach(b => b.onclick = () => openRest(+b.dataset.r));
+}
+function openRest(r) {
+  show('levels'); $('lvTitle').textContent = RESTS[r].name;
+  const pr = SV.prog[r];
+  $('lvGrid').innerHTML = Array.from({ length: LPR }, (_, i) => { const l = i + 1, s = SV.best[r + '-' + l] || 0; return `<button class="lv ${l === pr ? 'cur' : ''}" data-l="${l}" ${l > pr ? 'disabled' : ''}>${l > pr ? '🔒' : l}<small>${l <= pr ? '⭐'.repeat(s) || '　' : ''}</small></button>`; }).join('');
+  document.querySelectorAll('[data-l]').forEach(b => b.onclick = () => intro(r, +b.dataset.l));
+}
+function intro(r, l) {
+  newLevel(r, l); show('intro');
+  const c = G.cfg, R = G.R, nw = R.unlock.find(([x]) => x === l);
+  $('iT').textContent = `${R.name} 第 ${l} 關`;
+  $('iGoal').innerHTML = `<h3>🎯 今日目標</h3>賺到 ${im('coin', 'i')} <b style="color:#ffe14d">${c.goal[0]}</b>（三顆星要 ${c.goal[2]}）・今天來 <b>${c.n}</b> 位客人<div class="newdish">${c.menu.map(d => `<div>${dishHTML(R, d)}${R.dishes[d].n}</div>`).join('')}</div>` +
+    (nw ? `<br><b style="color:#9cff7a">✨ 新菜色：${nw[1].map(d => R.dishes[d].n).join('、')}</b><br>${nw[1].map(d => recipeText(R, d)).join('<br>')}` : '');
+}
+function recipeText(R, d) {
+  const D = R.dishes[d], nm = x => { const c = R.cookers.find(c => c.out === x); if (c) return `${c.n}做好的料`; const t = R.tops.find(t => t.id === x); if (t) return t.n; const b = R.bases.find(b => b.id === x); return b ? b.n : x; };
+  if (D.base) { const bc = R.cookers.find(c => c.out === D.base); return `${D.n}＝${bc ? bc.n + '烤好的餅皮' : nm(D.base)}＋${D.parts.map(nm).join('＋')}`; }
+  const c = R.cookers.find(c => c.direct && c.out === d); if (c) return `${D.n}：在${c.n}煮好直接點它上菜`;
+  if (R.disp.find(x => x.id === d)) return `${D.n}：點機器的空格開始做`;
+  if (R.batch.find(x => x.id === d)) return `${D.n}：點一下開始做，一次好幾份`;
+  return '';
 }
 function play() { show(null); hud(); running = true; paused = false; last = performance.now(); requestAnimationFrame(loop); }
-function renderLevels() {
-  $('lvGrid').innerHTML = Array.from({ length: MAXL }, (_, i) => { const L = i + 1, s = SV.best[L] || 0; return `<button class="lv ${L === SV.unlocked ? 'cur' : ''}" data-l="${L}" ${L > SV.unlocked ? 'disabled' : ''}>${L > SV.unlocked ? '🔒' : L}<small>${L <= SV.unlocked ? '⭐'.repeat(s) || '　' : ''}</small></button>`; }).join('');
-  document.querySelectorAll('[data-l]').forEach(b => b.onclick = () => intro(+b.dataset.l));
-}
 function renderUps() {
-  $('uCoin').textContent = '🪙 ' + SV.coins;
+  $('uCoin').innerHTML = `${im('coin')} ${SV.coins}`;
   $('upList').innerHTML = UPS.map(u => { const l = SV.up[u.k], max = l >= u.max, c = upCost(u, l); return `<button class="up" data-u="${u.k}" ${max || SV.coins < c ? 'disabled' : ''}><div class="ic">${u.ic}</div><div class="n">${u.n} <small>Lv${l}</small></div><div class="d">${u.d(l)}${max ? '' : `<br>→ ${u.d(l + 1)}`}</div><div class="c">${max ? '已滿' : '🪙 ' + c}</div></button>`; }).join('');
   document.querySelectorAll('[data-u]').forEach(b => b.onclick = () => { const u = UPS.find(x => x.k === b.dataset.u), c = upCost(u, SV.up[u.k]); if (SV.coins < c) return; SV.coins -= c; SV.up[u.k]++; persist(); renderUps(); });
 }
-$('mPlay').onclick = () => intro(SV.unlocked);
-$('mLevels').onclick = () => { renderLevels(); show('levels'); };
+$('howCard').innerHTML = `<h3>👨‍🍳 基本操作</h3>① 點爐台的<b>空格</b>放生料，外圈轉滿變<b style="color:#6f6">綠色</b>就點它（變<b style="color:#f66">紅色</b>就燒焦了）<br>
+② 有底料的（麵包、白飯、湯碗）先點底料放到盤子；披薩和鬆餅的餅皮從爐子出來會自己上盤<br>
+③ 再點配料疊上去，盤子<b style="color:#6f6">亮綠框</b>就是做好了，點它上菜<br>
+④ 飲料機、蛋糕櫃：點空格開始做；薯條這類：點一下做好幾份<br>
+⑤ 做錯就按 ${im('trash', 'i')}，再點那份丟掉<br>
+⑥ 客人等越久越生氣 ${im('neutral', 'i')}→${im('angry', 'i')}，越快上菜小費越多，連續上菜有加成！<br><br>
+<h3>🏪 五間餐廳</h3>每間 15 關，過第 10 關就能開下一間：<br>${RESTS.map(R => `${R.pics.map(p => im(p, 'i')).join('')} ${R.name}`).join('<br>')}`;
+$('mHow').onclick = () => show('how'); $('howBack').onclick = () => { SV.seenHow = true; persist(); goMenu(); };
 $('mUps').onclick = () => { renderUps(); show('upsOv'); };
-$('lvBack').onclick = goMenu; $('upBack').onclick = goMenu; $('iBack').onclick = goMenu;
+$('lvBack').onclick = goMenu; $('upBack').onclick = goMenu; $('iBack').onclick = () => openRest(G.r);
 $('iGo').onclick = play;
 $('pauseB').onclick = () => { if (!running) return; paused = true; show('pauseOv'); };
 $('pResume').onclick = () => { paused = false; show(null); last = performance.now(); };
-$('pQuit').onclick = goMenu;
-$('eNext').onclick = () => intro(SV.best[G.L] ? Math.min(MAXL, G.L + 1) : G.L);
-$('eRetry').onclick = () => intro(G.L);
+$('pQuit').onclick = () => openRest(G.r);
+$('eNext').onclick = () => { const win = SV.best[G.r + '-' + G.l]; if (win && G.l >= LPR) return goMenu(); intro(G.r, win ? G.l + 1 : G.l); };
+$('eRetry').onclick = () => intro(G.r, G.l);
 $('eUps').onclick = () => { renderUps(); show('upsOv'); };
 $('eMenu').onclick = goMenu;
 document.addEventListener('visibilitychange', () => { if (document.hidden && running && !paused) { paused = true; show('pauseOv'); } });
-newLevel(1); goMenu();
+newLevel(0, 1);
+if (!SV.seenHow) show('how'); else goMenu();
 </script>
 <a href="./" id="gbHome" style="position:fixed;top:calc(4px + env(safe-area-inset-top));left:50%;transform:translateX(-50%);z-index:9999;background:rgba(0,0,0,.45);color:#fff;text-decoration:none;font:600 13px -apple-system,sans-serif;padding:4px 12px;border-radius:12px;opacity:.6">⌂ 遊戲盒</a>
 <script>if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});</script>
