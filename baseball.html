@@ -2,7 +2,7 @@
 <html lang="zh-Hant">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
@@ -11,111 +11,155 @@
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <title>投手轉生記</title>
 <style>
-  :root { --bg:#0f1318; --card:#1a2029; --card2:#242c38; --ink:#e8edf3; --muted:#93a0b2; --gold:#f2c14e; --red:#e5605a; --blue:#5fa8ff; --green:#6fcf8a; }
+  :root { --bg:#0b0e14; --card:#151a24; --card2:#1e2533; --line:#273042; --ink:#eef2f8; --muted:#8e9ab0; --gold:#ffb84d; --red:#ff6b6b; --blue:#5aa9ff; --green:#5fd68a; --tc:#3fa7d6; }
   * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
-  html,body { margin:0; background:var(--bg); color:var(--ink); font-family:-apple-system,"PingFang TC","Noto Sans TC","Microsoft JhengHei",sans-serif; font-size:17px;
-    user-select:none; -webkit-user-select:none; }
-  .wrap { max-width:540px; margin:0 auto; padding:12px 12px 40px; }
+  html,body { margin:0; background:var(--bg); color:var(--ink); font-family:-apple-system,"PingFang TC","Noto Sans TC","Microsoft JhengHei",sans-serif; font-size:16px; user-select:none; -webkit-user-select:none; overscroll-behavior:none; }
+  body { background: radial-gradient(1200px 500px at 50% -200px, color-mix(in srgb, var(--tc) 35%, transparent), transparent 70%), var(--bg); background-attachment: fixed; min-height:100vh; }
+  .wrap { max-width:560px; margin:0 auto; padding:calc(32px + env(safe-area-inset-top)) 12px calc(40px + env(safe-area-inset-bottom)); }
   .hide { display:none !important; }
-  h1 { text-align:center; font-size:40px; margin:36px 0 4px; color:var(--gold); }
-  h2 { margin:6px 0 12px; color:var(--gold); font-size:24px; }
-  .sub { text-align:center; color:var(--muted); margin-bottom:26px; }
-  button { font-family:inherit; background:var(--gold); color:#221a05; border:0; border-radius:12px; padding:13px 16px; font-size:18px; font-weight:800; cursor:pointer; }
-  button.ghost { background:var(--card2); color:var(--ink); border:1px solid #33404f; }
+  h1 { text-align:center; font-size:38px; margin:6px 0 2px; background:linear-gradient(90deg,#ffd27a,#ff8a3d); -webkit-background-clip:text; background-clip:text; color:transparent; font-weight:900; }
+  h2 { margin:4px 0 10px; font-size:22px; font-weight:900; }
+  h3 { margin:0 0 8px; font-size:16px; color:#cfd7e6; display:flex; align-items:center; gap:6px; }
+  button { font-family:inherit; background:linear-gradient(135deg,#ffc56b,#ff8a3d); color:#2a1300; border:0; border-radius:14px; padding:13px 16px; font-size:17px; font-weight:800; cursor:pointer; box-shadow:0 4px 14px rgba(255,138,61,.25); }
+  button.ghost { background:var(--card2); color:var(--ink); border:1px solid var(--line); box-shadow:none; }
   button:disabled { opacity:.35; }
   .col { display:flex; flex-direction:column; gap:10px; }
-  .row { display:flex; gap:8px; flex-wrap:wrap; }
-  .card { background:var(--card); border:1px solid #27303c; border-radius:14px; padding:14px; margin-bottom:12px; }
+  .row { display:flex; gap:8px; align-items:center; }
+  .card { background:linear-gradient(180deg,rgba(255,255,255,.03),rgba(255,255,255,0)) ,var(--card); border:1px solid var(--line); border-radius:18px; padding:14px; margin-bottom:12px; box-shadow:0 6px 20px rgba(0,0,0,.25); }
   .muted { color:var(--muted); } .good { color:var(--green); } .bad { color:var(--red); } .gold { color:var(--gold); }
-  input { width:100%; font-family:inherit; font-size:20px; padding:12px; border-radius:10px; border:1px solid #33404f; background:#0b0e12; color:var(--ink); }
-  .lb { color:var(--muted); font-size:15px; margin:14px 0 6px; display:block; }
-  .opt { text-align:left; background:var(--card2); color:var(--ink); border:2px solid transparent; font-weight:600; font-size:17px; }
-  .opt.sel { border-color:var(--gold); }
-  .opt small { display:block; color:var(--muted); font-weight:400; font-size:14px; }
-  .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
-  .grid2 button { text-align:left; padding:12px 10px; font-size:16px; line-height:1.3; }
-  .grid2 button small { display:block; font-size:13px; color:var(--muted); font-weight:400; }
-  .stat { display:flex; align-items:center; gap:8px; margin:5px 0; font-size:16px; }
-  .stat .l { width:64px; color:var(--muted); }
-  .bar { flex:1; height:10px; background:#0b0e12; border-radius:6px; overflow:hidden; }
-  .bar i { display:block; height:100%; border-radius:6px; }
-  .stat .v { width:44px; text-align:right; font-variant-numeric:tabular-nums; font-weight:700; }
+  input { width:100%; font-family:inherit; font-size:19px; padding:12px; border-radius:12px; border:1px solid var(--line); background:#0a0d13; color:var(--ink); }
+  .lb { color:var(--muted); font-size:14px; margin:14px 0 6px; display:block; }
+  .opt { text-align:left; background:var(--card2); color:var(--ink); border:2px solid transparent; font-weight:700; box-shadow:none; }
+  .opt.sel { border-color:var(--gold); background:#2a2416; }
+  .opt small { display:block; color:var(--muted); font-weight:400; font-size:13px; margin-top:2px; }
+  .art { width:100%; display:block; border-radius:18px; margin-bottom:12px; }
+  table { width:100%; border-collapse:collapse; font-size:13.5px; }
+  td,th { padding:6px 3px; border-bottom:1px solid var(--line); text-align:center; white-space:nowrap; }
+  th { color:var(--muted); font-weight:600; font-size:12px; }
+  td.l, th.l { text-align:left; }
+  tr.me td { color:var(--gold); font-weight:800; background:rgba(255,184,77,.06); }
+  .scroll-x { overflow-x:auto; -webkit-overflow-scrolling:touch; }
+  /* 主角卡 */
+  .hero { position:relative; border-radius:22px; padding:16px; overflow:hidden; margin-bottom:12px; border:1px solid rgba(255,255,255,.08); }
+  .hero .bg { position:absolute; inset:0; background:linear-gradient(135deg, var(--tc), #0b0e14 75%); opacity:.9; }
+  .hero .bg2 { position:absolute; right:-30px; top:-30px; width:200px; height:200px; opacity:.12; }
+  .hero .in { position:relative; display:flex; gap:14px; align-items:center; }
+  .hero .av svg { width:92px; height:92px; border-radius:20px; box-shadow:0 6px 18px rgba(0,0,0,.4); }
+  .hero .nm { font-size:24px; font-weight:900; }
+  .hero .sub { font-size:14px; opacity:.85; }
+  .badge { width:66px; height:80px; border-radius:14px; display:flex; flex-direction:column; align-items:center; justify-content:center; font-weight:900; box-shadow:0 6px 16px rgba(0,0,0,.4); flex:none; }
+  .badge b { font-size:30px; line-height:1; } .badge span { font-size:11px; opacity:.85; margin-top:2px; }
+  .meters { position:relative; display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-top:12px; }
+  .meter { background:rgba(0,0,0,.35); border-radius:12px; padding:7px 9px; font-size:12px; }
+  .meter .t { display:flex; justify-content:space-between; opacity:.9; }
+  .meter .b { height:6px; background:rgba(255,255,255,.12); border-radius:4px; margin-top:5px; overflow:hidden; }
+  .meter .b i { display:block; height:100%; border-radius:4px; }
+  .tabs { display:grid; grid-template-columns:repeat(4,1fr); gap:6px; margin:4px 0 12px; position:sticky; top:calc(28px + env(safe-area-inset-top)); z-index:5; background:rgba(11,14,20,.85); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); padding:6px 0; }
+  .tabs button { padding:9px 2px; font-size:14px; background:var(--card2); color:var(--ink); border:1px solid var(--line); box-shadow:none; }
+  .tabs button.on { background:linear-gradient(135deg,#ffc56b,#ff8a3d); color:#2a1300; border-color:transparent; }
+  .sub-tabs { display:flex; gap:6px; margin-bottom:10px; overflow-x:auto; }
+  .sub-tabs button { padding:7px 12px; font-size:14px; white-space:nowrap; background:var(--card2); color:var(--ink); border:1px solid var(--line); box-shadow:none; border-radius:20px; }
+  .sub-tabs button.on { background:#fff; color:#111; }
+  .trains { display:grid; grid-template-columns:repeat(2,1fr); gap:8px; }
+  .tr { display:flex; gap:10px; align-items:center; text-align:left; background:var(--card2); color:var(--ink); border:1px solid var(--line); box-shadow:none; padding:10px; font-size:15px; }
+  .tr .ic { font-size:24px; width:34px; height:34px; display:flex; align-items:center; justify-content:center; border-radius:10px; background:rgba(255,255,255,.06); flex:none; }
+  .tr small { display:block; font-size:12px; color:var(--muted); font-weight:500; }
+  .attr { display:flex; align-items:center; gap:8px; margin:6px 0; font-size:14px; }
+  .attr .l { width:38px; color:var(--muted); }
+  .attr .bar { flex:1; height:10px; background:#0a0d13; border-radius:6px; overflow:hidden; position:relative; }
+  .attr .bar i { display:block; height:100%; border-radius:6px; }
+  .attr .bar u { position:absolute; top:0; bottom:0; width:2px; background:rgba(255,255,255,.5); }
+  .attr .v { width:28px; text-align:right; font-weight:900; }
   .chips { display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; }
-  .chip { background:var(--card2); border-radius:8px; padding:5px 9px; font-size:15px; }
-  .hdr { display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:8px; }
-  .hdr .nm { font-size:24px; font-weight:800; }
-  .scene { position:fixed; inset:0; background:rgba(8,10,14,.95); z-index:10; overflow-y:auto; }
-  .scene .inner { max-width:540px; margin:0 auto; padding:22px 14px 40px; }
-  .story { font-size:18px; line-height:1.8; white-space:pre-wrap; margin-bottom:16px; }
-  .choice { text-align:left; background:var(--card2); color:var(--ink); border:1px solid #33404f; }
-  .choice small { display:block; color:var(--muted); font-weight:400; font-size:14px; margin-top:3px; }
-  table { width:100%; border-collapse:collapse; font-size:15px; }
-  td,th { padding:6px 4px; border-bottom:1px solid #27303c; text-align:center; }
-  th { color:var(--muted); font-weight:600; }
+  .chip { background:var(--card2); border:1px solid var(--line); border-radius:20px; padding:4px 10px; font-size:13px; }
+  .mini-team { display:flex; align-items:center; gap:8px; }
+  .mini-team svg { width:26px; height:26px; flex:none; }
+  .scene { position:fixed; inset:0; background:rgba(6,8,12,.97); z-index:20; overflow-y:auto; }
+  .scene .inner { max-width:560px; margin:0 auto; padding:calc(32px + env(safe-area-inset-top)) 14px 40px; }
+  .story { font-size:17px; line-height:1.8; white-space:pre-wrap; margin-bottom:14px; }
+  .choice { text-align:left; background:var(--card2); color:var(--ink); border:1px solid var(--line); box-shadow:none; }
+  .choice small { display:block; color:var(--muted); font-weight:400; font-size:13px; margin-top:3px; }
+  .vs { display:grid; grid-template-columns:1fr auto 1fr; align-items:center; gap:8px; text-align:center; margin:4px 0 14px; }
+  .vs svg { width:64px; height:64px; }
+  .vs .t { font-weight:900; font-size:16px; margin-top:4px; } .vs .r { color:var(--muted); font-size:13px; }
+  .vs .x { font-size:26px; font-weight:900; color:var(--muted); }
   /* 比賽 */
-  #game { position:fixed; inset:0; background:var(--bg); z-index:8; overflow-y:auto; }
-  #game .inner { max-width:540px; margin:0 auto; padding:8px 10px 24px; }
-  .sb { display:flex; justify-content:space-between; align-items:center; background:var(--card); border-radius:12px; padding:8px 12px; font-size:16px; }
-  .sb .score { font-size:24px; font-weight:900; }
-  .bases { position:relative; width:46px; height:46px; }
-  .bases i { position:absolute; width:14px; height:14px; transform:rotate(45deg); border:2px solid #556274; }
-  .bases i.on { background:var(--gold); border-color:var(--gold); }
-  .dots span { display:inline-block; width:11px; height:11px; border-radius:50%; background:#2c3542; margin-right:3px; }
-  .dots .b.on { background:var(--green); } .dots .s.on { background:var(--gold); } .dots .o.on { background:var(--red); }
-  .batter { display:flex; justify-content:space-between; align-items:center; margin:8px 2px; }
-  .batter b { font-size:19px; }
-  .hint { background:#1d2733; border-left:4px solid var(--gold); border-radius:8px; padding:8px 10px; font-size:15px; margin:6px 0; }
-  #zone { width:100%; max-width:360px; aspect-ratio:1; display:block; margin:6px auto; touch-action:none; background:#0b0e12; border-radius:12px; }
-  .ptypes { display:flex; gap:6px; margin:6px 0; }
-  .ptypes button { flex:1; padding:9px 4px; font-size:15px; line-height:1.25; }
-  .ptypes button small { display:block; font-size:12px; font-weight:600; }
-  .ptypes button.on { background:var(--gold); color:#221a05; }
-  .meter { position:relative; height:22px; background:#0b0e12; border-radius:11px; overflow:hidden; margin:8px 0; }
-  .meter .z1 { position:absolute; top:0; bottom:0; background:rgba(111,207,138,.35); }
-  .meter .z2 { position:absolute; top:0; bottom:0; background:rgba(242,193,78,.85); }
-  .meter .cur { position:absolute; top:-2px; bottom:-2px; width:4px; background:#fff; border-radius:2px; }
-  #charge { width:100%; padding:18px; font-size:21px; touch-action:none; }
-  .res { text-align:center; font-size:22px; font-weight:900; min-height:30px; margin:4px 0; }
-  .plog { font-size:14px; color:var(--muted); line-height:1.6; max-height:90px; overflow-y:auto; }
+  #game { position:fixed; inset:0; background:var(--bg); z-index:15; overflow-y:auto; }
+  #game .inner { max-width:560px; margin:0 auto; padding:calc(32px + env(safe-area-inset-top)) 10px 24px; }
+  .sb { display:grid; grid-template-columns:1fr auto 1fr; align-items:center; border-radius:18px; padding:12px; background:linear-gradient(90deg, color-mix(in srgb, var(--hc) 45%, #151a24), #151a24 45%, #151a24 55%, color-mix(in srgb, var(--ac) 45%, #151a24)); border:1px solid var(--line); }
+  .sb .side { display:flex; align-items:center; gap:8px; } .sb .side.r { flex-direction:row-reverse; text-align:right; }
+  .sb svg { width:40px; height:40px; }
+  .sb .tm { font-size:13px; opacity:.85; } .sb .sc { font-size:36px; font-weight:900; font-variant-numeric:tabular-nums; line-height:1; }
+  .sb .mid { text-align:center; padding:0 6px; } .sb .q { font-weight:900; } .sb .clk { color:var(--muted); font-variant-numeric:tabular-nums; font-size:14px; }
+  #lead { width:100%; height:80px; display:block; margin:8px 0; background:var(--card); border-radius:14px; border:1px solid var(--line); }
+  .myline { display:grid; grid-template-columns:repeat(5,1fr); background:var(--card); border:1px solid var(--line); border-radius:14px; padding:8px 4px; margin-bottom:8px; text-align:center; }
+  .myline b { display:block; font-size:22px; } .myline span { font-size:11px; color:var(--muted); }
+  .feed { background:#080a0f; border:1px solid var(--line); border-radius:14px; padding:8px; height:250px; overflow-y:auto; font-size:14px; }
+  .ev { display:flex; gap:8px; align-items:flex-start; padding:5px 4px; border-bottom:1px solid rgba(255,255,255,.04); }
+  .ev .dot { width:8px; height:8px; border-radius:50%; margin-top:6px; flex:none; }
+  .ev .tm { color:var(--muted); font-size:12px; width:38px; flex:none; margin-top:1px; font-variant-numeric:tabular-nums; }
+  .ev.me { background:rgba(255,184,77,.08); border-radius:8px; } .ev.me .tx { color:var(--gold); font-weight:700; }
+  .ev.q .tx { color:var(--blue); font-weight:800; } .ev.big .tx { font-weight:900; }
+  .clutch { background:linear-gradient(135deg,#4a2a0a,#151a24); border:2px solid var(--gold); border-radius:18px; padding:12px; margin-top:10px; animation:glow 1.2s infinite; }
+  @keyframes glow { 50% { box-shadow:0 0 22px rgba(255,184,77,.5); } }
+  .toast { position:fixed; left:50%; bottom:calc(24px + env(safe-area-inset-bottom)); transform:translateX(-50%); z-index:50; background:linear-gradient(135deg,#ffd27a,#ff8a3d); color:#2a1300; border-radius:16px; padding:10px 18px; font-weight:900; box-shadow:0 8px 24px rgba(0,0,0,.5); animation:tin 3.2s forwards; text-align:center; min-width:250px; }
+  .toast small { display:block; font-weight:600; font-size:12px; }
+  @keyframes tin { 0% { opacity:0; transform:translate(-50%,20px) scale(.9); } 10%,85% { opacity:1; transform:translate(-50%,0) scale(1); } 100% { opacity:0; } }
+  .ach { display:flex; gap:12px; align-items:center; padding:9px 0; border-bottom:1px solid var(--line); }
+  .ach .i { font-size:26px; width:44px; height:44px; border-radius:12px; display:flex; align-items:center; justify-content:center; background:linear-gradient(135deg,#3a2a10,#1e2533); flex:none; }
+  .ach.off { opacity:.3; filter:grayscale(1); }
+  .big-score { display:grid; grid-template-columns:1fr auto 1fr; align-items:center; text-align:center; margin:6px 0 12px; }
+  .big-score svg { width:56px; height:56px; } .big-score .s { font-size:42px; font-weight:900; }
+  .result-tag { text-align:center; font-size:20px; font-weight:900; margin-bottom:10px; }
+  .pog { display:flex; gap:10px; align-items:center; background:linear-gradient(135deg,#3a2a10,#151a24); border:1px solid #5a4422; border-radius:16px; padding:10px; margin-bottom:12px; }
+  .pog svg { width:52px; height:52px; border-radius:12px; }
+  .pick-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+  .pick-grid .opt { padding:10px; font-size:15px; }
+  #field { width:100%; display:block; margin-top:8px; border-radius:14px; border:1px solid var(--line); image-rendering:pixelated; }
+  .bso { display:flex; gap:10px; justify-content:center; font-size:13px; color:var(--muted); margin-top:4px; }
+  .bso i { display:inline-block; width:10px; height:10px; border-radius:50%; background:#2a3242; margin-left:2px; }
+  .bso i.on.o { background:var(--red); }
 </style>
 </head>
 <body>
 <div class="wrap">
   <div id="sTitle">
-    <div id="tArt" style="margin-top:12px"></div>
-    <h1 style="margin-top:6px">⚾ 投手轉生記</h1>
-    <div class="sub">投不好，就再活一次</div>
+    <div id="titleArt"></div>
+    <h1>投手轉生記</h1>
+    <div style="text-align:center;color:var(--muted);margin-bottom:18px">投手生涯模擬：從高中打到名人堂</div>
     <div class="col">
-      <button id="bNew">新的人生</button>
-      <button class="ghost" id="bCont">繼續</button>
-      <button class="ghost" id="bHall">歷代投手</button>
+      <button id="bNew">⚾ 新的人生</button>
+      <button class="ghost hide" id="bCont">▶ 繼續生涯</button>
+      <button class="ghost" id="bHall">🏛️ 歷代投手・成就殿堂</button>
     </div>
-    <div class="card muted" style="margin-top:20px;line-height:1.8;font-size:16px">
-      高中三年練球、打大賽，爭取職棒選秀。<br>進了職棒，從二軍一路投上一軍。<br>
-      退役或落選後轉生成下一位投手，前世的記憶會變成天賦。<br>
-      投球時選球種、點選進壘位置，<b class="gold">按住蓄力、在金色區放開</b>。
+    <div class="card muted" style="margin-top:16px;line-height:1.8;font-size:15px">
+      每週安排訓練，然後觀看比賽：守備站位、打者、跑壘和每一球都會即時播出，兩隊每位球員的數據都會記錄。<br>
+      得點圈有人、比賽膠著時，<b class="gold">由你決定怎麼配球</b>。<br>
+      整個聯盟的球員都會成長、老化、轉隊和退休。拚最佳投手、MVP、總冠軍，最後進名人堂。
     </div>
   </div>
 
   <div id="sCreate" class="hide">
-    <h2>新的投手</h2>
+    <h2>建立投手</h2>
     <div id="legacy"></div>
+    <div class="card row" id="cAvatar"></div>
     <label class="lb">姓名</label>
-    <div class="row" style="flex-wrap:nowrap"><input id="iName" maxlength="6"><button class="ghost" id="bRnd" style="white-space:nowrap">隨機</button></div>
+    <div class="row"><input id="iName" maxlength="6"><button class="ghost" id="bRnd" style="white-space:nowrap">隨機</button></div>
+    <label class="lb">背號（0–99）</label>
+    <input id="iNum" type="number" inputmode="numeric" min="0" max="99">
     <label class="lb">選兩種實戰變化球（直球必備）</label>
-    <div class="grid2" id="pPick"></div>
+    <div class="pick-grid" id="pPick"></div>
     <label class="lb">再選一種「開發中」球種（練到 40 就能實戰）</label>
-    <div class="grid2" id="dPick"></div>
-    <button id="bStart" style="width:100%;margin-top:16px">入學</button>
+    <div class="pick-grid" id="dPick"></div>
+    <button class="ghost" id="bLook" style="width:100%;margin-top:10px">換個外型</button>
+    <button id="bStart" style="width:100%;margin-top:12px">入學</button>
   </div>
 
   <div id="sHub" class="hide">
-    <div id="hArt"></div>
-    <div class="hdr"><div style="display:flex;gap:10px;align-items:center"><div id="hAv"></div><div><div class="nm" id="hName"></div><div class="muted" id="hSub"></div></div></div><div style="text-align:right" id="hWhen"></div></div>
-    <div class="card" id="hStats"></div>
-    <div class="card" id="hNote" style="font-size:16px;line-height:1.6"></div>
-    <div class="grid2" id="hActs"></div>
-    <div class="card" id="hSeason" style="margin-top:12px"></div>
+    <div class="hero" id="hero"></div>
+    <div class="card hide" id="hNote" style="font-size:15px;line-height:1.6"></div>
+    <div class="tabs" id="tabs"><button data-t="week">📅 本週</button><button data-t="me">🧍 投手</button><button data-t="league">🏆 聯盟</button><button data-t="ach">🎖️ 成就</button></div>
+    <div id="tWeek"></div><div id="tMe" class="hide"></div><div id="tLeague" class="hide"></div><div id="tAch" class="hide"></div>
   </div>
 
   <div id="sHall" class="hide">
@@ -128,68 +172,16 @@
 <div class="scene hide" id="scene"><div class="inner" id="sceneIn"></div></div>
 
 <div id="game" class="hide"><div class="inner">
-  <div class="sb">
-    <div><div class="muted" style="font-size:13px" id="gTeams"></div><div class="score" id="gScore"></div></div>
-    <div style="text-align:center"><div id="gInning" style="font-weight:800"></div><div class="dots" id="gOuts"></div></div>
-    <div class="bases"><i id="b2" style="left:16px;top:2px"></i><i id="b3" style="left:2px;top:16px"></i><i id="b1" style="left:30px;top:16px"></i></div>
-    <div style="text-align:right"><div class="dots" id="gCount"></div><div class="muted" style="font-size:13px" id="gPC"></div></div>
-  </div>
-  <div class="batter"><div><b id="gBat"></b> <span class="muted" id="gBatInfo"></span></div><div class="muted" id="gLine" style="font-size:14px;text-align:right"></div></div>
-  <div class="hint" id="gHint"></div>
-  <canvas id="zone" width="600" height="600"></canvas>
-  <div class="res" id="gRes"></div>
-  <div class="ptypes" id="gTypes"></div>
-  <div class="meter"><div class="z1" id="mz1"></div><div class="z2" id="mz2"></div><div class="cur" id="mcur"></div></div>
-  <button id="charge">按住蓄力・放開投球</button>
-  <div class="row" style="margin-top:8px"><button class="ghost" id="gAuto" style="flex:1;font-size:15px">自動投完這局</button><button class="ghost" id="gSim" style="flex:1;font-size:15px">快速模擬整場</button><button class="ghost" id="gPull" style="flex:1;font-size:15px">請求換投</button></div>
-  <div class="plog" id="gLog"></div>
+  <div class="sb" id="sb"></div>
+  <canvas id="field" width="600" height="420"></canvas>
+  <div class="myline" id="gMy"></div>
+  <div class="feed" id="gFeed"></div>
+  <div id="gClutch"></div>
+  <div class="muted" style="font-size:11px;text-align:right;margin-top:4px">球員圖：Kenney.nl（CC0）</div>
+  <div class="row" style="margin-top:6px"><button class="ghost" id="gSpeed" style="flex:1">⏩ 快轉</button><button class="ghost" id="gSkip" style="flex:1">⏭ 直接看結果</button></div>
 </div></div>
 
 <script>
-// ===================== 基本資料 =====================
-const PITCHES = {
-  '直球':   { cat:'fast', spd:1.00, brk:[0, -0.15], d:'球速最快，靠球威壓制' },
-  '滑球':   { cat:'brk',  spd:0.87, brk:[1.0, 0.25], d:'橫向大幅滑開' },
-  '曲球':   { cat:'brk',  spd:0.77, brk:[0.35, 1.2], d:'大弧度下墜，慢速' },
-  '指叉球': { cat:'brk',  spd:0.86, brk:[0, 1.0], d:'看似直球，到本壘急墜' },
-  '變速球': { cat:'brk',  spd:0.82, brk:[-0.35, 0.55], d:'出手像直球，球速慢一截' },
-  '卡特球': { cat:'fast', spd:0.93, brk:[0.45, 0.1], d:'快速小幅切入' },
-  '伸卡球': { cat:'fast', spd:0.94, brk:[-0.55, 0.45], d:'下沉帶尾勁，製造滾地' },
-};
-const OFFSPEED = Object.keys(PITCHES).filter(p => p !== '直球');
-const TEAMS = ['港都海鷗','山城猛虎','北境雪狼','南灣巨鯨','中原雷鳴','東岸飛鷹'];
-const SCHOOLS = ['青嶺高中','海星高中','白楊工商','明德高中','鳳鳴實中','大成高中'];
-const SUR = ['林','陳','黃','張','李','王','吳','劉','蔡','楊','許','鄭','謝','郭','洪','曾','邱','廖','賴','周','金','朴','崔','姜','韓'];
-const GIV = ['承','宇','翔','哲','皓','睿','恩','昊','民','俊','浩','東','賢','成','勳','振','凱','佑','廷','晨','祐','澤','碩','鎮'];
-const rnd = (a,b) => a + Math.random()*(b-a), ri = (a,b) => Math.floor(rnd(a,b+1)), pick = a => a[Math.floor(Math.random()*a.length)];
-const clamp = (v,a,b) => Math.max(a, Math.min(b, v));
-const randName = () => pick(SUR) + pick(GIV) + pick(GIV);
-const gauss = () => { let u = 0, v = 0; while (!u) u = Math.random(); while (!v) v = Math.random(); return Math.sqrt(-2*Math.log(u)) * Math.cos(2*Math.PI*v); };
-const $ = id => document.getElementById(id);
-const fmt1 = v => (Math.round(v*100)/100).toFixed(2);
-
-const MEMORIES = {
-  HS_CHAMP:  { n:'盛夏的頂點', from:'高中大賽奪冠', t:'大賽心臟', d:'完美時機的判定區變寬' },
-  DRAFT1:    { n:'被唱名的那一刻', from:'選秀第一輪指名', t:'天生球威', d:'起始球速 +6' },
-  UNDRAFTED: { n:'落選的夏天', from:'選秀落選', t:'不屈', d:'受傷機率 -35%' },
-  SHUTOUT:   { n:'九局零封', from:'投出完封', t:'鐵臂', d:'體力成長 +25%' },
-  K10:       { n:'十次三振', from:'單場 10 次三振', t:'魔球', d:'變化球成長 +25%' },
-  W10:       { n:'十勝投手', from:'單季 10 勝', t:'精準', d:'控球成長 +25%' },
-  SV25:      { n:'守護神', from:'單季 25 次救援', t:'剛速', d:'球速成長 +25%' },
-  ERA_KING:  { n:'防禦率王', from:'奪得防禦率王', t:'精密機械', d:'起始控球 +6' },
-  RIVAL:     { n:'宿敵的背影', from:'一季內三度解決宿敵', t:'讀心', d:'捕手配球建議更準、打者更容易揮空' },
-  LONG:      { n:'十年選手', from:'職業生涯十年', t:'不老', d:'能力衰退延後兩年' },
-  K1000:     { n:'千次三振', from:'生涯 1000 次三振', t:'怪物', d:'所有能力起始 +3' },
-};
-
-// ===================== 存檔 =====================
-let C = null, LEG = { lives:[], talents:[], inherit:null };
-try { const l = JSON.parse(localStorage.getItem('pitcherLegacy')); if (l) LEG = Object.assign(LEG, l); } catch(e) {}
-const saveLeg = () => { try { localStorage.setItem('pitcherLegacy', JSON.stringify(LEG)); } catch(e) {} };
-const saveRun = () => { try { localStorage.setItem('pitcherRun', JSON.stringify(C)); } catch(e) {} };
-const loadRun = () => { try { return JSON.parse(localStorage.getItem('pitcherRun')); } catch(e) { return null; } };
-const has = t => LEG.talents.includes(t);
-
 // ===================== 插圖 =====================
 function bsr(seed) { let s = seed; return () => (s = (s * 9301 + 49297) % 233280) / 233280; }
 function bbArt(kind, color = '#f2c14e', seed = 5) {
@@ -230,688 +222,859 @@ function bbAvatar(color = '#f2c14e', num = 18, skin = 1) {
     <path d="M45 58 Q50 61 55 58" stroke="#6b3a2a" stroke-width="2" fill="none" stroke-linecap="round"/></svg>`;
 }
 
-const TCOL = { '港都海鷗':'#3fa7d6','山城猛虎':'#f29e4c','北境雪狼':'#9aa5b1','南灣巨鯨':'#2f6fb5','中原雷鳴':'#f1c40f','東岸飛鷹':'#e5605a' };
-const myCol = () => C && C.team ? TCOL[C.team] : '#5fa8ff';
-// ===================== 角色 =====================
-let picks = [], dev = null;
-function renderCreate() {
-  $('iName').value = randName(); picks = []; dev = null;
-  const last = LEG.lives[0];
-  $('legacy').innerHTML = LEG.lives.length ? `<div class="card" style="font-size:15px;line-height:1.7">第 <b class="gold">${LEG.lives.length + 1}</b> 世<br>
-    ${LEG.talents.length ? '天賦：' + LEG.talents.map(k => `<b class="gold">${MEMORIES[k].t}</b>（${MEMORIES[k].d}）`).join('、') : ''}
-    ${LEG.inherit ? `<br>傳承：${LEG.inherit.label} +${LEG.inherit.v}` : ''}<br><span class="muted">前世：${last.name}・${last.summary}</span></div>` : '';
-  drawPicks();
+const SPR_CHAR = 'data:image/png;base64,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';
+const SPR_EQ = 'data:image/png;base64,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';
+const SPR_ATLAS = {"Blue": [[42, 31, 21, 31], [21, 31, 21, 31], [21, 0, 21, 31], [0, 155, 21, 31], [0, 124, 21, 31], [0, 93, 21, 31], [0, 62, 21, 31], [0, 31, 21, 31], [0, 0, 21, 31], [42, 0, 21, 31]], "Green": [[105, 93, 21, 31], [21, 155, 21, 31], [63, 124, 21, 31], [105, 155, 21, 31], [84, 31, 21, 31], [126, 0, 21, 31], [126, 155, 21, 31], [126, 124, 21, 31], [147, 124, 21, 31], [126, 62, 21, 31]], "Red": [[147, 93, 21, 31], [147, 155, 21, 31], [126, 31, 21, 31], [168, 0, 21, 31], [147, 62, 21, 31], [147, 31, 21, 31], [147, 0, 21, 31], [63, 155, 21, 31], [84, 0, 21, 31], [168, 31, 21, 31]], "White": [[84, 93, 21, 31], [63, 93, 21, 31], [63, 62, 21, 31], [63, 31, 21, 31], [63, 0, 21, 31], [42, 155, 21, 31], [42, 124, 21, 31], [42, 93, 21, 31], [42, 62, 21, 31], [84, 62, 21, 31]]};
+const SPR_BALL = [69, 72, 18, 18];
+
+
+// ===================== 工具 =====================
+const rnd = (a,b) => a + Math.random()*(b-a), ri = (a,b) => Math.floor(rnd(a,b+1)), pick = a => a[Math.floor(Math.random()*a.length)];
+const clamp = (v,a,b) => Math.max(a, Math.min(b, v));
+const $ = id => document.getElementById(id);
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const f1 = v => (Math.round(v * 10) / 10).toFixed(1), f2 = v => (Math.round(v * 100) / 100).toFixed(2), f3 = v => v.toFixed(3).replace(/^0/, '');
+const SUR = ['林','陳','黃','張','李','王','吳','劉','蔡','楊','許','鄭','謝','郭','洪','曾','邱','廖','賴','周','高','簡','游','韋','朴','金','崔','宋','江','范','彭','魏','蕭','唐','杜','余','呂'];
+const GIV = ['承','宇','翔','哲','皓','睿','恩','昊','俊','浩','東','賢','成','勳','振','凱','佑','廷','晨','祐','澤','碩','岳','騰','旻','彥','翰','杰','霖','毅','軒','豪','銘','偉','安','傑','恆','暘'];
+const randName = () => pick(SUR) + pick(GIV) + pick(GIV);
+const PRO_TEAMS = [ ['台港海鷗','#2fa4e7','鷗'], ['山城猛虎','#f29e4c','虎'], ['北境雪狼','#9fb2c8','狼'], ['南灣巨鯨','#2f6fd5','鯨'], ['中原雷鳴','#f1c40f','雷'], ['東岸飛鷹','#e74c3c','鷹'] ];
+const HS_TEAMS = [ ['青嶺高中','#2e86de','嶺'], ['海星高中','#10ac84','星'], ['白楊工商','#ee5253','楊'], ['明德高中','#8854d0','明'], ['鳳鳴實中','#ff9f43','鳴'], ['大成高中','#778ca3','成'] ];
+const PITCHES = { '直球':{ cat:'fast', d:'球速最快，靠球威壓制' }, '滑球':{ cat:'brk', d:'橫向大幅滑開' }, '曲球':{ cat:'brk', d:'大弧度下墜' }, '指叉球':{ cat:'brk', d:'到本壘急墜，三振利器' }, '變速球':{ cat:'brk', d:'出手像直球，球速慢一截' }, '卡特球':{ cat:'fast', d:'快速小幅切入' }, '伸卡球':{ cat:'fast', d:'下沉帶尾勁，製造滾地' } };
+const OFFSPEED = Object.keys(PITCHES).filter(p => p !== '直球');
+const MEMORIES = {
+  HS_CHAMP:{ n:'高中冠軍', t:'大賽心臟', d:'關鍵打席成功率 +8%' }, DRAFT1:{ n:'狀元', t:'天生球威', d:'起始球速 +6' }, UNDRAFTED:{ n:'落選', t:'不屈', d:'受傷機率 -35%、潛力 +3' },
+  K15:{ n:'15 次三振', t:'魔球', d:'變化球成長 +25%' }, SHUTOUT:{ n:'完封', t:'鐵臂', d:'體力成長 +25%' }, ACE:{ n:'最佳投手', t:'王牌氣場', d:'起始教練信任 +25、潛力 +4' },
+  CHAMP:{ n:'總冠軍', t:'冠軍血統', d:'捕手默契成長加倍' }, CLUTCH:{ n:'關鍵三振', t:'冷血', d:'關鍵打席成功率 +12%' }, LONG:{ n:'十年老將', t:'不老', d:'衰退延後兩年' }, SV30:{ n:'守護神', t:'剛速', d:'球速成長 +25%' },
+};
+const ACH = [
+  ['debut','⚾','初登板','第一次登板'], ['win1','✅','首勝','拿下第一場勝投'], ['k10','🔥','10 次三振','單場 10 次三振'], ['k15','🌋','15 次三振','單場 15 次三振'], ['cg','💪','完投','一個人投完整場'],
+  ['so','🧱','完封','完投且沒有失分'], ['nh','👻','無安打比賽','完投沒有被敲安打'], ['clutch','🎯','關鍵三振','關鍵打席解決打者'], ['hsc','🏫','高中冠軍',''], ['pog','⭐','本場最佳',''],
+  ['lottery','📣','前段選秀','選秀前三順位'], ['no1','👑','狀元','選秀第一順位'], ['rot','🟢','先發輪值','進入一軍先發輪值'], ['o80','💎','總評 80',''], ['o90','🔴','總評 90',''],
+  ['allstar','🌟','明星賽',''], ['ring','💍','總冠軍',''], ['ace','🏆','最佳投手獎',''], ['mvp','👑','年度 MVP',''], ['roy','🌱','新人王',''],
+  ['era','📉','防禦率王',''], ['kking','💯','三振王',''], ['svking','🔒','救援王',''], ['w100','💯','生涯 60 勝',''], ['k1000','📈','生涯 1000 K',''],
+  ['ten','🎖️','十年老將',''], ['jersey','👕','退休背號',''], ['hof','🏛️','名人堂',''],
+];
+const EGGS = [
+  { n:34, need:null, who:'Nolan Ryan', t:'特快車', pot:96, b:{ velo:15 } },
+  { n:42, need:'卡特球', who:'Mariano Rivera', t:'睡魔', pot:96, b:{ '卡特球':20, ctrl:6 }, x:'clutch' },
+  { n:40, need:'伸卡球', who:'王建民', t:'台灣之光', pot:96, b:{ '伸卡球':20, sta:6 } },
+  { n:22, need:'曲球', who:'Clayton Kershaw', t:'神之曲球', pot:96, b:{ '曲球':18, ctrl:5 } },
+  { n:32, need:'曲球', who:'Sandy Koufax', t:'左手之神', pot:95, b:{ '曲球':15, velo:6 } },
+  { n:31, need:null, who:'Greg Maddux', t:'教授', pot:95, b:{ ctrl:18 } },
+  { n:45, need:'變速球', who:'Pedro Martínez', t:'外星人', pot:96, b:{ '變速球':18, velo:5 } },
+  { n:51, need:'滑球', who:'Randy Johnson', t:'巨怪', pot:96, b:{ '滑球':18, velo:8 } },
+  { n:11, need:'滑球', who:'達比修有', t:'變化球博物館', pot:95, b:{ '滑球':10, ctrl:6 }, x:'allpitch' },
+  { n:18, need:'指叉球', who:'山本由伸（日本王牌背號）', t:'王牌 18', pot:95, b:{ '指叉球':15, ctrl:5 } },
+  { n:17, need:null, who:'大谷翔平', t:'二刀流', pot:99, b:{ velo:12 } },
+  { n:99, need:null, who:'（傳說中的背號）', t:'全能怪物', pot:97, b:{ velo:5, ctrl:5, sta:5 } },
+];
+const eggOf = (n, picks) => EGGS.find(e => e.n === n && (!e.need || picks.includes(e.need)));
+
+// ===================== 圖 =====================
+function logo(t, s = 40) { const id = 'g' + Math.floor(Math.random() * 1e7); return `<svg viewBox="0 0 100 110" width="${s}" height="${s}" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="${id}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${t.c}"/><stop offset="1" stop-color="#0b0e14"/></linearGradient></defs><path d="M50 4 L92 18 L88 64 Q82 92 50 106 Q18 92 12 64 L8 18 Z" fill="url(#${id})" stroke="#fff" stroke-opacity=".8" stroke-width="4"/><text x="50" y="70" font-size="44" font-weight="900" fill="#fff" text-anchor="middle" font-family="sans-serif">${t.m}</text></svg>`; }
+function tier(o) { if (o >= 90) return { n:'傳奇', bg:'linear-gradient(160deg,#ff4d6d,#7b1fa2)', fg:'#fff' }; if (o >= 80) return { n:'鑽石', bg:'linear-gradient(160deg,#9be7ff,#5b5fff)', fg:'#0a1030' }; if (o >= 70) return { n:'黃金', bg:'linear-gradient(160deg,#ffe08a,#c98a1a)', fg:'#2a1a00' }; if (o >= 60) return { n:'白銀', bg:'linear-gradient(160deg,#eef2f7,#8b98a9)', fg:'#1a2230' }; return { n:'青銅', bg:'linear-gradient(160deg,#e0a77a,#7a4a2a)', fg:'#1e0f04' }; }
+function badge(o, label) { const t = tier(o); return `<div class="badge" style="background:${t.bg};color:${t.fg}"><b>${o}</b><span>${label || t.n}</span></div>`; }
+const ovrChip = o => `<span style="display:inline-block;min-width:28px;border-radius:6px;padding:1px 4px;background:${tier(o).bg};color:${tier(o).fg};font-weight:900">${o}</span>`;
+
+// ===================== 存檔 =====================
+let C = null, LEG = { lives:[], talents:[], inherit:null, ach:{}, eggs:{} };
+try { const l = JSON.parse(localStorage.getItem('pitch2Legacy')); if (l) LEG = Object.assign(LEG, l); } catch(e) {}
+const saveLeg = () => { try { localStorage.setItem('pitch2Legacy', JSON.stringify(LEG)); } catch(e) {} };
+const saveRun = () => { try { localStorage.setItem('pitch2Run', JSON.stringify(C)); } catch(e) {} };
+const loadRun = () => { try { return JSON.parse(localStorage.getItem('pitch2Run')); } catch(e) { return null; } };
+const has = t => LEG.talents.includes(t);
+let toastQ = [], toastOn = false;
+function toast(t, s) { toastQ.push([t, s]); if (!toastOn) nextToast(); }
+function nextToast() { const x = toastQ.shift(); if (!x) { toastOn = false; return; } toastOn = true; const el = document.createElement('div'); el.className = 'toast'; el.innerHTML = `${x[0]}${x[1] ? `<small>${x[1]}</small>` : ''}`; document.body.appendChild(el); setTimeout(() => { el.remove(); nextToast(); }, 3200); }
+function unlock(id) { if (!C || C.ach[id]) return; const a = ACH.find(x => x[0] === id); if (!a) return; C.ach[id] = C.age; LEG.ach[id] = (LEG.ach[id] || 0) + 1; saveLeg(); toast(`${a[1]} 成就解鎖：${a[2]}`, a[3]); }
+function pushMem(k) { if (!C.memories.includes(k)) C.memories.push(k); }
+
+// ===================== 球員模型 =====================
+let PID = 1;
+const ME = () => C.players.ME;
+const P = id => C.players[id];
+function pl() { return { g:0, gs:0, outs:0, h:0, r:0, bb:0, k:0, hr:0, w:0, l:0, sv:0, pc:0 }; }
+function bl() { return { g:0, ab:0, h:0, d:0, t:0, hr:0, rbi:0, r:0, bb:0, k:0 }; }
+function stuffOf(p) { if (!p.me) return p.a.stuff; const v = Object.entries(p.pi).filter(([k]) => k !== '直球').map(([, v]) => v).sort((a, b) => b - a); return ((v[0] || 30) * 0.6 + (v[1] || 30) * 0.4); }
+function ovrOf(p) { if (p.type === 'B') { const a = p.a; return Math.round(a.con * 0.3 + a.pow * 0.25 + a.eye * 0.2 + a.spd * 0.1 + a.fld * 0.15); } const a = p.a; return Math.round(a.velo * 0.3 + a.ctrl * 0.3 + stuffOf(p) * 0.3 + a.sta * 0.1); }
+const ovr = () => ovrOf(ME());
+function mkB(t, age, team) { const a = {}; for (const k of ['con','pow','eye','spd','fld']) a[k] = clamp(t + rnd(-9, 9), 15, 97); return { id:'P' + (PID++), type:'B', name: randName(), pos: '', age, a, pot: clamp(t + rnd(0, 18) - Math.max(0, age - 24) * 3, 40, 97), team, st: bl(), car: bl() }; }
+function mkP(t, age, team, starter) { const a = { velo: clamp(t + rnd(-8, 8), 15, 97), ctrl: clamp(t + rnd(-8, 8), 15, 97), stuff: clamp(t + rnd(-8, 8), 15, 97), sta: clamp(starter ? t + rnd(0, 12) : t - rnd(5, 18), 15, 97) }; return { id:'P' + (PID++), type:'P', name: randName(), age, a, pot: clamp(t + rnd(0, 18) - Math.max(0, age - 24) * 3, 40, 97), team, st: pl(), car: pl() }; }
+const POSN = ['捕手','一壘','二壘','游擊','三壘','左外','中外','右外','指定'];
+function genLeague(pro) {
+  const src = pro ? PRO_TEAMS : HS_TEAMS, players = C.players || {};
+  const teams = src.map(([n, c, m]) => ({ n, c, m, w:0, l:0, rs:0, ra:0, bats: [], pits: [] }));
+  for (const t of teams) {
+    const lvl = pro ? rnd(56, 64) : rnd(32, 42);
+    for (let i = 0; i < 11; i++) { const b = mkB(lvl + (i === 0 ? rnd(12, 20) : i < 3 ? rnd(5, 12) : i < 9 ? rnd(-2, 5) : rnd(-10, -2)), pro ? ri(20, 34) : ri(16, 18), t.n); b.pos = POSN[i % 9]; players[b.id] = b; t.bats.push(b.id); }
+    const np = t.n === C.team ? 8 : 9;
+    for (let i = 0; i < np; i++) { const p = mkP(lvl + (i === 0 ? rnd(12, 20) : i < 4 ? rnd(3, 10) : i === 4 ? rnd(6, 12) : rnd(-6, 3)), pro ? ri(20, 34) : ri(16, 18), t.n, i < 4); players[p.id] = p; t.pits.push(p.id); }
+  }
+  C.players = players; C.teams = teams;
+  teams.find(t => t.n === C.team).pits.push('ME'); ME().team = C.team;
 }
-function drawPicks() {
+const team = n => C.teams.find(t => t.n === n);
+const myTeam = () => team(C.team);
+const teamOvr = t => { const b = t.bats.map(id => ovrOf(P(id))).sort((a, b) => b - a).slice(0, 9), p = t.pits.map(id => ovrOf(P(id))).sort((a, b) => b - a).slice(0, 6); return Math.round((b.reduce((s, v) => s + v, 0) / 9 + p.reduce((s, v) => s + v, 0) / 6) / 2); };
+function staff(t) {
+  // 先發輪值（4 人）與牛棚
+  const ps = t.pits.filter(id => !(id === 'ME' && C.injury)).map(id => ({ id, o: ovrOf(P(id)), s: P(id).a.sta, v: ovrOf(P(id)) + (id === 'ME' ? (C.trust - 50) * 0.15 : 0) }));
+  const rot = [...ps].sort((a, b) => (b.v + b.s * 0.4) - (a.v + a.s * 0.4)).slice(0, 4).map(x => x.id);
+  const pen = ps.filter(x => !rot.includes(x.id)).sort((a, b) => b.v - a.v).map(x => x.id);
+  return { rot, closer: pen[0], setup: pen[1], pen };
+}
+function lineup(t) { return t.bats.map(id => P(id)).sort((a, b) => ovrOf(b) - ovrOf(a)).slice(0, 9).map(p => p.id); }
+
+// ===================== 建立 =====================
+let picks = [], dev = null, look = { skin:2, hair:0, hc:0 }, num = 18;
+function renderCreate() {
+  $('iName').value = randName(); num = ri(1, 99); $('iNum').value = num; picks = []; dev = null; look = { skin: ri(0,4), hair: ri(0,3), hc: ri(0,4) };
+  const last = LEG.lives[0];
+  $('legacy').innerHTML = LEG.lives.length ? `<div class="card" style="font-size:14px;line-height:1.7">第 <b class="gold">${LEG.lives.length + 1}</b> 世<br>${LEG.talents.length ? '天賦：' + LEG.talents.map(k => `<b class="gold">${MEMORIES[k].t}</b>（${MEMORIES[k].d}）`).join('、') + '<br>' : ''}${LEG.inherit ? `傳承：${LEG.inherit.label} +${LEG.inherit.v}<br>` : ''}<span class="muted">前世：${last.name}・${last.summary}</span></div>` : '';
+  drawCreate();
+}
+function drawCreate() {
+  $('cAvatar').innerHTML = `<div style="width:84px;height:84px;border-radius:18px;overflow:hidden;flex:none">${bbAvatar('#5aa9ff', num, look.skin)}</div><div><b style="font-size:22px">#${num}</b><div class="muted">投手</div></div>`;
   $('pPick').innerHTML = ''; $('dPick').innerHTML = '';
   for (const p of OFFSPEED) {
     const b = document.createElement('button'); b.className = 'opt' + (picks.includes(p) ? ' sel' : ''); b.innerHTML = `${p}<small>${PITCHES[p].d}</small>`;
-    b.onclick = () => { if (picks.includes(p)) picks = picks.filter(x => x !== p); else if (picks.length < 2) { picks.push(p); if (dev === p) dev = null; } drawPicks(); };
-    $('pPick').appendChild(b);
-    const d = document.createElement('button'); d.className = 'opt' + (dev === p ? ' sel' : ''); d.innerHTML = `${p}<small>${PITCHES[p].d}</small>`;
-    d.disabled = picks.includes(p); d.onclick = () => { dev = p; drawPicks(); };
-    $('dPick').appendChild(d);
+    b.onclick = () => { if (picks.includes(p)) picks = picks.filter(x => x !== p); else if (picks.length < 2) { picks.push(p); if (dev === p) dev = null; } drawCreate(); }; $('pPick').appendChild(b);
+    const d = document.createElement('button'); d.className = 'opt' + (dev === p ? ' sel' : ''); d.innerHTML = `${p}<small>${PITCHES[p].d}</small>`; d.disabled = picks.includes(p); d.onclick = () => { dev = p; drawCreate(); }; $('dPick').appendChild(d);
   }
   $('bStart').disabled = picks.length !== 2 || !dev;
 }
 $('bRnd').onclick = () => $('iName').value = randName();
+$('bLook').onclick = () => { look = { skin: ri(0,4), hair: ri(0,3), hc: ri(0,4) }; drawCreate(); };
+$('iNum').oninput = () => { const v = parseInt($('iNum').value, 10); if (!isNaN(v)) { num = clamp(v, 0, 99); drawCreate(); } };
 $('bStart').onclick = () => {
-  const inh = LEG.inherit || {};
-  const bonusAll = has('K1000') ? 3 : 0;
-  C = { name: ($('iName').value.trim() || randName()).slice(0, 6), life: LEG.lives.length + 1, school: pick(SCHOOLS),
-    phase:'HS', year:1, week:1, age:16, num: ri(1, 99), skin: ri(0, 3),
-    velo: ri(28, 36) + (has('DRAFT1') ? 6 : 0) + (inh.k === 'velo' ? inh.v : 0) + bonusAll,
-    ctrl: ri(28, 36) + (has('ERA_KING') ? 6 : 0) + (inh.k === 'ctrl' ? inh.v : 0) + bonusAll,
-    sta:  ri(28, 36) + (inh.k === 'sta' ? inh.v : 0) + bonusAll,
-    pitches: { '直球': 0 }, dev: { p: dev, lv: 5 }, fatigue: 0, injury: 0, bond: 20, trust: 20, money: 0,
-    team: null, level:'2軍', role:'先發', proYear:0, oneArmyYears:0, salary:0, round:0,
-    season: newSeason(), career: newLine(), seasons: [], tourney: [], memories: [], highlights: [], rival: null, peak: {}, note: '' };
-  for (const p of picks) C.pitches[p] = ri(18, 26) + (inh.k === 'pitch' ? inh.v : 0) + bonusAll;
-  newRival();
-  const coach = LEG.lives[0];
-  C.note = coach ? `你進了${C.school}棒球隊。總教練竟是 <b class="gold">${coach.name}</b>——前世的你。他看著你投了一球，點點頭：「比我當年好。」` : `你進了${C.school}棒球隊，成為一年級投手。`;
-  saveRun(); showHub();
-};
-function newLine() { return { g:0, outs:0, h:0, bb:0, k:0, r:0, w:0, l:0, sv:0 }; }
-function newSeason() { return newLine(); }
-function newRival() { C.rival = { name: randName(), faced: 0, won: 0, res: [] }; }
-
-// ===================== 能力 =====================
-const pitchLv = p => p === '直球' ? C.velo : C.pitches[p];
-function ovr() {
-  const lv = Object.entries(C.pitches).filter(([p]) => p !== '直球').map(([,v]) => v).sort((a,b) => b - a);
-  const top2 = ((lv[0] || 0) + (lv[1] || 0)) / 2;
-  return C.velo * 0.33 + C.ctrl * 0.3 + top2 * 0.27 + C.sta * 0.1;
-}
-const kmh = () => Math.round(125 + C.velo * 0.42);
-function growth(k) {
-  let g = C.phase === 'HS' ? 1 : C.age <= 27 ? 0.85 : C.age <= 31 ? 0.6 : 0.35;
-  if (k === 'sta' && has('SHUTOUT')) g *= 1.25;
-  if (k === 'pitch' && has('K10')) g *= 1.25;
-  if (k === 'ctrl' && has('W10')) g *= 1.25;
-  if (k === 'velo' && has('SV25')) g *= 1.25;
-  return g;
-}
-const era = l => l.outs ? l.r * 27 / l.outs : 0;
-const whip = l => l.outs ? (l.h + l.bb) * 3 / l.outs : 0;
-const ip = o => Math.floor(o/3) + (o % 3 ? '.' + (o % 3) : '');
-
-// ===================== 主畫面 =====================
-function showOnly(id) { ['sTitle','sCreate','sHub','sHall'].forEach(x => $(x).classList.toggle('hide', x !== id)); window.scrollTo(0,0); }
-function showHub() { showOnly('sHub'); renderHub(); }
-function sbar(l, v, col) { return `<div class="stat"><span class="l">${l}</span><div class="bar"><i style="width:${Math.min(100, v)}%;background:${col}"></i></div><span class="v">${Math.round(v)}</span></div>`; }
-function renderHub() {
-  $('hArt').innerHTML = bbArt(C.injury ? 'injury' : C.phase === 'HS' ? 'school' : 'bullpen', myCol(), C.week + C.year * 9 + C.proYear * 5);
-  $('hAv').innerHTML = bbAvatar(myCol(), C.num || 18, C.skin || 1);
-  $('hName').textContent = C.name;
-  $('hSub').textContent = C.phase === 'HS' ? `${C.school}・高${['一','二','三'][C.year-1]}` : `${C.team}・${C.level}・${C.role}`;
-  $('hWhen').innerHTML = C.phase === 'HS' ? `<b>第 ${C.week} 週</b><div class="muted" style="font-size:14px">夏季大賽前 ${9 - C.week} 週</div>` : `<b>職業第 ${C.proYear} 年・第 ${C.week} 週</b><div class="muted" style="font-size:14px">${C.age} 歲・年薪 ${C.salary} 萬</div>`;
-  let s = sbar(`球速`, C.velo, '#e5605a').replace('<span class="v">', `<span class="v" title="">`) + `<div class="muted" style="font-size:13px;margin:-2px 0 4px 72px">最快約 ${kmh()} km/h</div>`;
-  s += sbar('控球', C.ctrl, '#5fa8ff') + sbar('體力', C.sta, '#6fcf8a');
-  for (const [p, v] of Object.entries(C.pitches)) if (p !== '直球') s += sbar(p, v, '#c792ea');
-  if (C.dev) s += sbar(C.dev.p + '*', C.dev.lv, '#6b5a85');
-  s += `<div class="chips"><span class="chip">綜合 ${Math.round(ovr())}</span><span class="chip ${C.fatigue >= 70 ? 'bad' : ''}">疲勞 ${Math.round(C.fatigue)}</span>
-    ${C.injury ? `<span class="chip bad">傷停 ${C.injury} 週</span>` : ''}<span class="chip">捕手默契 ${C.bond}</span><span class="chip">教練信任 ${C.trust}</span>
-    ${C.phase === 'PRO' ? `<span class="chip">存款 ${C.money} 萬</span>` : ''}</div>${C.dev ? '<div class="muted" style="font-size:13px;margin-top:6px">* 開發中球種，練到 40 可以實戰</div>' : ''}`;
-  $('hStats').innerHTML = s;
-  $('hNote').innerHTML = C.note || '本週要怎麼練？';
-  $('hNote').classList.toggle('hide', !C.note);
-  const A = [];
-  if (C.injury) A.push(['復健', `還要 ${C.injury} 週`, () => turn('rehab')]);
-  else {
-    A.push(['球威訓練', '提升球速', () => turn('velo')], ['控球訓練', '提升控球', () => turn('ctrl')],
-      ['變化球練習', '選擇球種練習', () => pitchMenu()], ['體力跑步', '撐更多局數', () => turn('sta')],
-      ['與捕手研究配球', '默契 +、控球微幅', () => turn('bond')], ['休息', '疲勞大幅下降', () => turn('rest')]);
+  const inh = LEG.inherit, S = pick(HS_TEAMS), all = (has('ACE') ? 0 : 0);
+  C = { name: ($('iName').value.trim() || randName()).slice(0, 6), look, num, team: S[0], phase:'HS', year:1, week:1, age:16, iq:25, fatigue:0, injury:0,
+    trust: 30 + (has('ACE') ? 25 : 0), morale:60, chem:30, money:0, salary:0, contract:0, role:'先發', seasons: [], memories: [], highlights: [], ach: {}, rings:0, allstars:0, aces:0, mvps:0, proYear:0, awards: [], note:'', players: {}, dev: { p: dev, lv: 8 } };
+  const a = { velo: ri(36, 43) + (has('DRAFT1') ? 6 : 0) + (inh && inh.k === 'velo' ? inh.v : 0), ctrl: ri(36, 43) + (inh && inh.k === 'ctrl' ? inh.v : 0), sta: ri(36, 43) + (inh && inh.k === 'sta' ? inh.v : 0) };
+  const pi = { '直球': 0 }; for (const p of picks) pi[p] = ri(34, 42) + (inh && inh.k === 'pitch' ? inh.v : 0);
+  C.players.ME = { id:'ME', type:'P', me:true, name: C.name, age:16, a, pi, pot: ri(74, 88) + (has('UNDRAFTED') ? 3 : 0) + (has('ACE') ? 4 : 0), team: C.team, st: pl(), car: pl() };
+  const egg = eggOf(num, [...picks, dev]);
+  if (egg) {
+    const me = ME(); me.pot = egg.pot; C.egg = egg.n + (egg.need || ''); C.eggX = egg.x || null;
+    for (const [k, v] of Object.entries(egg.b)) { if (k in me.a) me.a[k] = Math.min(99, me.a[k] + v); else if (k in me.pi) me.pi[k] = Math.min(99, me.pi[k] + v); else if (C.dev.p === k) C.dev.lv += v; }
+    if (egg.x === 'allpitch') for (const p of OFFSPEED) if (!(p in me.pi) && p !== C.dev.p) { me.pi[p] = 30; break; }
+    LEG.eggs[C.egg] = (LEG.eggs[C.egg] || 0) + 1; saveLeg();
   }
-  if (C.phase === 'PRO' && C.age >= 33) A.push(['宣布引退', '結束職業生涯', () => retireAsk()]);
-  $('hActs').innerHTML = '';
-  for (const [t, d, f] of A) { const b = document.createElement('button'); b.className = 'ghost'; b.innerHTML = `${t}<small>${d}</small>`; b.onclick = f; $('hActs').appendChild(b); }
-  const L = C.season;
-  $('hSeason').innerHTML = `<b>${C.phase === 'HS' ? '本學年' : '本季'}成績</b>
-    <table style="margin-top:6px"><tr><th>登板</th><th>勝</th><th>敗</th><th>救援</th><th>局數</th><th>三振</th><th>防禦率</th><th>WHIP</th></tr>
-    <tr><td>${L.g}</td><td>${L.w}</td><td>${L.l}</td><td>${L.sv}</td><td>${ip(L.outs)}</td><td>${L.k}</td><td>${fmt1(era(L))}</td><td>${fmt1(whip(L))}</td></tr></table>
-    ${C.rival ? `<div style="margin-top:8px;font-size:15px">宿敵打者 <b class="bad">${C.rival.name}</b>：本季對決 ${C.rival.faced}/3${C.rival.res.length ? '　' + C.rival.res.join('、') : ''}</div>` : ''}`;
+  genLeague(false); newSeason();
+  const coach = LEG.lives[0];
+  C.note = (egg ? `<b class="gold">✨ 傳奇背號：${num} 號「${egg.t}」</b><br>致敬 ${egg.who}。潛力上限 <b class="gold">${egg.pot}</b>${Object.keys(egg.b).length ? '，' + Object.entries(egg.b).map(([k, v]) => `${{ velo:'球速', ctrl:'控球', sta:'體力' }[k] || k} +${v}`).join('、') : ''}${egg.x === 'clutch' ? '，關鍵時刻更冷血' : egg.x === 'allpitch' ? '，多學一種變化球' : ''}。<br><br>` : '') +
+    (coach ? `你進了${C.team}棒球隊。總教練是 <b class="gold">${coach.name}</b>——前世的你。「讓我看看你的直球。」` : `你進了${C.team}棒球隊，背號 ${C.num}。高中三年，目標是選秀會。`);
+  saveRun(); showHub(); if (egg) toast(`✨ 傳奇背號「${egg.t}」！`, `致敬 ${egg.who}・潛力 ${egg.pot}`);
+};
+
+// ===================== 賽季 =====================
+function newSeason() {
+  const pro = C.phase === 'PRO';
+  for (const t of C.teams) { t.w = t.l = t.rs = t.ra = 0; }
+  for (const id in C.players) C.players[id].st = C.players[id].type === 'B' ? bl() : pl();
+  C.week = 1; C.allstarDone = false; C.weeks = pro ? 10 : 6; C.gpw = pro ? 3 : 1;
+  if (!pro) { const ot = pick(C.teams.filter(t => t.n !== C.team)); C.rival = ot.bats.map(P).sort((a, b) => ovrOf(b) - ovrOf(a))[0].name; }
+  assignRole();
 }
-function pitchMenu() {
-  const opts = Object.keys(C.pitches).filter(p => p !== '直球').map(p => ({ label: `${p}（${Math.round(C.pitches[p])}）`, fn: () => turn('pitch', p) }));
-  if (C.dev) opts.push({ label: `${C.dev.p}（開發中 ${Math.round(C.dev.lv)}/40）`, fn: () => turn('dev') });
-  opts.push({ label: '取消', fn: d => d() });
-  scene('變化球練習', '要練哪一種？', opts);
+function assignRole() {
+  const s = staff(myTeam()), old = C.role;
+  C.role = s.rot.includes('ME') ? '先發' : s.closer === 'ME' ? '終結者' : s.pen.indexOf('ME') <= 3 ? '中繼' : '敗戰處理';
+  if (C.phase === 'HS') C.role = '先發';
+  if (C.phase === 'PRO' && C.role === '先發' && old !== '先發') unlock('rot');
 }
+
+// ===================== 比賽引擎 =====================
+function pAttrs(id) { const p = P(id); return { velo: p.a.velo, ctrl: p.a.ctrl, stuff: stuffOf(p), sta: p.a.sta }; }
+function newGame(home, away, opt) {
+  const G = { home, away, opt, inn: 1, top: true, outs: 0, bases: [null, null, null], s: { [home.n]: 0, [away.n]: 0 }, line: { [home.n]: [], [away.n]: [] }, pbox: {}, bbox: {}, feed: [], hist: [0], innings: C.phase === 'HS' ? 7 : 9, clutchN: 0, clutchHit: false };
+  for (const t of [home, away]) {
+    const st = staff(t), lu = lineup(t);
+    const rot = t.n === C.team && !opt.myStart ? st.rot.filter(x => x !== 'ME') : st.rot;
+    const starter = opt.myStart && t.n === C.team ? 'ME' : pick(rot.length ? rot : st.pen.filter(x => x !== 'ME'));
+    G[t.n] = { lu, bi: 0, staff: st, pit: starter, pc: 0, used: [starter], lead: null };
+    G.pbox[starter] = Object.assign(pl(), { g:1, gs:1, enterLead: 0 });
+    for (const id of lu) G.bbox[id] = Object.assign(bl(), { g:1 });
+  }
+  return G;
+}
+const defT = G => G.top ? G.home : G.away, offT = G => G.top ? G.away : G.home;
+function fatigueF(G, t) { const st = G[t.n], p = P(st.pit), lim = 40 + p.a.sta * 0.9; return clamp(1 - Math.max(0, st.pc - lim) / 70, 0.6, 1) * (st.pit === 'ME' ? (1 - C.fatigue / 400) : 1); }
+function paProbs(G, pid, bid, mod = {}) {
+  const pa = pAttrs(pid), b = P(bid).a, ff = fatigueF(G, defT(G));
+  const lvl = C.phase === 'HS' ? 40 : 60;
+  const pR = (pa.velo * 0.35 + pa.ctrl * 0.25 + pa.stuff * 0.4) * ff + (pid === 'ME' ? (C.morale - 50) * 0.04 + (C.chem - 50) * 0.03 : 0) + (mod.bonus || 0);
+  const bR = b.con * 0.45 + b.pow * 0.2 + b.eye * 0.35;
+  const d = (pR - bR) / 100;
+  const k = clamp(0.2 + d * 0.55 + (pa.stuff - lvl) * 0.0015, 0.05, 0.48);
+  const bb = clamp(0.085 - (pa.ctrl * ff - lvl) * 0.0013 + (b.eye - lvl) * 0.0011, 0.02, 0.18);
+  const h = clamp(0.235 - d * 0.38 + (b.con - lvl) * 0.0012, 0.1, 0.4);
+  const hr = clamp(0.085 + (b.pow - lvl) * 0.0035 - (pa.velo - lvl) * 0.0008, 0.02, 0.32);
+  return { k, bb, h, hr };
+}
+function adv(G, type, bid) {
+  const B = G.bases; let runs = []; const push = id => { if (id) runs.push(id); };
+  if (type === 'BB') { if (B[0] && B[1] && B[2]) push(B[2]); if (B[0] && B[1]) B[2] = B[2] && !(B[0] && B[1] && B[2]) ? B[2] : B[1]; if (B[0]) B[1] = B[0]; B[0] = bid; }
+  else if (type === '1B') { push(B[2]); let r2 = B[1]; B[2] = null; if (r2 && Math.random() < 0.6) { push(r2); r2 = null; } B[2] = r2; if (B[0]) { if (!B[2] && Math.random() < 0.3) B[2] = B[0]; else B[1] = B[0]; } else B[1] = null; if (B[2] === B[1]) B[1] = null; B[0] = bid; }
+  else if (type === '2B') { push(B[2]); push(B[1]); let r1 = B[0]; B[2] = null; B[1] = null; if (r1 && Math.random() < 0.45) { push(r1); r1 = null; } B[2] = r1; B[1] = bid; B[0] = null; }
+  else if (type === '3B') { push(B[2]); push(B[1]); push(B[0]); G.bases = [null, null, bid]; return runs; }
+  else if (type === 'HR') { push(B[2]); push(B[1]); push(B[0]); push(bid); G.bases = [null, null, null]; return runs; }
+  return runs;
+}
+function ev(G, txt, cls, t) { if (!G.opt.watch) return; G.feed.push({ txt, cls, t: t ? t.c : null, inn: `${G.inn}${G.top ? '上' : '下'}` }); }
+// 一個打席
+function plateAppearance(G, force) {
+  const D = defT(G), O = offT(G), ds = G[D.n], os = G[O.n];
+  const pid = ds.pit, bid = os.lu[os.bi % 9];
+  const pr = force ? force.probs : paProbs(G, pid, bid);
+  const pb = G.pbox[pid], bb = G.bbox[bid];
+  const r = Math.random();
+  let type;
+  if (force && force.result) type = force.result;
+  else if (r < pr.k) type = 'K'; else if (r < pr.k + pr.bb) type = 'BB';
+  else if (r < pr.k + pr.bb + pr.h) { const r2 = Math.random(); type = r2 < pr.hr ? 'HR' : r2 < pr.hr + 0.2 ? '2B' : r2 < pr.hr + 0.2 + 0.02 * (P(bid).a.spd / 60) ? '3B' : '1B'; }
+  else type = 'OUT';
+  const pc = type === 'K' ? ri(4, 7) : type === 'BB' ? ri(5, 7) : ri(1, 5); ds.pc += pc; pb.pc += pc;
+  const bn = P(bid).name, pn = pid === 'ME' ? C.name : P(pid).name, mine = pid === 'ME';
+  let runs = [], txt = '', outs = 0, oType = '';
+  G.lastPA = { pid, bid, type };
+  if (type === 'K') { outs = 1; bb.ab++; bb.k++; pb.k++; txt = `${bn}${pick(['揮棒落空','站著不動'])}，三振！`; }
+  else if (type === 'BB') { bb.bb++; pb.bb++; runs = adv(G, 'BB', bid); txt = `${bn}選到四壞保送`; }
+  else if (type === 'OUT') {
+    bb.ab++; outs = 1; oType = pick(['GB','GB','FB','FB','LD','PU']);
+    const where = { GB: pick(['游擊','二壘','三壘','一壘']) + '滾地球', FB: pick(['左外野','中外野','右外野']) + '飛球', LD: pick(['游擊','二壘','中外野']) + '平飛球被接殺', PU: '內野高飛球' }[oType];
+    txt = `${bn}打成${where}出局`;
+    if (oType === 'GB' && G.bases[0] && G.outs < 2 && Math.random() < 0.35) { outs = 2; G.bases[0] = null; txt = `${bn}打成雙殺打！`; }
+    else if (oType === 'FB' && G.bases[2] && G.outs < 2 && Math.random() < 0.6) { runs.push(G.bases[2]); G.bases[2] = null; txt += '，三壘跑者回本壘（高飛犧牲打）'; }
+    else if (oType === 'GB' && G.outs < 2) { if (G.bases[1] && !G.bases[2]) { G.bases[2] = G.bases[1]; G.bases[1] = null; } }
+  } else {
+    bb.ab++; bb.h++; pb.h++; if (type === '2B') bb.d++; if (type === '3B') bb.t++; if (type === 'HR') { bb.hr++; pb.hr++; }
+    runs = adv(G, type, bid);
+    txt = { '1B': `${bn}擊出${pick(['左外野','中外野','右外野','穿越二遊間的'])}安打`, '2B': `${bn}${pick(['左外野','右外野'])}二壘安打！`, '3B': `${bn}三壘安打！`, 'HR': `${bn}${pick(['左外野','中外野','右外野'])}全壘打！！` }[type];
+  }
+  G.lastPA.oType = oType;
+  for (const rid of runs) { G.s[O.n]++; if (G.bbox[rid]) G.bbox[rid].r++; bb.rbi++; pb.r++; }
+  if (runs.length) txt += `（得 ${runs.length} 分）`;
+  G.outs += outs; pb.outs += outs;
+  os.bi++;
+  checkLead(G, O, D);
+  const big = type === 'HR' || runs.length >= 2;
+  ev(G, (mine ? (type === 'K' ? '🔥 ' : '') : '') + txt, mine ? 'me' : big ? 'big' : '', O);
+  if (mine && type === 'K' && G.outs >= 3) {} // nothing
+  return { type, runs: runs.length };
+}
+function checkLead(G, O, D) {
+  const lo = G.s[O.n] - G.s[D.n], before = G.leader;
+  const now = lo > 0 ? O.n : lo < 0 ? D.n : null;
+  if (now !== before) {
+    G.leader = now;
+    if (now === O.n) { G.wCand = { team: O.n, pid: G[O.n].pit }; G.lCand = { team: D.n, pid: G[D.n].pit }; }
+    else if (now === null) { G.wCand = null; G.lCand = null; }
+  }
+}
+function changePitcher(G, t) {
+  const st = G[t.n], cur = st.pit, p = P(cur), lim = 40 + p.a.sta * 0.95;
+  const isStarter = st.used.length === 1;
+  const lead = G.s[t.n] - G.s[(t === G.home ? G.away : G.home).n];
+  const pb = G.pbox[cur];
+  let pull = false;
+  if (isStarter) pull = st.pc > lim + 8 || (pb.r >= 5 && G.inn >= 3) || pb.r >= 7;
+  else pull = pb.outs >= (cur === st.staff.closer ? 3 : 3 + (Math.random() < 0.3 ? 3 : 0)) || pb.r >= 3;
+  // 九局搶救
+  const late = G.inn >= G.innings, closer = st.staff.closer;
+  if (late && lead > 0 && lead <= 3 && cur !== closer && closer && !st.used.includes(closer)) pull = true;
+  if (!pull) return;
+  let next;
+  if (late && lead > 0 && lead <= 3 && closer && !st.used.includes(closer)) next = closer;
+  else if (G.inn >= G.innings - 2 && lead >= -1 && st.staff.setup && !st.used.includes(st.staff.setup)) next = st.staff.setup;
+  else next = st.staff.pen.find(id => !st.used.includes(id) && id !== closer) || st.staff.pen.find(id => !st.used.includes(id));
+  if (!next) return;
+  st.pit = next; st.pc = 0; st.used.push(next);
+  G.pbox[next] = Object.assign(pl(), { g:1, enterLead: lead });
+  ev(G, `🔄 ${t.n}換投：${next === 'ME' ? C.name : P(next).name}上場`, next === 'ME' ? 'me' : 'q');
+}
+function halfDone(G) {
+  const O = offT(G); G.line[O.n].push(G.halfRuns || 0); G.halfRuns = 0;
+  G.outs = 0; G.bases = [null, null, null];
+  if (G.top) { G.top = false; if (G.inn >= G.innings && G.s[G.home.n] > G.s[G.away.n]) return true; }
+  else { if (G.inn >= G.innings && G.s[G.home.n] !== G.s[G.away.n]) return true; G.inn++; G.top = true; if (G.inn > G.innings + 3) return true; }
+  return false;
+}
+function gameOver(G) { return G.top === false && G.inn >= G.innings && G.s[G.home.n] > G.s[G.away.n]; }
+function stepPA(G, force) {
+  const before = G.s[offT(G).n];
+  const r = plateAppearance(G, force);
+  G.halfRuns = (G.halfRuns || 0) + (G.s[offT(G).n] - before);
+  G.hist.push(G.s[G.home.n] - G.s[G.away.n]);
+  if (!G.top && G.inn >= G.innings && G.s[G.home.n] > G.s[G.away.n]) { G.over = true; G.walkoff = true; }
+  return r;
+}
+function simAll(G) {
+  while (!G.over) {
+    changePitcher(G, defT(G));
+    if (G.opt.auto !== false && isClutch(G)) { G.clutchN++; autoClutch(G); }
+    else stepPA(G);
+    if (G.over) break;
+    if (G.outs >= 3) { if (halfDone(G)) G.over = true; }
+  }
+  if (G.s[G.home.n] === G.s[G.away.n]) { G.s[pick([G.home, G.away]).n]++; }
+  return G;
+}
+function isClutch(G) {
+  const D = defT(G); if (G[D.n].pit !== 'ME' || G.clutchN >= 2 || G.outs > 2) return false;
+  const lead = G.s[D.n] - G.s[offT(G).n], risp = G.bases[1] || G.bases[2];
+  return (risp && G.outs === 2 && Math.abs(lead) <= 3 && G.inn >= 4) || (G.bases[0] && G.bases[1] && G.bases[2]) || (G.inn >= G.innings && lead > 0 && lead <= 2 && G.outs === 2);
+}
+const clutchBonus = () => (C.eggX === 'clutch' ? 8 : 0) + C.iq / 8 + (has('HS_CHAMP') ? 6 : 0) + (has('CLUTCH') ? 10 : 0) + (C.chem - 50) * 0.08;
+function clutchOptions(G) {
+  const os = G[offT(G).n], bid = os.lu[os.bi % 9], b = P(bid), me = ME();
+  const weakT = b.a.pow > b.a.con ? 'brk' : 'fast', weakZ = pick(['內角高','外角低','內角低','外角高']);
+  const read = Math.random() < 0.45 + C.chem / 250 + C.iq / 300;
+  const types = Object.keys(me.pi).map(p => ({ p, lv: p === '直球' ? me.a.velo : me.pi[p] })).sort((a, b) => b.lv - a.lv).slice(0, 3);
+  const base = paProbs(G, 'ME', bid);
+  return { bid, hint: read ? `打者怕${weakZ}的${weakT === 'fast' ? '快速球' : '變化球'}` : '先試探看看', opts: types.map(t => {
+    const match = read && PITCHES[t.p].cat === weakT;
+    const bonus = (t.lv - 60) * 0.25 + (match ? 9 : 0) + clutchBonus();
+    const pr = paProbs(G, 'ME', bid, { bonus });
+    const pOut = 1 - pr.bb - pr.h;
+    return { p: t.p, lv: t.lv, zone: match ? weakZ : pick(['內角','外角','低角度']), pr, pOut, match };
+  }) };
+}
+function autoClutch(G) { const o = clutchOptions(G); const best = o.opts.sort((a, b) => b.pOut - a.pOut)[0]; resolveClutch(G, best); }
+function resolveClutch(G, o) { const r = stepPA(G, { probs: o.pr }); if (r.type === 'K' || r.type === 'OUT') G.clutchHit = true; return r; }
+
+// 勝敗救援、數據寫入
+function finalize(G) {
+  const h = G.home, a = G.away, hs = G.s[h.n], as = G.s[a.n];
+  const win = hs > as ? h : a, lose = win === h ? a : h;
+  // 勝投：先發投滿 5 局且離場時領先並守住；否則取得最後領先時的投手
+  let wp = G.wCand && G.wCand.team === win.n ? G.wCand.pid : G[win.n].used[0];
+  const ws = G[win.n].used[0];
+  if (wp === ws && G.pbox[ws].outs < (G.innings === 7 ? 12 : 15)) wp = G[win.n].used[1] || ws;
+  const lp = G.lCand && G.lCand.team === lose.n ? G.lCand.pid : G[lose.n].used[0];
+  G.pbox[wp].w = 1; G.pbox[lp].l = 1;
+  const fin = G[win.n].used[G[win.n].used.length - 1];
+  if (fin !== wp && G.pbox[fin].enterLead > 0 && G.pbox[fin].enterLead <= 3) G.pbox[fin].sv = 1;
+  if (!G.opt.playoff) { win.w++; lose.l++; h.rs += hs; h.ra += as; a.rs += as; a.ra += hs;
+    for (const id in G.pbox) { const p = P(id), b = G.pbox[id]; for (const k of Object.keys(pl())) { p.st[k] += b[k] || 0; p.car[k] += b[k] || 0; } }
+    for (const id in G.bbox) { const p = P(id), b = G.bbox[id]; for (const k of Object.keys(bl())) { p.st[k] += b[k] || 0; p.car[k] += b[k] || 0; } } }
+  return { win, lose, wp, lp };
+}
+const era = s => s.outs ? s.r * 27 / s.outs : 0;
+const whip = s => s.outs ? (s.h + s.bb) * 3 / s.outs : 0;
+const ip = o => `${Math.floor(o / 3)}${o % 3 ? '.' + (o % 3) : ''}`;
+const avg = s => s.ab ? s.h / s.ab : 0;
+
+// ===================== 畫面 =====================
+function showOnly(id) { ['sTitle','sCreate','sHub','sHall'].forEach(x => $(x).classList.toggle('hide', x !== id)); window.scrollTo(0, 0); }
+function setTC() { const t = C && C.teams ? myTeam() : null; document.documentElement.style.setProperty('--tc', t ? t.c : '#3fa7d6'); }
+function showHub() { showOnly('sHub'); setTC(); renderHub(); }
+let tab = 'week', ltab = 'stand', lteam = null;
+document.querySelectorAll('#tabs button').forEach(b => b.onclick = () => { tab = b.dataset.t; renderHub(); window.scrollTo(0, 0); });
+function meter(label, v, col) { return `<div class="meter"><div class="t"><span>${label}</span><b>${Math.round(v)}</b></div><div class="b"><i style="width:${clamp(v, 0, 100)}%;background:${col}"></i></div></div>`; }
+const kmh = () => Math.round(125 + ME().a.velo * 0.42);
+function renderHub() {
+  const T = myTeam(), o = ovr();
+  if (o >= 80) unlock('o80'); if (o >= 90) unlock('o90');
+  $('hero').innerHTML = `<div class="bg"></div><div class="bg2">${logo(T, 200)}</div>
+    <div class="in"><div class="av">${bbAvatar(T.c, C.num, C.look.skin)}</div><div style="flex:1;min-width:0"><div class="nm">${C.name}</div>
+    <div class="sub">投手・${C.age} 歲・最快 ${kmh()} km/h</div><div class="sub mini-team" style="margin-top:4px">${logo(T, 22)}<span>${T.n}・${C.role}</span></div>
+    <div class="sub" style="margin-top:4px">${C.phase === 'HS' ? `高${'一二三'[C.year-1]}` : `職業第 ${C.proYear} 年`}・第 ${C.week}/${C.weeks} 週・戰績 <b>${T.w}-${T.l}</b></div></div>${badge(o)}</div>
+    <div class="meters">${meter('😊 士氣', C.morale, '#5fd68a')}${meter('🧤 捕手默契', C.chem, '#5aa9ff')}${meter('😮‍💨 疲勞', C.fatigue, C.fatigue >= 70 ? '#ff6b6b' : '#ffb84d')}</div>`;
+  $('hNote').innerHTML = C.note; $('hNote').classList.toggle('hide', !C.note);
+  document.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('on', b.dataset.t === tab));
+  ['week','me','league','ach'].forEach(t => $('t' + t[0].toUpperCase() + t.slice(1)).classList.toggle('hide', tab !== t));
+  ({ week: renderWeek, me: renderMe, league: renderLeague, ach: renderAch })[tab]();
+}
+const TRAIN = [['velo','🔥','球威訓練'],['ctrl','🎯','控球訓練'],['pitch','🌀','變化球練習'],['sta','🏃','體力跑步'],['dev','🧪','開發新球種'],['bond','🧤','牛棚配球'],['iq','📼','研究打者'],['rest','😴','休息']];
+function renderWeek() {
+  const L = ME().st;
+  let h = `<div class="card"><h3>📊 本季成績</h3><table><tr><th>登板</th><th>勝</th><th>敗</th><th>救援</th><th>局數</th><th>三振</th><th>防禦率</th><th>WHIP</th></tr>
+    <tr class="me"><td>${L.g}</td><td>${L.w}</td><td>${L.l}</td><td>${L.sv}</td><td>${ip(L.outs)}</td><td>${L.k}</td><td>${f2(era(L))}</td><td>${f2(whip(L))}</td></tr></table></div>`;
+  h += `<div class="card"><h3>🏋️ 本週訓練 <span class="muted" style="font-size:13px;font-weight:400">選一項，接著打本週 ${C.gpw} 場</span></h3><div class="trains" id="trainBtns"></div>
+    <div class="chips"><span class="chip">🧠 球商 ${C.iq}</span><span class="chip">📋 教練信任 ${C.trust}</span>${C.injury ? `<span class="chip bad">🩹 傷停 ${C.injury} 週</span>` : ''}${C.phase === 'PRO' ? `<span class="chip">💰 年薪 ${C.salary} 萬</span><span class="chip">📝 合約剩 ${C.contract} 年</span>` : ''}</div></div>`;
+  const R = aceRace(), myR = R.findIndex(r => r.id === 'ME');
+  h += `<div class="card"><h3>🏆 最佳投手排行 ${myR >= 0 ? `<span class="gold" style="font-size:13px">你第 ${myR + 1}</span>` : ''}</h3><table><tr><th></th><th class="l">投手</th><th class="l">球隊</th><th>勝</th><th>防禦率</th><th>三振</th></tr>${R.slice(0, 5).map((r, i) => { const s = P(r.id).st; return `<tr class="${r.id === 'ME' ? 'me' : ''}"><td>${i + 1}</td><td class="l">${r.id === 'ME' ? C.name : P(r.id).name}</td><td class="l"><span class="mini-team">${logo(team(P(r.id).team), 18)}</span></td><td>${s.w}</td><td>${f2(era(s))}</td><td>${s.k}</td></tr>`; }).join('')}</table></div>`;
+  if (C.phase === 'PRO' && C.age >= 33) h += `<button class="ghost" id="bRetire" style="width:100%">宣布引退</button>`;
+  $('tWeek').innerHTML = h;
+  for (const [k, ic, n] of TRAIN) {
+    if (k === 'dev' && !C.dev) continue;
+    const b = document.createElement('button'); b.className = 'tr';
+    const me = ME(), sub = k === 'rest' ? '疲勞 -45' : k === 'iq' ? `球商 ${C.iq}` : k === 'bond' ? `默契 ${Math.round(C.chem)}` : k === 'pitch' ? '選一種練' : k === 'dev' ? `${C.dev.p} ${Math.round(C.dev.lv)}/40` : `${{ velo:'球速', ctrl:'控球', sta:'體力' }[k]} ${Math.round(me.a[k])}`;
+    b.innerHTML = `<span class="ic">${ic}</span><span>${n}<small>${sub}</small></span>`;
+    if (C.injury && k !== 'rest') b.disabled = true;
+    b.onclick = () => k === 'pitch' ? pitchMenu() : train(k); $('trainBtns').appendChild(b);
+  }
+  if (C.injury) $('trainBtns').lastChild.innerHTML = `<span class="ic">🩹</span><span>復健<small>傷停 ${C.injury} 週</small></span>`;
+  if ($('bRetire')) $('bRetire').onclick = () => scene('引退', `你今年 ${C.age} 歲。要在這裡畫下句點嗎？`, [{ label:'宣布引退', main:true, fn:() => retire() }, { label:'再投一年', fn:() => closeScene() }], 'night');
+}
+function pitchMenu() { scene('變化球練習', '要練哪一種？', Object.keys(ME().pi).filter(p => p !== '直球').map(p => ({ label:`🌀 ${p}（${Math.round(ME().pi[p])}）`, fn:() => { closeScene(); train('pitch', p); } })).concat([{ label:'取消', fn:() => closeScene() }]), 'bullpen'); }
+function potGrade(v) { return v >= 92 ? 'S' : v >= 87 ? 'A+' : v >= 82 ? 'A' : v >= 77 ? 'B+' : v >= 72 ? 'B' : 'C'; }
+function renderMe() {
+  const me = ME(), K = me.car;
+  const row = (l, v, col) => `<div class="attr"><span class="l" style="width:52px">${l}</span><div class="bar"><i style="width:${v}%;background:${col}"></i><u style="left:${me.pot}%"></u></div><span class="v">${Math.round(v)}</span></div>`;
+  let bars = row('球速', me.a.velo, '#ff6b6b') + row('控球', me.a.ctrl, '#5aa9ff') + row('體力', me.a.sta, '#5fd68a');
+  for (const [p, v] of Object.entries(me.pi)) if (p !== '直球') bars += row(p, v, '#c792ea');
+  if (C.dev) bars += row(C.dev.p + '*', C.dev.lv, '#6b5a85');
+  $('tMe').innerHTML = `<div class="card"><h3>📈 能力</h3><div class="row" style="justify-content:center;gap:16px;margin-bottom:8px">${badge(ovr(), '總評')}${badge(Math.round(me.pot), '潛力 ' + potGrade(me.pot))}</div>${bars}
+    <div class="muted" style="font-size:12px;margin-top:4px">白線是潛力上限，越接近越難練${C.dev ? '；* 開發中球種，練到 40 可以實戰' : ''}</div>
+    <div class="chips"><span class="chip">💍 ${C.rings}</span><span class="chip">🏆 最佳投手 ${C.aces}</span><span class="chip">🌟 明星賽 ${C.allstars}</span>${C.phase === 'PRO' ? `<span class="chip">💰 存款 ${C.money} 萬</span>` : ''}</div></div>
+    <div class="card"><h3>📜 生涯</h3><div class="scroll-x"><table><tr><th class="l">年度</th><th>隊</th><th>登板</th><th>勝-敗</th><th>救援</th><th>局</th><th>三振</th><th>防禦率</th></tr>
+    ${C.seasons.map(x => `<tr><td class="l">${x.label}</td><td class="muted">${x.team.slice(0, 2)}</td><td>${x.g}</td><td>${x.w}-${x.l}</td><td>${x.sv}</td><td>${ip(x.outs)}</td><td>${x.k}</td><td>${f2(era(x))}</td></tr>`).join('')}
+    <tr class="me"><td class="l">生涯</td><td></td><td>${K.g}</td><td>${K.w}-${K.l}</td><td>${K.sv}</td><td>${ip(K.outs)}</td><td>${K.k}</td><td>${f2(era(K))}</td></tr></table></div>
+    <div class="muted" style="margin-top:6px;font-size:13px">${C.awards.length ? '獎項：' + C.awards.join('、') : ''}</div></div>`;
+}
+function aceScore(s, tn) { if (!s.outs) return -99; const t = team(tn), wp = t.w + t.l ? t.w / (t.w + t.l) : 0.5; return s.w * 2.2 + s.sv * 0.9 + s.k * 0.12 + s.outs / 3 * 0.25 - era(s) * 4 + wp * 6; }
+function aceRace() { const rows = []; for (const id in C.players) { const p = C.players[id]; if (p.type !== 'P' || !p.team || p.st.outs < 9) continue; rows.push({ id, v: aceScore(p.st, p.team) }); } return rows.sort((a, b) => b.v - a.v); }
+function pLeaders(stat, minOuts) { const rows = []; for (const id in C.players) { const p = C.players[id]; if (p.type !== 'P' || !p.team) continue; const s = p.st; if (stat === 'era' || stat === 'whip') { if (s.outs < minOuts) continue; rows.push({ id, v: stat === 'era' ? era(s) : whip(s) }); } else rows.push({ id, v: s[stat] }); } return rows.sort((a, b) => (stat === 'era' || stat === 'whip') ? a.v - b.v : b.v - a.v); }
+function bLeaders(stat, minAB) { const rows = []; for (const id in C.players) { const p = C.players[id]; if (p.type !== 'B' || !p.team) continue; const s = p.st; if (stat === 'avg') { if (s.ab < minAB) continue; rows.push({ id, v: avg(s) }); } else rows.push({ id, v: s[stat] }); } return rows.sort((a, b) => b.v - a.v); }
+const standings = () => [...C.teams].sort((a, b) => (b.w - b.l) - (a.w - a.l) || (b.rs - b.ra) - (a.rs - a.ra));
+function renderLeague() {
+  let h = `<div class="sub-tabs">${[['stand','📋 戰績'],['pit','⚾ 投手排行'],['bat','🏏 打者排行'],['teams','👥 球隊名單']].map(([k, n]) => `<button data-l="${k}" class="${ltab === k ? 'on' : ''}">${n}</button>`).join('')}</div>`;
+  const tg = Math.max(1, myTeam().w + myTeam().l);
+  const nm = id => id === 'ME' ? C.name : P(id).name;
+  const tbl = (title, rows, fmt, me) => `<div class="card"><h3>${title} ${me >= 0 ? `<span class="gold" style="font-size:13px">你第 ${me + 1}</span>` : ''}</h3><table>${rows.slice(0, 8).map((x, i) => `<tr class="${x.id === 'ME' ? 'me' : ''}"><td>${i + 1}</td><td class="l">${nm(x.id)}</td><td class="l"><span class="mini-team">${logo(team(P(x.id).team), 18)}<span class="muted" style="font-size:12px">${P(x.id).team}</span></span></td><td><b>${fmt(x.v)}</b></td></tr>`).join('')}</table></div>`;
+  if (ltab === 'stand') {
+    h += `<div class="card"><h3>📋 戰績排名 <span class="muted" style="font-size:12px;font-weight:400">前 4 名進季後賽</span></h3><table><tr><th></th><th class="l">球隊</th><th>勝</th><th>敗</th><th>得分</th><th>失分</th><th>總評</th></tr>${standings().map((t, i) => `<tr class="${t.n === C.team ? 'me' : ''}" ${i === 3 ? 'style="border-bottom:2px solid #ffb84d"' : ''}><td>${i + 1}</td><td class="l"><span class="mini-team">${logo(t, 22)}${t.n}</span></td><td>${t.w}</td><td>${t.l}</td><td>${t.rs}</td><td>${t.ra}</td><td class="muted">${teamOvr(t)}</td></tr>`).join('')}</table></div>`;
+  } else if (ltab === 'pit') {
+    const mo = Math.max(3, tg * 2);
+    for (const [k, n, f] of [['era','防禦率',v => f2(v)],['w','勝投',v => v],['k','三振',v => v],['sv','救援',v => v],['whip','WHIP',v => f2(v)]]) { const r = pLeaders(k, mo); h += tbl(n, r, f, r.findIndex(x => x.id === 'ME')); }
+  } else if (ltab === 'bat') {
+    const ma = Math.max(3, tg * 2.5);
+    for (const [k, n, f] of [['avg','打擊率',v => f3(v)],['hr','全壘打',v => v],['rbi','打點',v => v],['h','安打',v => v]]) h += tbl(n, bLeaders(k, ma), f, -1);
+  } else {
+    const t = team(lteam || C.team), st = staff(t);
+    h += `<div class="sub-tabs">${C.teams.map(x => `<button data-tm="${x.n}" class="${x.n === t.n ? 'on' : ''}">${x.m} ${x.n.slice(0, 2)}</button>`).join('')}</div>`;
+    const ps = t.pits.map(P).sort((a, b) => ovrOf(b) - ovrOf(a)), bs = t.bats.map(P).sort((a, b) => ovrOf(b) - ovrOf(a));
+    h += `<div class="card"><h3><span class="mini-team">${logo(t, 30)}${t.n}</span><span class="muted" style="font-size:13px;font-weight:400">${t.w}-${t.l}・總評 ${teamOvr(t)}</span></h3>
+      <div class="scroll-x"><table><tr><th class="l">投手</th><th>角色</th><th>年齡</th><th>總評</th><th>勝-敗</th><th>救援</th><th>防禦率</th></tr>${ps.map(p => `<tr class="${p.id === 'ME' ? 'me' : ''}"><td class="l">${p.id === 'ME' ? C.name : p.name}</td><td class="muted">${st.rot.includes(p.id) ? '先發' : st.closer === p.id ? '終結' : '牛棚'}</td><td>${p.age}</td><td>${ovrChip(ovrOf(p))}</td><td>${p.st.w}-${p.st.l}</td><td>${p.st.sv}</td><td>${f2(era(p.st))}</td></tr>`).join('')}</table></div>
+      <div class="scroll-x" style="margin-top:10px"><table><tr><th class="l">打者</th><th>守位</th><th>年齡</th><th>總評</th><th>打擊率</th><th>全壘打</th><th>打點</th></tr>${bs.map(p => `<tr><td class="l">${p.name}</td><td class="muted">${p.pos}</td><td>${p.age}</td><td>${ovrChip(ovrOf(p))}</td><td>${f3(avg(p.st))}</td><td>${p.st.hr}</td><td>${p.st.rbi}</td></tr>`).join('')}</table></div></div>`;
+  }
+  $('tLeague').innerHTML = h;
+  document.querySelectorAll('[data-l]').forEach(b => b.onclick = () => { ltab = b.dataset.l; renderLeague(); });
+  document.querySelectorAll('[data-tm]').forEach(b => b.onclick = () => { lteam = b.dataset.tm; renderLeague(); });
+}
+function renderAch() { const got = ACH.filter(a => C.ach[a[0]]).length; $('tAch').innerHTML = `<div class="card"><h3>🎖️ 這一世的成就　<span class="gold">${got}/${ACH.length}</span></h3>${ACH.map(a => `<div class="ach ${C.ach[a[0]] ? '' : 'off'}"><div class="i">${a[1]}</div><div><b>${a[2]}</b>${C.ach[a[0]] ? `<span class="muted" style="font-size:12px">　${C.ach[a[0]]} 歲</span>` : ''}<div class="muted" style="font-size:13px">${a[3]}</div></div></div>`).join('')}</div>`; }
 
 // ===================== 場景 =====================
-let afterScene = null;
-function scene(title, text, choices, kind) {
-  $('sceneIn').innerHTML = (kind ? bbArt(kind, myCol(), ri(1, 99)) : '') + `<h2>${title}</h2><div class="story">${text}</div><div class="col" id="chs"></div>`;
-  for (const c of choices) {
-    const b = document.createElement('button'); b.className = 'choice'; b.innerHTML = c.label + (c.note ? `<small>${c.note}</small>` : '');
-    b.onclick = () => c.fn(() => closeScene()); $('chs').appendChild(b);
-  }
+function scene(title, text, choices, kind, color) {
+  $('sceneIn').innerHTML = (kind ? bbArt(kind, color || (C && C.teams ? myTeam().c : '#5aa9ff'), ri(1, 999)) : '') + `<h2>${title}</h2><div class="story">${text}</div><div class="col" id="chs"></div>`;
+  for (const c of choices) { const b = document.createElement('button'); b.className = c.main ? '' : 'choice'; b.innerHTML = c.label + (c.note ? `<small>${c.note}</small>` : ''); b.onclick = () => c.fn(); $('chs').appendChild(b); }
   $('scene').classList.remove('hide'); $('scene').scrollTop = 0;
 }
-function msg(title, text, next, kind) { scene(title, text, [{ label: '繼續', fn: () => { closeScene(); if (next) next(); } }], kind); }
 function closeScene() { $('scene').classList.add('hide'); if (!$('sHub').classList.contains('hide')) renderHub(); }
+function vsBlock(a, b) { return `<div class="vs"><div>${logo(a, 64)}<div class="t">${a.n}</div><div class="r">${a.w}-${a.l}・總評 ${teamOvr(a)}</div></div><div class="x">VS</div><div>${logo(b, 64)}<div class="t">${b.n}</div><div class="r">${b.w}-${b.l}・總評 ${teamOvr(b)}</div></div></div>`; }
 
-// ===================== 每週行動 =====================
-function turn(k, p) {
-  closeScene();
-  let t = '';
-  const base = rnd(2.4, 4.2);
-  const injMul = has('UNDRAFTED') ? 0.65 : 1;
-  if (k === 'rehab') { C.injury--; C.fatigue = Math.max(0, C.fatigue - 30); t = '你在防護室做復健。'; }
-  else if (k === 'rest') { C.fatigue = Math.max(0, C.fatigue - 45); t = '你好好睡了幾天，手臂輕鬆多了。'; }
-  else if (k === 'bond') { C.bond = Math.min(100, C.bond + 8); const g = base * 0.35 * growth('ctrl'); C.ctrl += g; C.fatigue += 6; t = `你和捕手看了一整週的錄影。\n捕手默契 +8　控球 +${g.toFixed(1)}`; }
+// ===================== 訓練 =====================
+function ageF() { const a = C.age; return a <= 18 ? 1.35 : a <= 22 ? 1.25 : a <= 25 ? 1.1 : a <= 28 ? 0.8 : a <= 31 ? 0.5 : 0.25; }
+function dimF(v, pot) { let f = v < 50 ? 1.1 : v < 60 ? 0.9 : v < 70 ? 0.7 : v < 80 ? 0.5 : v < 88 ? 0.32 : 0.18; if (v >= pot) f *= 0.04; else if (v >= pot - 6) f *= 0.45; return f; }
+function grow(k, base, pitch) {
+  const me = ME(); let mult = ageF() * (0.85 + C.morale / 333);
+  if (pitch && has('K15')) mult *= 1.25; if (k === 'sta' && has('SHUTOUT')) mult *= 1.25; if (k === 'velo' && has('SV30')) mult *= 1.25;
+  const cur = pitch ? me.pi[pitch] : me.a[k], g = base * mult * dimF(cur, me.pot);
+  if (pitch) me.pi[pitch] = Math.min(99, cur + g); else me.a[k] = Math.min(99, cur + g);
+  return g;
+}
+function train(k, pitch) {
+  let t = ''; const me = ME();
+  if (C.injury) { C.injury--; C.fatigue = Math.max(0, C.fatigue - 35); t = '🩹 你在防護室做復健。'; }
+  else if (k === 'rest') { C.fatigue = Math.max(0, C.fatigue - 45); C.morale = Math.min(100, C.morale + 3); t = '😴 好好休息了一週，士氣 +3。'; }
+  else if (k === 'iq') { C.iq = Math.min(100, C.iq + 7); C.fatigue += 4; C.trust = Math.min(100, C.trust + 2); t = '📼 你把對手打者的錄影看了三遍。\n球商 +7（關鍵打席更準）'; }
+  else if (k === 'bond') { const add = (has('CHAMP') ? 16 : 10); C.chem = Math.min(100, C.chem + add); C.fatigue += 6; const g = grow('ctrl', 1.5); t = `🧤 你和捕手在牛棚練了一整週的配球。\n捕手默契 +${add}，控球 +${g.toFixed(1)}`; }
   else {
-    const tired = C.fatigue >= 60 ? 0.6 : 1;
-    if (k === 'pitch') { const g = base * growth('pitch') * tired; C.pitches[p] += g; t = `${p} +${g.toFixed(1)}`; }
-    else if (k === 'dev') { const g = base * 1.1 * growth('pitch') * tired; C.dev.lv += g; t = `${C.dev.p}（開發中）+${g.toFixed(1)}`;
-      if (C.dev.lv >= 40) { if (Object.keys(C.pitches).length < 5) { C.pitches[C.dev.p] = 40; t += `\n\n<b class="gold">${C.dev.p}完成！可以在比賽中使用了。</b>`; C.dev = null; } } }
-    else { const g = base * growth(k) * tired; C[k] += g; t = `${{ velo:'球速', ctrl:'控球', sta:'體力' }[k]} +${g.toFixed(1)}`; }
-    C.fatigue += rnd(12, 17);
-    if (tired < 1) t += '\n<span class="muted">（太疲勞，練習效果打折）</span>';
-    // 受傷判定
-    if (C.fatigue > 70 && Math.random() < (C.fatigue - 65) * 0.012 * injMul) return injure('練習量過大');
+    const tired = C.fatigue >= 65 ? 0.6 : 1, before = ovr();
+    if (k === 'dev') { const g = rnd(4, 6) * tired * ageF() * 1.1; C.dev.lv += g; t = `🧪 ${C.dev.p}（開發中）+${g.toFixed(1)}`; if (C.dev.lv >= 40) { me.pi[C.dev.p] = 40; t += `\n\n<b class="gold">${C.dev.p}完成！可以在比賽中使用了。</b>`; C.dev = null; } }
+    else if (k === 'pitch') { const g = grow(null, rnd(4, 6) * tired, pitch); t = `🌀 ${pitch} <span class="good">+${g.toFixed(1)}</span>`; }
+    else { const g = grow(k, rnd(4, 6) * tired); if (k === 'velo') grow('sta', g * 0.15); if (k === 'sta') grow('velo', g * 0.1); t = `${TRAIN.find(x => x[0] === k)[1]} ${{ velo:'球速', ctrl:'控球', sta:'體力' }[k]} <span class="good">+${g.toFixed(1)}</span>`; }
+    C.fatigue += rnd(8, 11);
+    if (tired < 1) t += '\n<span class="muted">太疲勞，效果打折</span>';
+    if (ovr() > before) t += `\n\n總評 <b class="gold">${before} → ${ovr()}</b>`;
+    if (C.fatigue > 75 && Math.random() < (C.fatigue - 70) * 0.012 * (has('UNDRAFTED') ? 0.65 : 1)) { const w = ri(1, 3); C.injury = w; C.fatigue = 35; t += `\n\n<span class="bad">練太兇，手肘發炎，傷停 ${w} 週（疲勞超過 75）。</span>`; }
   }
-  for (const s of ['velo','ctrl','sta']) C[s] = Math.min(130, C[s]);
-  C.note = '';
-  afterTraining(t, k === 'rehab' ? 'injury' : 'bullpen');
-}
-function injure(why) {
-  const w = ri(2, 5), f0 = Math.round(C.fatigue);
-  C.injury = w; C.fatigue = 30;
-  const part = pick(['手肘', '肩膀', '背部', '手指起水泡']);
-  C.note = `<b class="bad">受傷了：${part}</b>　原因：${why}（疲勞累積到 ${f0}）。需要復健 ${w} 週。`;
-  afterTraining(`<span class="bad">練習時${part}一陣劇痛。</span>\n原因：${why}。\n需要休養 ${w} 週，這段期間只能復健，也不能登板。`, 'injury');
+  C.note = ''; saveRun(); playWeek(t);
 }
 
-// 練完 → 本週比賽（職棒）→ 推進
-function afterTraining(text, kind = 'bullpen') {
-  saveRun();
-  if (C.phase === 'HS') {
-    msg('本週', text, () => { C.week++; if (C.week > 8) hsTournament(); else { hsEvent(); saveRun(); renderHub(); } }, kind);
-  } else {
-    msg('本週', text, () => proGame(), kind);
-  }
-}
-
-// 高中小事件
-function hsEvent() {
-  if (Math.random() < 0.3) {
-    const e = pick([
-      () => { C.trust += 5; return '教練在練習賽看了你的投球，在筆記本上寫了幾行字。（教練信任 +5）'; },
-      () => { C.bond += 5; return '捕手學長留下來陪你加練，接了一百球。（捕手默契 +5）'; },
-      () => { C.fatigue += 10; return '期中考週，熬夜讀書。（疲勞 +10）'; },
-      () => { C.velo += 1; return '球探出現在看台上，你多用了幾分力。（球速 +1）'; },
-      () => `聽說 <b class="bad">${C.rival.name}</b> 這週又敲了兩支全壘打。`,
-    ]);
-    C.note = e();
-  }
-}
-
-// ===================== 高中大賽 =====================
-function hsTournament() {
-  const lv = [[32, 38, 45], [40, 46, 53], [47, 54, 61]][C.year - 1];
-  const names = ['地區賽', '準決賽', '金鷹盃決賽'];
-  let r = 0;
+// ===================== 每週 =====================
+function pairings() { const ts = [...C.teams].sort(() => Math.random() - 0.5), out = []; for (let i = 0; i + 1 < ts.length; i += 2) out.push([ts[i], ts[i + 1]]); return out; }
+function playWeek(trainText) {
+  let g = 0;
   const next = () => {
-    const opp = pick(SCHOOLS.filter(s => s !== C.school));
-    scene(`夏季大賽・${names[r]}`, `對手：${opp}${r === 2 ? '\n全國轉播，看台上坐滿了球探。' : ''}\n\n你是先發投手。`, [
-      { label: '上場投球', fn: () => { closeScene(); startGame({ level: lv[r], role:'先發', innings: 7, opp, hs: true, rival: r >= 1, onEnd: res => done(res) }); } },
-      { label: '快速模擬', note: '用目前能力自動模擬整場', fn: () => { closeScene(); startGame({ level: lv[r], role:'先發', innings: 7, opp, hs: true, rival: r >= 1, quick: true, onEnd: res => done(res) }); } },
-    ], 'stadium');
-  };
-  const done = res => {
-    C.tourney.push(`高${'一二三'[C.year-1]}${names[r]}${res.teamWin ? '勝' : '敗'}`);
-    if (res.teamWin && r < 2) { r++; msg('晉級！', `${res.summary}\n\n球隊晉級${names[r]}！`, next, 'stadium'); return; }
-    if (res.teamWin && r === 2) { C.memories.push('HS_CHAMP'); C.highlights.push(`高${'一二三'[C.year-1]}奪得金鷹盃冠軍`); C.trust += 15;
-      return msg('🏆 冠軍！', `${res.summary}\n\n<b class="gold">你們拿下金鷹盃冠軍！</b>`, endYear, 'trophy'); }
-    msg('夏天結束', `${res.summary}\n\n${names[r]}落敗，這個夏天結束了。`, endYear, 'night');
+    if (g >= C.gpw) return endWeek();
+    g++;
+    const pairs = pairings(), mine = pairs.find(p => p.some(t => t.n === C.team));
+    for (const pr of pairs) if (pr !== mine) { const G = newGame(pr[0], pr[1], { watch:false }); simAll(G); finalize(G); }
+    const [h, a] = mine[0].n === C.team ? mine : [mine[1], mine[0]];
+    const myStart = C.role === '先發' && g === 1 && !C.injury;
+    const intro = (trainText && g === 1 ? `<div class="card" style="font-size:15px;line-height:1.7;white-space:pre-wrap">${trainText}</div>` : '');
+    const rival = C.phase === 'HS' && a.bats.some(id => P(id).name === C.rival);
+    const roleTxt = C.injury ? '傷停中，在場邊看球' : myStart ? '<b class="gold">你是今天的先發投手</b>' : C.role === '先發' ? '今天不是你的先發日' : `你在牛棚待命（${C.role}）`;
+    $('sceneIn').innerHTML = intro + `<h2>第 ${C.week} 週・第 ${g} 場</h2>` + vsBlock(h, a) + `<div class="muted" style="text-align:center;margin-bottom:12px">${roleTxt}${rival ? `<br><b class="bad">宿敵 ${C.rival} 在對方打線</b>` : ''}</div><div class="col" id="chs"></div>`;
+    const go = watch => { $('scene').classList.add('hide'); playGame(h, a, { watch, myStart, onEnd: next }); };
+    const b1 = document.createElement('button'); b1.innerHTML = '⚾ 觀看比賽'; b1.onclick = () => go(true);
+    const b2 = document.createElement('button'); b2.className = 'ghost'; b2.innerHTML = '⏭ 直接看結果'; b2.onclick = () => go(false);
+    $('chs').append(b1, b2); $('scene').classList.remove('hide'); $('scene').scrollTop = 0;
   };
   next();
 }
-function endYear() {
-  C.seasons.push({ label: `高${'一二三'[C.year-1]}`, ...C.season });
-  C.season = newSeason();
-  if (C.year === 3) return draft();
-  C.year++; C.age++; C.week = 1; C.fatigue = Math.max(0, C.fatigue - 30); newRival();
-  C.note = `升上高${'一二三'[C.year-1]}了。這一屆最可怕的打者是 <b class="bad">${C.rival.name}</b>。`;
+function endWeek() {
+  C.week++; C.fatigue = Math.max(0, C.fatigue - 10);
+  if (C.role === '敗戰處理') C.morale = Math.max(0, C.morale - 2);
+  assignRole();
+  if (C.phase === 'PRO' && !C.allstarDone && C.week > C.weeks / 2) { C.allstarDone = true; return allStar(); }
+  if (C.week > C.weeks) return endRegular();
   saveRun(); showHub();
 }
+function allStar() {
+  const R = aceRace(), rank = R.findIndex(r => r.id === 'ME') + 1;
+  if (rank && rank <= 6) { C.allstars++; unlock('allstar'); C.highlights.push(`職業第 ${C.proYear} 年入選明星賽`); C.morale = Math.min(100, C.morale + 10); saveRun();
+    return scene('🌟 明星賽', `明星賽投手名單出爐——你以第 ${rank} 名入選！\n士氣 +10`, [{ label:'繼續', main:true, fn:() => { closeScene(); showHub(); } }], 'stadium'); }
+  saveRun(); scene('明星賽名單', `明星賽名單公布，你排第 ${rank || '—'}，這次沒有入選（投手前 6 名入選）。`, [{ label:'繼續', main:true, fn:() => { closeScene(); showHub(); } }], 'bullpen');
+}
 
-// ===================== 選秀 =====================
-function draft() {
-  const champ = C.memories.includes('HS_CHAMP') ? 6 : 0;
-  const tW = C.tourney.filter(t => t.endsWith('勝')).length;
-  const v = ovr() + champ + tW * 1.2 + rnd(-3, 3);
-  let round = v >= 55 ? 1 : v >= 49 ? 2 : v >= 43 ? ri(3, 5) : 0;
-  const lines = `選秀會當天，你和家人守在電視前。\n（球探評價 ${Math.round(v)}）\n\n`;
-  if (!round) {
-    C.memories.push('UNDRAFTED'); C.highlights.push('選秀會上沒有被唱名');
-    return scene('選秀會', lines + '一輪、兩輪……直到最後一個名字念完，都沒有你。\n\n<b class="bad">落選了。</b>', [{ label: '這一世到此為止', fn: () => endLife('選秀落選') }], 'draft');
+// ===================== 觀看比賽 =====================
+let GM = null;
+function playGame(h, a, opt) {
+  const G = newGame(h, a, opt); GM = G; G.speed = opt.watch ? 650 : 0; G.fi = 0;
+  // 牛棚投手：讓你有機會上場
+  if (!opt.myStart && !C.injury && C.role !== '先發') { const st = G[C.team].staff; if (C.role === '終結者') st.closer = 'ME'; else if (C.role === '中繼') st.setup = 'ME'; }
+  if (!opt.watch) { simAll(G); return endGame(G); }
+  $('game').classList.remove('hide'); $('game').scrollTop = 0; $('gFeed').innerHTML = ''; $('gClutch').innerHTML = '';
+  document.documentElement.style.setProperty('--hc', h.c); document.documentElement.style.setProperty('--ac', a.c);
+  $('gSpeed').textContent = '⏩ 快轉'; $('gSpeed').disabled = false; $('gSkip').disabled = false;
+  G.feed.push({ txt: `${a.n} vs ${h.n}　比賽開始`, cls: 'q' });
+  fieldInit(G); watchLoop(G);
+}
+function renderLive(G) {
+  const h = G.home, a = G.away;
+  $('sb').innerHTML = `<div class="side">${logo(a, 40)}<div><div class="tm">${a.n}</div><div class="sc">${G.s[a.n]}</div></div></div><div class="mid"><div class="q">${G.inn} 局${G.top ? '上' : '下'}</div><div class="bso">出局 ${[0,1,2].map(i => `<i class="${i < G.outs ? 'on o' : ''}"></i>`).join('')}</div></div><div class="side r">${logo(h, 40)}<div><div class="tm">${h.n}</div><div class="sc">${G.s[h.n]}</div></div></div>`;
+  const m = G.pbox.ME;
+  $('gMy').innerHTML = m ? `<div><b>${ip(m.outs)}</b><span>局數</span></div><div><b>${m.k}</b><span>三振</span></div><div><b>${m.h}</b><span>被安打</span></div><div><b>${m.r}</b><span>失分</span></div><div><b>${m.pc}</b><span>用球數</span></div>` : `<div style="grid-column:span 5;color:var(--muted);font-size:14px;padding:6px">${C.injury ? '傷停中' : '你還沒上場'}</div>`;
+  const f = $('gFeed');
+  while (G.fi < G.feed.length) { const e = G.feed[G.fi++]; f.insertAdjacentHTML('beforeend', e.cls === 'q' ? `<div class="ev q"><span class="tx">${e.txt}</span></div>` : `<div class="ev ${e.cls}"><span class="tm">${e.inn || ''}</span><span class="dot" style="background:${e.t || '#888'}"></span><span class="tx">${e.txt}</span></div>`); }
+  f.scrollTop = f.scrollHeight;
+}
+async function watchLoop(G) {
+  let lastHalf = '';
+  while (!G.over) {
+    const half = `${G.inn}${G.top}`; if (half !== lastHalf) { lastHalf = half; G.feed.push({ txt: `— ${G.inn} 局${G.top ? '上' : '下'}　${offT(G).n}進攻 —`, cls: 'q' }); }
+    changePitcher(G, defT(G));
+    const myPitching = G[defT(G).n].pit === 'ME';
+    if (isClutch(G)) { G.clutchN++; renderLive(G); fieldSetPA(G); await clutchUI(G); }
+    else { fieldSetPA(G); stepPA(G); fieldResult(G); }
+    renderLive(G);
+    if (G.over) break;
+    if (G.outs >= 3) { if (halfDone(G)) G.over = true; }
+    if (G.speed) await sleep(myPitching ? G.speed : Math.min(G.speed, 260));
   }
-  C.team = pick(TEAMS); C.round = round;
-  if (round === 1) { C.memories.push('DRAFT1'); }
-  C.highlights.push(`第 ${round} 輪被${C.team}指名`);
-  const bonus = [0, 800, 400, 200, 150, 120][round];
-  C.money += bonus; C.salary = 60;
-  scene('選秀會', lines + `「第 ${round} 輪，${C.team}，選擇——${C.school}，投手，${C.name}！」\n\n簽約金 ${bonus} 萬，從二軍開始。`, [{ label: '加入職棒', fn: () => {
-    C.phase = 'PRO'; C.proYear = 1; C.week = 1; C.age = 19; C.level = '2軍'; C.role = '先發'; C.season = newSeason(); newRival();
-    C.note = `你穿上了${C.team}的球衣。二軍教練說：「先讓我看看你能吃幾局。」`;
-    saveRun(); closeScene(); showHub();
-  } }], 'draft');
+  if (G.s[G.home.n] === G.s[G.away.n]) G.s[pick([G.home, G.away]).n]++;
+  G.feed.push({ txt: `比賽結束　${G.away.n} ${G.s[G.away.n]} : ${G.s[G.home.n]} ${G.home.n}${G.walkoff ? '（再見！）' : ''}`, cls: 'q' }); renderLive(G);
+  setTimeout(() => endGame(G), 900);
+}
+function clutchUI(G) {
+  return new Promise(res => {
+    const o = clutchOptions(G), b = P(o.bid), lead = G.s[defT(G).n] - G.s[offT(G).n];
+    const runners = G.bases.map((x, i) => x ? ['一','二','三'][i] : null).filter(Boolean);
+    $('gClutch').innerHTML = `<div class="clutch"><div style="font-size:18px;font-weight:900">⚾ 關鍵打席！　${G.inn} 局${G.top ? '上' : '下'}・${G.outs} 出局・${runners.length ? runners.join('、') + '壘有人' : '壘上無人'}</div>
+      <div class="muted" style="margin:4px 0 6px">${lead > 0 ? `領先 ${lead} 分` : lead < 0 ? `落後 ${-lead} 分` : '平手'}　打者：<b style="color:#fff">${b.name}</b>（打擊 ${Math.round(b.a.con)}・力量 ${Math.round(b.a.pow)}）${b.name === C.rival ? '　<b class="bad">宿敵！</b>' : ''}</div>
+      <div class="hint" style="margin-bottom:8px">🧤 捕手：「${o.hint}」</div><div class="col" id="cBtns"></div></div>`;
+    for (const x of o.opts) { const bt = document.createElement('button'); bt.className = 'choice'; bt.innerHTML = `${x.match ? '⭐ ' : ''}${x.p}・${x.zone}　<span class="gold">解決打者約 ${Math.round(x.pOut * 100)}%</span><small>${x.p} ${Math.round(x.lv)}　三振機率約 ${Math.round(x.pr.k * 100)}%</small>`;
+      bt.onclick = () => { $('gClutch').innerHTML = ''; const r = resolveClutch(G, x); fieldResult(G); if (r.type === 'K' || r.type === 'OUT') G.feed.push({ txt: `🎯 ${C.name}用${x.p}${r.type === 'K' ? '三振' : '解決'}了${b.name}！`, cls: 'me big', inn: '' }); renderLive(G); res(); }; $('cBtns').appendChild(bt); }
+    $('gClutch').scrollIntoView && $('gClutch').scrollIntoView({ block:'end', behavior:'smooth' });
+  });
+}
+$('gSpeed').onclick = () => { if (!GM) return; GM.speed = GM.speed > 100 ? 60 : 650; $('gSpeed').textContent = GM.speed > 100 ? '⏩ 快轉' : '▶ 正常速度'; };
+$('gSkip').onclick = () => { if (!GM) return; GM.speed = 0; $('gSpeed').disabled = true; $('gSkip').disabled = true; };
+
+function boxTables(G, t) {
+  const st = G[t.n];
+  const bats = st.lu.map(id => [id, G.bbox[id]]);
+  const pits = st.used.map(id => [id, G.pbox[id]]);
+  const nm = id => id === 'ME' ? C.name : P(id).name;
+  return `<div class="card" style="padding:10px"><h3><span class="mini-team">${logo(t, 26)}${t.n}</span><span style="margin-left:auto;font-size:20px;font-weight:900">${G.s[t.n]}</span></h3>
+    <div class="scroll-x"><table><tr><th class="l">打者</th><th>打數</th><th>安打</th><th>得分</th><th>打點</th><th>全壘打</th><th>四壞</th><th>三振</th></tr>
+    ${bats.map(([id, b]) => `<tr><td class="l">${nm(id)}${P(id).name === C.rival ? ' <span class="bad">宿敵</span>' : ''}</td><td>${b.ab}</td><td><b>${b.h}</b></td><td>${b.r}</td><td>${b.rbi}</td><td>${b.hr}</td><td>${b.bb}</td><td>${b.k}</td></tr>`).join('')}</table></div>
+    <div class="scroll-x" style="margin-top:8px"><table><tr><th class="l">投手</th><th>局數</th><th>被安打</th><th>失分</th><th>四壞</th><th>三振</th><th>用球</th><th></th></tr>
+    ${pits.map(([id, p]) => `<tr class="${id === 'ME' ? 'me' : ''}"><td class="l">${nm(id)}</td><td>${ip(p.outs)}</td><td>${p.h}</td><td>${p.r}</td><td>${p.bb}</td><td><b>${p.k}</b></td><td class="muted">${p.pc}</td><td class="gold">${p.w ? '勝' : p.l ? '<span class="bad">敗</span>' : p.sv ? '救援' : ''}</td></tr>`).join('')}</table></div></div>`;
+}
+function endGame(G) {
+  const fin = finalize(G), won = fin.win.n === C.team, m = G.pbox.ME, h = G.home, a = G.away;
+  const tag = C.phase === 'HS' ? `高${'一二三'[C.year-1]}` : `職業第 ${C.proYear} 年`, opp = h.n === C.team ? a : h;
+  C.morale = clamp(C.morale + (won ? 2 : -2), 0, 100);
+  if (m) {
+    unlock('debut'); C.chem = Math.min(100, C.chem + (has('CHAMP') ? 3 : 1.5)); C.iq = Math.min(100, C.iq + 0.5);
+    const gs = m.outs / 3 * 1.5 + m.k - m.r * 2 - m.h * 0.5 - m.bb * 0.5 + (m.w ? 3 : 0) + (m.sv ? 3 : 0);
+    C.trust = clamp(C.trust + (gs >= 8 ? 5 : gs >= 3 ? 3 : gs >= 0 ? 1 : -3), 0, 100);
+    C.fatigue += G[C.team].used[0] === 'ME' ? 18 + m.pc * 0.06 : 7;
+    const ks = ['velo','ctrl','sta']; for (let i = 0; i < 2; i++) grow(pick(ks), 0.35);
+    if (m.w) unlock('win1');
+    if (m.k >= 10) unlock('k10');
+    if (m.k >= 15) { unlock('k15'); pushMem('K15'); C.highlights.push(`${tag}對${opp.n}投出 ${m.k} 次三振`); }
+    const cg = G[C.team].used.length === 1 && G[C.team].used[0] === 'ME' && m.outs >= (G.innings - 1) * 3;
+    if (cg) { unlock('cg'); if (m.r === 0) { unlock('so'); pushMem('SHUTOUT'); C.highlights.push(`${tag}對${opp.n}投出完封`); } if (m.h === 0) { unlock('nh'); C.highlights.push(`${tag}對${opp.n}投出無安打比賽`); } }
+    if (G.clutchHit) { unlock('clutch'); pushMem('CLUTCH'); }
+    if (C.fatigue > 85 && Math.random() < (C.fatigue - 80) * 0.012 * (has('UNDRAFTED') ? 0.65 : 1)) C.injury = ri(1, 3);
+  }
+  const K = ME().car; if (K.w >= 60) unlock('w100'); if (K.k >= 1000) unlock('k1000');
+  // 本場最佳
+  let pog = null, best = -99;
+  for (const id in G.pbox) { const p = G.pbox[id], v = p.outs / 3 * 1.5 + p.k - p.r * 2 - p.h * 0.5 + (p.w ? 4 : 0); if (v > best) { best = v; pog = id; } }
+  for (const id in G.bbox) { const b = G.bbox[id], v = b.h * 2 + b.hr * 4 + b.rbi * 1.5 + b.r; if (v > best) { best = v; pog = id; } }
+  if (pog === 'ME') unlock('pog');
+  saveRun();
+  const pp = P(pog), pt = team(pp.team), pb = G.pbox[pog], bb = G.bbox[pog];
+  $('sceneIn').innerHTML = bbArt(won ? 'stadium' : 'night', myTeam().c, ri(1, 99)) +
+    `<div class="big-score"><div>${logo(a, 56)}<div class="muted" style="font-size:13px">${a.n}</div></div><div class="s">${G.s[a.n]} : ${G.s[h.n]}</div><div>${logo(h, 56)}<div class="muted" style="font-size:13px">${h.n}</div></div></div>
+    <div class="result-tag ${won ? 'good' : 'bad'}">${won ? '🎉 贏球！' : '輸球'}${G.walkoff ? '（再見）' : ''}</div>
+    <div class="pog">${pog === 'ME' ? bbAvatar(pt.c, C.num, C.look.skin) : logo(pt, 52)}<div><div class="gold" style="font-size:13px;font-weight:800">⭐ 本場最佳球員</div><b style="font-size:18px">${pog === 'ME' ? C.name : pp.name}</b><div class="muted" style="font-size:13px">${pb ? `${ip(pb.outs)} 局 ${pb.k} 三振 失 ${pb.r} 分` : `${bb.ab} 打數 ${bb.h} 安打 ${bb.hr} 全壘打 ${bb.rbi} 打點`}　${pt.n}</div></div></div>
+    ${m ? '' : `<div class="card muted" style="font-size:14px">${C.injury ? '你傷停中。' : '你今天沒有登板。'}</div>`}${C.injury && m ? `<div class="card bad">賽後手臂不對勁，傷停 ${C.injury} 週（疲勞太高）。</div>` : ''}` +
+    boxTables(G, a) + boxTables(G, h) + `<button id="bNextG" style="width:100%">繼續</button>`;
+  $('scene').classList.remove('hide'); $('scene').scrollTop = 0;
+  $('bNextG').onclick = () => { if (G.fd) G.fd.run = false; $('scene').classList.add('hide'); $('game').classList.add('hide'); GM = null; G.opt.onEnd(won, m || pl()); };
 }
 
-// ===================== 職棒 =====================
-const WEEKS = 14;
-function assignRole() {
-  if (C.level === '2軍') { C.role = '先發'; return; }
-  const o = ovr();
-  if (C.sta >= 55 && o >= 64) C.role = '先發';
-  else if (C.velo >= 70 && C.trust >= 50) C.role = '終結者';
-  else C.role = '中繼';
+// ===================== 季後賽 =====================
+function endRegular() {
+  const st = standings(), seed = st.findIndex(t => t.n === C.team) + 1; saveRun();
+  if (seed > 4) return scene('例行賽結束', `球隊戰績 ${myTeam().w}-${myTeam().l}，排名第 ${seed}，<b class="bad">無緣季後賽</b>。`, [{ label:'繼續', main:true, fn:() => { closeScene(); endSeason(); } }], 'night');
+  const bo = C.phase === 'HS' ? 1 : 3, opp = st[4 - seed];
+  scene('季後賽！', `球隊以第 ${seed} 名打進季後賽。\n準決賽對手：${opp.n}　${bo === 1 ? '單場淘汰' : '三戰兩勝'}`, [{ label:'開打', main:true, fn:() => { closeScene(); series(opp, bo, '準決賽', w1 => {
+    if (!w1) return scene('季後賽出局', '準決賽落敗，賽季結束。', [{ label:'繼續', main:true, fn:() => { closeScene(); endSeason(); } }], 'night');
+    const oth = st.slice(0, 4).filter(t => t.n !== C.team && t.n !== opp.n), fo = Math.random() < 0.5 + (teamOvr(oth[0]) - teamOvr(oth[1])) * 0.04 ? oth[0] : oth[1], bo2 = C.phase === 'HS' ? 1 : 5;
+    scene('🏆 總冠軍賽', `晉級${C.phase === 'HS' ? '金鷹盃決賽' : '總冠軍賽'}！對手：${fo.n}　${bo2 === 1 ? '一場定江山' : '七戰四勝？不，五戰三勝'}`, [{ label:'開打', main:true, fn:() => { closeScene(); series(fo, bo2, '總冠軍賽', w2 => w2 ? champion() : scene('亞軍', '只差一步……冠軍賽落敗。', [{ label:'繼續', main:true, fn:() => { closeScene(); endSeason(); } }], 'night')); } }], 'stadium', fo.c);
+  }); } }], 'stadium', opp.c);
 }
-function proLevel() { return C.level === '2軍' ? 48 + C.proYear * 1.2 : 62 + Math.min(C.proYear, 8) * 1.1; }
-function proGame() {
-  if (C.injury) return advanceWeek('（傷停中，本週沒有登板）');
-  const opp = pick(TEAMS.filter(t => t !== C.team));
-  const rivalWeek = [3, 8, 12].includes(C.week) && C.rival.faced < 3;
-  const lv = proLevel();
-  const cfg = { level: lv, role: C.role, innings: 9, opp, rival: rivalWeek, onEnd: res => afterGame(res) };
-  scene(`本週登板・${C.level}`, `對手：${opp}\n角色：${C.role}${C.role === '終結者' ? '（九局上，守住領先）' : C.role === '中繼' ? '（比賽中段接手）' : ''}${rivalWeek ? `\n\n<b class="bad">宿敵 ${C.rival.name} 在對方打線裡。</b>` : ''}`, [
-    { label: '上場投球', fn: () => { closeScene(); startGame(cfg); } },
-    { label: '快速模擬', fn: () => { closeScene(); startGame({ ...cfg, quick: true }); } },
-  ], 'stadium');
+function series(opp, bo, name, done) {
+  let w = 0, l = 0, n = 0; const need = Math.ceil(bo / 2); C.lastSeries = [];
+  const next = () => {
+    if (w >= need) return done(true); if (l >= need) return done(false);
+    n++; const T = myTeam(), myStart = C.role === '先發' ? (n % 2 === 1) : false;
+    $('sceneIn').innerHTML = bbArt('stadium', opp.c, n) + `<h2>${name}・第 ${n} 戰</h2>` + vsBlock(T, opp) + `<div style="text-align:center;font-size:22px;font-weight:900">系列賽 ${w} : ${l}</div><div class="muted" style="text-align:center;margin:4px 0 12px">${myStart ? '<b class="gold">你先發</b>' : '你在牛棚待命'}</div><div class="col" id="chs"></div>`;
+    const go = watch => { $('scene').classList.add('hide'); playGame(T, opp, { watch, myStart, playoff: true, onEnd: (won, m) => { if (won) w++; else l++; C.lastSeries.push(m); next(); } }); };
+    const b1 = document.createElement('button'); b1.innerHTML = '⚾ 觀看比賽'; b1.onclick = () => go(true);
+    const b2 = document.createElement('button'); b2.className = 'ghost'; b2.innerHTML = '⏭ 直接看結果'; b2.onclick = () => go(false);
+    $('chs').append(b1, b2); $('scene').classList.remove('hide'); $('scene').scrollTop = 0;
+  };
+  next();
 }
-function afterGame(res) {
-  let t = res.summary;
-  // 升降
-  const L = C.season;
-  if (C.level === '2軍' && L.g >= 3 && (era(L) < 3.3 || ovr() >= 66) && C.trust >= 25) { C.level = '1軍'; assignRole(); C.trust += 5; C.season = newSeason(); t += `\n\n<b class="gold">接到通知：升上一軍！</b>擔任${C.role}。`; C.highlights.push(`職業第 ${C.proYear} 年升上一軍`); }
-  else if (C.level === '1軍' && L.g >= 5 && era(L) > 6.2) { C.level = '2軍'; C.role = '先發'; C.trust -= 8; t += `\n\n<span class="bad">表現不佳，被下放二軍。</span>`; }
-  else if (C.level === '1軍') { const old = C.role; assignRole(); if (old !== C.role) t += `\n\n教練把你調整為${C.role}。`; }
-  advanceWeek(t);
-}
-function advanceWeek(t) {
-  C.week++;
-  if (C.week > WEEKS) return msg('比賽結果', t, endSeason, 'stadium');
-  saveRun(); msg('比賽結果', t, () => showHub(), 'stadium');
+function champion() {
+  C.morale = Math.min(100, C.morale + 15);
+  if (C.phase === 'HS') { unlock('hsc'); pushMem('HS_CHAMP'); C.highlights.push(`高${'一二三'[C.year-1]}拿下金鷹盃冠軍`); return scene('🏆 高中冠軍！', `${C.team}奪得金鷹盃冠軍！`, [{ label:'繼續', main:true, fn:() => { closeScene(); endSeason(); } }], 'trophy'); }
+  C.rings++; unlock('ring'); pushMem('CHAMP'); C.highlights.push(`職業第 ${C.proYear} 年拿下總冠軍`);
+  scene('💍 總冠軍！', `${C.team}奪得總冠軍！香檳灑滿了休息室。\n這是你的第 ${C.rings} 枚冠軍戒指。`, [{ label:'繼續', main:true, fn:() => { closeScene(); endSeason(); } }], 'trophy');
 }
 function endSeason() {
-  const L = C.season;
-  const lines = [];
-  if (C.level === '1軍') C.oneArmyYears++;
-  if (L.w >= 10) { pushMem('W10'); lines.push('單季 10 勝！'); }
-  if (L.sv >= 25) { pushMem('SV25'); lines.push('單季 25 次救援！'); }
-  if (C.level === '1軍' && L.outs >= 150 && era(L) <= 2.6) { pushMem('ERA_KING'); lines.push(`<b class="gold">防禦率王（${fmt1(era(L))}）！</b>`); C.highlights.push(`職業第 ${C.proYear} 年奪得防禦率王`); }
-  if (C.rival.won >= 3) { pushMem('RIVAL'); lines.push(`本季三度解決宿敵 ${C.rival.name}！`); }
-  if (C.career.k >= 1000 && !C.memories.includes('K1000')) { pushMem('K1000'); lines.push('生涯 1000 次三振！'); C.highlights.push('生涯第 1000 次三振'); }
-  // 薪水
-  const perf = C.level === '1軍' ? Math.max(0, (5 - era(L))) * 60 + L.w * 25 + L.sv * 15 + L.k * 1.2 : 0;
-  let sal = Math.round(C.level === '1軍' ? 150 + ovr() * 4 + perf : 60 + ovr());
-  if (C.oneArmyYears >= 6) { sal = Math.round(sal * 1.8); if (C.oneArmyYears === 6) lines.push('<b class="gold">取得 FA 資格，簽下大約！</b>'); }
-  C.money += C.salary; const oldSal = C.salary; C.salary = sal;
-  C.seasons.push({ label: `職${C.proYear}・${C.level}`, ...L });
-  // 老化
-  C.age++; C.proYear++;
-  const dAge = has('LONG') ? 33 : 31;
-  if (C.age > dAge) { const d = C.age - dAge; C.velo -= 1.5 + d * 0.5; C.sta -= 2 + d * 0.4; C.ctrl -= 0.3; for (const p in C.pitches) if (p !== '直球') C.pitches[p] -= 0.8; }
-  if (C.proYear > 10) pushMem('LONG');
-  C.season = newSeason(); C.week = 1; C.fatigue = 10; C.injury = 0; newRival();
-  const forced = C.age >= 41 || (C.age >= 30 && ovr() < 50);
-  const text = `<b>第 ${C.proYear - 1} 季結束</b>\n${L.g} 場　${L.w} 勝 ${L.l} 敗 ${L.sv} 救援\n${ip(L.outs)} 局　${L.k} 三振　防禦率 ${fmt1(era(L))}\n\n${lines.join('\n')}${lines.length ? '\n\n' : ''}今年領了 ${oldSal} 萬，明年年薪 ${sal} 萬。`;
-  saveRun();
-  if (forced) return scene('季末', text + `\n\n<span class="bad">${C.age >= 41 ? '身體已經跟不上了。' : '球團沒有和你續約。'}</span>`, [{ label: '結束職業生涯', fn: () => endLife('引退') }], 'night');
-  C.note = `新球季開始。今年要注意的打者：<b class="bad">${C.rival.name}</b>。`;
-  msg('季末', text, () => showHub(), lines.length ? 'trophy' : 'bullpen');
+  const L = ME().st, lines = [];
+  C.seasons.push({ label: C.phase === 'HS' ? `高${'一二三'[C.year-1]}` : `職${C.proYear}`, team: C.team, ...L });
+  if (C.phase === 'PRO') {
+    const R = aceRace();
+    if (R[0] && R[0].id === 'ME') { C.aces++; unlock('ace'); pushMem('ACE'); C.awards.push(`職${C.proYear} 最佳投手`); lines.push('🏆 <b class="gold">最佳投手獎！</b>'); C.highlights.push(`職業第 ${C.proYear} 年獲選最佳投手`); }
+    else if (R[0]) lines.push(`最佳投手獎：${P(R[0].id).name}（${P(R[0].id).team}）`);
+    const mo = 30;
+    const e = pLeaders('era', mo); if (e[0] && e[0].id === 'ME') { unlock('era'); C.awards.push(`職${C.proYear} 防禦率王`); lines.push(`📉 防禦率王（${f2(e[0].v)}）`); }
+    const k = pLeaders('k', 0); if (k[0] && k[0].id === 'ME') { unlock('kking'); C.awards.push(`職${C.proYear} 三振王`); lines.push(`💯 三振王（${k[0].v} K）`); }
+    const s = pLeaders('sv', 0); if (s[0] && s[0].id === 'ME' && s[0].v > 0) { unlock('svking'); C.awards.push(`職${C.proYear} 救援王`); lines.push(`🔒 救援王（${s[0].v} 次）`); if (s[0].v >= 12) pushMem('SV30'); }
+    if (R[0] && R[0].id === 'ME' && myTeam().w >= myTeam().l + 6) { C.mvps++; unlock('mvp'); C.awards.push(`職${C.proYear} MVP`); lines.push('👑 <b class="gold">年度 MVP！</b>'); }
+    if (C.proYear === 1 && L.outs >= 30 && era(L) < 3.5) { unlock('roy'); C.awards.push('新人王'); lines.push('🌱 新人王！'); }
+    if (lines.some(x => x.includes('gold'))) C.morale = Math.min(100, C.morale + 10);
+    C.money += C.salary; C.proYear++; C.contract--; if (C.proYear > 10) { unlock('ten'); pushMem('LONG'); }
+  }
+  C.age++; ME().age = C.age;
+  const dA = has('LONG') ? 33 : 31, me = ME();
+  if (C.phase === 'PRO' && C.age > dA) { const d = C.age - dA; me.a.velo -= 1.2 + d * 0.5; me.a.sta -= 1.5 + d * 0.5; if (C.age > dA + 3) { me.a.ctrl -= 0.5; for (const p in me.pi) if (p !== '直球') me.pi[p] -= 0.6 + d * 0.2; } }
+  offseasonNPC(); saveRun();
+  const text = `<b>${C.seasons[C.seasons.length - 1].label}結束</b>\n${L.g} 場　${L.w} 勝 ${L.l} 敗 ${L.sv} 救援\n${ip(L.outs)} 局　${L.k} 三振　防禦率 ${f2(era(L))}\n球隊戰績 ${myTeam().w}-${myTeam().l}${lines.length ? '\n\n' + lines.join('\n') : ''}`;
+  if (C.phase === 'HS') {
+    if (C.year === 3) return scene('畢業', text + '\n\n高中三年結束了。接下來——選秀會。', [{ label:'前往選秀會', main:true, fn:() => { closeScene(); draft(); } }], 'school');
+    return scene('學年結束', text, [{ label:'升上新學年', main:true, fn:() => { closeScene(); C.year++; newSeason(); C.note = `升上高${'一二三'[C.year-1]}。這一屆最可怕的打者是 <b class="bad">${C.rival}</b>。`; saveRun(); showHub(); } }], 'school');
+  }
+  if (C.age >= 41 || (C.age >= 32 && ovr() < 55)) return scene('季末', text + `\n\n<span class="bad">${C.age >= 41 ? '身體已經跟不上了。' : '沒有球團願意給你合約了。'}</span>`, [{ label:'結束職業生涯', main:true, fn:() => { closeScene(); retire(); } }], 'night');
+  scene('季末', text, [{ label:'進入休賽季', main:true, fn:() => { closeScene(); C.contract <= 0 ? freeAgency() : (newSeason(), C.note = `新球季開始，你是${C.role}。`, saveRun(), showHub()); } }], lines.length ? 'trophy' : 'bullpen');
 }
-function pushMem(k) { if (!C.memories.includes(k)) C.memories.push(k); }
-function retireAsk() { scene('引退', `你今年 ${C.age} 歲。要在這裡畫下句點嗎？`, [{ label: '宣布引退', fn: () => endLife('引退') }, { label: '再投一年', fn: d => d() }], 'night'); }
-
-// ===================== 轉生 =====================
+function offseasonNPC() {
+  const lim = C.phase === 'HS' ? 18 : 37;
+  for (const id in C.players) {
+    if (id === 'ME') continue; const p = C.players[id]; if (!p.team) continue; p.age++;
+    for (const k in p.a) { if (p.age <= 25) p.a[k] = Math.min(p.pot + 3, p.a[k] + rnd(0.5, 4)); else if (p.age >= 31) p.a[k] -= rnd(0.5, 2.5) + (p.age - 31) * 0.4; else p.a[k] += rnd(-1, 1.5); }
+    if (p.age > lim || (C.phase === 'PRO' && p.age > 30 && ovrOf(p) < 50)) { const t = team(p.team); t.bats = t.bats.filter(x => x !== id); t.pits = t.pits.filter(x => x !== id); p.team = null; }
+  }
+  if (C.phase === 'PRO') for (let i = 0; i < 4; i++) { const a = pick(C.teams), b = pick(C.teams.filter(t => t !== a)); const isB = Math.random() < 0.55, arr = isB ? a.bats : a.pits.filter(x => x !== 'ME'); const id = pick(arr); if (!id) continue; if (isB) { a.bats = a.bats.filter(x => x !== id); b.bats.push(id); } else { a.pits = a.pits.filter(x => x !== id); b.pits.push(id); } P(id).team = b.n; }
+  for (const t of C.teams) {
+    while (t.bats.length > 12) { const o = t.bats.map(P).sort((x, y) => ovrOf(x) - ovrOf(y))[0]; t.bats = t.bats.filter(x => x !== o.id); o.team = null; }
+    while (t.pits.length > 10) { const o = t.pits.filter(x => x !== 'ME').map(P).sort((x, y) => ovrOf(x) - ovrOf(y))[0]; t.pits = t.pits.filter(x => x !== o.id); o.team = null; }
+    while (t.bats.length < 11) { const b = mkB(C.phase === 'PRO' ? (Math.random() < 0.15 ? rnd(64, 74) : rnd(50, 62)) : rnd(30, 38), C.phase === 'PRO' ? ri(19, 22) : 16, t.n); b.pos = pick(POSN); C.players[b.id] = b; t.bats.push(b.id); }
+    while (t.pits.length < 9) { const p = mkP(C.phase === 'PRO' ? (Math.random() < 0.15 ? rnd(64, 74) : rnd(50, 62)) : rnd(30, 38), C.phase === 'PRO' ? ri(19, 22) : 16, t.n, Math.random() < 0.5); C.players[p.id] = p; t.pits.push(p.id); }
+  }
+  for (const id in C.players) if (!C.players[id].team && id !== 'ME') delete C.players[id];
+}
+function freeAgency() {
+  const o = ovr(), L = ME().st, base = Math.round(80 + Math.max(0, o - 45) * 20 + L.w * 15 + L.sv * 8);
+  const cur = myTeam(), pool = C.teams.filter(t => t.n !== C.team).sort((a, b) => teamOvr(b) - teamOvr(a));
+  const offers = [ { t: cur, sal: base, y: 3, note:`原隊續約・保留捕手默契 ${Math.round(C.chem)}` }, { t: pool[0], sal: Math.round(base * 0.8), y: 2, note:`強隊（總評 ${teamOvr(pool[0])}），衝冠軍但薪水較低` }, { t: pool[pool.length - 1], sal: Math.round(base * 1.4), y: 4, note:`重建中（總評 ${teamOvr(pool[pool.length - 1])}），最多錢、保證先發` } ];
+  scene('📝 自由球員', '你的合約到期了，三支球隊開出條件：', offers.map(x => ({ label:`${x.t.m} ${x.t.n}　<span class="gold">${x.sal} 萬 × ${x.y} 年</span>`, note: x.note, fn:() => {
+    if (x.t.n !== C.team) { cur.pits = cur.pits.filter(id => id !== 'ME'); x.t.pits.push('ME'); C.team = x.t.n; ME().team = C.team; C.chem = 25; C.trust = Math.max(30, C.trust - 15) + (x === offers[2] ? 20 : 0); }
+    C.salary = x.sal; C.contract = x.y; closeScene(); newSeason(); setTC(); C.note = `新球季開始，你是${C.role}。`; saveRun(); showHub();
+  } })), 'draft');
+}
+function draft() {
+  const last = C.seasons[C.seasons.length - 1];
+  const v = ovr() + (last && last.outs ? Math.max(0, 4 - era(last)) * 1.5 + last.k / Math.max(1, last.g) * 0.4 : 0) + (C.ach.hsc ? 4 : 0) + rnd(-3, 3);
+  const pool = []; for (let i = 0; i < 30; i++) pool.push(55 + rnd(-8, 12));
+  const rank = pool.filter(x => x > v).length + 1, head = `選秀會當天，你和家人守在電視前。\n（球探評價 ${Math.round(v)}）\n\n`;
+  if (rank > 18) { pushMem('UNDRAFTED'); C.highlights.push('選秀會上沒有被唱名'); saveRun(); return scene('選秀會', head + '一輪、兩輪……直到最後一個名字念完，都沒有你。\n\n<b class="bad">落選了。</b>', [{ label:'這一世到此為止', main:true, fn:() => { closeScene(); endLife('選秀落選'); } }], 'draft'); }
+  const T = pick(PRO_TEAMS); if (rank <= 3) unlock('lottery'); if (rank === 1) { unlock('no1'); pushMem('DRAFT1'); }
+  C.highlights.push(`第 ${Math.ceil(rank / 6)} 輪第 ${rank} 順位被${T[0]}指名`);
+  const bonus = Math.round(1000 / rank + 100); C.money += bonus; C.salary = Math.round(400 / Math.sqrt(rank) + 60); C.contract = 3;
+  scene('選秀會', head + `「第 ${rank} 順位，${T[0]}，選擇——投手，${C.name}！」${rank === 1 ? '\n\n<b class="gold">狀元！</b>' : ''}\n\n簽約金 ${bonus} 萬，新人合約 ${C.salary} 萬 × 3 年。`, [{ label:'加入職棒', main:true, fn:() => {
+    C.phase = 'PRO'; C.proYear = 1; C.team = T[0]; C.trust = Math.min(100, 30 + (has('ACE') ? 25 : 0) + Math.max(0, 20 - rank * 2)); C.chem = 25;
+    C.players = { ME: ME() }; ME().st = pl(); genLeague(true); newSeason(); setTC();
+    C.note = `你穿上了${C.team}的球衣，目前是${C.role}。去「聯盟 → 球隊名單」看看隊友吧。`; saveRun(); closeScene(); showHub();
+  } }], 'draft', T[1]);
+}
+function retire() {
+  const K = ME().car, score = K.w / 15 + K.sv / 40 + K.k / 400 + C.rings * 2 + C.aces * 3 + C.allstars;
+  const msgs = [];
+  if (score >= 10 || C.aces >= 2) { unlock('jersey'); msgs.push(`👕 ${C.team}宣布退休你的 ${C.num} 號背號。`); }
+  if (score >= 18 || C.aces >= 3) { unlock('hof'); msgs.push('🏛️ 你入選了名人堂！'); C.highlights.push('入選名人堂'); }
+  saveRun();
+  scene('引退', `${C.age} 歲，${C.name}宣布引退。\n\n生涯 ${K.g} 場　${K.w} 勝 ${K.l} 敗 ${K.sv} 救援\n${ip(K.outs)} 局　${K.k} 三振　防禦率 ${f2(era(K))}\n💍 ${C.rings}　🏆 最佳投手 ${C.aces}　🌟 明星賽 ${C.allstars}${msgs.length ? '\n\n' + msgs.join('\n') : ''}`, [{ label:'回顧這一生', main:true, fn:() => { closeScene(); endLife('引退'); } }], msgs.length ? 'trophy' : 'night');
+}
 function endLife(how) {
-  closeScene();
-  const K = C.career;
-  const summary = C.phase === 'HS' ? `高中畢業後${how}` : `職業 ${C.proYear - 1} 年・${K.w} 勝 ${K.sv} 救援・${K.k} 三振・防禦率 ${fmt1(era(K))}`;
+  const K = ME().car, T = myTeam(), me = ME();
+  const summary = C.phase === 'HS' ? `高中畢業後${how}` : `職業 ${C.proYear - 1} 年・${K.w} 勝・${K.k} K・💍${C.rings}`;
   const mems = [...new Set(C.memories)];
-  const inh = [
-    { k:'velo', label:'球速', v: Math.max(2, Math.round(C.velo * 0.1)) },
-    { k:'ctrl', label:'控球', v: Math.max(2, Math.round(C.ctrl * 0.1)) },
-    { k:'sta', label:'體力', v: Math.max(2, Math.round(C.sta * 0.1)) },
-    { k:'pitch', label:'變化球', v: Math.max(2, Math.round(Math.max(...Object.entries(C.pitches).filter(([p]) => p !== '直球').map(([,v]) => v)) * 0.1)) },
-  ];
+  const bestP = Object.entries(me.pi).filter(([p]) => p !== '直球').sort((a, b) => b[1] - a[1])[0];
+  const inh = [ { k:'velo', label:'球速', v: Math.max(3, Math.round(me.a.velo * 0.1)) }, { k:'ctrl', label:'控球', v: Math.max(3, Math.round(me.a.ctrl * 0.1)) }, { k:'sta', label:'體力', v: Math.max(3, Math.round(me.a.sta * 0.1)) }, { k:'pitch', label:'變化球', v: Math.max(3, Math.round((bestP ? bestP[1] : 30) * 0.1)) } ];
   let selM = mems[0] || null, selI = inh[0];
   const draw = () => {
-    $('sceneIn').innerHTML = bbArt('night', myCol(), 3) + `<div style="display:flex;gap:12px;align-items:center;margin-bottom:10px">${bbAvatar(myCol(), C.num || 18, C.skin || 1)}<h2 style="margin:0">${C.name} 的一生</h2></div>
-      <div class="story">${summary}\n\n${C.highlights.length ? '<b>名場面</b>\n' + C.highlights.join('\n') : ''}</div>
-      <div class="card"><table><tr><th>年度</th><th>登板</th><th>勝</th><th>救援</th><th>局</th><th>三振</th><th>防禦率</th></tr>
-      ${C.seasons.map(s => `<tr><td>${s.label}</td><td>${s.g}</td><td>${s.w}</td><td>${s.sv}</td><td>${ip(s.outs)}</td><td>${s.k}</td><td>${fmt1(era(s))}</td></tr>`).join('')}</table></div>
-      <h2>轉生</h2>
-      <div class="muted" style="margin-bottom:8px">選一段核心記憶，變成下一位投手的天賦</div>
-      <div class="col" id="mm"></div>
-      <div class="muted" style="margin:14px 0 8px">再選一項能力傳承下去</div>
-      <div class="grid2" id="ii"></div>
+    $('sceneIn').innerHTML = bbArt('night', T.c, 3) + `<div class="card row"><div style="width:80px;height:80px;border-radius:16px;overflow:hidden;flex:none">${bbAvatar(T.c, C.num, C.look.skin)}</div><div><b style="font-size:21px">${C.name}</b><div class="muted">${summary}</div></div></div>
+      ${C.highlights.length ? `<div class="card" style="line-height:1.8"><h3>🎬 名場面</h3>${C.highlights.join('<br>')}</div>` : ''}
+      <div class="card">🎖️ 成就 <b class="gold">${Object.keys(C.ach).length}/${ACH.length}</b>　${ACH.filter(a => C.ach[a[0]]).map(a => a[1]).join(' ')}</div>
+      <h2>轉生</h2><div class="muted" style="margin-bottom:8px">選一段記憶，變成下一位投手的天賦</div><div class="col" id="mm"></div>
+      <div class="muted" style="margin:14px 0 8px">再選一項能力傳承下去</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px" id="ii"></div>
       <button id="bReborn" style="width:100%;margin-top:16px">轉生</button>`;
-    for (const k of mems) { const m = MEMORIES[k], b = document.createElement('button'); b.className = 'opt' + (selM === k ? ' sel' : ''); b.innerHTML = `${m.n}<small>${m.from} → 天賦「${m.t}」：${m.d}${has(k) ? '（已擁有）' : ''}</small>`; b.onclick = () => { selM = k; draw(); }; $('mm').appendChild(b); }
+    for (const k of mems) { const m = MEMORIES[k], b = document.createElement('button'); b.className = 'opt' + (selM === k ? ' sel' : ''); b.innerHTML = `${m.n}<small>天賦「${m.t}」：${m.d}${has(k) ? '（已擁有）' : ''}</small>`; b.onclick = () => { selM = k; draw(); }; $('mm').appendChild(b); }
     if (!mems.length) $('mm').innerHTML = '<div class="muted">這一世沒有留下特別的記憶。</div>';
     for (const x of inh) { const b = document.createElement('button'); b.className = 'opt' + (selI === x ? ' sel' : ''); b.innerHTML = `${x.label} +${x.v}`; b.onclick = () => { selI = x; draw(); }; $('ii').appendChild(b); }
     $('bReborn').onclick = () => {
-      LEG.lives.unshift({ name: C.name, summary, highlights: C.highlights, school: C.school, team: C.team, seasons: C.seasons.length, career: C.career });
+      LEG.lives.unshift({ name: C.name, summary, highlights: C.highlights, team: C.team, num: C.num, skin: C.look.skin, color: T.c, ach: Object.keys(C.ach).length });
       if (selM && !LEG.talents.includes(selM)) { LEG.talents.push(selM); if (LEG.talents.length > 4) LEG.talents.shift(); }
-      LEG.inherit = selI; saveLeg();
-      try { localStorage.removeItem('pitcherRun'); } catch(e) {}
+      LEG.inherit = selI; saveLeg(); try { localStorage.removeItem('pitch2Run'); } catch(e) {}
       $('scene').classList.add('hide'); renderCreate(); showOnly('sCreate');
     };
   };
   $('scene').classList.remove('hide'); $('scene').scrollTop = 0; draw();
 }
 
-// ===================== 比賽引擎 =====================
-let GS = null;
-function makeBatter(level, slot, rivalName) {
-  const st = slot === 3 ? 8 : slot <= 4 ? 4 : slot >= 7 ? -6 : 0;
-  const b = { name: rivalName || randName(), slot, con: clamp(level + st + rnd(-9, 9), 15, 120), pow: clamp(level + st * 1.5 + rnd(-14, 14), 10, 125), eye: clamp(level + rnd(-10, 10), 15, 120),
-    wz: pick(['high','low','in','out']), wt: pick(['fast','brk']), rival: !!rivalName };
-  if (rivalName) { b.con += 10; b.pow += 14; b.eye += 6; }
-  return b;
+// ===================== 即時小球場（Kenney Sports Pack，CC0）=====================
+const sprC = new Image(); sprC.src = SPR_CHAR;
+const KCOL = { Blue:[52,152,219], Red:[232,100,40], Green:[46,204,113], White:[236,240,241] };
+function hex2rgb(h) { const n = parseInt(h.slice(1), 16); return [n >> 16 & 255, n >> 8 & 255, n & 255]; }
+function kColor(hex, avoid) { const c = hex2rgb(hex); let best = null, bd = 1e9; for (const [k, v] of Object.entries(KCOL)) { if (k === avoid) continue; const d = (c[0]-v[0])**2 + (c[1]-v[1])**2 + (c[2]-v[2])**2; if (d < bd) { bd = d; best = k; } } return best; }
+const FW = 600, FH = 420;
+const HOME = [300, 372], BASE = [[392, 282], [300, 196], [208, 282]], MOUND = [300, 288];
+const FPOS = [[300, 288], [300, 400], [404, 258], [356, 210], [244, 210], [196, 258], [142, 120], [300, 78], [458, 120]];
+function hashN(s) { let h = 0; for (const ch of String(s)) h = (h * 31 + ch.charCodeAt(0)) >>> 0; return h; }
+function fieldInit(G) {
+  const hk = kColor(G.home.c), ak = kColor(G.away.c, hk);
+  G.fd = { hk, ak, run: true, ball: null, runners: [], batter: null, flash: 0, txt: '', txtT: 0 };
+  const loop = () => { if (!G.fd.run) return; fieldStep(G); fieldDraw(G); requestAnimationFrame(loop); };
+  if (typeof requestAnimationFrame !== 'undefined') requestAnimationFrame(loop);
 }
-const ZN = { high:'高', low:'低', in:'內角', out:'外角' };
-const grade = v => v >= 85 ? 'S' : v >= 72 ? 'A' : v >= 60 ? 'B' : v >= 48 ? 'C' : v >= 36 ? 'D' : 'E';
-
-function startGame(cfg) {
-  const inn = cfg.innings;
-  const lineup = []; for (let i = 0; i < 9; i++) lineup.push(makeBatter(cfg.level, i, cfg.rival && i === 3 ? C.rival.name : null));
-  GS = { cfg, inn, inning: 1, outs: 0, bases: [0,0,0], our: 0, opp: 0, pc: 0, lineup, bi: 0, b: 0, s: 0,
-    line: { outs:0, h:0, bb:0, k:0, r:0 }, types: {}, last: [], log: [], over: false, leadAtExit: null, myRunsAt: 0, entry: 1, sel: { p:'直球', x:0, y:0 }, rivalPA: [] };
-  const lam = 0.5;
-  const po = () => { let k = 0; const L = Math.exp(-lam); let p = 1; do { k++; p *= Math.random(); } while (p > L); return k - 1; };
-  GS.po = po;
-  if (cfg.role === '中繼') { GS.entry = Math.min(inn - 2, ri(5, 7)); }
-  if (cfg.role === '終結者') { GS.entry = inn; }
-  for (let i = 1; i < GS.entry; i++) { GS.opp += po(); GS.our += po(); }
-  if (cfg.role === '終結者') { GS.our = GS.opp + ri(1, 3); }
-  if (cfg.role === '中繼' && GS.our < GS.opp - 3) GS.our = GS.opp - ri(0, 2);
-  GS.inning = GS.entry; GS.bi = ri(0, 8);
-  GS.lead0 = GS.our - GS.opp;
-  if (cfg.quick) { while (!GS.over) autoHalf(); return; }
-  $('game').classList.remove('hide'); $('game').scrollTop = 0;
-  newBatter(); renderGame();
+const colOf = (G, t) => t === G.home ? G.fd.hk : G.fd.ak;
+function fieldSetPA(G) {
+  const fd = G.fd; if (!fd) return;
+  const os = G[offT(G).n]; fd.batter = os.lu[os.bi % 9];
+  fd.runners = G.bases.map((id, i) => id ? { id, x: BASE[i][0], y: BASE[i][1], tx: BASE[i][0], ty: BASE[i][1] } : null).filter(Boolean);
+  fd.ball = null;
 }
-const curB = () => GS.lineup[GS.bi % 9];
-function quality(p) {
-  const lv = pitchLv(p);
-  return p === '直球' ? (C.velo * 0.75 + C.ctrl * 0.25) / 100 : (lv * 0.7 + C.velo * 0.3) / 100;
+function fieldResult(G) {
+  const fd = G.fd; if (!fd || !G.lastPA) return;
+  const t = G.lastPA.type, o = G.lastPA.oType;
+  const dur = Math.max(8, Math.min(30, (G.speed || 0) / 22));
+  // 先投球，再擊出去
+  let to = null, arc = 0;
+  if (t === 'HR') { to = [pick([110, 300, 490]), 18]; arc = 120; }
+  else if (t === '1B') { to = [pick([170, 300, 430]), rnd(140, 175)]; arc = 25; }
+  else if (t === '2B' || t === '3B') { to = [pick([70, 530, 300]), rnd(70, 110)]; arc = 55; }
+  else if (t === 'OUT') { const f = o === 'GB' ? FPOS[pick([2, 3, 4, 5])] : o === 'PU' ? FPOS[pick([2, 3, 4, 5])] : FPOS[pick([6, 7, 8])]; to = [f[0], f[1]]; arc = o === 'GB' ? 0 : o === 'LD' ? 15 : 70; }
+  fd.ball = { stage: 0, t: 0, dur, to, arc };
+  fd.txt = { K:'三振！', BB:'保送', '1B':'安打', '2B':'二壘安打！', '3B':'三壘安打！', HR:'全壘打！！', OUT:'出局' }[t]; fd.txtT = 0; fd.big = t === 'HR' || t === 'K';
+  // 跑者移到新位置
+  const now = G.bases.map((id, i) => id ? [id, i] : null).filter(Boolean);
+  const keep = [];
+  for (const [id, i] of now) { const r = fd.runners.find(x => x.id === id) || { id, x: HOME[0] - 12, y: HOME[1], fromHome: true }; r.tx = BASE[i][0]; r.ty = BASE[i][1]; keep.push(r); }
+  for (const r of fd.runners) if (!keep.includes(r)) { r.tx = HOME[0]; r.ty = HOME[1]; r.gone = 40; keep.push(r); }
+  fd.pend = keep;
 }
-function staLimit() { return 35 + C.sta * 0.95; }
-function fatigueF() { return clamp(1 - Math.max(0, GS.pc - staLimit()) / 90, 0.55, 1) * (1 - C.fatigue / 400); }
-function rating() { const lv = Object.values(C.pitches).concat([C.velo]).sort((a,b) => b - a); return (C.velo * 0.35 + C.ctrl * 0.3 + (lv[0] + lv[1]) / 2 * 0.35) * fatigueF(); }
-
-function suggestion() {
-  const b = curB(), acc = Math.random() < 0.5 + C.bond / 200 + (has('RIVAL') ? 0.15 : 0);
-  const types = Object.keys(C.pitches);
-  const pool = acc ? types.filter(p => PITCHES[p].cat === b.wt) : types;
-  const p = (pool.length ? pool : types).sort((a,c) => pitchLv(c) - pitchLv(a))[Math.random() < 0.7 ? 0 : Math.min(1, (pool.length || types.length) - 1)];
-  const wz = acc ? b.wz : pick(['high','low','in','out']);
-  let x = 0, y = 0;
-  if (wz === 'high') { y = -1; x = pick([-1, 0, 1]); } if (wz === 'low') { y = 1; x = pick([-1, 0, 1]); }
-  if (wz === 'in') { x = -1; y = pick([-1, 0, 1]); } if (wz === 'out') { x = 1; y = pick([-1, 0, 1]); }
-  if (GS.s === 2 && PITCHES[p].cat === 'brk' && Math.random() < 0.6) { if (Math.abs(y) === 1) y *= 2; else x *= 2; }
-  const why = acc ? `這打者對${ZN[b.wz]}${b.wt === 'fast' ? '快速球' : '變化球'}比較沒辦法` : '先試試看他的反應';
-  return { p, x, y, why };
-}
-function newBatter() {
-  GS.b = 0; GS.s = 0; GS.last = [];
-  GS.sug = suggestion();
-  GS.sel = { p: GS.sug.p, x: GS.sug.x, y: GS.sug.y };
-}
-
-// ---- 投一球 ----
-function throwPitch(q) {
-  if (GS.over || GS.anim) return;
-  const p = GS.sel.p, b = curB();
-  GS.pc++; GS.types[p] = (GS.types[p] || 0) + 1;
-  const perfect = q >= 0.95;
-  const err = 0.14 + (1 - clamp(C.ctrl, 0, 110) / 110) * 0.55 + (1 - q) * 0.75 + C.fatigue / 300 + Math.max(0, GS.pc - staLimit()) / 150;
-  const x = GS.sel.x + gauss() * err * 0.6, y = GS.sel.y + gauss() * err * 0.6;
-  const inZ = Math.abs(x) <= 1.5 && Math.abs(y) <= 1.5;
-  const edge = inZ && (Math.abs(x) > 0.9 || Math.abs(y) > 0.9), mid = Math.abs(x) < 0.6 && Math.abs(y) < 0.6;
-  const dist = inZ ? 0 : Math.max(Math.abs(x) - 1.5, Math.abs(y) - 1.5, 0);
-  const rep = GS.last.length >= 2 && GS.last[GS.last.length - 1] === p && GS.last[GS.last.length - 2] === p ? 1.2 : 1;
-  const share = GS.pc > 12 ? (GS.types[p] / GS.pc) : 0;
-  const mono = share > 0.5 ? 1.12 : 1;
-  GS.last.push(p);
-  const zw = (b.wz === 'high' && y < -0.5) || (b.wz === 'low' && y > 0.5) || (b.wz === 'in' && x < -0.5) || (b.wz === 'out' && x > 0.5);
-  const tw = PITCHES[p].cat === b.wt;
-  let E = quality(p) * (0.55 + 0.45 * q) * fatigueF() + (has('RIVAL') && PITCHES[p].cat === 'brk' ? 0.05 : 0) + (perfect ? 0.06 : 0);
-  const speed = Math.round((125 + C.velo * 0.42) * PITCHES[p].spd * (0.95 + q * 0.05) * (1 - Math.max(0, GS.pc - staLimit()) / 600));
-  // 打者反應
-  let swingP = inZ ? 0.6 + (GS.s === 2 ? 0.22 : 0) : clamp(0.4 - b.eye / 260 + (dist < 0.6 ? 0.15 : 0) + (GS.s === 2 ? 0.12 : 0) + (PITCHES[p].cat === 'brk' ? 0.08 : 0), 0.05, 0.7);
-  if (GS.b === 3 && !inZ) swingP *= 0.6;
-  const swing = Math.random() < swingP;
-  let out = null, txt = '', cls = '';
-  if (!swing) {
-    if (inZ) { GS.s++; txt = edge ? '好球！漂亮的邊角' : '好球'; cls = 'gold'; }
-    else { GS.b++; txt = '壞球'; cls = 'muted'; }
-  } else {
-    const cP = clamp((b.con / 100) * (1.08 - E * 0.6) * (inZ ? 1 : 0.6) * (zw ? 0.75 : 1) * (tw ? 0.8 : 1) * (edge ? 0.85 : 1) * rep * mono, 0.12, 0.95);
-    if (Math.random() > cP) { GS.s++; txt = '揮棒落空！'; cls = 'gold'; }
-    else if (Math.random() < 0.4 + (edge ? 0.15 : 0) - (mid ? 0.15 : 0)) { if (GS.s < 2) GS.s++; txt = '界外球'; cls = 'muted'; }
-    else {
-      const hP = clamp(0.27 + (b.con - 60) / 260 + (mid ? 0.12 : 0) - (edge ? 0.08 : 0) - E * 0.13 + (rep > 1 ? 0.05 : 0), 0.08, 0.6);
-      if (Math.random() < hP) {
-        const hr = clamp((b.pow / 100) * 0.26 * (mid ? 1.6 : 1) * (1.2 - E * 0.5), 0.02, 0.6);
-        const r = Math.random();
-        out = r < hr ? 'HR' : r < hr + 0.2 ? '2B' : r < hr + 0.22 ? '3B' : '1B';
-      } else out = 'OUT';
-    }
+function fieldStep(G) {
+  const fd = G.fd, b = fd.ball;
+  if (b) {
+    b.t = Math.min(1, b.t + 1 / b.dur);
+    if (b.t >= 1 && b.stage === 0) { b.stage = 1; b.t = 0; if (fd.pend) { fd.runners = fd.pend; fd.pend = null; } }
+    if (b.stage === 1 && !b.to) b.t = 1;
   }
-  if (GS.s >= 3) out = 'K';
-  if (GS.b >= 4) out = 'BB';
-  animate({ p, x, y, speed, perfect, q }, () => {
-    if (out) { const r = resolvePA(out); txt = r.t; cls = r.c; }
-    $('gRes').innerHTML = `<span class="${cls}">${txt}</span>　<span class="muted" style="font-size:15px">${p} ${speed} km/h${perfect ? ' ✦完美' : ''}</span>`;
-    if (mono > 1 && !out) GS.log.unshift('<span class="bad">打者開始鎖定你的' + p + '（配球太單調）</span>');
-    if (out) afterPA(); else renderGame();
-  });
+  if (fd.txt) fd.txtT++;
+  for (const r of fd.runners) { r.x += (r.tx - r.x) * 0.08; r.y += (r.ty - r.y) * 0.08; if (r.gone) r.gone--; }
+  fd.runners = fd.runners.filter(r => !('gone' in r) || r.gone > 0);
 }
-
-// ---- 打席結果與跑壘 ----
-function adv(type) {
-  const B = GS.bases; let runs = 0;
-  if (type === 'BB') { if (B[0] && B[1] && B[2]) runs++; if (B[0] && B[1]) B[2] = 1; if (B[0]) B[1] = 1; B[0] = 1; }
-  else if (type === '1B') { runs += B[2]; const s2 = B[1] && Math.random() < 0.6; runs += s2 ? 1 : 0; B[2] = B[1] && !s2 ? 1 : 0; B[2] = B[2] || (B[0] && Math.random() < 0.25 ? 1 : 0); B[1] = B[0]; B[0] = 1; }
-  else if (type === '2B') { runs += B[2] + B[1]; const s1 = B[0] && Math.random() < 0.45; runs += s1 ? 1 : 0; B[2] = B[0] && !s1 ? 1 : 0; B[1] = 1; B[0] = 0; }
-  else if (type === '3B') { runs += B[0] + B[1] + B[2]; GS.bases = [0,0,1]; return runs; }
-  else if (type === 'HR') { runs += B[0] + B[1] + B[2] + 1; GS.bases = [0,0,0]; return runs; }
-  return runs;
+function sprite(c, col, idx, x, y, flip) {
+  const r = SPR_ATLAS[col][idx % 10], s = 1.3, w = r[2] * s, h = r[3] * s;
+  if (!sprC.complete || !sprC.naturalWidth) { c.fillStyle = '#fff'; c.fillRect(x - 6, y - 18, 12, 18); return; }
+  c.save(); c.translate(x, y); if (flip) c.scale(-1, 1); c.drawImage(sprC, r[0], r[1], r[2], r[3], -w / 2, -h, w, h); c.restore();
 }
-function resolvePA(type) {
-  const b = curB(); let t = '', c = '', runs = 0;
-  if (type === 'K') { GS.outs++; GS.line.k++; GS.line.outs++; t = '三振！'; c = 'gold'; }
-  else if (type === 'OUT') {
-    GS.outs++; GS.line.outs++;
-    const k = pick(['滾地球出局', '飛球出局', '平飛球被接殺', '內野飛球']);
-    t = k; c = 'good';
-    if (GS.outs < 3 && GS.bases[2] && k === '飛球出局' && Math.random() < 0.55) { runs++; GS.bases[2] = 0; t += '，三壘跑者回本壘'; c = 'bad'; }
-    if (GS.outs < 3 && GS.bases[0] && k === '滾地球出局' && Math.random() < 0.3) { GS.outs++; GS.line.outs++; GS.bases[0] = 0; t = '滾地球，雙殺！'; c = 'gold'; }
+function fieldDraw(G) {
+  const cv = $('field'); if (!cv || !cv.getContext) return; const c = cv.getContext('2d'); if (!c) return;
+  c.imageSmoothingEnabled = false;
+  const fd = G.fd;
+  // 外野草皮
+  c.fillStyle = '#1d3b2a'; c.fillRect(0, 0, FW, FH);
+  c.save(); c.beginPath(); c.moveTo(HOME[0], HOME[1]); c.lineTo(0, 92); c.quadraticCurveTo(300, -60, 600, 92); c.closePath(); c.clip();
+  for (let i = 0; i < 14; i++) { c.fillStyle = i % 2 ? '#3f9d4f' : '#48ab58'; c.beginPath(); c.arc(HOME[0], HOME[1], 420 - i * 30, 0, Math.PI * 2); c.fill(); }
+  c.restore();
+  // 全壘打牆
+  c.strokeStyle = '#f2c14e'; c.lineWidth = 4; c.beginPath(); c.moveTo(0, 92); c.quadraticCurveTo(300, -60, 600, 92); c.stroke();
+  // 內野紅土
+  c.fillStyle = '#c98a55'; c.beginPath(); c.moveTo(HOME[0], HOME[1] + 18); c.lineTo(BASE[0][0] + 26, BASE[0][1]); c.quadraticCurveTo(300, 130, BASE[2][0] - 26, BASE[2][1]); c.closePath(); c.fill();
+  c.fillStyle = '#4fae5c'; c.beginPath(); c.moveTo(HOME[0], HOME[1] - 22); c.lineTo(BASE[0][0] - 24, BASE[0][1]); c.lineTo(BASE[1][0], BASE[1][1] + 24); c.lineTo(BASE[2][0] + 24, BASE[2][1]); c.closePath(); c.fill();
+  // 界外線
+  c.strokeStyle = '#fff'; c.lineWidth = 2; c.beginPath(); c.moveTo(HOME[0], HOME[1]); c.lineTo(0, 92); c.moveTo(HOME[0], HOME[1]); c.lineTo(600, 92); c.stroke();
+  // 投手丘、壘包
+  c.fillStyle = '#c98a55'; c.beginPath(); c.ellipse(MOUND[0], MOUND[1], 18, 11, 0, 0, Math.PI * 2); c.fill();
+  c.fillStyle = '#fff'; c.fillRect(MOUND[0] - 5, MOUND[1] - 1, 10, 3);
+  c.fillStyle = '#c98a55'; c.beginPath(); c.ellipse(HOME[0], HOME[1] + 6, 28, 16, 0, 0, Math.PI * 2); c.fill();
+  c.fillStyle = '#fff'; c.beginPath(); c.moveTo(HOME[0] - 6, HOME[1]); c.lineTo(HOME[0] + 6, HOME[1]); c.lineTo(HOME[0] + 6, HOME[1] + 4); c.lineTo(HOME[0], HOME[1] + 8); c.lineTo(HOME[0] - 6, HOME[1] + 4); c.fill();
+  BASE.forEach((p, i) => { c.save(); c.translate(p[0], p[1]); c.rotate(Math.PI / 4); c.fillStyle = G.bases[i] ? '#ffd23f' : '#fff'; c.fillRect(-5, -5, 10, 10); c.restore(); });
+  // 守備
+  const D = defT(G), O = offT(G), dc = colOf(G, D), oc = colOf(G, O);
+  const ds = G[D.n];
+  FPOS.forEach((p, i) => { sprite(c, dc, i === 0 ? hashN(ds.pit) : i + 1, p[0], p[1], p[0] > 300); if (i === 0 && ds.pit === 'ME') { c.strokeStyle = '#ffd23f'; c.lineWidth = 2; c.beginPath(); c.ellipse(p[0], p[1], 14, 5, 0, 0, Math.PI * 2); c.stroke(); c.fillStyle = '#ffd23f'; c.font = 'bold 13px sans-serif'; c.textAlign = 'center'; c.fillText('你', p[0], p[1] - 46); } });
+  // 打者、跑者
+  if (fd.batter) sprite(c, oc, hashN(fd.batter), HOME[0] - 18, HOME[1] + 4, false);
+  for (const r of fd.runners) sprite(c, oc, hashN(r.id), r.x, r.y + 4, r.tx < r.x);
+  // 球
+  const b = fd.ball;
+  if (b) {
+    let x, y, h = 0;
+    if (b.stage === 0) { x = MOUND[0] + (HOME[0] - MOUND[0]) * b.t; y = MOUND[1] - 20 + (HOME[1] - 14 - MOUND[1] + 20) * b.t; }
+    else if (b.to) { x = HOME[0] + (b.to[0] - HOME[0]) * b.t; y = HOME[1] - 14 + (b.to[1] - HOME[1] + 14) * b.t; h = Math.sin(b.t * Math.PI) * b.arc; }
+    else { x = HOME[0]; y = HOME[1] + 12; }
+    c.fillStyle = 'rgba(0,0,0,.3)'; c.beginPath(); c.ellipse(x, y + 4, 4, 2, 0, 0, Math.PI * 2); c.fill();
+    c.fillStyle = '#fff'; c.strokeStyle = '#d33'; c.lineWidth = 1; c.beginPath(); c.arc(x, y - h, 4 + h / 60, 0, Math.PI * 2); c.fill(); c.stroke();
   }
-  else if (type === 'BB') { GS.line.bb++; runs = adv('BB'); t = '保送'; c = 'bad'; }
-  else { GS.line.h++; runs = adv(type); t = { '1B':'安打', '2B':'二壘安打', '3B':'三壘安打', 'HR':'全壘打！' }[type]; c = 'bad'; }
-  if (runs) { GS.opp += runs; GS.line.r += runs; t += `（失 ${runs} 分）`; }
-  if (b.rival) {
-    const good = type === 'K' || type === 'OUT';
-    GS.rivalPA.push(good ? '解決' : '被打');
-  }
-  GS.log.unshift(`${b.name}：${t}`);
-  return { t, c };
-}
-function afterPA() {
-  GS.bi++;
-  if (GS.outs >= 3) return setTimeout(endHalf, 650);
-  newBatter(); renderGame();
-}
-
-// ---- 自動 ----
-function autoPA() {
-  const b = curB(), R = rating(), Lb = (b.con + b.pow + b.eye) / 3;
-  const d = (R - Lb);
-  const pK = clamp(0.19 + d * 0.006, 0.05, 0.45), pBB = clamp(0.1 - (C.ctrl - 50) * 0.0011, 0.03, 0.16), pH = clamp(0.235 - d * 0.0042, 0.1, 0.4);
-  GS.pc += ri(3, 5);
-  const r = Math.random();
-  let type;
-  if (r < pK) type = 'K'; else if (r < pK + pBB) type = 'BB';
-  else if (r < pK + pBB + pH) { const hr = clamp(b.pow / 100 * 0.12, 0.03, 0.3), r2 = Math.random(); type = r2 < hr ? 'HR' : r2 < hr + 0.2 ? '2B' : r2 < hr + 0.22 ? '3B' : '1B'; }
-  else type = 'OUT';
-  resolvePA(type); GS.bi++;
-}
-function autoHalf() { while (GS.outs < 3) autoPA(); endHalf(true); }
-
-function shouldExit() {
-  const role = GS.cfg.role;
-  if (role === '終結者') return true;
-  if (role === '中繼') return GS.inning >= GS.entry + (Math.random() < 0.4 ? 1 : 0);
-  return GS.pc > staLimit() + 12 || (GS.line.r >= 5 && GS.inning >= 3) || (GS.line.r >= 7);
-}
-function endHalf(silent) {
-  GS.outs = 0; GS.bases = [0,0,0];
-  // 我方進攻
-  if (!(GS.inning >= GS.inn && GS.our > GS.opp)) GS.our += GS.po();
-  const last = GS.inning >= GS.inn;
-  if (last && GS.our !== GS.opp) return finish();
-  if (GS.pulled || shouldExit()) return exitPitcher(silent);
-  GS.inning++;
-  if (GS.inning > GS.inn + 3) return finish();
-  if (!silent && !GS.cfg.quick) { newBatter(); renderGame(); $('gRes').innerHTML = `<span class="muted">第 ${GS.inning} 局</span>`; }
-}
-function exitPitcher(silent) {
-  GS.leadAtExit = GS.our - GS.opp; GS.exitInning = GS.inning;
-  // 牛棚接手
-  for (let i = GS.inning + 1; i <= GS.inn || GS.our === GS.opp; i++) {
-    GS.opp += GS.po(); if (!(i >= GS.inn && GS.our > GS.opp)) GS.our += GS.po();
-    if (i > GS.inn + 3) { if (GS.our === GS.opp) GS.our++; break; }
-  }
-  finish(true);
-}
-function finish(exited) {
-  GS.over = true;
-  if (GS.our === GS.opp) GS.our++;
-  const L = GS.line, win = GS.our > GS.opp, role = GS.cfg.role;
-  const lead = exited ? GS.leadAtExit : GS.our - GS.opp;
-  let dec = '';
-  const cg = !exited && GS.entry === 1;
-  if (role === '終結者') { if (win && GS.lead0 > 0 && GS.lead0 <= 3) { dec = 'SV'; } else if (!win && lead <= 0) dec = 'L'; }
-  else if (role === '先發') { if (win && lead > 0 && L.outs >= (GS.inn === 7 ? 12 : 15)) dec = 'W'; else if (!win && lead < 0) dec = 'L'; }
-  else { if (win && lead > 0 && GS.lead0 <= 0) dec = 'W'; else if (!win && lead < 0 && GS.lead0 >= 0) dec = 'L'; }
-  const S = C.season, K = C.career;
-  for (const T of [S, K]) { T.g++; T.outs += L.outs; T.h += L.h; T.bb += L.bb; T.k += L.k; T.r += L.r; if (dec === 'W') T.w++; if (dec === 'L') T.l++; if (dec === 'SV') T.sv++; }
-  // 疲勞與信任
-  C.fatigue += role === '先發' ? 12 + GS.pc * 0.12 : 8;
-  const good = L.outs ? L.r * 27 / L.outs < 3 : true;
-  C.trust = clamp(C.trust + (good ? 4 : -3), 0, 100);
-  // 名場面
-  const extra = [];
-  if (L.k >= 10) { pushMem('K10'); extra.push(`單場 ${L.k} 次三振！`); C.highlights.push(`${C.phase === 'HS' ? '高中' : '職業第 ' + C.proYear + ' 年'}單場 ${L.k} 次三振`); }
-  if (cg && L.r === 0 && GS.inn === 9) { pushMem('SHUTOUT'); extra.push('完封勝！'); C.highlights.push(`職業第 ${C.proYear} 年投出完封`); }
-  for (const r of GS.rivalPA) { if (C.rival.faced < 3) { C.rival.faced++; C.rival.res.push(r); if (r === '解決') C.rival.won++; } }
-  // 受傷
-  if (C.fatigue > 75 && Math.random() < (C.fatigue - 70) * 0.01 * (has('UNDRAFTED') ? 0.65 : 1)) { C.injury = ri(2, 4); extra.push(`<span class="bad">賽後手臂不對勁，傷停 ${C.injury} 週（登板過度、疲勞累積）。</span>`); }
-  const decT = { W:'勝投', L:'敗投', SV:'救援成功' }[dec] || '無關勝敗';
-  const summary = `${win ? '球隊勝利' : '球隊落敗'}　${GS.our} : ${GS.opp}\n你的成績：${ip(L.outs)} 局　${L.h} 安　${L.bb} 四壞　${L.k} 三振　失 ${L.r} 分（${decT}）　用球數 ${GS.pc}${GS.rivalPA.length ? `\n對宿敵 ${C.rival.name}：${GS.rivalPA.join('、')}` : ''}${extra.length ? '\n\n' + extra.join('\n') : ''}`;
-  const res = { teamWin: win, summary };
-  $('game').classList.add('hide');
-  saveRun();
-  GS.cfg.onEnd(res);
-}
-
-// ===================== 比賽畫面 =====================
-const zone = $('zone'), zctx = zone.getContext ? zone.getContext('2d') : null;
-function renderGame() {
-  const b = curB();
-  $('gTeams').textContent = `${GS.cfg.opp} vs ${C.phase === 'HS' ? C.school : C.team}`;
-  $('gScore').textContent = `${GS.opp} : ${GS.our}`;
-  $('gInning').textContent = `${GS.inning} 局上`;
-  $('gOuts').innerHTML = [0,1,2].map(i => `<span class="o ${i < GS.outs ? 'on' : ''}"></span>`).join('');
-  $('gCount').innerHTML = [0,1,2,3].map(i => `<span class="b ${i < GS.b ? 'on' : ''}"></span>`).join('') + '<br>' + [0,1].map(i => `<span class="s ${i < GS.s ? 'on' : ''}"></span>`).join('');
-  ['b1','b2','b3'].forEach((id, i) => $(id).classList.toggle('on', !!GS.bases[i]));
-  $('gPC').textContent = `用球 ${GS.pc}`;
-  $('gBat').innerHTML = `${b.slot + 1}棒 ${b.rival ? '<span class="bad">' + b.name + '（宿敵）</span>' : b.name}`;
-  $('gBatInfo').textContent = `打擊 ${grade(b.con)}・力量 ${grade(b.pow)}・選球 ${grade(b.eye)}`;
-  $('gLine').textContent = `${ip(GS.line.outs)}局 ${GS.line.k}K 失${GS.line.r}`;
-  const sg = GS.sug;
-  $('gHint').innerHTML = `🧤 捕手建議：<b class="gold">${sg.p}</b>・${posName(sg.x, sg.y)}　<span class="muted">${sg.why}</span>${GS.pc > staLimit() ? '<br><span class="bad">體力下滑，球威和控球都在變差</span>' : ''}`;
-  $('gTypes').innerHTML = '';
-  for (const p of Object.keys(C.pitches)) {
-    const bt = document.createElement('button'); bt.className = 'ghost' + (GS.sel.p === p ? ' on' : '');
-    bt.innerHTML = `${p}<small>${Math.round(pitchLv(p))}</small>`; bt.onclick = () => { GS.sel.p = p; renderGame(); };
-    $('gTypes').appendChild(bt);
-  }
-  $('gLog').innerHTML = GS.log.slice(0, 8).join('<br>');
-  const pw = has('HS_CHAMP') ? 0.06 : 0.035;
-  $('mz2').style.left = (PERF - pw) * 100 + '%'; $('mz2').style.width = pw * 200 + '%';
-  $('mz1').style.left = '70%'; $('mz1').style.width = '30%';
-  drawZone();
-}
-function posName(x, y) {
-  const v = y < 0 ? '高' : y > 0 ? '低' : '', h = x < 0 ? '內角' : x > 0 ? '外角' : '';
-  const out = Math.abs(x) >= 2 || Math.abs(y) >= 2 ? '（壞球帶）' : '';
-  return (h + v || '正中') + out;
-}
-const CELL = 100, OX = 50, OY = 50; // 5x5 格，畫布 600
-function cellXY(x, y) { return [OX + (x + 2) * CELL + CELL/2, OY + (y + 2) * CELL + CELL/2]; }
-function drawZone(ball) {
-  if (!zctx) return;
-  const c = zctx; c.clearRect(0, 0, 600, 600);
-  // 背景
-  { const gr = c.createLinearGradient(0, 0, 0, 600); gr.addColorStop(0, '#0d1a12'); gr.addColorStop(0.5, '#1f4a2e'); gr.addColorStop(1, '#6b4a2e'); c.fillStyle = gr; c.fillRect(0, 0, 600, 600);
-    c.fillStyle = 'rgba(255,255,255,.05)'; for (let i = 0; i < 6; i++) c.fillRect(0, i * 40, 600, 20);
-    // 遠方投手
-    c.fillStyle = 'rgba(232,237,243,.35)'; c.beginPath(); c.arc(300, 112, 7, 0, 7); c.fill(); c.fillRect(294, 119, 12, 20);
-    // 本壘板
-    c.fillStyle = 'rgba(255,255,255,.75)'; c.beginPath(); c.moveTo(240, 572); c.lineTo(360, 572); c.lineTo(360, 584); c.lineTo(300, 600); c.lineTo(240, 584); c.fill();
-    // 打者剪影（右打，站在畫面左側）
-    if (GS) { c.save(); c.globalAlpha = 0.32; c.fillStyle = '#0b0e12';
-      c.beginPath(); c.arc(-6, 150, 34, 0, 7); c.fill(); c.fillRect(-40, 182, 70, 190); c.fillRect(-36, 372, 26, 200); c.fillRect(0, 372, 26, 200);
-      c.strokeStyle = '#0b0e12'; c.lineWidth = 16; c.lineCap = 'round'; c.beginPath(); c.moveTo(14, 200); c.lineTo(80, 60); c.stroke(); c.restore(); } }
-  c.fillStyle = 'rgba(26,36,48,.55)'; c.fillRect(OX + CELL, OY + CELL, CELL * 3, CELL * 3);
-  c.strokeStyle = 'rgba(255,255,255,.08)'; c.lineWidth = 2;
-  for (let i = 0; i <= 5; i++) { c.beginPath(); c.moveTo(OX + i*CELL, OY); c.lineTo(OX + i*CELL, OY + 5*CELL); c.stroke(); c.beginPath(); c.moveTo(OX, OY + i*CELL); c.lineTo(OX + 5*CELL, OY + i*CELL); c.stroke(); }
-  c.strokeStyle = '#e8edf3'; c.lineWidth = 4; c.strokeRect(OX + CELL, OY + CELL, CELL * 3, CELL * 3);
-  // 打者弱點不顯示；捕手建議（虛線金框）
-  if (GS && GS.sug) { const [sx, sy] = cellXY(GS.sug.x, GS.sug.y); c.setLineDash([10, 8]); c.strokeStyle = '#f2c14e'; c.lineWidth = 4; c.strokeRect(sx - CELL/2 + 6, sy - CELL/2 + 6, CELL - 12, CELL - 12); c.setLineDash([]); }
-  // 選定位置
-  if (GS) { const [tx, ty] = cellXY(GS.sel.x, GS.sel.y); c.strokeStyle = '#5fa8ff'; c.lineWidth = 5; c.beginPath(); c.arc(tx, ty, 30, 0, 7); c.stroke(); c.beginPath(); c.moveTo(tx - 12, ty); c.lineTo(tx + 12, ty); c.moveTo(tx, ty - 12); c.lineTo(tx, ty + 12); c.stroke(); }
-  if (ball) {
-    if (ball.trail) { c.strokeStyle = ball.perfect ? 'rgba(242,193,78,.9)' : 'rgba(255,255,255,.35)'; c.lineWidth = ball.perfect ? 8 : 4; c.beginPath(); ball.trail.forEach((p, i) => i ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1])); c.stroke(); }
-    c.fillStyle = '#fff'; c.beginPath(); c.arc(ball.x, ball.y, ball.r, 0, 7); c.fill();
-    c.strokeStyle = '#e5605a'; c.lineWidth = 2; c.beginPath(); c.arc(ball.x - ball.r * 0.4, ball.y, ball.r * 0.7, -0.9, 0.9); c.stroke();
+  // 結果文字
+  if (fd.txt && b && b.stage === 1 && fd.txtT < 200) {
+    c.save(); c.globalAlpha = Math.min(1, (200 - fd.txtT) / 30); c.font = `900 ${fd.big ? 40 : 28}px sans-serif`; c.textAlign = 'center'; c.lineWidth = 6; c.strokeStyle = '#0b0e14'; c.strokeText(fd.txt, 300, 160); c.fillStyle = fd.big ? '#ffd23f' : '#fff'; c.fillText(fd.txt, 300, 160); c.restore();
   }
 }
-function animate(pt, cb) {
-  GS.anim = true;
-  const [ex, ey] = cellXY(pt.x, pt.y);
-  const br = PITCHES[pt.p].brk;
-  const sx = 300 - br[0] * 40, sy = 120 - br[1] * 30;
-  const dur = 650 * 140 / pt.speed;
-  const t0 = performance.now(); const trail = [];
-  const step = now => {
-    let t = Math.min(1, (now - t0) / dur);
-    // 位置：先直線，後段加上變化
-    const lin = t, late = Math.pow(t, 2.6);
-    const x = sx + (ex - br[0] * CELL * 0.9 - sx) * lin + br[0] * CELL * 0.9 * late;
-    const y = sy + (ey - br[1] * CELL * 0.9 - sy) * lin + br[1] * CELL * 0.9 * late;
-    trail.push([x, y]);
-    drawZone({ x, y, r: 6 + 20 * t * t, trail, perfect: pt.perfect });
-    if (t < 1) requestAnimationFrame(step); else { setTimeout(() => { GS.anim = false; cb(); }, 350); }
-  };
-  if (!zctx || typeof requestAnimationFrame === 'undefined') { GS.anim = false; cb(); return; }
-  requestAnimationFrame(step);
-}
-// 點選進壘位置
-zone.addEventListener('pointerdown', e => {
-  if (!GS || GS.anim) return;
-  const r = zone.getBoundingClientRect();
-  const px = (e.clientX - r.left) / r.width * 600, py = (e.clientY - r.top) / r.height * 600;
-  const cx = Math.floor((px - OX) / CELL) - 2, cy = Math.floor((py - OY) / CELL) - 2;
-  if (cx < -2 || cx > 2 || cy < -2 || cy > 2) return;
-  GS.sel.x = cx; GS.sel.y = cy; drawZone();
-});
-// 蓄力計：按住時游標來回移動，放開判定
-const PERF = 0.9;
-let charging = false, cStart = 0, cVal = 0;
-function meterLoop(now) {
-  if (!charging) return;
-  const t = ((now - cStart) / 900) % 2;
-  cVal = t < 1 ? t : 2 - t;
-  $('mcur').style.left = (cVal * 100) + '%';
-  requestAnimationFrame(meterLoop);
-}
-function chargeStart(e) { e.preventDefault(); if (!GS || GS.anim || GS.over || charging) return; charging = true; cStart = performance.now(); requestAnimationFrame(meterLoop); }
-function chargeEnd(e) {
-  e.preventDefault(); if (!charging) return; charging = false;
-  const pw = has('HS_CHAMP') ? 0.06 : 0.035;
-  const d = Math.abs(cVal - PERF);
-  const q = d <= pw ? 1 : cVal >= 0.7 ? clamp(0.9 - d * 1.2, 0.6, 0.9) : clamp(0.3 + cVal * 0.5, 0.3, 0.65);
-  throwPitch(q);
-}
-$('charge').addEventListener('pointerdown', chargeStart);
-$('charge').addEventListener('pointerup', chargeEnd);
-$('charge').addEventListener('pointerleave', e => { if (charging) chargeEnd(e); });
-$('gAuto').onclick = () => { if (GS.anim || GS.over) return; while (GS.outs < 3) autoPA(); renderGame(); setTimeout(() => endHalf(), 300); };
-$('gSim').onclick = () => { if (GS.anim || GS.over) return; GS.cfg.quick = true; while (GS.outs < 3) autoPA(); endHalf(true); while (!GS.over) autoHalf(); };
-$('gPull').onclick = () => { if (GS.anim || GS.over) return; GS.pulled = true; GS.cfg.quick = true; while (GS.outs < 3) autoPA(); endHalf(true); };
+
 
 // ===================== 標題 =====================
-function title_() { showOnly('sTitle'); $('tArt').innerHTML = bbArt('stadium', '#f2c14e', 9); const r = loadRun(); $('bCont').classList.toggle('hide', !r); }
-$('bNew').onclick = () => {
-  const r = loadRun();
-  const go = () => { closeScene(); renderCreate(); showOnly('sCreate'); };
-  if (r) scene('新的人生', `你還有一位進行中的投手「${r.name}」。重新開始會放棄他（不會留下轉生記憶）。`, [{ label: '確定', fn: () => { try { localStorage.removeItem('pitcherRun'); } catch(e) {} go(); } }, { label: '算了', fn: d => d() }]);
-  else go();
-};
-$('bCont').onclick = () => { C = loadRun(); if (C) showHub(); };
+function title_() { showOnly('sTitle'); document.documentElement.style.setProperty('--tc', '#2e8b57'); $('titleArt').innerHTML = bbArt('stadium', '#f2c14e', 9); $('bCont').classList.toggle('hide', !loadRun()); }
+$('bNew').onclick = () => { const go = () => { closeScene(); renderCreate(); showOnly('sCreate'); }; if (loadRun()) scene('新的人生', '你還有一位進行中的投手，重新開始會放棄他（不會留下轉生記憶）。', [{ label:'確定', main:true, fn:() => { try { localStorage.removeItem('pitch2Run'); } catch(e) {} go(); } }, { label:'算了', fn:() => closeScene() }]); else go(); };
+$('bCont').onclick = () => { C = loadRun(); if (C) { PID = Math.max(PID, ...Object.keys(C.players).filter(k => k[0] === 'P').map(k => +k.slice(1) + 1)); showHub(); } };
 $('bHall').onclick = () => {
-  $('hallList').innerHTML = LEG.lives.length ? LEG.lives.map((l, i) => `<div class="card"><b style="font-size:19px">第 ${LEG.lives.length - i} 世　${l.name}</b><br><span class="muted">${l.school}${l.team ? '→' + l.team : ''}</span><br>${l.summary}
-    ${l.highlights && l.highlights.length ? `<div class="muted" style="font-size:14px;margin-top:6px;line-height:1.6">${l.highlights.join('<br>')}</div>` : ''}</div>`).join('')
-    + `<div class="card">目前天賦：${LEG.talents.length ? LEG.talents.map(k => MEMORIES[k].t).join('、') : '無'}</div>` : '<div class="card muted">還沒有前世。</div>';
+  $('hallList').innerHTML = `<div class="card"><h3>✨ 傳奇背號圖鑑　<span class="gold">${Object.keys(LEG.eggs || {}).length}/${EGGS.length}</span></h3><div class="muted" style="font-size:13px;margin-bottom:6px">特定背號配上特定球種，會喚醒傳奇的力量</div>${EGGS.map(e => (LEG.eggs || {})[e.n + (e.need || '')] ? `<div class="ach"><div class="i">${e.n}</div><div><b>${e.t}</b>${e.need ? `　<span class="muted" style="font-size:12px">${e.need}</span>` : ''}<div class="muted" style="font-size:13px">致敬 ${e.who}・潛力 ${e.pot}</div></div></div>` : `<div class="ach off"><div class="i">?</div><div><b>？？？</b><div class="muted" style="font-size:13px">尚未發現</div></div></div>`).join('')}</div>
+    <div class="card"><h3>🏛️ 成就殿堂　<span class="gold">${Object.keys(LEG.ach).length}/${ACH.length}</span></h3>${ACH.map(a => `<div class="ach ${LEG.ach[a[0]] ? '' : 'off'}"><div class="i">${a[1]}</div><div><b>${a[2]}</b>${LEG.ach[a[0]] ? `<span class="muted" style="font-size:12px">　達成 ${LEG.ach[a[0]]} 次</span>` : ''}<div class="muted" style="font-size:13px">${a[3]}</div></div></div>`).join('')}</div>` +
+    (LEG.lives.length ? LEG.lives.map((l, i) => `<div class="card row"><div style="width:72px;height:72px;border-radius:14px;overflow:hidden;flex:none">${bbAvatar(l.color, l.num, l.skin)}</div><div><b>第 ${LEG.lives.length - i} 世　${l.name}</b><br><span style="font-size:14px">${l.summary}</span>${l.highlights && l.highlights.length ? `<div class="muted" style="font-size:13px;margin-top:4px;line-height:1.6">${l.highlights.slice(0, 5).join('<br>')}</div>` : ''}</div></div>`).join('') : '<div class="card muted">還沒有前世。</div>');
   showOnly('sHall');
 };
 $('bHallBack').onclick = title_;
