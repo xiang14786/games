@@ -158,8 +158,8 @@
   <div id="sHub" class="hide">
     <div class="hero" id="hero"></div>
     <div class="card hide" id="hNote" style="font-size:15px;line-height:1.6"></div>
-    <div class="tabs" id="tabs"><button data-t="week">📅 本週</button><button data-t="me">🧍 投手</button><button data-t="league">🏆 聯盟</button><button data-t="ach">🎖️ 成就</button></div>
-    <div id="tWeek"></div><div id="tMe" class="hide"></div><div id="tLeague" class="hide"></div><div id="tAch" class="hide"></div>
+    <div class="tabs" id="tabs"><button data-t="week">📅 本週</button><button data-t="me">🧍 投手</button><button data-t="league">🏆 聯盟</button><button data-t="ach">🎖️ 成就</button><button data-t="life">💰 生活</button></div>
+    <div id="tWeek"></div><div id="tMe" class="hide"></div><div id="tLeague" class="hide"></div><div id="tAch" class="hide"></div><div id="tLife" class="hide"></div>
   </div>
 
   <div id="sHall" class="hide">
@@ -364,7 +364,7 @@ $('bStart').onclick = () => {
   const coach = LEG.lives[0];
   C.note = (egg ? `<b class="gold">✨ 傳奇背號：${num} 號「${egg.t}」</b><br>致敬 ${egg.who}。潛力上限 <b class="gold">${egg.pot}</b>${Object.keys(egg.b).length ? '，' + Object.entries(egg.b).map(([k, v]) => `${{ velo:'球速', ctrl:'控球', sta:'體力' }[k] || k} +${v}`).join('、') : ''}${egg.x === 'clutch' ? '，關鍵時刻更冷血' : egg.x === 'allpitch' ? '，多學一種變化球' : ''}。<br><br>` : '') +
     (coach ? `你進了${C.team}棒球隊。總教練是 <b class="gold">${coach.name}</b>——前世的你。「讓我看看你的直球。」` : `你進了${C.team}棒球隊，背號 ${C.num}。高中三年，目標是選秀會。`);
-  saveRun(); showHub(); if (egg) toast(`✨ 傳奇背號「${egg.t}」！`, `致敬 ${egg.who}・潛力 ${egg.pot}`);
+  saveRun(); showHub(); storyCheck(() => {}); if (egg) toast(`✨ 傳奇背號「${egg.t}」！`, `致敬 ${egg.who}・潛力 ${egg.pot}`);
 };
 
 // ===================== 賽季 =====================
@@ -372,7 +372,7 @@ function newSeason() {
   const pro = C.phase === 'PRO';
   for (const t of C.teams) { t.w = t.l = t.rs = t.ra = 0; }
   for (const id in C.players) C.players[id].st = C.players[id].type === 'B' ? bl() : pl();
-  C.week = 1; C.allstarDone = false; C.weeks = pro ? 10 : 6; C.gpw = pro ? 3 : 1;
+  C.week = 1; C.allstarDone = false; C.weeks = pro ? 10 : 6; C.gpw = pro ? 3 : 1; C.fatigue = 0; C.wk = {};
   if (!pro) { const ot = pick(C.teams.filter(t => t.n !== C.team)); C.rival = ot.bats.map(P).sort((a, b) => ovrOf(b) - ovrOf(a))[0].name; }
   assignRole();
 }
@@ -409,6 +409,9 @@ function paProbs(G, pid, bid, mod = {}) {
   const bb = clamp(0.085 - (pa.ctrl * ff - lvl) * 0.0013 + (b.eye - lvl) * 0.0011, 0.02, 0.18);
   const h = clamp(0.235 - d * 0.38 + (b.con - lvl) * 0.0012, 0.1, 0.4);
   const hr = clamp(0.085 + (b.pow - lvl) * 0.0035 - (pa.velo - lvl) * 0.0008, 0.02, 0.32);
+  if (pid === 'ME' && G.tac === 'power') return { k: clamp(k + 0.05, 0.05, 0.55), bb, h: h + 0.01, hr: hr + 0.03 };
+  if (pid === 'ME' && G.tac === 'nibble') return { k: k + 0.01, bb: bb + 0.035, h: Math.max(0.08, h - 0.035), hr: Math.max(0.02, hr - 0.02) };
+  if (pid === 'ME' && G.tac === 'ground') return { k: Math.max(0.05, k - 0.04), bb: Math.max(0.02, bb - 0.015), h: h + 0.01, hr: Math.max(0.02, hr - 0.045) };
   return { k, bb, h, hr };
 }
 function adv(G, type, bid) {
@@ -573,6 +576,7 @@ document.querySelectorAll('#tabs button').forEach(b => b.onclick = () => { tab =
 function meter(label, v, col) { return `<div class="meter"><div class="t"><span>${label}</span><b>${Math.round(v)}</b></div><div class="b"><i style="width:${clamp(v, 0, 100)}%;background:${col}"></i></div></div>`; }
 const kmh = () => Math.round(125 + ME().a.velo * 0.42);
 function renderHub() {
+  ensureCareer();
   const T = myTeam(), o = ovr();
   if (o >= 80) unlock('o80'); if (o >= 90) unlock('o90');
   $('hero').innerHTML = `<div class="bg"></div><div class="bg2">${logo(T, 200)}</div>
@@ -582,13 +586,13 @@ function renderHub() {
     <div class="meters">${meter('😊 士氣', C.morale, '#5fd68a')}${meter('🧤 捕手默契', C.chem, '#5aa9ff')}${meter('😮‍💨 疲勞', C.fatigue, C.fatigue >= 70 ? '#ff6b6b' : '#ffb84d')}</div>`;
   $('hNote').innerHTML = C.note; $('hNote').classList.toggle('hide', !C.note);
   document.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('on', b.dataset.t === tab));
-  ['week','me','league','ach'].forEach(t => $('t' + t[0].toUpperCase() + t.slice(1)).classList.toggle('hide', tab !== t));
-  ({ week: renderWeek, me: renderMe, league: renderLeague, ach: renderAch })[tab]();
+  ['week','me','league','ach','life'].forEach(t => $('t' + t[0].toUpperCase() + t.slice(1)).classList.toggle('hide', tab !== t));
+  ({ week: renderWeek, me: renderMe, league: renderLeague, ach: renderAch, life: () => renderLife($('tLife')) })[tab]();
 }
 const TRAIN = [['velo','🔥','球威訓練'],['ctrl','🎯','控球訓練'],['pitch','🌀','變化球練習'],['sta','🏃','體力跑步'],['dev','🧪','開發新球種'],['bond','🧤','牛棚配球'],['iq','📼','研究打者'],['rest','😴','休息']];
 function renderWeek() {
   const L = ME().st;
-  let h = `<div class="card"><h3>📊 本季成績</h3><table><tr><th>登板</th><th>勝</th><th>敗</th><th>救援</th><th>局數</th><th>三振</th><th>防禦率</th><th>WHIP</th></tr>
+  let h = storyCard() + `<div class="card"><h3>📊 本季成績</h3><table><tr><th>登板</th><th>勝</th><th>敗</th><th>救援</th><th>局數</th><th>三振</th><th>防禦率</th><th>WHIP</th></tr>
     <tr class="me"><td>${L.g}</td><td>${L.w}</td><td>${L.l}</td><td>${L.sv}</td><td>${ip(L.outs)}</td><td>${L.k}</td><td>${f2(era(L))}</td><td>${f2(whip(L))}</td></tr></table></div>`;
   h += `<div class="card"><h3>🏋️ 本週訓練 <span class="muted" style="font-size:13px;font-weight:400">選一項，接著打本週 ${C.gpw} 場</span></h3><div class="trains" id="trainBtns"></div>
     <div class="chips"><span class="chip">🧠 球商 ${C.iq}</span><span class="chip">📋 教練信任 ${C.trust}</span>${C.injury ? `<span class="chip bad">🩹 傷停 ${C.injury} 週</span>` : ''}${C.phase === 'PRO' ? `<span class="chip">💰 年薪 ${C.salary} 萬</span><span class="chip">📝 合約剩 ${C.contract} 年</span>` : ''}</div></div>`;
@@ -682,13 +686,13 @@ function train(k, pitch) {
   else if (k === 'bond') { const add = (has('CHAMP') ? 16 : 10); C.chem = Math.min(100, C.chem + add); C.fatigue += 6; const g = grow('ctrl', 1.5); t = `🧤 你和捕手在牛棚練了一整週的配球。\n捕手默契 +${add}，控球 +${g.toFixed(1)}`; }
   else {
     const tired = C.fatigue >= 65 ? 0.6 : 1, before = ovr();
-    if (k === 'dev') { const g = rnd(4, 6) * tired * ageF() * 1.1; C.dev.lv += g; t = `🧪 ${C.dev.p}（開發中）+${g.toFixed(1)}`; if (C.dev.lv >= 40) { me.pi[C.dev.p] = 40; t += `\n\n<b class="gold">${C.dev.p}完成！可以在比賽中使用了。</b>`; C.dev = null; } }
-    else if (k === 'pitch') { const g = grow(null, rnd(4, 6) * tired, pitch); t = `🌀 ${pitch} <span class="good">+${g.toFixed(1)}</span>`; }
-    else { const g = grow(k, rnd(4, 6) * tired); if (k === 'velo') grow('sta', g * 0.15); if (k === 'sta') grow('velo', g * 0.1); t = `${TRAIN.find(x => x[0] === k)[1]} ${{ velo:'球速', ctrl:'控球', sta:'體力' }[k]} <span class="good">+${g.toFixed(1)}</span>`; }
-    C.fatigue += rnd(8, 11);
+    if (k === 'dev') { const g = rnd(4, 6) * tired * ageF() * 1.1 * trainMult(); C.dev.lv += g; t = `🧪 ${C.dev.p}（開發中）+${g.toFixed(1)}`; if (C.dev.lv >= 40) { me.pi[C.dev.p] = 40; t += `\n\n<b class="gold">${C.dev.p}完成！可以在比賽中使用了。</b>`; C.dev = null; } }
+    else if (k === 'pitch') { const g = grow(null, rnd(4, 6) * tired * trainMult(), pitch); t = `🌀 ${pitch} <span class="good">+${g.toFixed(1)}</span>`; }
+    else { const g = grow(k, rnd(4, 6) * tired * trainMult()); if (k === 'velo') grow('sta', g * 0.15); if (k === 'sta') grow('velo', g * 0.1); t = `${TRAIN.find(x => x[0] === k)[1]} ${{ velo:'球速', ctrl:'控球', sta:'體力' }[k]} <span class="good">+${g.toFixed(1)}</span>`; }
+    C.fatigue += rnd(5, 7);
     if (tired < 1) t += '\n<span class="muted">太疲勞，效果打折</span>';
     if (ovr() > before) t += `\n\n總評 <b class="gold">${before} → ${ovr()}</b>`;
-    if (C.fatigue > 75 && Math.random() < (C.fatigue - 70) * 0.012 * (has('UNDRAFTED') ? 0.65 : 1)) { const w = ri(1, 3); C.injury = w; C.fatigue = 35; t += `\n\n<span class="bad">練太兇，手肘發炎，傷停 ${w} 週（疲勞超過 75）。</span>`; }
+    if (C.fatigue > 75 && Math.random() < (C.fatigue - 70) * 0.012 * (has('UNDRAFTED') ? 0.65 : 1) * injMult()) { const w = ri(1, 3); C.injury = w; C.fatigue = 35; t += `\n\n<span class="bad">練太兇，手肘發炎，傷停 ${w} 週（疲勞超過 75）。</span>`; }
   }
   C.note = ''; saveRun(); playWeek(t);
 }
@@ -716,16 +720,19 @@ function playWeek(trainText) {
   next();
 }
 function endWeek() {
-  C.week++; C.fatigue = Math.max(0, C.fatigue - 10);
+  ensureCareer();
+  C.week++; C.fatigue = Math.max(0, C.fatigue - weeklyRecover());
+  C.money += weeklyIncome().total; for (const k in C.wk) if (!k.startsWith('S_')) delete C.wk[k];
+  if (C.perks.house) C.morale = Math.max(50, C.morale);
   if (C.role === '敗戰處理') C.morale = Math.max(0, C.morale - 2);
   assignRole();
   if (C.phase === 'PRO' && !C.allstarDone && C.week > C.weeks / 2) { C.allstarDone = true; return allStar(); }
   if (C.week > C.weeks) return endRegular();
-  saveRun(); showHub();
+  saveRun(); lifeEvent(() => storyCheck(() => showHub()));
 }
 function allStar() {
   const R = aceRace(), rank = R.findIndex(r => r.id === 'ME') + 1;
-  if (rank && rank <= 6) { C.allstars++; unlock('allstar'); C.highlights.push(`職業第 ${C.proYear} 年入選明星賽`); C.morale = Math.min(100, C.morale + 10); saveRun();
+  if (rank && rank <= 6) { C.allstars++; unlock('allstar'); C.fame = (C.fame || 0) + 5; C.highlights.push(`職業第 ${C.proYear} 年入選明星賽`); C.morale = Math.min(100, C.morale + 10); saveRun();
     return scene('🌟 明星賽', `明星賽投手名單出爐——你以第 ${rank} 名入選！\n士氣 +10`, [{ label:'繼續', main:true, fn:() => { closeScene(); showHub(); } }], 'stadium'); }
   saveRun(); scene('明星賽名單', `明星賽名單公布，你排第 ${rank || '—'}，這次沒有入選（投手前 6 名入選）。`, [{ label:'繼續', main:true, fn:() => { closeScene(); showHub(); } }], 'bullpen');
 }
@@ -733,7 +740,7 @@ function allStar() {
 // ===================== 觀看比賽 =====================
 let GM = null;
 function playGame(h, a, opt) {
-  const G = newGame(h, a, opt); GM = G; G.speed = opt.watch ? 650 : 0; G.fi = 0;
+  const G = newGame(h, a, opt); GM = G; G.speed = opt.watch ? 1000 : 0; G.fi = 0;
   // 牛棚投手：讓你有機會上場
   if (!opt.myStart && !C.injury && C.role !== '先發') { const st = G[C.team].staff; if (C.role === '終結者') st.closer = 'ME'; else if (C.role === '中繼') st.setup = 'ME'; }
   if (!opt.watch) { simAll(G); return endGame(G); }
@@ -758,16 +765,34 @@ async function watchLoop(G) {
     const half = `${G.inn}${G.top}`; if (half !== lastHalf) { lastHalf = half; G.feed.push({ txt: `— ${G.inn} 局${G.top ? '上' : '下'}　${offT(G).n}進攻 —`, cls: 'q' }); }
     changePitcher(G, defT(G));
     const myPitching = G[defT(G).n].pit === 'ME';
+    if (myPitching && G.speed && !G.tacAuto && G.tacHalf !== half && G.outs === 0) { G.tacHalf = half; renderLive(G); fieldSetPA(G); await tacticUI(G); }
     if (isClutch(G)) { G.clutchN++; renderLive(G); fieldSetPA(G); await clutchUI(G); }
     else { fieldSetPA(G); stepPA(G); fieldResult(G); }
     renderLive(G);
     if (G.over) break;
     if (G.outs >= 3) { if (halfDone(G)) G.over = true; }
-    if (G.speed) await sleep(myPitching ? G.speed : Math.min(G.speed, 260));
+    if (G.speed) await sleep(myPitching ? G.speed : G.speed * 0.6);
   }
   if (G.s[G.home.n] === G.s[G.away.n]) G.s[pick([G.home, G.away]).n]++;
   G.feed.push({ txt: `比賽結束　${G.away.n} ${G.s[G.away.n]} : ${G.s[G.home.n]} ${G.home.n}${G.walkoff ? '（再見！）' : ''}`, cls: 'q' }); renderLive(G);
   setTimeout(() => endGame(G), 900);
+}
+const TACS = [
+  ['power', '🔥 直球對決', '三振變多，但容易被打全壘打'],
+  ['nibble', '🎯 邊角引誘', '不容易被打安打，但四壞球變多'],
+  ['ground', '🧱 製造滾地', '很少被打全壘打，但三振變少'],
+];
+function tacticUI(G) {
+  return new Promise(res => {
+    const D = defT(G), O = offT(G), lead = G.s[D.n] - G.s[O.n], m = G.pbox.ME, lu = G[O.n].lu, bi = G[O.n].bi;
+    const next = [0, 1, 2].map(i => P(lu[(bi + i) % 9]));
+    $('gClutch').innerHTML = `<div class="tac"><div style="font-size:18px;font-weight:900">🧤 ${G.inn} 局${G.top ? '上' : '下'}配球策略　${lead > 0 ? `領先 ${lead}` : lead < 0 ? `落後 ${-lead}` : '平手'}</div>
+      <div class="muted" style="margin:4px 0 6px">${m.outs ? `你已投 ${ip(m.outs)} 局 ${m.k} 三振 失 ${m.r} 分・${m.pc} 球` : '捕手走上投手丘：「這局怎麼配？」'}</div>
+      <div style="font-size:13px;margin-bottom:8px">本局打者：${next.map(b => `<b>${b.name}</b><span class="muted">（打擊 ${Math.round(b.a.con)}・力量 ${Math.round(b.a.pow)}）</span>`).join('、')}</div><div class="col" id="tBtns"></div></div>`;
+    for (const [k, n, dsc] of TACS) { const b = document.createElement('button'); b.className = 'choice'; b.innerHTML = `${n}<small>${dsc}</small>`; b.onclick = () => { G.tac = k; $('gClutch').innerHTML = ''; G.feed.push({ txt: `🧤 配球：${n}`, cls: 'q' }); renderLive(G); res(); }; $('tBtns').appendChild(b); }
+    const b = document.createElement('button'); b.className = 'ghost'; b.innerHTML = '交給捕手，不再詢問'; b.onclick = () => { G.tacAuto = true; G.tac = null; $('gClutch').innerHTML = ''; res(); }; $('tBtns').appendChild(b);
+    $('gClutch').scrollIntoView && $('gClutch').scrollIntoView({ block:'end', behavior:'smooth' });
+  });
 }
 function clutchUI(G) {
   return new Promise(res => {
@@ -781,7 +806,7 @@ function clutchUI(G) {
     $('gClutch').scrollIntoView && $('gClutch').scrollIntoView({ block:'end', behavior:'smooth' });
   });
 }
-$('gSpeed').onclick = () => { if (!GM) return; GM.speed = GM.speed > 100 ? 60 : 650; $('gSpeed').textContent = GM.speed > 100 ? '⏩ 快轉' : '▶ 正常速度'; };
+$('gSpeed').onclick = () => { if (!GM) return; GM.speed = GM.speed > 100 ? 60 : 1000; $('gSpeed').textContent = GM.speed > 100 ? '⏩ 快轉' : '▶ 正常速度'; };
 $('gSkip').onclick = () => { if (!GM) return; GM.speed = 0; $('gSpeed').disabled = true; $('gSkip').disabled = true; };
 
 function boxTables(G, t) {
@@ -803,7 +828,7 @@ function endGame(G) {
     unlock('debut'); C.chem = Math.min(100, C.chem + (has('CHAMP') ? 3 : 1.5)); C.iq = Math.min(100, C.iq + 0.5);
     const gs = m.outs / 3 * 1.5 + m.k - m.r * 2 - m.h * 0.5 - m.bb * 0.5 + (m.w ? 3 : 0) + (m.sv ? 3 : 0);
     C.trust = clamp(C.trust + (gs >= 8 ? 5 : gs >= 3 ? 3 : gs >= 0 ? 1 : -3), 0, 100);
-    C.fatigue += G[C.team].used[0] === 'ME' ? 18 + m.pc * 0.06 : 7;
+    C.fatigue += (G[C.team].used[0] === 'ME' ? 10 + m.pc * 0.04 : 4) * gameFatMult();
     const ks = ['velo','ctrl','sta']; for (let i = 0; i < 2; i++) grow(pick(ks), 0.35);
     if (m.w) unlock('win1');
     if (m.k >= 10) unlock('k10');
@@ -811,14 +836,14 @@ function endGame(G) {
     const cg = G[C.team].used.length === 1 && G[C.team].used[0] === 'ME' && m.outs >= (G.innings - 1) * 3;
     if (cg) { unlock('cg'); if (m.r === 0) { unlock('so'); pushMem('SHUTOUT'); C.highlights.push(`${tag}對${opp.n}投出完封`); } if (m.h === 0) { unlock('nh'); C.highlights.push(`${tag}對${opp.n}投出無安打比賽`); } }
     if (G.clutchHit) { unlock('clutch'); pushMem('CLUTCH'); }
-    if (C.fatigue > 85 && Math.random() < (C.fatigue - 80) * 0.012 * (has('UNDRAFTED') ? 0.65 : 1)) C.injury = ri(1, 3);
+    if (C.fatigue > 85 && Math.random() < (C.fatigue - 80) * 0.012 * (has('UNDRAFTED') ? 0.65 : 1) * injMult()) C.injury = ri(1, 3);
   }
   const K = ME().car; if (K.w >= 60) unlock('w100'); if (K.k >= 1000) unlock('k1000');
   // 本場最佳
   let pog = null, best = -99;
   for (const id in G.pbox) { const p = G.pbox[id], v = p.outs / 3 * 1.5 + p.k - p.r * 2 - p.h * 0.5 + (p.w ? 4 : 0); if (v > best) { best = v; pog = id; } }
   for (const id in G.bbox) { const b = G.bbox[id], v = b.h * 2 + b.hr * 4 + b.rbi * 1.5 + b.r; if (v > best) { best = v; pog = id; } }
-  if (pog === 'ME') unlock('pog');
+  if (pog === 'ME') { unlock('pog'); C.fame = (C.fame || 0) + 1; }
   saveRun();
   const pp = P(pog), pt = team(pp.team), pb = G.pbox[pog], bb = G.bbox[pog];
   $('sceneIn').innerHTML = bbArt(won ? 'stadium' : 'night', myTeam().c, ri(1, 99)) +
@@ -858,7 +883,7 @@ function series(opp, bo, name, done) {
 function champion() {
   C.morale = Math.min(100, C.morale + 15);
   if (C.phase === 'HS') { unlock('hsc'); pushMem('HS_CHAMP'); C.highlights.push(`高${'一二三'[C.year-1]}拿下金鷹盃冠軍`); return scene('🏆 高中冠軍！', `${C.team}奪得金鷹盃冠軍！`, [{ label:'繼續', main:true, fn:() => { closeScene(); endSeason(); } }], 'trophy'); }
-  C.rings++; unlock('ring'); pushMem('CHAMP'); C.highlights.push(`職業第 ${C.proYear} 年拿下總冠軍`);
+  C.rings++; unlock('ring'); C.fame = (C.fame || 0) + 8; pushMem('CHAMP'); C.highlights.push(`職業第 ${C.proYear} 年拿下總冠軍`);
   scene('💍 總冠軍！', `${C.team}奪得總冠軍！香檳灑滿了休息室。\n這是你的第 ${C.rings} 枚冠軍戒指。`, [{ label:'繼續', main:true, fn:() => { closeScene(); endSeason(); } }], 'trophy');
 }
 function endSeason() {
@@ -866,16 +891,16 @@ function endSeason() {
   C.seasons.push({ label: C.phase === 'HS' ? `高${'一二三'[C.year-1]}` : `職${C.proYear}`, team: C.team, ...L });
   if (C.phase === 'PRO') {
     const R = aceRace();
-    if (R[0] && R[0].id === 'ME') { C.aces++; unlock('ace'); pushMem('ACE'); C.awards.push(`職${C.proYear} 最佳投手`); lines.push('🏆 <b class="gold">最佳投手獎！</b>'); C.highlights.push(`職業第 ${C.proYear} 年獲選最佳投手`); }
+    if (R[0] && R[0].id === 'ME') { C.aces++; unlock('ace'); C.fame = (C.fame || 0) + 10; pushMem('ACE'); C.awards.push(`職${C.proYear} 最佳投手`); lines.push('🏆 <b class="gold">最佳投手獎！</b>'); C.highlights.push(`職業第 ${C.proYear} 年獲選最佳投手`); }
     else if (R[0]) lines.push(`最佳投手獎：${P(R[0].id).name}（${P(R[0].id).team}）`);
     const mo = 30;
     const e = pLeaders('era', mo); if (e[0] && e[0].id === 'ME') { unlock('era'); C.awards.push(`職${C.proYear} 防禦率王`); lines.push(`📉 防禦率王（${f2(e[0].v)}）`); }
     const k = pLeaders('k', 0); if (k[0] && k[0].id === 'ME') { unlock('kking'); C.awards.push(`職${C.proYear} 三振王`); lines.push(`💯 三振王（${k[0].v} K）`); }
     const s = pLeaders('sv', 0); if (s[0] && s[0].id === 'ME' && s[0].v > 0) { unlock('svking'); C.awards.push(`職${C.proYear} 救援王`); lines.push(`🔒 救援王（${s[0].v} 次）`); if (s[0].v >= 12) pushMem('SV30'); }
-    if (R[0] && R[0].id === 'ME' && myTeam().w >= myTeam().l + 6) { C.mvps++; unlock('mvp'); C.awards.push(`職${C.proYear} MVP`); lines.push('👑 <b class="gold">年度 MVP！</b>'); }
+    if (R[0] && R[0].id === 'ME' && myTeam().w >= myTeam().l + 6) { C.mvps++; unlock('mvp'); C.fame = (C.fame || 0) + 6; C.awards.push(`職${C.proYear} MVP`); lines.push('👑 <b class="gold">年度 MVP！</b>'); }
     if (C.proYear === 1 && L.outs >= 30 && era(L) < 3.5) { unlock('roy'); C.awards.push('新人王'); lines.push('🌱 新人王！'); }
     if (lines.some(x => x.includes('gold'))) C.morale = Math.min(100, C.morale + 10);
-    C.money += C.salary; C.proYear++; C.contract--; if (C.proYear > 10) { unlock('ten'); pushMem('LONG'); }
+    C.proYear++; C.contract--; if (C.proYear > 10) { unlock('ten'); pushMem('LONG'); }
   }
   C.age++; ME().age = C.age;
   const dA = has('LONG') ? 33 : 31, me = ME();
@@ -935,7 +960,7 @@ function retire() {
   if (score >= 10 || C.aces >= 2) { unlock('jersey'); msgs.push(`👕 ${C.team}宣布退休你的 ${C.num} 號背號。`); }
   if (score >= 18 || C.aces >= 3) { unlock('hof'); msgs.push('🏛️ 你入選了名人堂！'); C.highlights.push('入選名人堂'); }
   saveRun();
-  scene('引退', `${C.age} 歲，${C.name}宣布引退。\n\n生涯 ${K.g} 場　${K.w} 勝 ${K.l} 敗 ${K.sv} 救援\n${ip(K.outs)} 局　${K.k} 三振　防禦率 ${f2(era(K))}\n💍 ${C.rings}　🏆 最佳投手 ${C.aces}　🌟 明星賽 ${C.allstars}${msgs.length ? '\n\n' + msgs.join('\n') : ''}`, [{ label:'回顧這一生', main:true, fn:() => { closeScene(); endLife('引退'); } }], msgs.length ? 'trophy' : 'night');
+  scene('引退', `${C.age} 歲，${C.name}宣布引退。\n\n生涯 ${K.g} 場　${K.w} 勝 ${K.l} 敗 ${K.sv} 救援\n${ip(K.outs)} 局　${K.k} 三振　防禦率 ${f2(era(K))}\n💍 ${C.rings}　🏆 最佳投手 ${C.aces}　🌟 明星賽 ${C.allstars}${msgs.length ? '\n\n' + msgs.join('\n') : ''}`, [{ label:'回顧這一生', main:true, fn:() => { closeScene(); storyCheck(() => endLife('引退')); } }], msgs.length ? 'trophy' : 'night');
 }
 function endLife(how) {
   const K = ME().car, T = myTeam(), me = ME();
@@ -1066,10 +1091,170 @@ function fieldDraw(G) {
   }
 }
 
+// ===================== 生涯系統：薪水用途、故事模式、隨機事件（籃球／棒球共用） =====================
+// 每個遊戲要先定義 SPORT = { name, art:{ happy, sad, money, home }, boost(amount) => 文字, starter() => bool, topAward() => bool, topName }
+(() => { const st = document.createElement('style'); st.textContent = `
+  button.shop { display:flex; align-items:center; gap:10px; width:100%; margin-top:8px; padding:10px 12px; background:#1b2130; border:1px solid #2b3446; border-radius:14px; color:#e8edf5; font-size:15px; }
+  button.shop .ic { font-size:26px; }
+  button.shop small { display:block; color:#8e9ab0; font-size:12px; font-weight:400; margin-top:2px; }
+  button.shop:disabled { opacity:.45; }
+  .story-card { background:linear-gradient(135deg,#2a2210,#151a24); border:1px solid #6b5520; }
+  .story-card .prog, .tac-prog { height:8px; background:#0b0e14; border-radius:6px; overflow:hidden; margin-top:8px; }
+  .story-card .prog i { display:block; height:100%; background:linear-gradient(90deg,#ffd27a,#ff9f43); }
+  #tabs { display:grid !important; grid-template-columns:repeat(5,1fr); gap:5px; }
+  #tabs button { padding:9px 2px !important; font-size:13px !important; white-space:nowrap; }
+  .tac { background:linear-gradient(135deg,#132a44,#151a24); border:2px solid #5aa9ff; border-radius:18px; padding:12px; margin-top:10px; }
+`; document.head.appendChild(st); })();
+function ensureCareer() {
+  if (!C) return;
+  C.perks = C.perks || {}; C.wk = C.wk || {}; C.fame = C.fame || 0; C.story = C.story || 0; C.endorse = C.endorse || 0; if (C.storySeen === undefined) C.storySeen = -1; C.evSeen = C.evSeen || {};
+}
+const trainMult = () => (C.perks.trainer ? 1.2 : 1) * (C.perks.gym ? 1.15 : 1);
+const injMult = () => C.perks.physio ? 0.5 : 1;
+const gameFatMult = () => (C.perks.chef ? 0.7 : 1) * (C.perks.jet ? 0.7 : 1);
+const weeklyRecover = () => 16 + (C.perks.physio ? 8 : 0) + (C.perks.house ? 4 : 0);
+const moneyUnit = () => C.phase === 'HS' ? 0.1 : 1;
+function weeklyIncome() {
+  if (C.phase === 'HS') return { total: 2, lines: [['家裡給的零用錢', 2]] };
+  const sal = Math.round(C.salary / C.weeks), end = C.endorse + Math.round(Math.sqrt(C.fame) * 2.5);
+  return { total: sal + end, lines: [['薪水（年薪 ÷ ' + C.weeks + ' 週）', sal], ...(end ? [['代言與商業收入', end]] : [])] };
+}
+const PERKS = [
+  { k:'trainer', ic:'🏋️', n:'私人訓練師', d:'所有訓練效果 +20%', p:300 },
+  { k:'gym', ic:'🏟️', n:'家用訓練館', d:'所有訓練效果再 +15%', p:600, need:'trainer' },
+  { k:'physio', ic:'💆', n:'專屬物理治療師', d:'每週多恢復 8 疲勞，受傷機率減半', p:250 },
+  { k:'chef', ic:'🥗', n:'營養師', d:'比賽消耗的疲勞 -30%', p:180 },
+  { k:'car', ic:'🏎️', n:'超跑', d:'士氣 +15、人氣 +5（買來開心的）', p:220, once: () => { C.morale = Math.min(100, C.morale + 15); C.fame += 5; } },
+  { k:'house', ic:'🏡', n:'海景豪宅', d:'士氣永遠不低於 50，每週多恢復 4 疲勞', p:1200 },
+  { k:'school', ic:'🏫', n:'開設自己的訓練營', d:'人氣 +20，之後每週 +12 萬收入', p:2000, once: () => { C.fame += 20; C.endorse += 12; } },
+  { k:'jet', ic:'🛩️', n:'私人飛機', d:'客場不用搭紅眼班機：比賽疲勞再 -30%', p:3500 },
+  { k:'stake', ic:'📈', n:'買下球隊股份', d:'人氣 +40、退休時名人堂評分加分', p:8000, once: () => { C.fame += 40; } },
+];
+const WEEKLY = [
+  { k:'meal', ic:'🍖', n:'請全隊吃大餐', d:'團隊默契 +8', p:30, f: () => { C.chem = Math.min(100, C.chem + 8); } },
+  { k:'spa', ic:'🧖', n:'按摩 SPA', d:'疲勞 -25', p:20, f: () => { C.fatigue = Math.max(0, C.fatigue - 25); } },
+  { k:'coach', ic:'🎓', n:'請傳奇教練指導', d:'隨機能力大幅成長', p:80, f: () => SPORT.boost(3.5) },
+  { k:'charity', ic:'❤️', n:'慈善捐款', d:'人氣 +6、士氣 +4', p:60, f: () => { C.fame += 6; C.morale = Math.min(100, C.morale + 4); } },
+  { k:'trip', ic:'✈️', n:'放假出國散心', d:'疲勞歸零、士氣 +10（每季一次）', p:90, season: true, f: () => { C.fatigue = 0; C.morale = Math.min(100, C.morale + 10); } },
+];
+function renderLife(el) {
+  ensureCareer();
+  const u = moneyUnit(), inc = weeklyIncome();
+  let h = `<div class="card"><h3>💰 錢包</h3><div style="font-size:30px;font-weight:900" class="gold">${C.money} 萬</div>
+    <div class="muted" style="font-size:14px;line-height:1.7">每週收入 <b class="good">+${inc.total} 萬</b><br>${inc.lines.map(([n, v]) => `・${n} ${v} 萬`).join('<br>')}</div>
+    <div class="chips"><span class="chip">⭐ 人氣 ${C.fame}</span>${C.phase === 'PRO' ? `<span class="chip">📝 年薪 ${C.salary} 萬・剩 ${C.contract} 年</span>` : ''}</div>
+    <div class="muted" style="font-size:12px;margin-top:6px">人氣越高，代言收入越多。得獎、明星賽、本場最佳、慈善都會增加人氣。</div></div>`;
+  h += `<div class="card"><h3>🛍️ 本週花費 <span class="muted" style="font-size:12px;font-weight:400">每項每週一次</span></h3>${WEEKLY.map(w => { const p = Math.max(1, Math.round(w.p * u)); const used = w.season ? C.wk['S_' + w.k] : C.wk[w.k];
+    return `<button class="shop" data-w="${w.k}" ${used || C.money < p ? 'disabled' : ''}><span class="ic">${w.ic}</span><span style="flex:1;text-align:left"><b>${w.n}</b><small>${w.d}</small></span><b class="gold">${used ? '✓' : p + ' 萬'}</b></button>`; }).join('')}</div>`;
+  h += `<div class="card"><h3>🏠 長期投資 ${C.phase === 'HS' ? '<span class="muted" style="font-size:12px;font-weight:400">進職業後才買得起</span>' : ''}</h3>${PERKS.map(x => { const own = C.perks[x.k], lock = x.need && !C.perks[x.need];
+    return `<button class="shop" data-p="${x.k}" ${own || lock || C.money < x.p ? 'disabled' : ''}><span class="ic">${x.ic}</span><span style="flex:1;text-align:left"><b>${x.n}</b><small>${lock ? '要先請私人訓練師' : x.d}</small></span><b class="gold">${own ? '已擁有' : x.p + ' 萬'}</b></button>`; }).join('')}</div>`;
+  el.innerHTML = h;
+  el.querySelectorAll('[data-w]').forEach(b => b.onclick = () => { const w = WEEKLY.find(x => x.k === b.dataset.w), p = Math.max(1, Math.round(w.p * u)); C.money -= p; if (w.season) C.wk['S_' + w.k] = 1; else C.wk[w.k] = 1; const r = w.f(); toast(`${w.ic} ${w.n}`, r || w.d); saveRun(); renderHub(); });
+  el.querySelectorAll('[data-p]').forEach(b => b.onclick = () => { const x = PERKS.find(y => y.k === b.dataset.p); C.money -= x.p; C.perks[x.k] = 1; if (x.once) x.once(); toast(`${x.ic} 買下${x.n}！`, x.d); saveRun(); renderHub(); });
+}
+
+// ---------- 故事模式 ----------
+const STORY = [
+  { t:'第一章・新人報到', d:'在正式比賽上場一次', ok: () => C.ach.debut, r:{ money: 5, morale: 10 },
+    intro: () => `${C.team}的更衣室裡，學長把一件舊球衣丟給你：「${C.num} 號，以前是隊上的王牌穿的。別丟臉。」\n\n你的${SPORT.name}人生，從這裡開始。` },
+  { t:'第二章・打出名號', d:'拿到一次「本場最佳」', ok: () => C.ach.pog, r:{ fame: 5, pot: 1 },
+    intro: () => `校刊記者來採訪隊上的學長，經過你的時候連看都沒看一眼。\n\n讓所有人記住你的名字吧。` },
+  { t:'第三章・宿敵', d:`高中拿下冠軍（或打進職業）`, ok: () => C.ach.hsc || C.phase === 'PRO', r:{ pot: 2, morale: 10 },
+    intro: () => `賽後，對手的王牌 <b class="bad">${C.rival || '那個傢伙'}</b> 經過你身邊：「冠軍是我的。」\n\n他說得很輕，但你聽得很清楚。` },
+  { t:'第四章・夢想的舞台', d:'在選秀會被選中，成為職業球員', ok: () => C.phase === 'PRO', r:{ money: 100, fame: 5 },
+    intro: () => `畢業季到了。球探開始出現在看台上，教練說：「選秀會上，每個人只有一次機會。」` },
+  { t:'第五章・站穩腳步', d: () => `成為球隊的${SPORT.starterName}`, ok: () => C.phase === 'PRO' && SPORT.starter(), r:{ money: 80, morale: 10 },
+    intro: () => `職業的世界很殘酷。板凳上的每一分鐘，都有人在等著搶你的位置。\n\n總教練說：「想上場？拿出實力來。」` },
+  { t:'第六章・第一桶金', d:'買下第一項長期投資（在「生活」分頁）', ok: () => Object.keys(C.perks || {}).length > 0, r:{ fame: 5, morale: 8 },
+    intro: () => `第一次領到職業薪水，你盯著存摺看了很久。\n\n經紀人說：「錢要花在刀口上——請個訓練師，還是買間房子給爸媽？」` },
+  { t:'第七章・全明星', d:'入選一次明星賽', ok: () => C.allstars > 0, r:{ money: 150, fame: 10 },
+    intro: () => `球迷開始在場邊舉你的名字。\n\n經紀人說：「下個月的明星賽票選，你有機會。」` },
+  { t:'第八章・冠軍之路', d:'拿下一座總冠軍', ok: () => C.rings > 0, r:{ money: 300, pot: 2, fame: 10 },
+    intro: () => `${C.rival ? `當年的宿敵 ${C.rival} 已經在別隊拿過冠軍了。` : ''}\n\n你看著空空的手指：「我也要一枚戒指。」` },
+  { t:'第九章・聯盟最強', d: () => `拿下${SPORT.topName}`, ok: () => SPORT.topAward(), r:{ money: 500, fame: 15 },
+    intro: () => `你已經是聯盟頂尖的球員之一了。但「之一」兩個字，你聽了很不舒服。` },
+  { t:'終章・傳奇', d:'退休時入選名人堂', ok: () => C.ach.hof, r:{ fame: 30 },
+    intro: () => `年紀越來越大，身體開始不聽使喚。\n\n你還想留下一點什麼——讓下一代的孩子，穿上你的背號。` },
+];
+function storyCard() {
+  ensureCareer();
+  const s = STORY[C.story];
+  if (!s) return `<div class="card story-card"><h3>📖 故事模式</h3><b class="gold">全篇完結！</b><div class="muted" style="font-size:14px">你走完了一位傳奇${SPORT.name}員的一生。</div></div>`;
+  const d = typeof s.d === 'function' ? s.d() : s.d, r = s.r;
+  return `<div class="card story-card"><h3>📖 ${s.t} <span class="muted" style="font-size:12px;font-weight:400">${C.story + 1}/${STORY.length}</span></h3>
+    <div style="font-size:15px">🎯 目標：<b>${d}</b></div><div class="muted" style="font-size:13px;margin-top:4px">獎勵：${[r.money ? `💰 ${r.money} 萬` : '', r.fame ? `⭐ 人氣 +${r.fame}` : '', r.pot ? `📈 潛力 +${r.pot}` : '', r.morale ? `😊 士氣 +${r.morale}` : ''].filter(Boolean).join('　')}</div>
+    <div class="prog"><i style="width:${C.story / STORY.length * 100}%"></i></div></div>`;
+}
+// 檢查故事進度：完成就跳獎勵，再播下一章開頭；最後呼叫 done()
+function storyCheck(done) {
+  ensureCareer();
+  const s = STORY[C.story];
+  if (s && C.storySeen < C.story) { C.storySeen = C.story; saveRun(); return scene(`📖 ${s.t}`, s.intro() + `\n\n<b class="gold">🎯 目標：${typeof s.d === 'function' ? s.d() : s.d}</b>`, [{ label:'繼續', main:true, fn: () => { closeScene(); storyCheck(done); } }], SPORT.art.home); }
+  if (s && s.ok()) {
+    const r = s.r, lines = [];
+    if (r.money) { C.money += r.money; lines.push(`💰 +${r.money} 萬`); }
+    if (r.fame) { C.fame += r.fame; lines.push(`⭐ 人氣 +${r.fame}`); }
+    if (r.pot) { ME().pot = Math.min(99, ME().pot + r.pot); lines.push(`📈 潛力 +${r.pot}`); }
+    if (r.morale) { C.morale = Math.min(100, C.morale + r.morale); lines.push(`😊 士氣 +${r.morale}`); }
+    C.story++; saveRun();
+    return scene('✅ 章節完成！', `<b class="gold">${s.t}</b>\n\n${lines.join('\n')}`, [{ label:'繼續', main:true, fn: () => { closeScene(); storyCheck(done); } }], SPORT.art.happy);
+  }
+  done();
+}
+
+// ---------- 隨機事件 ----------
+const LIFE_EV = [
+  { k:'reporter', w: 1, s: () => `賽後記者把麥克風塞到你面前：「對下一個對手有什麼話想說？」`, t:'記者採訪', c: [
+    { l:'「我們會全力以赴。」', n:'團隊默契 +5', f: () => { C.chem = Math.min(100, C.chem + 5); return '標準答案。隊友們拍了拍你的肩膀。'; } },
+    { l:'「他們不是我們的對手。」', n:'士氣 +8、人氣 +4、教練信任 -3', f: () => { C.morale = Math.min(100, C.morale + 8); C.fame += 4; C.trust = Math.max(0, C.trust - 3); return '這句話上了隔天的體育版頭條。教練的臉很臭。'; } }] },
+  { k:'club', w: 1, s: () => `隊友約你週末去夜店慶祝：「放鬆一下啦！」`, t:'隊友邀約', c: [
+    { l:'去！', n:'士氣 +10、團隊默契 +4、疲勞 +18', f: () => { C.morale = Math.min(100, C.morale + 10); C.chem = Math.min(100, C.chem + 4); C.fatigue += 18; return '你玩到天亮。隔天練球腳步有點飄。'; } },
+    { l:'在家早點睡', n:'疲勞 -12', f: () => { C.fatigue = Math.max(0, C.fatigue - 12); return '你睡了整整十個小時。'; } }] },
+  { k:'family', w: 1, s: () => `媽媽打電話來：「這週末是爸爸生日，你會回來嗎？」`, t:'家裡的電話', c: [
+    { l:'回家一趟', n:'士氣 +12、疲勞 -10', f: () => { C.morale = Math.min(100, C.morale + 12); C.fatigue = Math.max(0, C.fatigue - 10); return '爸爸喝了兩杯，一直跟親戚炫耀你。'; } },
+    { l:'留下來加練', n:'能力成長、士氣 -5', f: () => { C.morale = Math.max(0, C.morale - 5); return '你在空蕩蕩的球場練到很晚。\n' + SPORT.boost(2.5); } }] },
+  { k:'fan', w: 1, s: () => `你收到一封小球迷的信，歪歪扭扭的字寫著：「我長大也要跟你一樣厲害！」`, t:'粉絲來信', c: [
+    { l:'回信並寄一件簽名球衣', n:'人氣 +5、士氣 +6', f: () => { C.fame += 5; C.morale = Math.min(100, C.morale + 6); return '小球迷的媽媽把照片 PO 上網，爆紅了。'; } },
+    { l:'收進抽屜當動力', n:'士氣 +8', f: () => { C.morale = Math.min(100, C.morale + 8); return '你把信貼在置物櫃裡。'; } }] },
+  { k:'oldcoach', w: 1, s: () => `啟蒙教練特地來看你比賽。賽後他說：「我發現你一個小毛病。」`, t:'老教練', c: [
+    { l:'請他指點', n:'球商 +5、能力成長', f: () => { C.iq = Math.min(100, C.iq + 5); return '他講了一個小時，你全記下來了。\n' + SPORT.boost(1.5); } }] },
+  { k:'fight', w: 1, s: () => `訓練時兩個主力隊友吵了起來，整個球隊氣氛很差。`, t:'隊內衝突', c: [
+    { l:'當和事佬', n:'團隊默契 +7', f: () => { C.chem = Math.min(100, C.chem + 7); return '你請兩個人吃宵夜，事情就這樣過去了。'; } },
+    { l:'站在隊長那邊', n:'教練信任 +5、默契 -3', f: () => { C.trust = Math.min(100, C.trust + 5); C.chem = Math.max(0, C.chem - 3); return '教練注意到了你的態度。'; } }] },
+  { k:'hater', w: 1, s: () => `網路上有人罵你「被高估」，留言有好幾千讚。`, t:'網路酸民', c: [
+    { l:'發文回嗆', n:'人氣 +5、士氣 -4', f: () => { C.fame += 5; C.morale = Math.max(0, C.morale - 4); return '吵了一整天，你的追蹤數反而漲了。'; } },
+    { l:'用表現讓他閉嘴', n:'能力成長', f: () => '你把手機關掉，去球場多練了一小時。\n' + SPORT.boost(1.5) }] },
+  { k:'sponsor', w: 1.5, pro: true, need: () => C.fame >= 10, s: () => `經紀人打來：「有運動飲料品牌想找你代言！」`, t:'代言邀約', c: [
+    { l:'簽約', n:'每週代言收入 +8 萬、疲勞 +8（要拍廣告）', f: () => { C.endorse += 8; C.fatigue += 8; return '你拍了一支廣告，在便利商店天天看到自己的臉。'; } },
+    { l:'婉拒，專心打球', n:'教練信任 +4、球商 +2', f: () => { C.trust = Math.min(100, C.trust + 4); C.iq = Math.min(100, C.iq + 2); return '教練說：「這才對。」'; } }] },
+  { k:'invest', w: 0.8, pro: true, need: () => C.money >= 200, s: () => `一個大學同學找你投資他的手搖飲創業：「穩賺的啦，投 150 萬就好！」`, t:'投資機會', c: [
+    { l:'投資 150 萬', n:'可能翻倍，也可能血本無歸', f: () => { C.money -= 150; if (Math.random() < 0.45) { C.money += 330; return '飲料店爆紅，開了十家分店！你拿回 <b class="gold">330 萬</b>。'; } return '半年後店收了。<b class="bad">150 萬沒了。</b>'; } },
+    { l:'婉拒', n:'', f: () => '同學有點失望，不過你們還是朋友。' }] },
+  { k:'pain', w: 1.2, need: () => C.fatigue >= 45, s: () => `你醒來時覺得身體很沉重，關節隱隱作痛。`, t:'身體的警訊', c: [
+    { l:'找防護員處理', n:'疲勞 -25、教練信任 -2', f: () => { C.fatigue = Math.max(0, C.fatigue - 25); C.trust = Math.max(0, C.trust - 2); return '防護員幫你冰敷、按摩，好多了。'; } },
+    { l:'咬牙硬撐', n:'教練信任 +3，但可能受傷', f: () => { C.trust = Math.min(100, C.trust + 3); if (Math.random() < 0.35 * injMult()) { C.injury = ri(1, 2); return `<b class="bad">撐不住了……傷停 ${C.injury} 週。</b>`; } return '你撐過去了，教練看在眼裡。'; } }] },
+  { k:'charity', w: 0.8, pro: true, s: () => `球團邀請你去偏鄉學校辦一場免費的${SPORT.name}營。`, t:'公益活動', c: [
+    { l:'參加', n:'人氣 +7、士氣 +5、疲勞 +6', f: () => { C.fame += 7; C.morale = Math.min(100, C.morale + 5); C.fatigue += 6; return '孩子們的笑容讓你想起小時候的自己。'; } },
+    { l:'這週想休息', n:'疲勞 -8', f: () => { C.fatigue = Math.max(0, C.fatigue - 8); return '你在家好好休息了一天。'; } }] },
+];
+function lifeEvent(done) {
+  ensureCareer();
+  if (Math.random() > 0.38) return done();
+  const pool = LIFE_EV.filter(e => (!e.pro || C.phase === 'PRO') && (!e.need || e.need()) && !(C.evSeen[e.k] >= (C.phase === 'PRO' ? C.proYear : 0) && Math.random() < 0.7));
+  if (!pool.length) return done();
+  let tot = pool.reduce((s, e) => s + e.w, 0), k = Math.random() * tot, e = pool[0];
+  for (const x of pool) { k -= x.w; if (k <= 0) { e = x; break; } }
+  C.evSeen[e.k] = C.phase === 'PRO' ? C.proYear : 0;
+  scene(`💬 ${e.t}`, e.s(), e.c.map(c => ({ label: c.l, note: c.n, fn: () => { const r = c.f(); saveRun(); scene(e.t, r, [{ label:'繼續', main:true, fn: () => { closeScene(); done(); } }], SPORT.art.home); } })), SPORT.art.home);
+}
+
 
 // ===================== 標題 =====================
 function title_() { showOnly('sTitle'); document.documentElement.style.setProperty('--tc', '#2e8b57'); $('titleArt').innerHTML = bbArt('stadium', '#f2c14e', 9); $('bCont').classList.toggle('hide', !loadRun()); }
 $('bNew').onclick = () => { const go = () => { closeScene(); renderCreate(); showOnly('sCreate'); }; if (loadRun()) scene('新的人生', '你還有一位進行中的投手，重新開始會放棄他（不會留下轉生記憶）。', [{ label:'確定', main:true, fn:() => { try { localStorage.removeItem('pitch2Run'); } catch(e) {} go(); } }, { label:'算了', fn:() => closeScene() }]); else go(); };
+const SPORT = { name:'棒球', art:{ happy:'trophy', sad:'night', home:'bullpen' }, starterName:'先發投手或終結者', topName:'最佳投手獎',
+  boost: amt => { const k = pick(['velo','ctrl','sta']), g = grow(k, amt * 2 * trainMult()); return `${{ velo:'球速', ctrl:'控球', sta:'體力' }[k]} +${g.toFixed(1)}`; },
+  starter: () => ['先發','終結者'].includes(C.role), topAward: () => C.aces > 0 };
 $('bCont').onclick = () => { C = loadRun(); if (C) { PID = Math.max(PID, ...Object.keys(C.players).filter(k => k[0] === 'P').map(k => +k.slice(1) + 1)); showHub(); } };
 $('bHall').onclick = () => {
   $('hallList').innerHTML = `<div class="card"><h3>✨ 傳奇背號圖鑑　<span class="gold">${Object.keys(LEG.eggs || {}).length}/${EGGS.length}</span></h3><div class="muted" style="font-size:13px;margin-bottom:6px">特定背號配上特定球種，會喚醒傳奇的力量</div>${EGGS.map(e => (LEG.eggs || {})[e.n + (e.need || '')] ? `<div class="ach"><div class="i">${e.n}</div><div><b>${e.t}</b>${e.need ? `　<span class="muted" style="font-size:12px">${e.need}</span>` : ''}<div class="muted" style="font-size:13px">致敬 ${e.who}・潛力 ${e.pot}</div></div></div>` : `<div class="ach off"><div class="i">?</div><div><b>？？？</b><div class="muted" style="font-size:13px">尚未發現</div></div></div>`).join('')}</div>
