@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="遊戲盒">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<title>彩色連線</title>
+<style>
+  * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html,body { margin:0; height:100%; background:#0b0b12; color:#fff; overflow:hidden;
+    font-family:-apple-system,"PingFang TC","Noto Sans TC","Microsoft JhengHei",sans-serif;
+    user-select:none; -webkit-user-select:none; overscroll-behavior:none; }
+  .hide { display:none !important; }
+  #app { max-width:520px; height:100%; margin:0 auto; display:flex; flex-direction:column; padding:calc(env(safe-area-inset-top) + 10px) 12px calc(env(safe-area-inset-bottom) + 12px); }
+  .scr { flex:1; display:flex; flex-direction:column; min-height:0; }
+  .logo { text-align:center; font-size:46px; font-weight:900; margin:24px 0 6px; letter-spacing:2px; }
+  .logo span { display:inline-block; }
+  .sub { text-align:center; color:#9aa0b5; margin-bottom:18px; }
+  .packs { display:flex; flex-direction:column; gap:10px; overflow-y:auto; padding-bottom:10px; }
+  .pack { display:flex; align-items:center; gap:12px; background:#171724; border:2px solid #262638; border-radius:18px; padding:14px; color:#fff; font-family:inherit; text-align:left; }
+  .pack .sz { width:58px; height:58px; border-radius:14px; display:flex; align-items:center; justify-content:center; font-size:20px; font-weight:900; color:#0b0b12; flex:none; }
+  .pack b { font-size:19px; display:block; }
+  .pack small { color:#9aa0b5; font-size:13px; }
+  .pack .pr { margin-left:auto; text-align:right; font-weight:900; font-size:16px; }
+  .pack:disabled { opacity:.4; }
+  .grid { display:grid; grid-template-columns:repeat(5,1fr); gap:8px; overflow-y:auto; padding:4px 2px 12px; }
+  .lvb { aspect-ratio:1; border-radius:12px; border:2px solid #2a2a3e; background:#171724; color:#fff; font-size:18px; font-weight:900; font-family:inherit; position:relative; }
+  .lvb.done { border-color:var(--c); }
+  .lvb.perfect::after { content:'★'; position:absolute; top:2px; right:5px; font-size:12px; color:#ffd34d; }
+  .lvb:disabled { opacity:.3; }
+  .top { display:flex; align-items:center; gap:8px; margin-bottom:8px; }
+  .top h2 { margin:0; font-size:20px; flex:1; text-align:center; }
+  button.ic { width:44px; height:44px; border-radius:14px; border:2px solid #2a2a3e; background:#171724; color:#fff; font-size:18px; font-family:inherit; padding:0; }
+  .stats { display:flex; justify-content:space-around; color:#9aa0b5; font-size:14px; margin-bottom:8px; }
+  .stats b { color:#fff; font-size:17px; }
+  #board { width:100%; aspect-ratio:1; touch-action:none; display:block; border-radius:12px; }
+  .bar { display:flex; gap:8px; margin-top:12px; }
+  .bar button { flex:1; height:50px; border-radius:16px; border:2px solid #2a2a3e; background:#171724; color:#fff; font-size:16px; font-weight:800; font-family:inherit; }
+  .bar button:disabled { opacity:.35; }
+  .ov { position:fixed; inset:0; background:rgba(5,5,10,.8); backdrop-filter:blur(4px); display:flex; align-items:center; justify-content:center; z-index:10; padding:20px; }
+  .box { background:#171724; border:2px solid #2a2a3e; border-radius:24px; padding:24px 20px; text-align:center; width:100%; max-width:340px; animation:pop .3s; }
+  @keyframes pop { from { transform:scale(.7); opacity:0; } }
+  .box h2 { margin:0 0 8px; font-size:30px; }
+  .box p { color:#c0c4d6; font-size:16px; line-height:1.7; margin:0 0 16px; }
+  .box button { width:100%; height:52px; border-radius:16px; border:0; font-size:19px; font-weight:900; font-family:inherit; margin-top:8px; }
+  .go { background:linear-gradient(90deg,#ff3b3b,#ffb000,#3bd16f,#2f8fff,#b44dff); color:#fff; text-shadow:0 1px 3px rgba(0,0,0,.4); }
+  .alt { background:#262638; color:#fff; }
+  .toast { position:fixed; left:50%; bottom:20%; transform:translateX(-50%); background:#262638; border-radius:999px; padding:10px 18px; font-weight:800; z-index:20; animation:pop .25s; }
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="scr" id="sHome">
+    <div class="logo" id="logo"></div>
+    <div class="sub">把同色的點連起來，管線不能交叉<br>還要<b style="color:#fff">鋪滿整個盤面</b>！</div>
+    <div class="packs" id="packs"></div>
+  </div>
+  <div class="scr hide" id="sLevels">
+    <div class="top"><button class="ic" id="lvBack">←</button><h2 id="lvTitle"></h2><div style="width:44px"></div></div>
+    <div class="grid" id="lvGrid"></div>
+  </div>
+  <div class="scr hide" id="sGame">
+    <div class="top"><button class="ic" id="gBack">←</button><h2 id="gTitle"></h2><button class="ic" id="gNext">→</button></div>
+    <div class="stats"><span>連線 <b id="sFlow">0/0</b></span><span>步數 <b id="sMoves">0</b></span><span>鋪滿 <b id="sPipe">0%</b></span></div>
+    <canvas id="board"></canvas>
+    <div class="bar"><button id="bUndo">↶ 復原</button><button id="bReset">⟲ 重來</button><button id="bHint">💡 提示 <span id="hintN"></span></button></div>
+  </div>
+</div>
+<script>
+const $ = id => document.getElementById(id);
+const COLORS = ['#ff2d2d', '#2fbf3f', '#2f6bff', '#ffe51a', '#ff8a00', '#19e0ff', '#ff3bd5', '#a0342f', '#8a3bff', '#ffffff', '#a8a8a8', '#9cff2e', '#d6b46b', '#1e2fa0', '#00a39a', '#ff9ec4'];
+const PACKS = [
+  { n: 5, name: '入門', cnt: 30, k: [4, 5] }, { n: 6, name: '簡單', cnt: 30, k: [5, 6] }, { n: 7, name: '普通', cnt: 30, k: [6, 7] },
+  { n: 8, name: '進階', cnt: 30, k: [7, 9] }, { n: 9, name: '困難', cnt: 30, k: [8, 10] }, { n: 10, name: '專家', cnt: 30, k: [9, 12] },
+];
+let SV = { done: {}, perfect: {}, hints: 5 };
+try { const o = JSON.parse(localStorage.getItem('flowSave')); if (o) SV = Object.assign(SV, o); } catch (e) {}
+const persist = () => { try { localStorage.setItem('flowSave', JSON.stringify(SV)); } catch (e) {} };
+$('logo').innerHTML = '彩色連線'.split('').map((c, i) => `<span style="color:${COLORS[i]}">${c}</span>`).join('');
+
+// ===================== 出題 =====================
+function mulberry(a) { return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+function genPuzzle(n, k, seed) {
+  const R = mulberry(seed);
+  for (let attempt = 0; attempt < 60; attempt++) {
+    // 1) 蛇形漢彌頓路徑
+    let path = [];
+    for (let r = 0; r < n; r++) for (let c = 0; c < n; c++) path.push(r * n + (r % 2 ? n - 1 - c : c));
+    // 2) backbite 隨機打亂
+    const nb = i => { const r = i / n | 0, c = i % n, o = []; if (r) o.push(i - n); if (r < n - 1) o.push(i + n); if (c) o.push(i - 1); if (c < n - 1) o.push(i + 1); return o; };
+    const iters = n * n * 40;
+    for (let t = 0; t < iters; t++) {
+      if (R() < 0.5) path.reverse();
+      const e = path[0], cand = nb(e).filter(x => x !== path[1]), m = cand[Math.floor(R() * cand.length)];
+      const idx = path.indexOf(m);
+      path = path.slice(0, idx).reverse().concat(path.slice(idx));
+    }
+    // 3) 切成 k 段（每段至少 3 格）
+    const L = path.length, cuts = new Set();
+    let tries = 0;
+    while (cuts.size < k - 1 && tries++ < 500) { const c = 3 + Math.floor(R() * (L - 5)); if ([...cuts].every(x => Math.abs(x - c) >= 3) && c >= 3 && L - c >= 3) cuts.add(c); }
+    if (cuts.size < k - 1) continue;
+    const cs = [0, ...[...cuts].sort((a, b) => a - b), L], segs = [];
+    for (let i = 0; i < cs.length - 1; i++) segs.push(path.slice(cs[i], cs[i + 1]));
+    // 品質：兩端點不能相鄰（太簡單），段落不能「自己貼自己」太多
+    const adj = (a, b) => nb(a).includes(b);
+    let bad = segs.some(s => adj(s[0], s[s.length - 1]));
+    if (!bad) {
+      for (const s of segs) { const pos = new Map(s.map((x, i) => [x, i])); let touch = 0; for (let i = 0; i < s.length; i++) for (const y of nb(s[i])) if (pos.has(y) && Math.abs(pos.get(y) - i) > 1) touch++; if (touch > 4) { bad = true; break; } }
+    }
+    if (bad && attempt < 50) continue;
+    return { n, sol: segs, dots: segs.map(s => [s[0], s[s.length - 1]]) };
+  }
+}
+function puzzleFor(p, i) { const P = PACKS[p], R = mulberry(p * 1000 + i * 7 + 13); const k = P.k[0] + Math.floor(R() * (P.k[1] - P.k[0] + 1)); return genPuzzle(P.n, k, p * 100003 + i * 7919 + 1); }
+
+// ===================== 遊戲狀態 =====================
+let cur = null; // { p, i, pz, paths:[[]...], owner:Int8Array, moves, hist, hinted:Set }
+const cv = $('board'), ctx = cv.getContext('2d');
+function startLevel(p, i) {
+  const pz = puzzleFor(p, i), n = pz.n;
+  cur = { p, i, pz, n, paths: pz.dots.map(() => []), moves: 0, hist: [], lastColor: -1, hinted: new Set(), won: false };
+  cur.dotAt = new Map(); pz.dots.forEach((d, c) => { cur.dotAt.set(d[0], c); cur.dotAt.set(d[1], c); });
+  show('sGame'); $('gTitle').textContent = `${PACKS[p].name} ${n}×${n}・第 ${i + 1} 關`;
+  resize(); draw(); stats();
+}
+function snapshot() { return cur.paths.map(a => a.slice()); }
+function ownerMap() { const o = new Int16Array(cur.n * cur.n).fill(-1); cur.paths.forEach((pth, c) => pth.forEach(x => o[x] = c)); return o; }
+function connected(c) { const pth = cur.paths[c], d = cur.pz.dots[c]; return pth.length >= 2 && ((pth[0] === d[0] && pth[pth.length - 1] === d[1]) || (pth[0] === d[1] && pth[pth.length - 1] === d[0])); }
+function stats() {
+  const k = cur.pz.dots.length, con = cur.pz.dots.filter((_, c) => connected(c)).length;
+  const o = ownerMap(); let filled = 0; for (let i = 0; i < o.length; i++) if (o[i] >= 0 || cur.dotAt.has(i)) filled++;
+  $('sFlow').textContent = `${con}/${k}`; $('sMoves').textContent = cur.moves; $('sPipe').textContent = Math.round(filled / o.length * 100) + '%';
+  $('hintN').textContent = `(${SV.hints})`; $('bHint').disabled = SV.hints <= 0;
+  $('gNext').disabled = !(SV.done[key(cur.p, cur.i)] || cur.i + 1 <= unlockedIn(cur.p)) || cur.i + 1 >= PACKS[cur.p].cnt;
+  if (con === k && !cur.won) {
+    if (filled === o.length) win();
+    else toast('全部連起來了！但還有空格，要鋪滿才算過關');
+  }
+}
+const key = (p, i) => p + '-' + i;
+function unlockedIn(p) { let u = 0; while (u < PACKS[p].cnt && SV.done[key(p, u)]) u++; return u; }
+function packUnlocked(p) { return p === 0 || Object.keys(SV.done).filter(k => k.startsWith((p - 1) + '-')).length >= 10; }
+
+// ===================== 繪圖 =====================
+let S = 0;
+function resize() { const r = cv.getBoundingClientRect(), dpr = window.devicePixelRatio || 1; cv.width = r.width * dpr; cv.height = r.width * dpr; ctx.setTransform(dpr, 0, 0, dpr, 0, 0); S = r.width; }
+window.addEventListener('resize', () => { if (cur) { resize(); draw(); } });
+function cc(i) { const n = cur.n, s = S / n; return [(i % n + 0.5) * s, ((i / n | 0) + 0.5) * s]; }
+function draw() {
+  const n = cur.n, s = S / n;
+  ctx.fillStyle = '#000'; ctx.fillRect(0, 0, S, S);
+  // 已佔格子底色
+  const o = ownerMap();
+  for (let i = 0; i < n * n; i++) { const c = o[i] >= 0 ? o[i] : -1; if (c >= 0) { ctx.fillStyle = COLORS[c] + '30'; ctx.fillRect((i % n) * s, (i / n | 0) * s, s, s); } }
+  // 格線
+  ctx.strokeStyle = '#3a3a20'; ctx.lineWidth = 1.5;
+  for (let i = 0; i <= n; i++) { ctx.beginPath(); ctx.moveTo(i * s, 0); ctx.lineTo(i * s, S); ctx.stroke(); ctx.beginPath(); ctx.moveTo(0, i * s); ctx.lineTo(S, i * s); ctx.stroke(); }
+  ctx.strokeStyle = '#6a6a30'; ctx.lineWidth = 3; ctx.strokeRect(1.5, 1.5, S - 3, S - 3);
+  // 管線
+  cur.paths.forEach((pth, c) => {
+    if (pth.length < 2) return;
+    ctx.strokeStyle = COLORS[c]; ctx.lineWidth = s * 0.34; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    ctx.beginPath(); pth.forEach((x, j) => { const [a, b] = cc(x); j ? ctx.lineTo(a, b) : ctx.moveTo(a, b); }); ctx.stroke();
+  });
+  // 點
+  cur.pz.dots.forEach((d, c) => d.forEach(x => {
+    const [a, b] = cc(x); ctx.fillStyle = COLORS[c];
+    ctx.beginPath(); ctx.arc(a, b, s * 0.36, 0, 7); ctx.fill();
+    if (connected(c)) { ctx.strokeStyle = 'rgba(255,255,255,.6)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(a, b, s * 0.4, 0, 7); ctx.stroke(); }
+    ctx.fillStyle = 'rgba(255,255,255,.35)'; ctx.beginPath(); ctx.arc(a - s * 0.1, b - s * 0.1, s * 0.1, 0, 7); ctx.fill();
+  }));
+  // 拖曳中的光暈
+  if (drag) { const [a, b] = drag.pos; ctx.fillStyle = COLORS[drag.c] + '55'; ctx.beginPath(); ctx.arc(a, b, s * 0.7, 0, 7); ctx.fill(); }
+}
+
+// ===================== 拖曳 =====================
+let drag = null;
+function cellAt(e) { const r = cv.getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top, n = cur.n; if (x < 0 || y < 0 || x >= r.width || y >= r.height) return { cell: -1, pos: [x, y] }; return { cell: (y / (r.width / n) | 0) * n + (x / (r.width / n) | 0), pos: [x, y] }; }
+const adjC = (a, b) => { const n = cur.n; return (Math.abs(a - b) === n) || (Math.abs(a - b) === 1 && (a / n | 0) === (b / n | 0)); };
+cv.addEventListener('pointerdown', e => {
+  if (!cur || cur.won) return; e.preventDefault(); cv.setPointerCapture(e.pointerId);
+  const { cell, pos } = cellAt(e); if (cell < 0) return;
+  const before = snapshot();
+  let c = cur.dotAt.has(cell) ? cur.dotAt.get(cell) : ownerMap()[cell];
+  if (c === undefined || c < 0) return;
+  if (cur.dotAt.get(cell) === c) cur.paths[c] = [cell]; // 從點重新開始
+  else { const j = cur.paths[c].indexOf(cell); cur.paths[c] = cur.paths[c].slice(0, j + 1); } // 從管線中間接著畫
+  drag = { c, pos, before, moved: false }; draw(); stats();
+});
+cv.addEventListener('pointermove', e => {
+  if (!drag) return; e.preventDefault();
+  const { cell, pos } = cellAt(e); drag.pos = pos;
+  const pth = cur.paths[drag.c], last = pth[pth.length - 1];
+  if (cell >= 0 && cell !== last) {
+    // 退回
+    const j = pth.indexOf(cell);
+    if (j >= 0) { cur.paths[drag.c] = pth.slice(0, j + 1); }
+    else if (adjC(last, cell) && !(connected(drag.c) && pth.length > 1)) {
+      const dc = cur.dotAt.get(cell);
+      if (dc !== undefined && dc !== drag.c) { draw(); return; } // 別色的點不能進
+      // 切斷別人的管線
+      cur.paths.forEach((q, c2) => { if (c2 === drag.c) return; const k = q.indexOf(cell); if (k >= 0) cur.paths[c2] = q.slice(0, k); });
+      pth.push(cell); drag.moved = true;
+    }
+  }
+  draw(); stats();
+});
+function endDrag() {
+  if (!drag) return;
+  const changed = JSON.stringify(drag.before) !== JSON.stringify(cur.paths);
+  if (changed) { cur.hist.push(drag.before); if (cur.lastColor !== drag.c) cur.moves++; cur.lastColor = drag.c; }
+  drag = null; draw(); stats();
+}
+cv.addEventListener('pointerup', endDrag); cv.addEventListener('pointercancel', endDrag);
+$('bUndo').onclick = () => { if (!cur.hist.length || cur.won) return; cur.paths = cur.hist.pop(); cur.lastColor = -1; draw(); stats(); };
+$('bReset').onclick = () => { if (cur.won) return; cur.hist.push(snapshot()); cur.paths = cur.pz.dots.map(() => []); cur.moves = 0; cur.lastColor = -1; draw(); stats(); };
+$('bHint').onclick = () => {
+  if (SV.hints <= 0 || cur.won) return;
+  const c = cur.pz.dots.findIndex((_, c) => !connected(c) || cur.paths[c].join() !== cur.pz.sol[c].join() && cur.paths[c].join() !== cur.pz.sol[c].slice().reverse().join());
+  if (c < 0) return;
+  cur.hist.push(snapshot());
+  const sol = cur.pz.sol[c];
+  cur.paths.forEach((q, c2) => { if (c2 !== c) { const k = q.findIndex(x => sol.includes(x)); if (k >= 0) cur.paths[c2] = q.slice(0, k); } });
+  cur.paths[c] = sol.slice(); cur.hinted.add(c); cur.moves++; cur.lastColor = c; SV.hints--; persist(); draw(); stats();
+};
+
+// ===================== 過關 =====================
+function win() {
+  cur.won = true; const k = key(cur.p, cur.i), perfect = cur.moves <= cur.pz.dots.length;
+  const first = !SV.done[k]; SV.done[k] = 1; if (perfect) SV.perfect[k] = 1;
+  if (first && Object.keys(SV.done).length % 5 === 0) SV.hints++;
+  persist();
+  setTimeout(() => {
+    const last = cur.i + 1 >= PACKS[cur.p].cnt;
+    const ov = document.createElement('div'); ov.className = 'ov';
+    ov.innerHTML = `<div class="box"><h2>${perfect ? '✨ 完美！' : '🎉 過關！'}</h2><p>${perfect ? `只用了 ${cur.moves} 步，一步都沒浪費！` : `用了 ${cur.moves} 步（最少 ${cur.pz.dots.length} 步就是完美）`}${first && Object.keys(SV.done).length % 5 === 0 ? '<br>💡 提示 +1' : ''}</p>
+      ${last ? '' : '<button class="go" id="oNext">下一關</button>'}<button class="alt" id="oRetry">再玩一次</button><button class="alt" id="oList">關卡列表</button></div>`;
+    document.body.appendChild(ov);
+    const close = () => ov.remove();
+    if (!last) ov.querySelector('#oNext').onclick = () => { close(); startLevel(cur.p, cur.i + 1); };
+    ov.querySelector('#oRetry').onclick = () => { close(); startLevel(cur.p, cur.i); };
+    ov.querySelector('#oList').onclick = () => { close(); openPack(cur.p); };
+  }, 350);
+}
+function toast(t) { if (document.querySelector('.toast')) return; const d = document.createElement('div'); d.className = 'toast'; d.textContent = t; document.body.appendChild(d); setTimeout(() => d.remove(), 1800); }
+
+// ===================== 選單 =====================
+function show(id) { ['sHome', 'sLevels', 'sGame'].forEach(x => $(x).classList.toggle('hide', x !== id)); }
+function home() {
+  show('sHome');
+  $('packs').innerHTML = PACKS.map((P, p) => { const d = Object.keys(SV.done).filter(k => k.startsWith(p + '-')).length, ok = packUnlocked(p);
+    return `<button class="pack" data-p="${p}" ${ok ? '' : 'disabled'}><div class="sz" style="background:${COLORS[p]};font-size:${P.n > 9 ? 15 : 20}px">${P.n}×${P.n}</div><div><b>${P.name}</b><small>${ok ? `${P.k[0]}–${P.k[1]} 種顏色` : `🔒 上一組過 10 關解鎖`}</small></div><div class="pr" style="color:${COLORS[p]}">${d}/${P.cnt}</div></button>`; }).join('') +
+    `<div class="sub" style="margin-top:6px">💡 提示 ${SV.hints} 個（每過 5 關送 1 個）</div>`;
+  document.querySelectorAll('[data-p]').forEach(b => b.onclick = () => openPack(+b.dataset.p));
+}
+function openPack(p) {
+  show('sLevels'); $('lvTitle').textContent = `${PACKS[p].name}　${PACKS[p].n}×${PACKS[p].n}`;
+  const u = unlockedIn(p);
+  $('lvGrid').innerHTML = Array.from({ length: PACKS[p].cnt }, (_, i) => `<button class="lvb ${SV.done[key(p, i)] ? 'done' : ''} ${SV.perfect[key(p, i)] ? 'perfect' : ''}" style="--c:${COLORS[i % 12]}" data-i="${i}" ${i > u ? 'disabled' : ''}>${i + 1}</button>`).join('');
+  document.querySelectorAll('[data-i]').forEach(b => b.onclick = () => startLevel(p, +b.dataset.i));
+}
+$('lvBack').onclick = home;
+$('gBack').onclick = () => openPack(cur.p);
+$('gNext').onclick = () => startLevel(cur.p, cur.i + 1);
+home();
+</script>
+<a href="./" id="gbHome" style="position:fixed;top:calc(4px + env(safe-area-inset-top));left:50%;transform:translateX(-50%);z-index:9999;background:rgba(0,0,0,.45);color:#fff;text-decoration:none;font:600 13px -apple-system,sans-serif;padding:4px 12px;border-radius:12px;opacity:.6">⌂ 遊戲盒</a>
+<script>if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});</script>
+</body>
+</html>
