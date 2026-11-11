@@ -242,6 +242,7 @@ $('autoX').onchange = () => { try { localStorage.setItem('meowAutoX', $('autoX')
 
 function today() { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0'); }
 function dateSeed(s) { let h = 2166136261; for (const ch of s) { h ^= ch.charCodeAt(0); h = Math.imul(h, 16777619); } return h >>> 0; }
+if (!(store.level >= 1)) { const ks = Object.keys(store.stars || {}).map(Number).filter(x => x >= 1); store.level = ks.length ? Math.max(...ks) + 1 : 1; persist(); }
 store.dailyH = store.dailyH || {}; store.stars = store.stars || {}; store.cat = store.cat || 0;
 function levelSize(l) { return l <= 5 ? 5 : l <= 15 ? 6 : l <= 30 ? 7 : l <= 55 ? 8 : l <= 85 ? 9 : 10; }
 function levelSpread(l) { return l <= 10 ? 1.7 : l % 3 === 0 ? 0.6 : l % 3 === 1 ? 1.1 : 1.6; }
@@ -271,7 +272,7 @@ function refreshHome() {
 
 function start(mode, n, seed, title, spread = 1.5) {
   let pz = null; for (let k = 0; !pz && k < 20; k++) pz = makePuzzle(n, seed + k * 101, k < 10 ? spread : 1.7);
-  G = { mode, n, seed, title, reg: pz.reg, sol: pz.sol, st: Array(n*n).fill(0), hearts: 3, t: 0, hints: 0, mistakes: 0, done: false };
+  G = { mode, n, seed, title, reg: pz.reg, sol: pz.sol, st: Array(n*n).fill(0), hearts: 3, t: 0, hints: 0, mistakes: 0, done: false, spread };
   $('home').classList.add('hide'); $('game').classList.remove('hide');
   buildBoard(); render();
   clearInterval(timerH);
@@ -377,7 +378,8 @@ $('bHint').onclick = () => {
   }
 };
 $('bClear').onclick = () => { G.st = G.st.map(v => v === 1 ? 0 : v); render(); };
-$('bRestart').onclick = () => start(G.mode, G.n, G.seed, G.title);
+function restartG() { const l = G.lvl, sp = G.spread; start(G.mode, G.n, G.seed, G.title, sp); G.lvl = l; }
+$('bRestart').onclick = restartG;
 $('bBack').onclick = home;
 
 function home() { clearInterval(timerH); $('game').classList.add('hide'); $('home').classList.remove('hide'); $('ov').classList.add('hide'); refreshHome(); }
@@ -400,7 +402,7 @@ function win() {
   if (G.mode === 'level') {
     const before = catsOwned(), A0 = areaOf(G.lvl).i;
     store.stars[G.lvl] = Math.max(store.stars[G.lvl] || 0, stars);
-    store.level = Math.max(store.level, G.lvl + 1);
+    if (G.lvl >= 1) store.level = Math.max(store.level || 1, G.lvl + 1);
     if (catsOwned() > before) { const c = CATS[catsOwned() - 1]; extra += `<br><br>🎁 新貓咪加入圖鑑：<b style="font-size:26px">${c[0]}</b> ${c[1]}`; }
     if (areaOf(store.level).i > A0) extra += `<br>🗺️ 解鎖新地區：<b>${areaOf(store.level).a[1]}</b>（${levelSize(store.level)}×${levelSize(store.level)}）`;
     btns.push(['下一關', playLevel]);
@@ -413,7 +415,7 @@ function win() {
 function confetti() { for (let i = 0; i < 26; i++) { const d = document.createElement('div'); d.className = 'conf'; d.textContent = ['🐾', '⭐', '🎉', '💛', catIcon()][i % 5]; d.style.left = Math.random() * 100 + 'vw'; d.style.animationDuration = (1.6 + Math.random() * 1.6) + 's'; d.style.animationDelay = Math.random() * 0.4 + 's'; document.body.appendChild(d); setTimeout(() => d.remove(), 3800); } }
 function lose() {
   G.done = true; clearInterval(timerH);
-  setTimeout(() => overlay('😿 愛心用完了', '再仔細推理一次吧！', [['回選單', home, true], ['重來這題', () => start(G.mode, G.n, G.seed, G.title)]]), 500);
+  setTimeout(() => overlay('😿 愛心用完了', '再仔細推理一次吧！', [['回選單', home, true], ['重來這題', restartG]]), 500);
 }
 
 function playLevel() { const l = store.level, n = levelSize(l); start('level', n, l * 7919 + 13, `第 ${l} 關`, levelSpread(l)); G.lvl = l; }
