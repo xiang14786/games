@@ -183,7 +183,7 @@ const PM = Object.fromEntries(PLANES.map(p => [p.id, p]));
 const FUEL = { 1950: .12, 1955: .12, 1956: .16, 1958: .12, 1970: .11, 1973: .14, 1974: .34, 1978: .32, 1979: .48, 1981: .55, 1985: .38, 1986: .2, 1990: .24, 1991: .33, 1992: .2, 1998: .14, 2000: .27, 2003: .28, 2005: .45, 2007: .55, 2008: .88, 2009: .45, 2011: .7, 2014: .65, 2015: .36, 2016: .3, 2019: .4, 2020: .22, 2021: .38, 2022: .72, 2023: .55, 2025: .48, 2030: .5, 2040: .55, 2060: .6 };
 // 物價指數（2000=1）
 const CPI = { 1950: .14, 1960: .17, 1970: .22, 1975: .31, 1980: .48, 1985: .62, 1990: .76, 2000: 1, 2010: 1.27, 2020: 1.5, 2022: 1.68, 2030: 1.95, 2060: 3.5 };
-const ERA = { 1950: .055, 1960: .13, 1970: .3, 1980: .5, 1990: .72, 2000: 1, 2010: 1.3, 2019: 1.75, 2030: 2.2, 2060: 3.2 };
+const ERA = { 1950: .16, 1960: .22, 1970: .3, 1980: .5, 1990: .72, 2000: 1, 2010: 1.3, 2019: 1.75, 2030: 2.2, 2060: 3.2 };
 function interp(T, y) { const ks = Object.keys(T).map(Number).sort((a, b) => a - b); if (y <= ks[0]) return T[ks[0]]; for (let i = 1; i < ks.length; i++) if (y <= ks[i]) { const a = ks[i - 1], b = ks[i]; return T[a] + (T[b] - T[a]) * (y - a) / (b - a); } return T[ks[ks.length - 1]]; }
 // 歷史事件：日期、結束、區域需求倍率、標題、說明
 const EVENTS = [
@@ -271,12 +271,12 @@ function simulateWeek() {
       const pax = Math.min(x.cap, Math.round(dem));
       const fare = baseFare(d) * x.r.fare;
       x.r.pax = pax; x.r.cap = x.cap; x.r.lf = x.cap ? pax / x.cap : 0; x.r.rev = pax * fare; x.r.comp = list.length - 1; x.r.dem = Math.round(D0);
-      let cost = 0;
+      let cost = 0, lease = 0;
       for (const pid of x.r.planes) { const p = x.al.fleet.find(f => f.id === pid); if (!p) continue; const pl = PM[p.type], trips = weeklyTrips(pl, d), legs = trips * 2, bh = legs * flightH(pl, d);
         const fuel = legs * d * pl.burn * fp, crew = bh * pl.seats * 2.4, maint = bh * (180 + pl.price * 9) * (1 + p.age * 0.025), fees = legs * pl.seats * 3.2;
-        x.al.fin.fuel += fuel; x.al.fin.crew += crew; x.al.fin.maint += maint; x.al.fin.fees += fees; cost += fuel + crew + maint + fees; }
+        x.al.fin.fuel += fuel; x.al.fin.crew += crew; x.al.fin.maint += maint; x.al.fin.fees += fees; cost += fuel + crew + maint + fees; if (p.leased) lease += pl.price * 1e6 * 0.0048; }
       x.r.cost = cost; x.al.fin.rev += x.r.rev; x.al.fin.pax += pax;
-      x.r.lfHist = (x.r.lfHist || []).concat([x.r.lf]).slice(-26); x.r.profHist = (x.r.profHist || []).concat([x.r.rev - cost]).slice(-26);
+      x.r.lfHist = (x.r.lfHist || []).concat([x.r.lf]).slice(-26); x.r.profHist = (x.r.profHist || []).concat([x.r.rev - cost - lease]).slice(-26);
     }
   }
   for (const al of S.airlines.slice()) {
@@ -299,7 +299,9 @@ function bankrupt(al) {
   if (!al.alive) return;
   if (al.human) { al.alive = false; S.speed = 0; save(); modal(`<h3>💸 破產了</h3><div class="card">負債 ${fmtM(al.debt)} 已經超過銀行願意借的上限，${al.name} 宣告破產。<br><br>撐到 ${new Date(S.t).getFullYear()} 年，最高營運 ${Math.max(...S.hist.map(h => h.pax || 0)).toLocaleString()} 人/週。</div><button class="b" style="width:100%" id="bRe">重新開始</button>`); $('bRe').onclick = () => { localStorage.removeItem('skyRoutes'); closeModal(); showStart(); }; return; }
   al.alive = false; al.routes = []; al.fleet = []; news('air_down', `${al.name} 宣告破產！`, '它的航線全部停飛，旅客會轉向其他航空公司。');
-  // 補一家新對手
+  spawnRival();
+}
+function spawnRival() {
   const used = new Set(S.airlines.filter(a => a.alive).map(a => a.home)), y = yearOf(S.t);
   const c = AP.filter(a => apSize(a, y) >= 5 && !used.has(a.c)).sort(() => Math.random() - 0.5)[0];
   if (c) { const rn = RIVAL_NAMES[S.airlines.length % RIVAL_NAMES.length]; const r = mkAirline('r' + S.airlines.length, rn[0], rn[1], c.c, false); r.cash = 25e6; r.price = 2; S.airlines.push(r); for (let i = 0; i < 2; i++) aiExpand(r, true); news('air_office', `新航空公司 ${r.name} 在${c.n}成立`, '新的競爭對手出現了。'); }
@@ -317,19 +319,27 @@ function aiExpand(al, free) {
   if (!free && al.routes.length >= Math.min(55, 8 + 2.5 * (y - S.start))) return;
   const served = new Set(al.routes.map(r => r.b));
   const hubs = [al.home, ...al.routes.filter(r => r.planes.length >= 2).map(r => r.b)].slice(0, 2);
-  let best = null;
+  const cands = [];
   for (const h of hubs) for (const b of AP) {
     if (b.c === h || served.has(b.c) || apSize(b, y) <= 0 || al.routes.some(r => (r.a === h && r.b === b.c) || (r.b === h && r.a === b.c))) continue;
     const d = dist(APM[h], b); const pl = types.filter(p => p.range >= d).sort((p, q) => q.seats - p.seats)[0]; if (!pl) continue;
     const dem = marketDemand(APM[h], b), comp = S.airlines.filter(o => o.routes.some(r => [r.a, r.b].sort().join() === [h, b.c].sort().join())).length;
     const hot = me().routes.find(r => [r.a, r.b].sort().join() === [h, b.c].sort().join() && (r.lf || 0) > 0.85);
     const sc = dem / (1 + comp) * (0.7 + Math.random() * 0.6) * (hot && !free ? 2.2 : 1);
-    if (!best || sc > best.sc) best = { h, b: b.c, d, sc, dem, comp };
+    cands.push({ h, b: b.c, d, sc, dem, comp });
+  }
+  cands.sort((p, q) => q.sc - p.sc);
+  let best = null, pl = null;
+  let bestEst = 0;
+  for (const c of cands.slice(0, 40)) {
+    const want = c.dem * 0.75 / (1 + c.comp);
+    const fit = types.filter(p => p.range >= c.d), ok = fit.filter(p => weeklyTrips(p, c.d) * 2 * p.seats <= want * 1.25);
+    const cp = ok.length ? ok.sort((p, q) => seatCost(p, c.d) - seatCost(q, c.d))[0] : fit.sort((p, q) => weeklyTrips(p, c.d) * p.seats - weeklyTrips(q, c.d) * q.seats)[0];
+    const legs = weeklyTrips(cp, c.d) * 2, pax = Math.min(legs * cp.seats * 0.85, want), est = pax * baseFare(c.d) - seatCost(cp, c.d) * cp.seats * legs;
+    const v = est * (0.7 + Math.random() * 0.6) * (c.sc > 0 ? 1 : 0);
+    if (est > 0 && v > bestEst) { bestEst = v; best = c; pl = cp; }
   }
   if (!best) return;
-  const want = best.dem * 0.75 / (1 + best.comp);
-  const fit = types.filter(p => p.range >= best.d), ok = fit.filter(p => weeklyTrips(p, best.d) * 2 * p.seats <= want * 1.25);
-  const pl = ok.length ? ok.sort((p, q) => seatCost(p, best.d) - seatCost(q, best.d))[0] : fit.sort((p, q) => weeklyTrips(p, best.d) * p.seats - weeklyTrips(q, best.d) * q.seats)[0];
   if (!free && al.cash < pl.price * 1e6 * 0.25) return;
   const p = addPlane(al, pl.id, true);
   const r = { id: S.nextId++, a: best.h, b: best.b, planes: [p.id], fare: rand(0.95, 1.1), opened: S.t }; p.route = r.id; al.routes.push(r);
@@ -365,6 +375,7 @@ function tick() {
   simulateWeek(); updatePrices();
   for (const e of EV) if (S.t >= e.s && S.t - WEEK < e.s) { news('air_news', `${e.t}`, e.d); }
   if (S.week % 4 === 0) for (const al of S.airlines.slice(1)) if (al.alive) aiMonthly(al);
+  if (S.week % 13 === 0 && S.airlines.filter(a => !a.human && a.alive).length < 3) spawnRival();
   // 年度結算
   const prev = new Date(S.t - WEEK).getFullYear();
   if (y !== prev) yearEnd(prev);
