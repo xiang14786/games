@@ -283,7 +283,7 @@ function simulateWeek() {
     if (!al.alive || !al.fin) continue;
     const f = al.fin;
     for (const p of al.fleet) { if (p.leased) f.lease += PM[p.type].price * 1e6 * 0.0048; else if (!p.route) f.maint += PM[p.type].price * 1e6 * 0.0004; p.age += 7 / 365; }
-    const stations = new Set(); for (const r of al.routes) { stations.add(r.a); stations.add(r.b); } stations.add(al.home);
+    const stations = new Set(); for (const r of al.routes) { stations.add(r.a); stations.add(r.b); } stations.add(al.home); for (const c of al.bases || []) stations.add(c);
     for (const c of stations) f.station += 4000 + apSize(APM[c], y) * 1500;
     f.interest = al.debt * 0.07 / 52;
     const exp = f.fuel + f.crew + f.maint + f.fees + f.lease + f.station + f.interest;
@@ -462,7 +462,7 @@ function drawMap(t) {
   // 機場
   for (const a of AP) {
     const s = apSize(a, y); if (s <= 0) continue; const [x, yy] = proj(a.lon, a.lat); if (x < -20 || x > W + 20 || yy < -20 || yy > H + 20) continue;
-    const mine = a.c === m.home || m.routes.some(r => r.a === a.c || r.b === a.c), r = 2 + s * 0.45 * Math.min(1.6, cam.z / 2);
+    const mine = a.c === m.home || (m.bases || []).includes(a.c) || m.routes.some(r => r.a === a.c || r.b === a.c), r = 2 + s * 0.45 * Math.min(1.6, cam.z / 2);
     if (sel && sel.ap === a.c) { ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(x, yy, r + 6, 0, 7); ctx.stroke(); }
     ctx.fillStyle = a.c === m.home ? m.color : mine ? '#ffffff' : 'rgba(170,200,240,.75)'; ctx.beginPath(); ctx.arc(x, yy, r, 0, 7); ctx.fill();
     if (a.c === m.home) { ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.stroke(); }
@@ -611,15 +611,18 @@ function closeModal() { modalOpen = false; $('modal').classList.add('hide'); sel
 function openAirport(code) {
   const a = APM[code], y = yearOf(S.t), m = me(), s = apSize(a, y);
   const types = avail(y), maxR = Math.max(...types.map(p => p.range));
-  const isMine = code === m.home || m.routes.some(r => r.a === code || r.b === code);
+  const isBase = (m.bases || []).includes(code), isMine = code === m.home || isBase || m.routes.some(r => r.a === code || r.b === code);
+  const bCost = baseCost(code);
   const dests = AP.filter(b => b.c !== code && apSize(b, y) > 0).map(b => ({ b, d: dist(a, b), dem: marketDemand(a, b), comp: S.airlines.filter(o => o.alive && o.routes.some(r => [r.a, r.b].sort().join() === [code, b.c].sort().join())).length, mine: m.routes.some(r => [r.a, r.b].sort().join() === [code, b.c].sort().join()) })).filter(x => x.d <= maxR && x.d >= 150).sort((p, q) => q.dem - p.dem).slice(0, 25);
   const riv = S.airlines.filter(o => !o.human && o.alive && o.home === code);
-  modal(`<h3><img src="${IMG('air_tower')}">${a.n}（${a.c}）</h3><div class="muted">機場規模 ${s.toFixed(1)}/10${code === m.home ? '・<b style="color:#fff">你的基地</b>' : ''}${riv.length ? `・${riv.map(r => r.name).join('、')}的基地` : ''}</div>
-    ${isMine ? '' : '<div class="card" style="margin-top:8px">⚠️ 這裡還不是你的據點。航線一端要是你的基地或已經有航線的機場。</div>'}
+  modal(`<h3><img src="${IMG('air_tower')}">${a.n}（${a.c}）</h3><div class="muted">機場規模 ${s.toFixed(1)}/10${code === m.home ? '・<b style="color:#fff">你的總部</b>' : isBase ? '・<b style="color:#fff">你的基地</b>' : ''}${riv.length ? `・${riv.map(r => r.name).join('、')}的基地` : ''}</div>
+    ${isMine ? '' : `<div class="card" style="margin-top:8px">⚠️ 這裡還不是你的據點。航線一端要是你的基地或已經有航線的機場。<br><br>🏢 也可以直接在這裡<b>設立新基地</b>（租櫃台、機庫、招募地勤），之後就能從這裡開任何航線。<br><span class="muted">一次性費用 ${fmtM(bCost)}，之後每週會有站點營運費。</span><br><button class="b y" id="bBase" style="width:100%;margin-top:8px" ${m.cash < bCost ? 'disabled' : ''}>設立基地（${fmtM(bCost)}）</button></div>`}
     <div style="margin:10px 0 6px;font-weight:800">從這裡出發的熱門航點</div>
     ${dests.map(x => { const ok = isMine && !x.mine; return `<div class="dest"><div class="c">${x.b.c}</div><div class="d"><b style="color:#fff">${x.b.n}</b>・${Math.round(x.d).toLocaleString()} km<br>需求 每週約 ${Math.round(x.dem).toLocaleString()} 人${x.comp ? `・⚔️${x.comp} 家在飛` : ''}</div>${x.mine ? '<span class="pill" style="background:#1f6a3a">已開航</span>' : `<button class="b sm" data-d="${x.b.c}" ${ok ? '' : 'disabled'}>開航</button>`}</div>`; }).join('')}`);
   document.querySelectorAll('[data-d]').forEach(b => b.onclick = () => planRoute(code, b.dataset.d));
+  const bb = $('bBase'); if (bb) bb.onclick = () => { if (m.cash < bCost) return; m.cash -= bCost; (m.bases = m.bases || []).push(code); news('air_office', `${m.name} 在${a.n}設立新基地`, '可以從這裡開航線了。'); save(); toast('air_office', `${a.n} 基地成立！現在可以從這裡開航線了。`); openAirport(code); renderTop(); };
 }
+function baseCost(code) { return Math.round((1.5 + apSize(APM[code], yearOf(S.t)) * 1.2) * interp(CPI, yearOf(S.t)) / 0.5 * 10) * 1e5; }
 function planRoute(a, b) {
   const m = me(), d = dist(APM[a], APM[b]), y = yearOf(S.t);
   const idle = m.fleet.filter(p => !p.route && PM[p.type].range >= d);
