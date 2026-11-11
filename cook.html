@@ -140,7 +140,8 @@
   .rest small { font-size:12px; opacity:.85; }
   .rest .pr { margin-left:auto; text-align:right; font-weight:900; font-size:14px; white-space:nowrap; }
   .rest:disabled { filter:grayscale(1); opacity:.55; }
-  .lvgrid { display:grid; grid-template-columns:repeat(5,1fr); gap:8px; width:100%; max-width:390px; }
+  #levels { overflow-y:auto; }
+  .lvgrid { flex-shrink:0; display:grid; grid-template-columns:repeat(5,1fr); gap:8px; width:100%; max-width:390px; }
   .lv { aspect-ratio:1; border-radius:14px; border:0; background:linear-gradient(180deg,#ffe8b0,#f0b860); color:#5a2a00; font-weight:900; font-size:20px; box-shadow:0 4px 0 #a8701a; font-family:inherit; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:0; }
   .lv small { font-size:10px; letter-spacing:-1px; color:#c06a00; }
   .lv:disabled { background:#5a4a3a; color:#8a7a6a; box-shadow:0 4px 0 #2a1a0a; }
@@ -205,8 +206,8 @@ const RESTS = [
     tops: [{ id: 'cheese', n: '起司', img: 'cheese' }, { id: 'lettuce', n: '生菜', img: 'lettuce' }, { id: 'tomato', n: '番茄', img: 'tomato' }],
     disp: [{ id: 'soda', n: '汽水機', t: 2.2 }, { id: 'icecream', n: '霜淇淋機', t: 1.6 }],
     batch: [{ id: 'fries', n: '炸薯條', t: 3.5, cnt: 3 }],
-    dishes: { burger: { n: '漢堡', base: 'bun', parts: ['patty'], img: 'burger', p: 8 }, cburger: { n: '起司堡', base: 'bun', parts: ['patty', 'cheese'], img: 'burger', chips: ['cheese'], p: 10 }, vburger: { n: '鮮蔬堡', base: 'bun', parts: ['patty', 'lettuce', 'tomato'], img: 'burger', chips: ['lettuce', 'tomato'], p: 12 }, dburger: { n: '豪華堡', base: 'bun', parts: ['patty', 'cheese', 'lettuce', 'tomato'], img: 'burger', chips: ['cheese', 'lettuce', 'tomato'], p: 15 }, soda: { n: '汽水', img: 'soda', p: 4 }, fries: { n: '薯條', img: 'fries', p: 5 }, icecream: { n: '霜淇淋', img: 'icecream', p: 5 } },
-    unlock: [[1, ['burger', 'soda']], [3, ['cburger']], [5, ['fries']], [8, ['vburger']], [11, ['dburger', 'icecream']]] },
+    dishes: { burger: { n: '漢堡', base: 'bun', parts: ['patty'], img: 'burger', p: 8 }, cburger: { n: '起司堡', base: 'bun', parts: ['patty', 'cheese'], img: 'burger', chips: ['cheese'], p: 10 }, vburger: { n: '鮮蔬堡', base: 'bun', parts: ['patty', 'lettuce', 'tomato'], img: 'burger', chips: ['lettuce', 'tomato'], p: 12 }, dburger: { n: '豪華堡', base: 'bun', parts: ['patty', 'cheese', 'lettuce', 'tomato'], img: 'burger', chips: ['cheese', 'lettuce', 'tomato'], p: 15 }, lburger: { n: '生菜堡', base: 'bun', parts: ['patty', 'lettuce'], img: 'burger', chips: ['lettuce'], p: 10 }, tburger: { n: '番茄起司堡', base: 'bun', parts: ['patty', 'cheese', 'tomato'], img: 'burger', chips: ['cheese', 'tomato'], p: 13 }, soda: { n: '汽水', img: 'soda', p: 4 }, fries: { n: '薯條', img: 'fries', p: 5 }, icecream: { n: '霜淇淋', img: 'icecream', p: 5 } },
+    unlock: [[1, ['burger', 'soda']], [3, ['cburger']], [5, ['fries']], [8, ['vburger']], [11, ['dburger', 'icecream']], [20, ['lburger']], [35, ['tburger']]], max: 200 },
   { id: 'japan', name: '和風食堂', sub: '拉麵、咖哩飯、壽司', pics: ['ramen', 'sushi', 'bento'], col: ['#e85a5a', '#5a1a2a'], wall: ['#f3ead8', '#e6d8bc'], ctr: ['#c8a070', '#8a6038', '#5a3a1a'], deco: ['tea', 'dango'],
     cookers: [{ id: 'pot', n: '煮麵鍋', style: 'pot', raw: 'noodle', out: 'noodles', img: 'noodle', t: 3.8, rawF: 'brightness(1.25) saturate(.4)' }, { id: 'fryer', n: '天婦羅鍋', style: 'fryer', raw: 'shrimp', out: 'fshrimp', img: 'shrimp', outImg: 'fshrimp', t: 3.5 }],
     bases: [{ id: 'bowl', n: '湯碗', img: 'bowl' }, { id: 'rice', n: '白飯', img: 'rice' }],
@@ -241,34 +242,46 @@ const RESTS = [
     unlock: [[1, ['fchicken', 'bubbletea']], [3, ['gua']], [5, ['dumpling']], [7, ['gua3']], [9, ['shavedice']], [12, ['gua2']]] },
 ];
 const LPR = 15;
+const maxL = r => RESTS[r].max || LPR;
 
 // ===================== 存檔 =====================
 let SV = { coins: 0, best: {}, prog: [1, 0, 0, 0, 0], up: { speed: 0, slot: 0, plate: 0, disp: 0, batch: 0, decor: 0, tip: 0 }, seenHow: false };
 try { const o = JSON.parse(localStorage.getItem('cookRush2')); if (o) { Object.assign(SV, o); SV.up = Object.assign({ speed: 0, slot: 0, plate: 0, disp: 0, batch: 0, decor: 0, tip: 0 }, o.up); } else { const old = JSON.parse(localStorage.getItem('cookRush')); if (old) { SV.coins = old.coins || 0; const u = old.up || {}; SV.up.speed = u.grill || 0; SV.up.slot = Math.min(1, u.gslot || 0); SV.up.plate = u.plate || 0; SV.up.disp = u.soda || 0; SV.up.batch = u.fry || 0; SV.up.decor = u.decor || 0; SV.up.tip = u.tip || 0; } } } catch (e) {}
 const persist = () => { try { localStorage.setItem('cookRush2', JSON.stringify(SV)); } catch (e) {} };
 const UPS = [
-  { k: 'speed', ic: '🔥', n: '火力全開', max: 5, base: 60, d: l => `烹煮時間 -${l * 9}%` },
+  { k: 'speed', ic: '🔥', n: '火力全開', max: 15, base: 60, d: l => `烹煮時間 -${Math.round((1 - spdOf(l)) * 100)}%` },
   { k: 'slot', ic: '➕', n: '加大爐台', max: 1, base: 300, d: l => `每個爐台 +${l} 格` },
   { k: 'plate', ic: '🍽️', n: '多一個盤子', max: 1, base: 260, d: l => `${3 + l} 個盤子` },
   { k: 'disp', ic: '🥤', n: '飲料機升級', max: 4, base: 50, d: l => `製作 -${l * 15}%${l >= 2 ? '・多一格' : ''}` },
-  { k: 'batch', ic: '🍟', n: '大份量', max: 3, base: 70, d: l => `一次多做 ${l} 份・更快` },
-  { k: 'decor', ic: '🪴', n: '餐廳裝潢', max: 5, base: 80, d: l => `客人耐心 +${l * 10}%` },
-  { k: 'tip', ic: '💝', n: '服務訓練', max: 5, base: 90, d: l => `小費 +${l * 15}%` },
+  { k: 'batch', ic: '🍟', n: '大份量', max: 5, base: 70, d: l => `一次多做 ${l} 份・更快` },
+  { k: 'decor', ic: '🪴', n: '餐廳裝潢', max: 15, base: 80, d: l => `客人耐心 +${Math.round((decorOf(l) - 1) * 100)}%` },
+  { k: 'tip', ic: '💝', n: '服務訓練', max: 15, base: 90, d: l => `小費 +${l * 15}%` },
 ];
-const upCost = (u, l) => Math.round(u.base * Math.pow(1.6, l));
-const spd = () => 1 - SV.up.speed * 0.09;
+const upCost = (u, l) => Math.round(u.base * (l <= 5 ? Math.pow(1.6, l) : Math.pow(1.6, 5) * Math.pow(1.33, l - 5)));
+const spdOf = l => l <= 5 ? 1 - l * 0.09 : 0.55 * Math.pow(0.955, l - 5);
+const decorOf = l => l <= 5 ? 1 + l * 0.1 : 1.5 + (l - 5) * 0.07;
+const spd = () => spdOf(SV.up.speed);
 
 // ===================== 關卡 =====================
 function mulberry(a) { return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
 function menuAt(R, l) { const m = []; for (const [x, it] of R.unlock) if (l >= x) m.push(...it); return m; }
 function levelCfg(r, l) {
   const R = RESTS[r], menu = menuAt(R, l), d = r * 5 + l;
-  const n = 8 + l + r * 2, pat = Math.max(20, 38 - d * 0.35) * (1 + SV.up.decor * 0.1), gap = Math.max(3, 7 - d * 0.09), maxItems = l < 3 ? 2 : l < 8 ? 3 : 4;
+  let n = 8 + l + r * 2, pat = Math.max(20, 38 - d * 0.35), gap = Math.max(3, 7 - d * 0.09), maxItems = l < 3 ? 2 : l < 8 ? 3 : 4, minItems = 1, gf = [0.5, 0.8, 1.15];
+  if (l > LPR) { // 第 16 關以後：越來越難，需要升級才過得去
+    const x = l - LPR, t = Math.min(1, x / 185);
+    n = Math.min(44, 23 + Math.floor(x / 6));
+    pat = Math.max(13, 32.75 - x * 0.105);
+    gap = Math.max(1.7, 5.65 - x * 0.022);
+    minItems = x > 120 ? 2 : 1;
+    gf = [0.5 + 0.22 * t, 0.8 + 0.18 * t, 1.15 + 0.12 * t];
+  }
+  pat *= decorOf(SV.up.decor);
   const rnd = mulberry(r * 7777 + l * 911 + 7), orders = [];
   const asm = menu.filter(k => R.dishes[k].base || cookerFor(R, k)), side = menu.filter(k => !asm.includes(k));
-  for (let i = 0; i < n; i++) { const k = 1 + Math.floor(rnd() * maxItems), o = []; for (let j = 0; j < k; j++) o.push(rnd() < 0.55 || !side.length ? asm[Math.floor(rnd() * asm.length)] : side[Math.floor(rnd() * side.length)]); orders.push(o); }
+  for (let i = 0; i < n; i++) { const k = minItems + Math.floor(rnd() * (maxItems - minItems + 1)), o = []; for (let j = 0; j < k; j++) o.push(rnd() < 0.55 || !side.length ? asm[Math.floor(rnd() * asm.length)] : side[Math.floor(rnd() * side.length)]); orders.push(o); }
   const total = orders.reduce((s, o) => s + o.reduce((a, x) => a + R.dishes[x].p, 0), 0);
-  return { r, l, R, menu, n, pat, gap, orders, goal: [Math.round(total * 0.5), Math.round(total * 0.8), Math.round(total * 1.15)] };
+  return { r, l, R, menu, n, pat, gap, orders, goal: gf.map(f => Math.round(total * f)) };
 }
 function cookerFor(R, dish) { return R.cookers.find(c => c.direct && c.out === dish); }
 function usedThing(cfg, thing) {
@@ -289,7 +302,7 @@ function newLevel(r, l) {
   applyTheme(R); buildKitchen(); renderSeats(); hud();
 }
 const cookT = c => c.t * spd(), burnT = c => cookT(c) + 4.5;
-const dispT = d => d.t * (1 - SV.up.disp * 0.15), batchT = b => b.t * (1 - SV.up.batch * 0.12), batchN = b => b.cnt + SV.up.batch;
+const dispT = d => d.t * (1 - SV.up.disp * 0.15), batchT = b => b.t * Math.max(0.4, 1 - SV.up.batch * 0.12), batchN = b => b.cnt + SV.up.batch;
 function applyTheme(R) {
   const a = $('app').style; a.setProperty('--wall1', R.wall[0]); a.setProperty('--wall2', R.wall[1]); a.setProperty('--ctr1', R.ctr[0]); a.setProperty('--ctr2', R.ctr[1]); a.setProperty('--ctr3', R.ctr[2]);
   $('sign').textContent = R.name; $('decoL').src = IMG(R.deco[0]); $('decoR').src = IMG(R.deco[1]);
@@ -495,16 +508,16 @@ function hud() {
 function finish() {
   running = false; const g = G.cfg.goal, stars = G.coins >= g[2] ? 3 : G.coins >= g[1] ? 2 : G.coins >= g[0] ? 1 : 0, win = stars > 0, k = G.r + '-' + G.l;
   SV.coins += G.coins;
-  if (win) { SV.best[k] = Math.max(SV.best[k] || 0, stars); SV.prog[G.r] = Math.max(SV.prog[G.r], Math.min(LPR, G.l + 1)); if (G.l >= LPR) SV.prog[G.r] = LPR + 1; if (G.l >= 10 && G.r + 1 < RESTS.length && !SV.prog[G.r + 1]) SV.prog[G.r + 1] = 1; }
+  if (win) { SV.best[k] = Math.max(SV.best[k] || 0, stars); SV.prog[G.r] = Math.max(SV.prog[G.r], Math.min(maxL(G.r), G.l + 1)); if (G.l >= maxL(G.r)) SV.prog[G.r] = maxL(G.r) + 1; if (G.l >= 10 && G.r + 1 < RESTS.length && !SV.prog[G.r + 1]) SV.prog[G.r + 1] = 1; }
   persist();
   $('eT').textContent = win ? '🎉 打烊囉！' : '😵 今天生意不太好…';
   $('eStars').textContent = '⭐'.repeat(stars) + '☆'.repeat(3 - stars);
   $('eCoin').innerHTML = `${im('moneybag')}+${G.coins}`;
   const nx = G.R.unlock.find(([l]) => l === G.l + 1), newRest = win && G.l === 10 && G.r + 1 < RESTS.length;
   $('eInfo').innerHTML = `服務 <b>${G.served}</b> 位客人${G.lost ? `，<b style="color:#ff8a80">氣走 ${G.lost} 位</b>` : '，一位都沒氣走！'}${G.burnt ? `<br>燒焦了 ${G.burnt} 份` : ''}<br>目標：⭐ ${g[0]}　⭐⭐ ${g[1]}　⭐⭐⭐ ${g[2]}` +
-    (win && nx && G.l < LPR ? `<br><b style="color:#9cff7a">下一關新菜色：</b><div class="newdish">${nx[1].map(d => `<div>${dishHTML(G.R, d)}${G.R.dishes[d].n}</div>`).join('')}</div>` : '') +
+    (win && nx && G.l < maxL(G.r) ? `<br><b style="color:#9cff7a">下一關新菜色：</b><div class="newdish">${nx[1].map(d => `<div>${dishHTML(G.R, d)}${G.R.dishes[d].n}</div>`).join('')}</div>` : '') +
     (newRest ? `<br><b style="color:#ffe14d">🎊 解鎖新餐廳：${RESTS[G.r + 1].name}！</b>` : '') + (win ? '' : '<br>升級一下廚房，或做快一點再來挑戰！');
-  $('eNext').textContent = win ? (G.l < LPR ? '下一關' : '回主選單') : '再挑戰';
+  $('eNext').textContent = win ? (G.l < maxL(G.r) ? '下一關' : '回主選單') : '再挑戰';
   setTimeout(() => show('end'), 500);
 }
 
@@ -513,22 +526,26 @@ function show(id) { ['menu', 'how', 'levels', 'upsOv', 'intro', 'pauseOv', 'end'
 function goMenu() {
   running = false; show('menu'); $('mCoin').innerHTML = `${im('coin')} ${SV.coins}`;
   $('rests').innerHTML = RESTS.map((R, r) => { const pr = SV.prog[r] || 0, stars = Object.keys(SV.best).filter(k => k.startsWith(r + '-')).reduce((s, k) => s + SV.best[k], 0);
-    return `<button class="rest" data-r="${r}" style="background:linear-gradient(135deg,${R.col[0]},${R.col[1]})" ${pr ? '' : 'disabled'}><div class="pics">${R.pics.map(p => im(p)).join('')}</div><div style="margin-left:10px"><b>${R.name}</b><small>${pr ? R.sub : `🔒 上一間餐廳過第 10 關解鎖`}</small></div><div class="pr">${pr ? `${Math.min(pr - 1, LPR)}/${LPR}<br>⭐ ${stars}` : ''}</div></button>`; }).join('');
+    return `<button class="rest" data-r="${r}" style="background:linear-gradient(135deg,${R.col[0]},${R.col[1]})" ${pr ? '' : 'disabled'}><div class="pics">${R.pics.map(p => im(p)).join('')}</div><div style="margin-left:10px"><b>${R.name}</b><small>${pr ? R.sub : `🔒 上一間餐廳過第 10 關解鎖`}</small></div><div class="pr">${pr ? `${Math.min(pr - 1, maxL(r))}/${maxL(r)}<br>⭐ ${stars}` : ''}</div></button>`; }).join('');
   document.querySelectorAll('[data-r]').forEach(b => b.onclick = () => openRest(+b.dataset.r));
 }
 function openRest(r) {
   show('levels'); $('lvTitle').textContent = RESTS[r].name;
   const pr = SV.prog[r];
-  $('lvGrid').innerHTML = Array.from({ length: LPR }, (_, i) => { const l = i + 1, s = SV.best[r + '-' + l] || 0; return `<button class="lv ${l === pr ? 'cur' : ''}" data-l="${l}" ${l > pr ? 'disabled' : ''}>${l > pr ? '🔒' : l}<small>${l <= pr ? '⭐'.repeat(s) || '　' : ''}</small></button>`; }).join('');
+  $('lvGrid').innerHTML = Array.from({ length: maxL(r) }, (_, i) => { const l = i + 1, s = SV.best[r + '-' + l] || 0; return `<button class="lv ${l === pr ? 'cur' : ''}" data-l="${l}" ${l > pr ? 'disabled' : ''}>${l > pr ? '🔒' : l}<small>${l <= pr ? '⭐'.repeat(s) || '　' : ''}</small></button>`; }).join('');
   document.querySelectorAll('[data-l]').forEach(b => b.onclick = () => intro(r, +b.dataset.l));
+  const cur = $('lvGrid').querySelector('.cur'); if (cur) setTimeout(() => cur.scrollIntoView({ block: 'center' }), 30);
 }
 function intro(r, l) {
   newLevel(r, l); show('intro');
   const c = G.cfg, R = G.R, nw = R.unlock.find(([x]) => x === l);
   $('iT').textContent = `${R.name} 第 ${l} 關`;
   $('iGoal').innerHTML = `<h3>🎯 今日目標</h3>賺到 ${im('coin', 'i')} <b style="color:#ffe14d">${c.goal[0]}</b>（三顆星要 ${c.goal[2]}）・今天來 <b>${c.n}</b> 位客人<div class="newdish">${c.menu.map(d => `<div>${dishHTML(R, d)}${R.dishes[d].n}</div>`).join('')}</div>` +
+    (l > LPR && upSum() < recUp(l) ? `<br><b style="color:#ffb3b3">💡 這關很硬！建議先去升級（目前升級 ${upSum()} 級，建議 ${recUp(l)} 級以上）</b>` : '') +
     (nw ? `<br><b style="color:#9cff7a">✨ 新菜色：${nw[1].map(d => R.dishes[d].n).join('、')}</b><br>${nw[1].map(d => recipeText(R, d)).join('<br>')}` : '');
 }
+const upSum = () => Object.values(SV.up).reduce((a, b) => a + b, 0);
+const recUp = l => Math.min(50, 12 + Math.floor((l - LPR) / 5));
 function recipeText(R, d) {
   const D = R.dishes[d], nm = x => { const c = R.cookers.find(c => c.out === x); if (c) return `${c.n}做好的料`; const t = R.tops.find(t => t.id === x); if (t) return t.n; const b = R.bases.find(b => b.id === x); return b ? b.n : x; };
   if (D.base) { const bc = R.cookers.find(c => c.out === D.base); return `${D.n}＝${bc ? bc.n + '烤好的餅皮' : nm(D.base)}＋${D.parts.map(nm).join('＋')}`; }
@@ -557,7 +574,7 @@ $('iGo').onclick = play;
 $('pauseB').onclick = () => { if (!running) return; paused = true; show('pauseOv'); };
 $('pResume').onclick = () => { paused = false; show(null); last = performance.now(); };
 $('pQuit').onclick = () => openRest(G.r);
-$('eNext').onclick = () => { const win = SV.best[G.r + '-' + G.l]; if (win && G.l >= LPR) return goMenu(); intro(G.r, win ? G.l + 1 : G.l); };
+$('eNext').onclick = () => { const win = SV.best[G.r + '-' + G.l]; if (win && G.l >= maxL(G.r)) return goMenu(); intro(G.r, win ? G.l + 1 : G.l); };
 $('eRetry').onclick = () => intro(G.r, G.l);
 $('eUps').onclick = () => { renderUps(); show('upsOv'); };
 $('eMenu').onclick = goMenu;
