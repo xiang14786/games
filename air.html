@@ -209,6 +209,21 @@ const RIVAL_NAMES = [['寰宇航空', '#e8402a'], ['長榮之翼', '#2fae5a'], [
 
 // ===================== 狀態 =====================
 let S = null; // 整個世界
+const DIFF = [
+  { n: '輕鬆', d: '對手保守、成本低', cost: 0.85, ai: 0.7, riv: 3, ev: 0.6, adm: 0.6 },
+  { n: '普通', d: '標準挑戰', cost: 1, ai: 1, riv: 3, ev: 1, adm: 1 },
+  { n: '困難', d: '4 家對手、會打價格戰', cost: 1.05, ai: 1.4, riv: 4, ev: 1.25, adm: 1.25 },
+  { n: '地獄', d: '5 家兇猛對手、天災人禍不斷', cost: 1.12, ai: 1.8, riv: 5, ev: 1.6, adm: 1.5 },
+];
+const D = () => DIFF[S && S.diff != null ? S.diff : 1];
+const SVC = [
+  { n: '陽春', c: -5, a: 0.8, rep: -18, d: '省錢但旅客不滿' },
+  { n: '經濟', c: -2, a: 0.92, rep: -8, d: '基本服務' },
+  { n: '標準', c: 0, a: 1, rep: 0, d: '一般水準' },
+  { n: '舒適', c: 5, a: 1.1, rep: 10, d: '好吃的餐點、寬座椅' },
+  { n: '頂級', c: 11, a: 1.2, rep: 20, d: '五星服務，口碑最好' },
+];
+const repMult = al => 0.75 + (al.rep ?? 55) / 200;
 const WEEK = 7 * 864e5;
 const yearOf = t => new Date(t).getFullYear() + new Date(t).getMonth() / 12;
 function dist(a, b) { const R = 6371, t = Math.PI / 180, d1 = (b.lat - a.lat) * t, d2 = (b.lon - a.lon) * t; const x = Math.sin(d1 / 2) ** 2 + Math.cos(a.lat * t) * Math.cos(b.lat * t) * Math.sin(d2 / 2) ** 2; return 2 * R * Math.asin(Math.sqrt(x)); }
@@ -216,16 +231,16 @@ const fmtM = v => { const n = v * cpi(); const a = Math.abs(n); return (n < 0 ? 
 const cpi = () => interp(CPI, S ? yearOf(S.t) : 2000);
 const fuelPrice = () => S.fuel;
 function avail(y) { return PLANES.filter(p => y >= p.y0 && y <= p.y1); }
-function newWorld(era, home, name, color) {
+function newWorld(era, home, name, color, diff = 1) {
   const t0 = new Date(era + '-01-05').getTime(), y = era;
-  S = { t: t0, start: era, fuel: interp(FUEL, y), week: 0, speed: 1, hist: [], news: [], goals: [], medals: [], decade: null, nextId: 1, airlines: [] };
+  S = { t: t0, start: era, fuel: interp(FUEL, y), week: 0, speed: 1, hist: [], news: [], goals: [], medals: [], decade: null, nextId: 1, airlines: [], diff, ach: {}, evts: [], boom: null };
   const me = mkAirline('me', name, color, home, true);
   me.cash = 20e6; S.airlines.push(me);
   // 對手：挑三個不同地區的大機場當基地
   const regs = new Set([APM[home].reg]);
   const big = AP.filter(a => apSize(a, y) >= 5 && a.c !== home).sort((a, b) => apSize(b, y) - apSize(a, y));
   const used = [];
-  for (const a of big) { if (S.airlines.length >= 4) break; if (regs.has(a.reg)) continue; regs.add(a.reg); const rn = RIVAL_NAMES[S.airlines.length - 1]; const r = mkAirline('r' + S.airlines.length, rn[0], rn[1], a.c, false); r.cash = 30e6 * rand(.9, 1.3); S.airlines.push(r); used.push(a.c); }
+  for (const a of big) { if (S.airlines.length >= 1 + DIFF[diff].riv) break; if (regs.has(a.reg) && S.airlines.length < 4) continue; if (used.includes(a.c)) continue; regs.add(a.reg); const rn = RIVAL_NAMES[S.airlines.length - 1]; const r = mkAirline('r' + S.airlines.length, rn[0], rn[1], a.c, false); r.cash = 30e6 * rand(.9, 1.3) * (0.7 + 0.3 * DIFF[diff].ai); S.airlines.push(r); used.push(a.c); }
   // 開局送兩架便宜飛機
   const cheap = avail(y).sort((a, b) => a.price - b.price)[0];
   for (let i = 0; i < 2; i++) addPlane(me, cheap.id, true);
@@ -234,7 +249,7 @@ function newWorld(era, home, name, color) {
   S.hist.push({ t: S.t, cash: me.cash, profit: 0, pax: 0 });
   save();
 }
-function mkAirline(id, name, color, home, human) { return { id, name, color, home, human, cash: 0, debt: 0, fleet: [], routes: [], shares: 10e6, price: 3, priceHist: [], profitHist: [], weekP: 0, weekRev: 0, weekPax: 0, yearP: 0, holds: {}, fin: null, alive: true }; }
+function mkAirline(id, name, color, home, human) { return { id, name, color, home, human, cash: 0, debt: 0, fleet: [], routes: [], shares: 10e6, price: 3, priceHist: [], profitHist: [], weekP: 0, weekRev: 0, weekPax: 0, yearP: 0, holds: {}, fin: null, alive: true, rep: human ? 55 : 50 + Math.random() * 15, svc: 2, crewUp: 0 }; }
 function addPlane(al, pid, leased) { const p = { id: S.nextId++, type: pid, leased, age: 0, route: null, bought: S.t }; al.fleet.push(p); if (!leased) al.cash -= PM[pid].price * 1e6; return p; }
 const me = () => S.airlines[0];
 const airl = id => S.airlines.find(a => a.id === id);
@@ -251,6 +266,7 @@ function demandMult(a, b) {
   return m;
 }
 function marketDemand(a, b) { const y = yearOf(S.t), d = dist(a, b); return 80 * apSize(a, y) * apSize(b, y) / Math.pow(1 + d / 4000, 0.7) * interp(ERA, y) * demandMult(a, b); }
+function boomMult(r) { const b = S.boom; return b && S.t < b.until && (r.a === b.c || r.b === b.c) ? b.m : 1; }
 function hubBonus(al, code) { const n = al.routes.filter(r => r.a === code || r.b === code).length; return n >= 6 ? 1.25 : n >= 3 ? 1.12 : 1; }
 function routeCap(al, r) { const d = dist(APM[r.a], APM[r.b]); let cap = 0; for (const pid of r.planes) { const p = al.fleet.find(f => f.id === pid); if (!p) continue; const pl = PM[p.type]; cap += weeklyTrips(pl, d) * 2 * pl.seats; } return cap; }
 // 每週結算
@@ -261,13 +277,13 @@ function simulateWeek() {
   // 依航段（不分方向）歸組
   const markets = {};
   for (const al of S.airlines) if (al.alive) for (const r of al.routes) { const k = [r.a, r.b].sort().join('-'); (markets[k] = markets[k] || []).push({ al, r }); }
-  for (const al of S.airlines) { al.fin = { rev: 0, fuel: 0, crew: 0, maint: 0, fees: 0, lease: 0, station: 0, interest: 0, pax: 0 }; }
+  for (const al of S.airlines) { al.fin = { rev: 0, fuel: 0, crew: 0, maint: 0, fees: 0, lease: 0, station: 0, interest: 0, service: 0, admin: 0, pax: 0 }; }
   for (const k in markets) {
     const list = markets[k], A = APM[list[0].r.a], B = APM[list[0].r.b], d = dist(A, B), D0 = marketDemand(A, B);
     let tot = 0;
-    for (const x of list) { x.cap = routeCap(x.al, x.r); x.att = Math.pow(x.r.fare, -2.4) * Math.pow(Math.max(1, x.cap), 0.55) * (x.al.human ? 1 : 1) * hubBonus(x.al, x.r.a) * hubBonus(x.al, x.r.b); tot += x.att; }
+    for (const x of list) { x.cap = routeCap(x.al, x.r); x.att = Math.pow(x.r.fare, -2.4) * Math.pow(Math.max(1, x.cap), 0.55) * (x.al.human ? 1 : 1) * hubBonus(x.al, x.r.a) * hubBonus(x.al, x.r.b) * repMult(x.al) * SVC[x.al.svc ?? 2].a * boomMult(x.r); tot += x.att; }
     for (const x of list) {
-      const share = tot ? x.att / tot : 0, dem = D0 * share * Math.pow(x.r.fare, -1.2) * Math.min(1.3, list.length > 1 ? 1 + 0.08 * (list.length - 1) : 1);
+      const share = tot ? x.att / tot : 0, dem = D0 * boomMult(x.r) * share * Math.pow(x.r.fare, -1.2) * Math.min(1.3, list.length > 1 ? 1 + 0.08 * (list.length - 1) : 1);
       const pax = Math.min(x.cap, Math.round(dem));
       const fare = baseFare(d) * x.r.fare;
       x.r.pax = pax; x.r.cap = x.cap; x.r.lf = x.cap ? pax / x.cap : 0; x.r.rev = pax * fare; x.r.comp = list.length - 1; x.r.dem = Math.round(D0);
@@ -286,7 +302,13 @@ function simulateWeek() {
     const stations = new Set(); for (const r of al.routes) { stations.add(r.a); stations.add(r.b); } stations.add(al.home); for (const c of al.bases || []) stations.add(c);
     for (const c of stations) f.station += 4000 + apSize(APM[c], y) * 1500;
     f.interest = al.debt * 0.07 / 52;
-    const exp = f.fuel + f.crew + f.maint + f.fees + f.lease + f.station + f.interest;
+    f.crew *= 1 + (al.crewUp || 0);
+    f.service = f.pax * SVC[al.svc ?? 2].c;
+    f.admin = al.human ? 4000 * Math.pow(al.routes.length, 1.5) * D().adm + al.fleet.length * 1500 * D().adm : 2500 * Math.pow(al.routes.length, 1.35);
+    if (al.human) { const k = D().cost; f.fuel *= k; f.crew *= k; f.maint *= k; f.fees *= k; f.station *= k; }
+    const exp = f.fuel + f.crew + f.maint + f.fees + f.lease + f.station + f.interest + f.service + f.admin;
+    // 口碑慢慢往目標靠近
+    { const ages = al.fleet.length ? al.fleet.reduce((s, p) => s + p.age, 0) / al.fleet.length : 5; const tgt = clamp(55 + SVC[al.svc ?? 2].rep + (ages < 5 ? 8 : ages > 15 ? -12 : ages > 10 ? -5 : 0) - (al.routes.some(r => r.lf > 0.97) ? 4 : 0), 5, 98); al.rep = (al.rep ?? 55) + (tgt - (al.rep ?? 55)) * 0.03; }
     al.weekP = f.rev - exp; al.weekRev = f.rev; al.weekPax = f.pax; al.cash += al.weekP; al.yearP += al.weekP;
     al.profitHist = al.profitHist.concat([al.weekP]).slice(-52);
     // 現金不足自動借貸
@@ -316,7 +338,7 @@ function updatePrices() {
 function seatCost(pl, d) { const legs = weeklyTrips(pl, d) * 2, ft = flightH(pl, d); return (d * pl.burn * S.fuel + ft * pl.seats * 2.4 + ft * (180 + pl.price * 9) + pl.seats * 3.2 + pl.price * 1e6 * 0.0048 / legs) / pl.seats; }
 function aiExpand(al, free) {
   const y = yearOf(S.t), types = avail(y); if (!types.length) return;
-  if (!free && al.routes.length >= Math.min(55, 8 + 2.5 * (y - S.start))) return;
+  if (!free && al.routes.length >= Math.min(55 + 10 * D().ai, 8 + 2.5 * D().ai * (y - S.start))) return;
   const served = new Set(al.routes.map(r => r.b));
   const hubs = [al.home, ...al.routes.filter(r => r.planes.length >= 2).map(r => r.b)].slice(0, 2);
   const cands = [];
@@ -359,7 +381,20 @@ function aiMonthly(al) {
     if (avg > 0.95) r.fare = Math.min(1.4, r.fare + 0.03); else if (avg < 0.6) r.fare = Math.max(0.75, r.fare - 0.03);
   }
   const recent = al.profitHist.slice(-8).reduce((s, v) => s + v, 0);
-  if ((al.cash > 8e6 && recent > 0 && Math.random() < 0.7) || (al.routes.length < 3 && Math.random() < 0.3)) aiExpand(al, false);
+  if ((al.cash > 8e6 && recent > 0 && Math.random() < Math.min(0.95, 0.7 * D().ai)) || (al.routes.length < 3 && Math.random() < 0.3)) aiExpand(al, false);
+  if (D().ai > 1.2 && al.cash > 15e6 && Math.random() < 0.3 * D().ai) aiExpand(al, false);
+  // 價格戰：在你賺最多的航線上殺價
+  if (D().ai >= 1 && me().routes.length >= 8 && Math.random() < 0.12 * D().ai) {
+    const mine = me().routes.filter(r => (r.lf || 0) > 0.75 && (r.rev - r.cost) > 0).sort((a, b) => (b.rev - b.cost) - (a.rev - a.cost))[0];
+    if (mine) {
+      let r = al.routes.find(x => [x.a, x.b].sort().join() === [mine.a, mine.b].sort().join());
+      if (!r && al.cash > 10e6 && (al.home === mine.a || al.home === mine.b || al.routes.some(x => x.a === mine.a || x.b === mine.a || x.a === mine.b || x.b === mine.b))) {
+        const d = dist(APM[mine.a], APM[mine.b]), pl = avail(yearOf(S.t)).filter(p => p.range >= d).sort((p, q) => seatCost(p, d) - seatCost(q, d))[0];
+        if (pl) { const p = addPlane(al, pl.id, true); r = { id: S.nextId++, a: mine.a, b: mine.b, planes: [p.id], fare: 1, opened: S.t }; p.route = r.id; al.routes.push(r); }
+      }
+      if (r && r.fare > 0.8) { r.fare = 0.78; news('air_warn', `${al.name} 發動價格戰！`, `在 ${APM[mine.a].n}－${APM[mine.b].n} 殺價搶客，你的載客率可能會下降。`); }
+    }
+  }
   // 汰換舊飛機
   const y = yearOf(S.t);
   for (const p of al.fleet) { const pl = PM[p.type]; if (y > pl.y1 + 3 && p.route) { const r = al.routes.find(x => x.id === p.route); const d = dist(APM[r.a], APM[r.b]); const nt = avail(y).filter(q => q.range >= d).sort((a, b) => Math.abs(a.seats - pl.seats) - Math.abs(b.seats - pl.seats))[0]; if (nt) { p.type = nt.id; p.age = 0; } } }
@@ -375,7 +410,7 @@ function tick() {
   simulateWeek(); updatePrices();
   for (const e of EV) if (S.t >= e.s && S.t - WEEK < e.s) { news('air_news', `${e.t}`, e.d); }
   if (S.week % 4 === 0) for (const al of S.airlines.slice(1)) if (al.alive) aiMonthly(al);
-  if (S.week % 13 === 0 && S.airlines.filter(a => !a.human && a.alive).length < 3) spawnRival();
+  if (S.week % 13 === 0 && S.airlines.filter(a => !a.human && a.alive).length < D().riv) spawnRival();
   // 年度結算
   const prev = new Date(S.t - WEEK).getFullYear();
   if (y !== prev) yearEnd(prev);
@@ -384,6 +419,8 @@ function tick() {
   for (const a of AP) if (a.open === y && new Date(S.t - WEEK).getFullYear() < y && a.open > 1950) news('air_tower', `新機場啟用：${a.n}（${a.c}）`, '可以開設新航線了。');
   const m = me(); S.hist.push({ t: S.t, cash: m.cash, profit: m.weekP, pax: m.weekPax, rev: m.weekRev, fuel: S.fuel }); if (S.hist.length > 520) S.hist.shift();
   checkGoal();
+  randomEvent();
+  if (S.week % 4 === 0) checkAch();
   if (S.week % 4 === 0) save();
 }
 function yearEnd(y) {
@@ -417,6 +454,69 @@ function endDecade() {
   news('air_medal', `${d.end - 10} 年代結算：${medal}`, `十年合約達成 ${n}/4 項。`);
   newDecadeGoal(false);
 }
+// ===================== 隨機事件 =====================
+function randomEvent() {
+  const m = me(); if (!m.alive || m.routes.length < 3 || modalOpen) return;
+  if (Math.random() > 0.035 * D().ev) return;
+  const y = yearOf(S.t), owned = m.fleet.filter(p => p.route), avgAge = m.fleet.length ? m.fleet.reduce((s, p) => s + p.age, 0) / m.fleet.length : 0;
+  const ev = [
+    [0.4 + avgAge * 0.3, () => { // 飛安事故
+      const p = owned.sort((a, b) => b.age - a.age)[0]; if (!p) return false; const pl = PM[p.type], r = m.routes.find(x => x.id === p.route);
+      if (r) r.planes = r.planes.filter(id => id !== p.id); m.fleet = m.fleet.filter(f => f !== p); m.rep = Math.max(5, (m.rep ?? 55) - 22);
+      const fine = pl.price * 1e6 * 0.4; m.cash -= fine;
+      choice('air_warn', '✈️💥 飛安事故', `一架 ${pl.n}（機齡 ${p.age.toFixed(0)} 年）發生重大事故，飛機全毀。媒體大幅報導，口碑大跌。<br>賠償與調查費用 ${fmtM(fine)}。<br><br><span class="muted">老飛機越多，出事機率越高。</span>`,
+        [['公開道歉、全面安檢（再花 ' + fmtM(fine * 0.5) + '，口碑回升一些）', () => { m.cash -= fine * 0.5; m.rep += 10; }], ['低調處理', () => {}]]); return true; }],
+    [3, () => { // 罷工
+      const raise = 0.12; choice('air_hand', '🪧 機組人員罷工', `工會要求加薪 ${raise * 100}%，否則全面罷工。`,
+        [['答應加薪（機組成本永久 +12%）', () => { m.crewUp = (m.crewUp || 0) + raise; m.rep += 3; }], ['拒絕（停飛兩週、口碑下降）', () => { m.cash -= m.weekRev * 1.6; m.rep = Math.max(5, m.rep - 12); toast('air_warn', '罷工兩週，損失大量收入'); }]]); return true; }],
+    [2.5, () => { // 旅遊熱潮
+      const cs = [...new Set(m.routes.flatMap(r => [r.a, r.b]))], c = pick(cs); S.boom = { c, m: 1.45, until: S.t + 26 * WEEK };
+      news('air_up', `${APM[c].n} 掀起旅遊熱潮！`, '未來半年，飛這個城市的需求大增 45%。'); return true; }],
+    [2, () => { // 起降費調漲
+      const c = pick([m.home, ...(m.bases || [])]); m.stationUp = m.stationUp || {}; choice('air_tower', `🏛️ ${APM[c].n} 機場調漲費用`, '機場當局要你一次付清擴建分攤費，不付就限制你的起降時段（口碑下降）。',
+        [['付 ' + fmtM(baseCost(c) * 1.5), () => { m.cash -= baseCost(c) * 1.5; }], ['不付', () => { m.rep = Math.max(5, m.rep - 10); }]]); return true; }],
+    [2, () => { // 好評
+      m.rep = Math.min(98, (m.rep ?? 55) + 8); news('air_medal', `${m.name} 獲選年度最佳航空`, '口碑上升！'); return true; }],
+    [1.5 * D().ai, () => { // 對手挖角
+      const r = S.airlines.filter(a => !a.human && a.alive).sort((a, b) => b.cash - a.cash)[0]; if (!r) return false;
+      choice('air_office', `🕵️ ${r.name} 來挖角`, `${r.name} 想挖走你的資深機師團隊。`,
+        [['發留任獎金 ' + fmtM(m.weekRev * 0.8), () => { m.cash -= m.weekRev * 0.8; }], ['讓他們走（機組成本 +6%、對手變強）', () => { m.crewUp = (m.crewUp || 0) + 0.06; r.rep = Math.min(95, r.rep + 10); r.cash += 10e6; }]]); return true; }],
+    [y >= 1990 ? 1.5 : 0.5, () => { // 電腦當機
+      m.cash -= m.weekRev * 0.5; m.rep = Math.max(5, m.rep - 6); news('air_warn', '訂位系統大當機', '一整天無法劃位，損失收入、旅客抱怨。'); return true; }],
+  ];
+  let tot = ev.reduce((s, e) => s + e[0], 0), r = Math.random() * tot;
+  for (const e of ev) { r -= e[0]; if (r <= 0) { e[1](); break; } }
+}
+function choice(ic, title, body, opts) {
+  S.speed && (S._sp = S.speed);
+  modal(`<h3><img src="${IMG(ic)}">${title}</h3><div class="card">${body}</div>${opts.map((o, i) => `<button class="b ${i ? 'g' : 'y'}" style="width:100%;margin-top:6px" data-ch="${i}">${o[0]}</button>`).join('')}`);
+  const c = $('mClose'); if (c) c.style.display = 'none';
+  document.querySelectorAll('[data-ch]').forEach(b => b.onclick = () => { opts[+b.dataset.ch][1](); if (c) c.style.display = ''; closeModal(); renderTop(); });
+}
+
+// ===================== 成就 =====================
+const ACH = [
+  ['r10', '小有規模', '經營 10 條航線', m => m.routes.length >= 10, 5e6],
+  ['r30', '航線網', '經營 30 條航線', m => m.routes.length >= 30, 15e6],
+  ['r60', '天網恢恢', '經營 60 條航線', m => m.routes.length >= 60, 40e6],
+  ['f20', '機隊成形', '擁有 20 架飛機', m => m.fleet.length >= 20, 8e6],
+  ['f80', '大機隊', '擁有 80 架飛機', m => m.fleet.length >= 80, 30e6],
+  ['p20k', '人潮洶湧', '每週載客 2 萬人', m => m.weekPax >= 20000, 10e6],
+  ['p100k', '十萬旅客', '每週載客 10 萬人', m => m.weekPax >= 100000, 50e6],
+  ['cont', '飛遍六大洲', '航點遍及 6 個地區', m => new Set(m.routes.flatMap(r => [APM[r.a].reg, APM[r.b].reg])).size >= 6, 20e6],
+  ['base3', '多據點', '設立 3 個基地', m => (m.bases || []).length >= 3, 6e6],
+  ['rep85', '口碑之王', '口碑達到 85', m => (m.rep ?? 0) >= 85, 12e6],
+  ['own', '併購者', '收購 1 家對手', m => (S.acq || 0) >= 1, 15e6],
+  ['own3', '航空帝國', '收購 3 家對手', m => (S.acq || 0) >= 3, 60e6],
+  ['top', '市值第一', '市值排名第 1', m => ranking()[0] === m, 10e6],
+  ['debt0', '零負債', '航線 15 條以上且沒有負債', m => m.routes.length >= 15 && m.debt <= 0, 10e6],
+  ['wk1', '週賺百萬', '單週淨利 100 萬（2000 年幣值）', m => m.weekP >= 1e6, 10e6],
+  ['wk10', '印鈔機', '單週淨利 1000 萬（2000 年幣值）', m => m.weekP >= 10e6, 80e6],
+  ['gold3', '三連金', '拿到 3 面金牌', m => S.medals.filter(x => x.medal === '🥇').length >= 3, 50e6],
+  ['hard', '硬派老闆', '在困難以上難度撐過 20 年', m => (S.diff ?? 1) >= 2 && yearOf(S.t) - S.start >= 20, 40e6],
+];
+function checkAch() { const m = me(); for (const a of ACH) if (!S.ach[a[0]] && a[3](m)) { S.ach[a[0]] = S.t; m.cash += a[4]; news('air_trophy', `🏆 成就解鎖：${a[1]}`, `${a[2]}・獎金 ${fmtM(a[4])}`); } }
+
 const ranking = () => S.airlines.filter(a => a.alive).slice().sort((a, b) => b.price * b.shares - a.price * a.shares);
 
 // ===================== 地圖 =====================
@@ -562,15 +662,20 @@ function tabFleet(el) {
   $('bBuy').onclick = () => openShop(null);
 }
 function tabFinance(el) {
-  const m = me(), f = m.fin || { rev: 0, fuel: 0, crew: 0, maint: 0, fees: 0, lease: 0, station: 0, interest: 0 }, exp = f.fuel + f.crew + f.maint + f.fees + f.lease + f.station + f.interest;
+  const m = me(), f = m.fin || { rev: 0, fuel: 0, crew: 0, maint: 0, fees: 0, lease: 0, station: 0, interest: 0, service: 0, admin: 0 }, exp = f.fuel + f.crew + f.maint + f.fees + f.lease + f.station + f.interest + (f.service || 0) + (f.admin || 0);
   const fy = interp(FUEL, yearOf(S.t));
   let h = `<h3><img src="${IMG('air_bank')}">財務 <small>上週損益</small></h3>
     <div class="card"><canvas class="chart" id="chP"></canvas><div class="muted">近兩年每週利潤</div></div>
-    <div class="card"><table><tr><td>💰 票價收入</td><td class="pos">${fmtM(f.rev)}</td></tr><tr><td>⛽ 燃油</td><td class="neg">-${fmtM(f.fuel)}</td></tr><tr><td>👩‍✈️ 機組人員</td><td class="neg">-${fmtM(f.crew)}</td></tr><tr><td>🔧 維修</td><td class="neg">-${fmtM(f.maint)}</td></tr><tr><td>🛬 起降費</td><td class="neg">-${fmtM(f.fees)}</td></tr><tr><td>📄 飛機租金</td><td class="neg">-${fmtM(f.lease)}</td></tr><tr><td>🏢 機場站點</td><td class="neg">-${fmtM(f.station)}</td></tr><tr><td>🏦 利息</td><td class="neg">-${fmtM(f.interest)}</td></tr><tr><td><b>本週淨利</b></td><td class="${m.weekP >= 0 ? 'pos' : 'neg'}">${fmtM(m.weekP)}</td></tr></table></div>
+    <div class="card"><div class="row"><img src="${IMG('air_medal')}" style="width:30px"><div style="flex:1"><b>口碑 ${Math.round(m.rep ?? 55)} / 100</b><div class="bar" style="margin-top:4px"><i style="width:${m.rep ?? 55}%"></i></div><div class="muted">口碑越高，旅客越選你。受服務等級、機隊新舊、意外事件影響。</div></div></div>
+      <div style="font-weight:800;margin:8px 0 4px">機上服務等級</div><div style="display:flex;gap:4px">${SVC.map((v, i) => `<button class="b sm ${i === (m.svc ?? 2) ? 'y' : 'g'}" style="flex:1;padding:6px 0" data-svc="${i}">${v.n}</button>`).join('')}</div>
+      <div class="muted" style="margin-top:4px">${SVC[m.svc ?? 2].d}・每位旅客 ${SVC[m.svc ?? 2].c >= 0 ? '+' : ''}${fmtM(SVC[m.svc ?? 2].c)}・吸引力 ×${SVC[m.svc ?? 2].a}</div>
+      <div class="muted">難度：${D().n}・管理費隨航線數變多會越來越貴</div></div>
+    <div class="card"><table><tr><td>💰 票價收入</td><td class="pos">${fmtM(f.rev)}</td></tr><tr><td>⛽ 燃油</td><td class="neg">-${fmtM(f.fuel)}</td></tr><tr><td>👩‍✈️ 機組人員</td><td class="neg">-${fmtM(f.crew)}</td></tr><tr><td>🔧 維修</td><td class="neg">-${fmtM(f.maint)}</td></tr><tr><td>🛬 起降費</td><td class="neg">-${fmtM(f.fees)}</td></tr><tr><td>📄 飛機租金</td><td class="neg">-${fmtM(f.lease)}</td></tr><tr><td>🏢 機場站點</td><td class="neg">-${fmtM(f.station)}</td></tr><tr><td>🏦 利息</td><td class="neg">-${fmtM(f.interest)}</td></tr><tr><td>🍱 機上服務</td><td class="${f.service > 0 ? 'neg' : 'pos'}">${f.service > 0 ? '-' : '+'}${fmtM(Math.abs(f.service || 0))}</td></tr><tr><td>🏢 總部管理費</td><td class="neg">-${fmtM(f.admin || 0)}</td></tr><tr><td><b>本週淨利</b></td><td class="${m.weekP >= 0 ? 'pos' : 'neg'}">${fmtM(m.weekP)}</td></tr></table></div>
     <div class="card"><div class="row"><img src="${IMG('air_fuel')}" style="width:30px"><div style="flex:1"><b>油價 ${(S.fuel * cpi()).toFixed(2)} 美元/公升</b><div class="muted">${S.fuel > fy * 1.15 ? '🔺 偏高' : S.fuel < fy * 0.87 ? '🔻 偏低' : '正常水準'}</div></div></div><canvas class="chart" id="chF" style="height:60px"></canvas></div>
     <div class="card"><div class="row"><div style="flex:1"><b>銀行貸款 ${fmtM(m.debt)}</b><div class="muted">年利率 7%，現金不夠時會自動借</div></div><button class="b sm g" id="bRepay" ${m.debt <= 0 || m.cash < 1e6 ? 'disabled' : ''}>還款</button><button class="b sm g" id="bLoan">借款</button></div></div>`;
   el.innerHTML = h;
   chart($('chP'), S.hist.slice(-104).map(x => x.profit), true); chart($('chF'), S.hist.slice(-104).map(x => x.fuel), false, '#ffcf4a');
+  el.querySelectorAll('[data-svc]').forEach(b => b.onclick = () => { m.svc = +b.dataset.svc; renderTab(); });
   $('bRepay').onclick = () => { const v = Math.min(m.debt, m.cash * 0.8); m.debt -= v; m.cash -= v; renderTop(); renderTab(); };
   $('bLoan').onclick = () => { const lim = Math.max(10e6, companyValue(m) * 0.4) - m.debt; if (lim <= 0) return toast('air_warn', '銀行不肯再借了'); const v = Math.min(lim, 20e6); m.debt += v; m.cash += v; toast('air_bank', `借了 ${fmtM(v)}`); renderTop(); renderTab(); };
 }
@@ -597,6 +702,7 @@ function tabGoals(el) {
     const tgt = g.k === 'pax' ? g.target.toLocaleString() + ' 人' : g.k === 'routes' ? g.target + ' 條' : g.k === 'cash' ? fmtM(g.target) : '第 1 名';
     return `<div class="goal" style="margin-bottom:10px"><div style="font-size:24px">${done ? '✅' : '🎯'}</div><div class="p"><b>${g.n}</b> <span class="muted">${cur} / ${tgt}</span><div class="bar"><i style="width:${p * 100}%"></i></div></div></div>`; }).join('');
   h += `<div class="muted">每達成一項立刻拿獎金；十年結束依達成數給獎牌。</div></div>`;
+  h += `<div class="card"><b>🏆 成就 ${Object.keys(S.ach || {}).length} / ${ACH.length}</b><div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:6px">${ACH.map(a => { const ok = (S.ach || {})[a[0]]; return `<div style="background:${ok ? '#1f6a3a' : '#16294a'};border-radius:10px;padding:6px 8px;font-size:12px;opacity:${ok ? 1 : .75}"><b style="font-size:13px">${ok ? '🏆' : '🔒'} ${a[1]}</b><br>${a[2]}<br><span class="muted">獎金 ${fmtM(a[4])}</span></div>`; }).join('')}</div></div>`;
   h += `<div class="card"><b>🏅 歷屆獎牌</b><div style="font-size:15px;margin-top:6px">${S.medals.length ? S.medals.map(x => `${x.dec} 年代 ${x.medal}`).join('　') : '<span class="muted">還沒有</span>'}</div></div>`;
   h += `<div class="card"><b>📰 新聞</b>${S.news.slice(-12).reverse().map(n => `<div style="display:flex;gap:8px;align-items:center;padding:6px 0;border-bottom:1px solid #1f3d66"><img src="${IMG(n.ic)}" style="width:26px"><div style="flex:1;font-size:13px"><b>${n.t}</b><div class="muted">${new Date(n.at).getFullYear()}/${new Date(n.at).getMonth() + 1}　${n.d}</div></div></div>`).join('') || '<div class="muted">尚無新聞</div>'}</div>`;
   h += `<button class="b g" style="width:100%" id="bQuit">🏠 回主選單（自動存檔）</button>`;
@@ -694,6 +800,7 @@ function openStock(a) {
   if ($('bTake')) $('bTake').onclick = () => {
     a.alive = false; for (const p of a.fleet) m.fleet.push(p); for (const r of a.routes) { const dup = m.routes.find(x => [x.a, x.b].sort().join() === [r.a, r.b].sort().join()); if (dup) { dup.planes.push(...r.planes); } else m.routes.push(r); }
     m.cash += a.cash - a.debt; m.debt += 0; delete m.holds[a.id]; a.routes = []; a.fleet = [];
+    S.acq = (S.acq || 0) + 1;
     news('air_hand', `你收購了 ${a.name}！`, `接收 ${a.fleet.length} 架飛機和它所有的航線。`); closeModal();
   };
 }
@@ -708,7 +815,7 @@ const ERAS = [
   { y: 2015, n: '現代航空', d: '省油新機型，但疫情即將來襲……', pl: 'J787' },
 ];
 const COLORS = ['#3a7bff', '#e8402a', '#2fae5a', '#ff9a2e', '#a05aff', '#19c0e0', '#ff5ca8', '#ffcf3a'];
-let pickE = 0, pickH = 'TSA', pickC = 0;
+let pickE = 0, pickH = 'TSA', pickC = 0, pickD = 1;
 function showStart() {
   const sv = load();
   $('start').classList.remove('hide');
@@ -719,15 +826,17 @@ function showStart() {
       ${sv ? `<button class="b y" style="width:100%;max-width:420px" id="bCont">▶ 繼續經營 ${sv.airlines[0].name}（${new Date(sv.t).getFullYear()} 年）</button>` : ''}
       <div style="font-weight:800;align-self:center">選擇年代</div><div class="choice">${ERAS.map((e, i) => `<button class="era ${i === pickE ? 'on' : ''}" data-e="${i}">${planeSVG(e.pl, COLORS[pickC])}<div><b>${e.y}　${e.n}</b><small>${e.d}</small></div></button>`).join('')}</div>
       <div style="font-weight:800">選擇基地</div><div class="hubs choice" style="grid-template-columns:repeat(4,1fr)">${homes.filter(c => APM[c] && apSize(APM[c], y) > 0).concat(apSize(APM.GMP, y) > 0 && apSize(APM.ICN, y) <= 0 ? ['GMP'] : []).filter((c, i, a) => a.indexOf(c) === i).map(c => `<button class="hub ${c === pickH ? 'on' : ''}" data-h="${c}">${c}<small>${APM[c].n}</small></button>`).join('')}</div>
+      <div style="font-weight:800">難度</div><div class="hubs choice" style="grid-template-columns:repeat(4,1fr)">${DIFF.map((d, i) => `<button class="hub ${i === pickD ? 'on' : ''}" data-df="${i}">${d.n}<small>${d.d}</small></button>`).join('')}</div>
       <div style="font-weight:800">公司名稱與代表色</div><input class="txt" id="iName" maxlength="8" value="${$('iName') ? $('iName').value : '星宇航空'}" style="max-width:420px"><div class="colors">${COLORS.map((c, i) => `<button style="background:${c}" class="${i === pickC ? 'on' : ''}" data-c="${i}"></button>`).join('')}</div>
       <button class="b" style="width:100%;max-width:420px;font-size:20px;padding:14px" id="bGo">🛫 創立航空公司</button>
-      <div class="card" style="max-width:420px;font-size:13px;line-height:1.7"><b>怎麼玩</b><br>① 點地圖上的機場開航線，選飛機（買或租）<br>② 調整票價，看載客率：綠色賺錢、紅色要注意<br>③ 對手會跟你搶航線，油價和歷史事件也會影響生意<br>④ 在股市買對手股票，持股過半就能收購<br>⑤ 每十年有董事會目標，達成拿獎金和獎牌</div>
+      <div class="card" style="max-width:420px;font-size:13px;line-height:1.7"><b>怎麼玩</b><br>① 點地圖上的機場開航線，選飛機（買或租）<br>② 調整票價，看載客率：綠色賺錢、紅色要注意<br>③ 對手會跟你搶航線，油價和歷史事件也會影響生意<br>④ 在股市買對手股票，持股過半就能收購<br>⑤ 每十年有董事會目標，達成拿獎金和獎牌<br>⑥ 在「財務」調整服務等級、顧好口碑；小心罷工、事故等突發事件<br>⑦ 「目標」裡有 18 個成就等你解鎖</div>
       <div class="credit">機型名稱為虛構，規格參考真實客機・圖示：Microsoft Fluent Emoji（MIT）・地圖：Natural Earth</div>`;
     document.querySelectorAll('[data-e]').forEach(b => b.onclick = () => { pickE = +b.dataset.e; draw(); });
     document.querySelectorAll('[data-h]').forEach(b => b.onclick = () => { pickH = b.dataset.h; draw(); });
     document.querySelectorAll('[data-c]').forEach(b => b.onclick = () => { pickC = +b.dataset.c; draw(); });
-    $('bGo').onclick = () => { newWorld(ERAS[pickE].y, pickH, ($('iName').value.trim() || '星宇航空').slice(0, 8), COLORS[pickC]); begin(); };
-    if ($('bCont')) $('bCont').onclick = () => { S = sv; begin(); };
+    document.querySelectorAll('[data-df]').forEach(b => b.onclick = () => { pickD = +b.dataset.df; draw(); });
+    $('bGo').onclick = () => { newWorld(ERAS[pickE].y, pickH, ($('iName').value.trim() || '星宇航空').slice(0, 8), COLORS[pickC], pickD); begin(); };
+    if ($('bCont')) $('bCont').onclick = () => { S = sv; S.ach = S.ach || {}; if (S.diff == null) S.diff = 1; begin(); };
   };
   draw();
 }
