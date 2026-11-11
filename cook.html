@@ -215,7 +215,7 @@ const RESTS = [
     disp: [{ id: 'tea', n: '綠茶', t: 2 }, { id: 'sushi', n: '壽司台', t: 2.6 }],
     batch: [{ id: 'dango', n: '烤糰子', t: 3.8, cnt: 3 }],
     dishes: { ramen: { n: '拉麵', base: 'bowl', parts: ['noodles'], img: 'ramen', p: 9 }, dramen: { n: '豪華拉麵', base: 'bowl', parts: ['noodles', 'egg', 'fishcake'], img: 'ramen', chips: ['egg', 'fishcake'], p: 14 }, curryrice: { n: '咖哩飯', base: 'rice', parts: ['curry'], img: 'curryrice', p: 9 }, tendon: { n: '炸蝦飯', base: 'rice', parts: ['fshrimp'], img: 'rice', chips: ['fshrimp'], p: 11 }, bento: { n: '便當', base: 'rice', parts: ['fshrimp', 'egg'], img: 'bento', p: 14 }, tea: { n: '綠茶', img: 'tea', p: 4 }, sushi: { n: '壽司', img: 'sushi', p: 7 }, dango: { n: '糰子', img: 'dango', p: 5 } },
-    unlock: [[1, ['ramen', 'tea']], [3, ['curryrice']], [5, ['sushi']], [7, ['tendon', 'dango']], [10, ['bento', 'dramen']]] },
+    unlock: [[1, ['ramen', 'tea']], [3, ['curryrice']], [5, ['sushi']], [7, ['tendon', 'dango']], [10, ['bento', 'dramen']]], max: 100 },
   { id: 'pizza', name: '義式披薩屋', sub: '披薩、義大利麵、沙拉', pics: ['pizza', 'noodle', 'salad'], col: ['#3fae5a', '#1a4a2a'], wall: ['#fff3e0', '#f7e2c0'], ctr: ['#8a5a3a', '#5a3a22', '#3a2010'], deco: ['olive', 'tomato'],
     cookers: [{ id: 'oven', n: '石窯', style: 'oven', raw: 'flatbread', out: 'crust', img: 'flatbread', t: 4.5, baseOut: true, rawF: 'brightness(1.3) saturate(.3)' }, { id: 'pot2', n: '煮麵鍋', style: 'pot', raw: 'noodle', out: 'pasta', img: 'noodle', t: 4, direct: true, rawF: 'brightness(1.25) saturate(.4)' }],
     bases: [],
@@ -223,7 +223,7 @@ const RESTS = [
     disp: [{ id: 'juice', n: '果汁', t: 2 }, { id: 'tropical', n: '水果調飲', t: 2.6 }],
     batch: [{ id: 'salad', n: '沙拉', t: 4, cnt: 2 }],
     dishes: { pmarg: { n: '瑪格麗特', base: 'crust', parts: ['tomato', 'cheese'], img: 'pizza', p: 10 }, pmush: { n: '蘑菇披薩', base: 'crust', parts: ['tomato', 'cheese', 'mushroom'], img: 'pizza', chips: ['mushroom'], p: 12 }, pbacon: { n: '培根披薩', base: 'crust', parts: ['tomato', 'cheese', 'bacon'], img: 'pizza', chips: ['bacon'], p: 12 }, pspicy: { n: '辣味披薩', base: 'crust', parts: ['tomato', 'cheese', 'bacon', 'pepper'], img: 'pizza', chips: ['bacon', 'pepper'], p: 15 }, psup: { n: '總匯披薩', base: 'crust', parts: ['tomato', 'cheese', 'mushroom', 'bacon', 'olive'], img: 'pizza', chips: ['mushroom', 'bacon', 'olive'], p: 17 }, pasta: { n: '義大利麵', img: 'noodle', p: 9 }, salad: { n: '沙拉', img: 'salad', p: 6 }, juice: { n: '果汁', img: 'juice', p: 4 }, tropical: { n: '水果調飲', img: 'tropical', p: 6 } },
-    unlock: [[1, ['pmarg', 'juice']], [3, ['pasta']], [5, ['pmush', 'salad']], [8, ['pbacon', 'tropical']], [10, ['pspicy']], [12, ['psup']]] },
+    unlock: [[1, ['pmarg', 'juice']], [3, ['pasta']], [5, ['pmush', 'salad']], [8, ['pbacon', 'tropical']], [10, ['pspicy']], [12, ['psup']]], max: 100 },
   { id: 'cafe', name: '甜點咖啡廳', sub: '鬆餅、可頌、咖啡', pics: ['pancakes', 'coffee', 'cake'], col: ['#ff8fb8', '#7a3a5a'], wall: ['#ffe6ef', '#ffd6e4'], ctr: ['#f0c8d8', '#c88aa8', '#8a4a6a'], deco: ['cupcake', 'donut'],
     cookers: [{ id: 'griddle', n: '鬆餅機', style: 'griddle', raw: 'pancakes', out: 'pcake', img: 'pancakes', t: 4, baseOut: true, rawF: 'brightness(1.35) saturate(.25)' }, { id: 'oven2', n: '烤箱', style: 'oven', raw: 'croissant', out: 'croissant', img: 'croissant', t: 5, direct: true, rawF: 'brightness(1.4) saturate(.25)' }],
     bases: [],
@@ -231,7 +231,7 @@ const RESTS = [
     disp: [{ id: 'coffee', n: '咖啡機', t: 2.4 }, { id: 'milk', n: '鮮奶', t: 1.8 }, { id: 'cake', n: '蛋糕櫃', t: 1.4 }],
     batch: [{ id: 'donut', n: '甜甜圈', t: 4, cnt: 3 }],
     dishes: { pbutter: { n: '奶油鬆餅', base: 'pcake', parts: ['butter'], img: 'pancakes', chips: ['butter'], p: 9 }, phoney: { n: '蜂蜜鬆餅', base: 'pcake', parts: ['butter', 'honey'], img: 'pancakes', chips: ['honey'], p: 11 }, pstraw: { n: '草莓鬆餅', base: 'pcake', parts: ['strawberry', 'honey'], img: 'pancakes', chips: ['strawberry'], p: 12 }, pberry: { n: '莓果鬆餅', base: 'pcake', parts: ['strawberry', 'blueberry', 'butter'], img: 'pancakes', chips: ['strawberry', 'blueberry'], p: 15 }, croissant: { n: '可頌', img: 'croissant', p: 7 }, coffee: { n: '咖啡', img: 'coffee', p: 5 }, milk: { n: '鮮奶', img: 'milk', p: 4 }, cake: { n: '草莓蛋糕', img: 'cake', p: 7 }, donut: { n: '甜甜圈', img: 'donut', p: 5 } },
-    unlock: [[1, ['pbutter', 'coffee']], [3, ['croissant']], [5, ['phoney', 'milk']], [7, ['donut']], [9, ['pstraw', 'cake']], [12, ['pberry']]] },
+    unlock: [[1, ['pbutter', 'coffee']], [3, ['croissant']], [5, ['phoney', 'milk']], [7, ['donut']], [9, ['pstraw', 'cake']], [12, ['pberry']]], max: 100 },
   { id: 'night', name: '台灣夜市', sub: '炸雞、刈包、珍奶', pics: ['chicken', 'bubbletea', 'gua'], col: ['#ffcf3a', '#7a1a1a'], wall: ['#3a2a4a', '#2e2040'], ctr: ['#c83a2a', '#8a1a12', '#4a0a08'], deco: ['dumpling', 'corn'], night: true,
     cookers: [{ id: 'fryer2', n: '油鍋', style: 'fryer', raw: 'chicken', out: 'fchicken', img: 'chicken', t: 4, direct: true, rawF: 'brightness(1.35) saturate(.3)' }, { id: 'grill2', n: '滷肉鍋', style: 'pot', raw: 'meat', out: 'pork', img: 'meat', t: 3.8 }],
     bases: [{ id: 'bun2', n: '刈包皮', img: 'flatbread' }],
@@ -239,7 +239,7 @@ const RESTS = [
     disp: [{ id: 'bubbletea', n: '珍珠奶茶', t: 2.4 }, { id: 'shavedice', n: '剉冰', t: 2 }],
     batch: [{ id: 'dumpling', n: '小籠包', t: 4.2, cnt: 3 }],
     dishes: { fchicken: { n: '炸雞腿', img: 'chicken', p: 9 }, gua: { n: '刈包', base: 'bun2', parts: ['pork', 'peanuts'], img: 'gua', p: 10 }, gua2: { n: '豪華刈包', base: 'bun2', parts: ['pork', 'peanuts', 'lettuce', 'cucumber'], img: 'gua', chips: ['lettuce', 'cucumber'], p: 14 }, gua3: { n: '酸菜刈包', base: 'bun2', parts: ['pork', 'lettuce'], img: 'gua', chips: ['lettuce'], p: 11 }, bubbletea: { n: '珍奶', img: 'bubbletea', p: 5 }, shavedice: { n: '剉冰', img: 'shavedice', p: 5 }, dumpling: { n: '小籠包', img: 'dumpling', p: 6 } },
-    unlock: [[1, ['fchicken', 'bubbletea']], [3, ['gua']], [5, ['dumpling']], [7, ['gua3']], [9, ['shavedice']], [12, ['gua2']]] },
+    unlock: [[1, ['fchicken', 'bubbletea']], [3, ['gua']], [5, ['dumpling']], [7, ['gua3']], [9, ['shavedice']], [12, ['gua2']]], max: 100 },
 ];
 const LPR = 15;
 const maxL = r => RESTS[r].max || LPR;
@@ -269,11 +269,12 @@ function levelCfg(r, l) {
   const R = RESTS[r], menu = menuAt(R, l), d = r * 5 + l;
   let n = 8 + l + r * 2, pat = Math.max(20, 38 - d * 0.35), gap = Math.max(3, 7 - d * 0.09), maxItems = l < 3 ? 2 : l < 8 ? 3 : 4, minItems = 1, gf = [0.5, 0.8, 1.15];
   if (l > LPR) { // 第 16 關以後：越來越難，需要升級才過得去
-    const x = l - LPR, t = Math.min(1, x / 185);
-    n = Math.min(44, 23 + Math.floor(x / 6));
-    pat = Math.max(13, 32.75 - x * 0.105);
-    gap = Math.max(1.7, 5.65 - x * 0.022);
-    minItems = x > 120 ? 2 : 1;
+    const x = l - LPR, t = Math.min(1, x / (maxL(r) - LPR)), n15 = 8 + LPR + r * 2;
+    n = Math.min(44 + r * 2, n15 + Math.floor(31 * t));
+    const d15 = r * 5 + LPR, p15 = Math.max(20, 38 - d15 * 0.35), g15 = Math.max(3, 7 - d15 * 0.09);
+    pat = Math.max(13, p15 - (p15 - 12.8) * t);
+    gap = Math.max(1.7, g15 - (g15 - 1.6) * t);
+    minItems = t > 0.65 ? 2 : 1;
     gf = [0.5 + 0.22 * t, 0.8 + 0.18 * t, 1.15 + 0.12 * t];
   }
   pat *= decorOf(SV.up.decor);
@@ -541,11 +542,11 @@ function intro(r, l) {
   const c = G.cfg, R = G.R, nw = R.unlock.find(([x]) => x === l);
   $('iT').textContent = `${R.name} 第 ${l} 關`;
   $('iGoal').innerHTML = `<h3>🎯 今日目標</h3>賺到 ${im('coin', 'i')} <b style="color:#ffe14d">${c.goal[0]}</b>（三顆星要 ${c.goal[2]}）・今天來 <b>${c.n}</b> 位客人<div class="newdish">${c.menu.map(d => `<div>${dishHTML(R, d)}${R.dishes[d].n}</div>`).join('')}</div>` +
-    (l > LPR && upSum() < recUp(l) ? `<br><b style="color:#ffb3b3">💡 這關很硬！建議先去升級（目前升級 ${upSum()} 級，建議 ${recUp(l)} 級以上）</b>` : '') +
+    (l > LPR && upSum() < recUp(l, r) ? `<br><b style="color:#ffb3b3">💡 這關很硬！建議先去升級（目前升級 ${upSum()} 級，建議 ${recUp(l, r)} 級以上）</b>` : '') +
     (nw ? `<br><b style="color:#9cff7a">✨ 新菜色：${nw[1].map(d => R.dishes[d].n).join('、')}</b><br>${nw[1].map(d => recipeText(R, d)).join('<br>')}` : '');
 }
 const upSum = () => Object.values(SV.up).reduce((a, b) => a + b, 0);
-const recUp = l => Math.min(50, 12 + Math.floor((l - LPR) / 5));
+const recUp = (l, r) => Math.min(50, 12 + Math.floor(37 * Math.min(1, (l - LPR) / (maxL(r) - LPR))));
 function recipeText(R, d) {
   const D = R.dishes[d], nm = x => { const c = R.cookers.find(c => c.out === x); if (c) return `${c.n}做好的料`; const t = R.tops.find(t => t.id === x); if (t) return t.n; const b = R.bases.find(b => b.id === x); return b ? b.n : x; };
   if (D.base) { const bc = R.cookers.find(c => c.out === D.base); return `${D.n}＝${bc ? bc.n + '烤好的餅皮' : nm(D.base)}＋${D.parts.map(nm).join('＋')}`; }
