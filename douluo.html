@@ -716,8 +716,10 @@ const HAIRCOL = ['1c1814', '1c1814', '2a3a6a', 'e8e0d0', 'd8b048', '8a2a2a', 'c8
 const STN = { con: ['體質', 'muscle-up', '生命、防禦、魂環承受上限'], spi: ['精神力', 'brain', '魂環承受上限、控制'], agi: ['敏捷', 'sprint', '出手速度、閃避'], atk: ['力量', 'fist', '攻擊力'], wit: ['悟性', 'light-bulb', '修煉速度'], cha: ['魅力', 'charm', '交友、好感'], luck: ['氣運', 'clover', '奇遇、魂骨掉落'], bx: ['戰鬥經驗', 'crossed-swords', '戰鬥加成'] };
 
 // 立繪（AI 生成，已去背）：[頭部中心x, 頭部中心y, 頭部大小, 寬高比]
-const PORT = {"M1": [0.489, 0.088, 0.178, 0.3], "M2": [0.493, 0.088, 0.178, 0.299], "M3": [0.463, 0.088, 0.178, 0.321], "M4": [0.485, 0.088, 0.178, 0.307], "M5": [0.496, 0.088, 0.178, 0.355], "M6": [0.548, 0.088, 0.178, 0.397], "F1": [0.492, 0.088, 0.178, 0.393], "F2": [0.502, 0.088, 0.178, 0.422], "F3": [0.476, 0.088, 0.178, 0.489], "F4": [0.515, 0.088, 0.178, 0.3], "F5": [0.525, 0.088, 0.178, 0.684], "F6": [0.524, 0.09, 0.178, 0.5], "S1": [0.493, 0.088, 0.178, 0.403]};
-const PORT_M = ['M1','M2','M3','M4','M5','M6'], PORT_F = ['F1','F2','F3','F4','F5','F6'];
+const PORT = {"M1": [0.489, 0.088, 0.178, 0.3], "M2": [0.493, 0.088, 0.178, 0.299], "M3": [0.463, 0.088, 0.178, 0.321], "M4": [0.485, 0.088, 0.178, 0.307], "M5": [0.496, 0.088, 0.178, 0.355], "M6": [0.548, 0.088, 0.178, 0.397], "F1": [0.492, 0.088, 0.178, 0.393], "F2": [0.502, 0.088, 0.178, 0.422], "F3": [0.476, 0.088, 0.178, 0.489], "F4": [0.515, 0.088, 0.178, 0.3], "F5": [0.525, 0.088, 0.178, 0.684], "F6": [0.524, 0.09, 0.178, 0.5], "S1": [0.493, 0.088, 0.178, 0.403], "S2": [0.441, 0.103, 0.178, 0.393], "S3": [0.44, 0.152, 0.178, 0.387], "S4": [0.519, 0.165, 0.178, 0.408], "S5": [0.457, 0.15, 0.178, 0.334], "S6": [0.541, 0.143, 0.178, 0.479], "S7": [0.405, 0.185, 0.178, 0.472], "N1": [0.576, 0.118, 0.178, 0.466], "N2": [0.462, 0.172, 0.178, 0.547], "N3": [0.528, 0.1, 0.178, 0.647], "N4": [0.552, 0.135, 0.178, 0.403], "N5": [0.566, 0.135, 0.178, 0.388], "N6": [0.485, 0.088, 0.178, 0.426]};
+const PORT_M = ['M1','M2','M3','M4','M5','M6','S2','N4','N6'], PORT_F = ['F1','F2','F3','F4','F5','F6','N5'];
+const PORT_NM = ['N1','N2','N3','N4','N6','S2'], PORT_NF = ['N5','F3','F4','F6'];
+const PORT_ALL = Object.keys(PORT);
 
 'use strict';
 // ======================================================================
@@ -808,7 +810,7 @@ function beastUnit(a, b) {
 const ringC = a => { const t = RINGC[ringTier(a)]; return t.edge || t.c; };
 function npcUnit(nm, lv, soulId, sex, side = 1) {
   const s = SOUL[soulId] || pick(SOULS);
-  return mkUnit({ nm, side, lv, type: s.t, col: s.col, seed: nm + lv, sex, hair: pick(sex ? HAIR_M : HAIR_F), hcol: pick(HAIRCOL), look: { img: pick(sex ? PORT_M : PORT_F) }, rings: autoRings(lv, s.q), skills: s.sk, con: 10 + lv * 0.6, atk: 10 + lv * 0.65, agi: 10 + lv * 0.5 });
+  return mkUnit({ nm, side, lv, type: s.t, col: s.col, seed: nm + lv, sex, hair: pick(sex ? HAIR_M : HAIR_F), hcol: pick(HAIRCOL), look: { img: pick(sex ? PORT_NM : PORT_NF) }, rings: autoRings(lv, s.q), skills: s.sk, con: 10 + lv * 0.6, atk: 10 + lv * 0.65, agi: 10 + lv * 0.5 });
 }
 
 // ---------------- 戰鬥模擬（產出步驟，給動畫播放） ----------------
@@ -1086,11 +1088,11 @@ function load() { try { const s = localStorage.getItem(SAVE_KEY); if (s) { S = J
 // ======================================================================
 const SHREK7 = [
   { id: 'dmb', n: '戴沐白', sex: 1, soul: 'whitetiger', d: 7, tal: 1.25, lookO: { img: 'S1' } },
-  { id: 'osc', n: '奧斯卡', sex: 1, soul: 'sausage', d: 3, tal: 1.1, lookO: { img: 'M5' } },
-  { id: 'mhj', n: '馬紅俊', sex: 1, soul: 'phoenix', d: 1, tal: 1.15, lookO: { img: 'M4' } },
-  { id: 'zzq', n: '朱竹清', sex: 0, soul: 'netherCat', d: 1, tal: 1.2, lookO: { img: 'F2' } },
-  { id: 'nrr', n: '寧榮榮', sex: 0, soul: 'sevenTreasure', d: -2, tal: 1.25, lookO: { img: 'F5' } },
-  { id: 'xw', n: '小舞', sex: 0, soul: 'rabbit', d: 0, tal: 1.3, lookO: { img: 'F1' } },
+  { id: 'osc', n: '奧斯卡', sex: 1, soul: 'sausage', d: 3, tal: 1.1, lookO: { img: 'S3' } },
+  { id: 'mhj', n: '馬紅俊', sex: 1, soul: 'phoenix', d: 1, tal: 1.15, lookO: { img: 'S4' } },
+  { id: 'zzq', n: '朱竹清', sex: 0, soul: 'netherCat', d: 1, tal: 1.2, lookO: { img: 'S5' } },
+  { id: 'nrr', n: '寧榮榮', sex: 0, soul: 'sevenTreasure', d: -2, tal: 1.25, lookO: { img: 'S6' } },
+  { id: 'xw', n: '小舞', sex: 0, soul: 'rabbit', d: 0, tal: 1.3, lookO: { img: 'S7' } },
 ];
 const TOUR = ['預選賽', '晉級賽', '十六強', '四強賽', '總決賽'];
 const TRIALS = [
@@ -1641,7 +1643,7 @@ function showTitle() {
    <div class="tlogo"><h1>斗羅大陸</h1><div class="sub">魂 師 之 路</div></div>
    <div class="tbtns">${has ? `<button class="btn gold" id="tCont">${ic('play-button')} 繼續人生</button>` : ''}<button class="btn ${has ? 'ghost' : 'gold'}" id="tNew">${ic('sparkles')} 新的人生</button><button class="btn ghost" id="tBox">${ic('exit-door')} 回到遊戲盒</button></div>
    <div class="credit">頭像 DiceBear Lorelei (CC0)・圖示 game-icons.net (CC BY 3.0)・字型 霞鶩文楷、jf open 粉圓 (OFL)</div>`;
-  if ($('tCont')) $('tCont').onclick = () => { if (load()) { if (!S.look) S.look = { img: pick(S.sex ? PORT_M : PORT_F) }; for (const c of S.comps) { const k = { dmb: 'S1', osc: 'M5', mhj: 'M4', zzq: 'F2', nrr: 'F5', xw: 'F1' }[c.id]; if (k) c.look = { img: k }; else if (!c.look || !c.look.img) c.look = { img: portFor(c.sex) }; } hideTitle(); render(); setTimeout(nextEvent, 300); } };
+  if ($('tCont')) $('tCont').onclick = () => { if (load()) { if (!S.look) S.look = { img: pick(S.sex ? PORT_M : PORT_F) }; for (const c of S.comps) { const k = { dmb: 'S1', osc: 'S3', mhj: 'S4', zzq: 'S5', nrr: 'S6', xw: 'S7' }[c.id]; if (k) c.look = { img: k }; else if (!c.look || !c.look.img) c.look = { img: portFor(c.sex) }; } hideTitle(); render(); setTimeout(nextEvent, 300); } };
   $('tNew').onclick = () => { if (has && !confirm('開始新的人生會覆蓋目前存檔，確定嗎？')) return; createStep1(); };
   $('tBox').onclick = () => location.href = './';
 }
@@ -1652,7 +1654,7 @@ function lookPicker(cur, sex, done) {
   const o = document.createElement('div'); o.id = 'face'; document.body.appendChild(o);
   let tabS = sex ? 'M' : 'F';
   const draw = () => {
-    const list = tabS === 'M' ? PORT_M : PORT_F;
+    const list = tabS === 'M' ? PORT_M.concat(['S1','S3','S4','N1']) : PORT_F.concat(['S5','S6','S7']);
     o.innerHTML = `<div class="fin"><div class="lp-t">選擇你的形象</div><div class="fcats"><button class="${tabS === 'M' ? 'on' : ''}" data-s="M">男生</button><button class="${tabS === 'F' ? 'on' : ''}" data-s="F">女生</button></div>
       <div class="lpg">${list.map(k => `<button class="lp ${cur && cur.img === k ? 'on' : ''}" data-k="${k}"><img src="${PIMG(k)}" alt=""></button>`).join('')}</div>
       <div class="fbtn"><button class="btn ghost" id="lpChibi">${ic('paint-brush')} 改用Q版捏臉</button><button class="btn ghost" id="fNo">取消</button></div></div>`;
