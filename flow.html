@@ -51,6 +51,7 @@
   .go { background:linear-gradient(90deg,#ff3b3b,#ffb000,#3bd16f,#2f8fff,#b44dff); color:#fff; text-shadow:0 1px 3px rgba(0,0,0,.4); }
   .alt { background:#262638; color:#fff; }
   .toast { position:fixed; left:50%; bottom:20%; transform:translateX(-50%); background:#262638; border-radius:999px; padding:10px 18px; font-weight:800; z-index:20; animation:pop .25s; }
+.specials{display:grid;gap:8px;margin-bottom:10px}.pack.sp{border:1px solid rgba(255,255,255,.18)}
 </style>
 </head>
 <body>
@@ -77,8 +78,9 @@ const COLORS = ['#ff2d2d', '#2fbf3f', '#2f6bff', '#ffe51a', '#ff8a00', '#19e0ff'
 const PACKS = [
   { n: 5, name: '入門', cnt: 30, k: [4, 5] }, { n: 6, name: '簡單', cnt: 30, k: [5, 6] }, { n: 7, name: '普通', cnt: 30, k: [6, 7] },
   { n: 8, name: '進階', cnt: 30, k: [7, 9] }, { n: 9, name: '困難', cnt: 30, k: [8, 10] }, { n: 10, name: '專家', cnt: 30, k: [9, 12] },
+  { n: 11, name: '大師', cnt: 30, k: [10, 13] }, { n: 12, name: '傳說', cnt: 30, k: [11, 14] },
 ];
-let SV = { done: {}, perfect: {}, hints: 5 };
+let SV = { done: {}, perfect: {}, hints: 5, daily: {}, timeBest: 0 };
 try { const o = JSON.parse(localStorage.getItem('flowSave')); if (o) SV = Object.assign(SV, o); } catch (e) {}
 const persist = () => { try { localStorage.setItem('flowSave', JSON.stringify(SV)); } catch (e) {} };
 $('logo').innerHTML = '彩色連線'.split('').map((c, i) => `<span style="color:${COLORS[i]}">${c}</span>`).join('');
@@ -122,12 +124,28 @@ function puzzleFor(p, i) { const P = PACKS[p], R = mulberry(p * 1000 + i * 7 + 1
 // ===================== 遊戲狀態 =====================
 let cur = null; // { p, i, pz, paths:[[]...], owner:Int8Array, moves, hist, hinted:Set }
 const cv = $('board'), ctx = cv.getContext('2d');
-function startLevel(p, i) {
-  const pz = puzzleFor(p, i), n = pz.n;
-  cur = { p, i, pz, n, paths: pz.dots.map(() => []), moves: 0, hist: [], lastColor: -1, hinted: new Set(), won: false };
+function startLevel(p, i) { begin(puzzleFor(p, i), `${PACKS[p].name} ${PACKS[p].n}×${PACKS[p].n}・第 ${i + 1} 關`, 'pack', p, i); }
+function begin(pz, title, mode, p = -1, i = -1) {
+  const n = pz.n;
+  cur = { p, i, pz, n, mode, paths: pz.dots.map(() => []), moves: 0, hist: [], lastColor: -1, hinted: new Set(), won: false };
   cur.dotAt = new Map(); pz.dots.forEach((d, c) => { cur.dotAt.set(d[0], c); cur.dotAt.set(d[1], c); });
-  show('sGame'); $('gTitle').textContent = `${PACKS[p].name} ${n}×${n}・第 ${i + 1} 關`;
+  show('sGame'); $('gTitle').textContent = title; $('gNext').style.visibility = mode === 'pack' ? '' : 'hidden';
   resize(); draw(); stats();
+}
+// ---- 每日一題 ----
+const today = () => { const d = new Date(); return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`; };
+function dailySeed(d) { let h = 7; for (const c of d) h = (h * 131 + c.charCodeAt(0)) % 2147483647; return h; }
+function startDaily() { const d = today(), sd = dailySeed(d), R = mulberry(sd), n = 7 + Math.floor(R() * 3), k = n - 1 + Math.floor(R() * 3); begin(genPuzzle(n, k, sd), `📅 每日一題 ${n}×${n}`, 'daily'); }
+function streak() { let s = 0; const d = new Date(); while (SV.daily[`${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`]) { s++; d.setDate(d.getDate() - 1); } return s; }
+// ---- 限時挑戰 ----
+let TA = null;
+function startTime() { TA = { left: 180, solved: 0, seed: Date.now() % 100000 }; nextTime(); TA.timer = setInterval(() => { if (document.hidden || !TA) return; TA.left--; $('gTitle').textContent = `⏱ ${TA.left} 秒・已解 ${TA.solved} 題`; if (TA.left <= 0) endTime(); }, 1000); }
+function nextTime() { const lv = Math.min(5, Math.floor(TA.solved / 3)), n = 5 + lv, k = n - 1 + (TA.solved % 2); begin(genPuzzle(n, k, TA.seed + TA.solved * 977), `⏱ ${TA.left} 秒・已解 ${TA.solved} 題`, 'time'); }
+function endTime() {
+  if (!TA) return; clearInterval(TA.timer); const n = TA.solved, best = n > SV.timeBest; if (best) SV.timeBest = n; const h = Math.floor(n / 4); SV.hints += h; persist(); TA = null; cur.won = true;
+  const ov = document.createElement('div'); ov.className = 'ov';
+  ov.innerHTML = `<div class="box"><h2>⏱ 時間到！</h2><p>三分鐘內解了 <b>${n}</b> 題${best ? '<br>🏅 新紀錄！' : `（最佳 ${SV.timeBest}）`}${h ? `<br>💡 提示 +${h}` : ''}</p><button class="go" id="oAgain">再挑戰</button><button class="alt" id="oHome">回首頁</button></div>`;
+  document.body.appendChild(ov); ov.querySelector('#oAgain').onclick = () => { ov.remove(); startTime(); }; ov.querySelector('#oHome').onclick = () => { ov.remove(); home(); };
 }
 function snapshot() { return cur.paths.map(a => a.slice()); }
 function ownerMap() { const o = new Int16Array(cur.n * cur.n).fill(-1); cur.paths.forEach((pth, c) => pth.forEach(x => o[x] = c)); return o; }
@@ -137,7 +155,7 @@ function stats() {
   const o = ownerMap(); let filled = 0; for (let i = 0; i < o.length; i++) if (o[i] >= 0 || cur.dotAt.has(i)) filled++;
   $('sFlow').textContent = `${con}/${k}`; $('sMoves').textContent = cur.moves; $('sPipe').textContent = Math.round(filled / o.length * 100) + '%';
   $('hintN').textContent = `(${SV.hints})`; $('bHint').disabled = SV.hints <= 0;
-  $('gNext').disabled = !(SV.done[key(cur.p, cur.i)] || cur.i + 1 <= unlockedIn(cur.p)) || cur.i + 1 >= PACKS[cur.p].cnt;
+  if (cur.mode === 'pack') $('gNext').disabled = !(SV.done[key(cur.p, cur.i)] || cur.i + 1 <= unlockedIn(cur.p)) || cur.i + 1 >= PACKS[cur.p].cnt;
   if (con === k && !cur.won) {
     if (filled === o.length) win();
     else toast('全部連起來了！但還有空格，要鋪滿才算過關');
@@ -231,7 +249,15 @@ $('bHint').onclick = () => {
 };
 
 // ===================== 過關 =====================
+function celebrate() { cv.animate([{ filter: 'brightness(1)' }, { filter: 'brightness(1.8) drop-shadow(0 0 20px #fff)' }, { filter: 'brightness(1)' }], { duration: 500 }); if (navigator.vibrate) navigator.vibrate(40); }
 function win() {
+  celebrate();
+  if (cur.mode === 'time') { cur.won = true; TA.solved++; TA.left += 5; setTimeout(() => { if (TA) nextTime(); }, 450); return; }
+  if (cur.mode === 'daily') {
+    cur.won = true; const d = today(), first = !SV.daily[d]; SV.daily[d] = 1; const st = streak(); if (first) SV.hints += st >= 7 ? 3 : st >= 3 ? 2 : 1; persist();
+    setTimeout(() => { const ov = document.createElement('div'); ov.className = 'ov'; ov.innerHTML = `<div class="box"><h2>📅 今日完成！</h2><p>連續 <b>${st}</b> 天${first ? `<br>💡 提示 +${st >= 7 ? 3 : st >= 3 ? 2 : 1}` : ''}<br>明天會有新的題目</p><button class="go" id="oHome">回首頁</button></div>`; document.body.appendChild(ov); ov.querySelector('#oHome').onclick = () => { ov.remove(); home(); }; }, 400);
+    return;
+  }
   cur.won = true; const k = key(cur.p, cur.i), perfect = cur.moves <= cur.pz.dots.length;
   const first = !SV.done[k]; SV.done[k] = 1; if (perfect) SV.perfect[k] = 1;
   if (first && Object.keys(SV.done).length % 5 === 0) SV.hints++;
@@ -254,10 +280,12 @@ function toast(t) { if (document.querySelector('.toast')) return; const d = docu
 function show(id) { ['sHome', 'sLevels', 'sGame'].forEach(x => $(x).classList.toggle('hide', x !== id)); }
 function home() {
   show('sHome');
-  $('packs').innerHTML = PACKS.map((P, p) => { const d = Object.keys(SV.done).filter(k => k.startsWith(p + '-')).length, ok = packUnlocked(p);
+  const dd = SV.daily[today()];
+  $('packs').innerHTML = `<div class="specials"><button class="pack sp" id="hDaily"><div class="sz" style="background:#ff8a00;font-size:24px">📅</div><div><b>每日一題</b><small>${dd ? '今天完成了 ✓' : '每天一題，連續天數越多提示越多'}・連續 ${streak()} 天</small></div></button><button class="pack sp" id="hTime"><div class="sz" style="background:#19e0ff;font-size:24px">⏱</div><div><b>限時挑戰</b><small>3 分鐘能解幾題？每解一題 +5 秒・最佳 ${SV.timeBest} 題</small></div></button></div>` + PACKS.map((P, p) => { const d = Object.keys(SV.done).filter(k => k.startsWith(p + '-')).length, ok = packUnlocked(p);
     return `<button class="pack" data-p="${p}" ${ok ? '' : 'disabled'}><div class="sz" style="background:${COLORS[p]};font-size:${P.n > 9 ? 15 : 20}px">${P.n}×${P.n}</div><div><b>${P.name}</b><small>${ok ? `${P.k[0]}–${P.k[1]} 種顏色` : `🔒 上一組過 10 關解鎖`}</small></div><div class="pr" style="color:${COLORS[p]}">${d}/${P.cnt}</div></button>`; }).join('') +
     `<div class="sub" style="margin-top:6px">💡 提示 ${SV.hints} 個（每過 5 關送 1 個）</div>`;
   document.querySelectorAll('[data-p]').forEach(b => b.onclick = () => openPack(+b.dataset.p));
+  $('hDaily').onclick = startDaily; $('hTime').onclick = startTime;
 }
 function openPack(p) {
   show('sLevels'); $('lvTitle').textContent = `${PACKS[p].name}　${PACKS[p].n}×${PACKS[p].n}`;
@@ -266,7 +294,7 @@ function openPack(p) {
   document.querySelectorAll('[data-i]').forEach(b => b.onclick = () => startLevel(p, +b.dataset.i));
 }
 $('lvBack').onclick = home;
-$('gBack').onclick = () => openPack(cur.p);
+$('gBack').onclick = () => { if (cur.mode === 'time' && TA) { clearInterval(TA.timer); TA = null; } if (cur.mode === 'pack') openPack(cur.p); else home(); };
 $('gNext').onclick = () => startLevel(cur.p, cur.i + 1);
 home();
 </script>

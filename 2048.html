@@ -2,7 +2,7 @@
 <html lang="zh-Hant">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
@@ -11,194 +11,348 @@
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <title>2048 殺時間</title>
 <style>
-  :root { --bg:#14161c; --panel:#1e222b; --cell:#2a2f3a; --text:#e8eaf0; --muted:#8a91a3; --accent:#f2b84b; }
-  * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
-  html,body { margin:0; height:100%; background:var(--bg); color:var(--text);
-    font-family:-apple-system,"PingFang TC","Noto Sans TC","Microsoft JhengHei",sans-serif;
-    overscroll-behavior:none; touch-action:none; user-select:none; }
-  .wrap { max-width:480px; margin:0 auto; padding:18px 16px 24px; }
-  header { display:flex; align-items:center; justify-content:space-between; gap:10px; }
-  h1 { margin:0; font-size:44px; font-weight:800; color:var(--accent); letter-spacing:1px; }
-  .scores { display:flex; gap:8px; }
-  .score { background:var(--panel); border-radius:10px; padding:6px 12px; text-align:center; min-width:72px; }
-  .score small { display:block; font-size:13px; color:var(--muted); }
-  .score b { font-size:22px; }
-  .bar { display:flex; justify-content:space-between; align-items:center; margin:14px 0; gap:10px; }
-  .hint { color:var(--muted); font-size:15px; }
-  .btns { display:flex; gap:8px; }
-  button { background:var(--accent); color:#1a1a1a; border:0; border-radius:10px; padding:10px 16px;
-    font-size:17px; font-weight:700; cursor:pointer; }
-  button.ghost { background:var(--panel); color:var(--text); }
-  button:disabled { opacity:.4; }
-  .board { position:relative; background:var(--panel); border-radius:14px; padding:10px;
-    width:100%; aspect-ratio:1; }
-  .grid { display:grid; grid-template-columns:repeat(4,1fr); grid-template-rows:repeat(4,1fr); gap:10px; width:100%; height:100%; }
-  .cell { background:var(--cell); border-radius:9px; display:flex; align-items:center; justify-content:center;
-    font-weight:800; font-size:clamp(22px,8vw,38px); transition:background .12s; }
-  .cell.pop { animation:pop .16s ease; }
-  .cell.merge { animation:merge .18s ease; }
-  @keyframes pop { from{transform:scale(.4);opacity:.3} to{transform:scale(1);opacity:1} }
-  @keyframes merge { 50%{transform:scale(1.15)} }
-  .overlay { position:absolute; inset:0; background:rgba(10,12,16,.82); border-radius:14px;
-    display:none; flex-direction:column; align-items:center; justify-content:center; gap:16px; }
-  .overlay.show { display:flex; }
-  .overlay h2 { margin:0; font-size:34px; }
-  .overlay p { margin:0; font-size:18px; color:var(--muted); }
-  .overlay .row { display:flex; gap:10px; }
-  .rules { margin-top:16px; color:var(--muted); font-size:15px; line-height:1.6; }
+:root{--bg:#12141b;--panel:#1d212b;--panel2:#262b38;--cell:#2a2f3c;--text:#eef0f6;--muted:#8a91a6;--accent:#f2b84b;--good:#5ae0a8;--bad:#ff6a6a}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--text);font-family:-apple-system,"PingFang TC","Noto Sans TC","Microsoft JhengHei",sans-serif;overscroll-behavior:none;user-select:none;-webkit-user-select:none}
+body{transition:background .3s}
+.wrap{max-width:480px;margin:0 auto;padding:calc(38px + env(safe-area-inset-top)) 14px calc(16px + env(safe-area-inset-bottom));min-height:100%;display:flex;flex-direction:column}
+button{font-family:inherit;border:0;border-radius:12px;padding:10px 14px;font-size:16px;font-weight:700;cursor:pointer;background:var(--accent);color:#1a1a1a}
+button.ghost{background:var(--panel);color:var(--text)}
+button:disabled{opacity:.35}
+.top{display:flex;align-items:center;gap:8px}
+.top h1{margin:0;font-size:34px;font-weight:900;color:var(--accent);letter-spacing:1px;flex:1}
+.top h1 small{display:block;font-size:13px;color:var(--muted);font-weight:600;letter-spacing:0}
+.sc{background:var(--panel);border-radius:12px;padding:5px 10px;text-align:center;min-width:66px}
+.sc small{display:block;font-size:12px;color:var(--muted)}.sc b{font-size:20px}
+.bar{display:flex;align-items:center;gap:8px;margin:10px 0}
+.bar .grow{flex:1;color:var(--muted);font-size:14px}
+.coin{color:var(--accent);font-weight:800}
+.board{position:relative;background:var(--panel);border-radius:16px;padding:var(--gap);width:100%;aspect-ratio:1;touch-action:none}
+.bgc{position:absolute;border-radius:10px;background:var(--cell)}
+.bgc.stone{background:repeating-linear-gradient(45deg,#3a3f4c,#3a3f4c 6px,#30343f 6px,#30343f 12px);box-shadow:inset 0 0 0 2px #4a5060}
+.tile{position:absolute;border-radius:10px;display:flex;align-items:center;justify-content:center;font-weight:900;transition:transform .11s ease-in-out;will-change:transform;z-index:2}
+.tile span{display:block}
+.tile.new span{animation:pop .18s ease .06s both}
+.tile.merged span{animation:merge .2s ease .1s}
+.tile.sel{outline:4px solid #fff;outline-offset:-2px;z-index:3}
+.tile.boom{animation:boom .3s forwards}
+@keyframes pop{from{transform:scale(0)}to{transform:scale(1)}}
+@keyframes merge{0%{transform:scale(1)}50%{transform:scale(1.22)}100%{transform:scale(1)}}
+@keyframes boom{to{transform:scale(1.6);opacity:0}}
+.float{position:absolute;z-index:9;font-weight:900;color:var(--accent);font-size:22px;pointer-events:none;animation:fl .8s ease-out forwards;text-shadow:0 2px 6px #000}
+@keyframes fl{from{transform:translateY(0);opacity:1}to{transform:translateY(-50px);opacity:0}}
+.items{display:flex;gap:8px;margin-top:12px}
+.items button{flex:1;background:var(--panel);color:var(--text);padding:8px 4px;font-size:14px;position:relative}
+.items button b{display:block;font-size:22px}
+.items button i{position:absolute;top:4px;right:8px;font-style:normal;font-size:12px;color:var(--accent)}
+.items button.on{background:var(--accent);color:#1a1a1a}
+.tip{min-height:22px;text-align:center;color:var(--accent);font-size:14px;margin-top:8px}
+.timer{height:8px;background:var(--panel);border-radius:5px;overflow:hidden;margin-bottom:8px}.timer i{display:block;height:100%;background:linear-gradient(90deg,var(--good),var(--accent),var(--bad));transition:width 1s linear}
+.ov{position:fixed;inset:0;background:rgba(6,8,12,.82);display:flex;align-items:center;justify-content:center;z-index:20;padding:20px}
+.box{background:var(--panel);border-radius:18px;padding:20px;width:100%;max-width:400px;max-height:88vh;overflow:auto;text-align:center}
+.box h2{margin:0 0 8px;font-size:28px}.box p{color:var(--muted);margin:6px 0 14px;line-height:1.6}
+.box .row{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.modes{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.mode{background:var(--panel);border-radius:14px;padding:12px 10px;text-align:left;color:var(--text);font-weight:400;position:relative}
+.mode b{display:block;font-size:18px;margin-bottom:2px}.mode small{display:block;color:var(--muted);font-size:12.5px;line-height:1.4}
+.mode em{position:absolute;top:8px;right:10px;font-style:normal;font-size:12px;color:var(--accent)}
+.mode .big{font-size:26px;float:right;margin-top:-2px}
+.sect{margin:16px 2px 6px;font-weight:800;color:var(--muted);font-size:14px;display:flex;justify-content:space-between}
+.shop{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.si{background:var(--panel);border-radius:14px;padding:10px;text-align:center}
+.si b{display:block;font-size:15px;margin:4px 0}.si .sw{display:flex;gap:3px;justify-content:center}.si .sw i{width:18px;height:18px;border-radius:5px;display:block}
+.si button{width:100%;margin-top:6px;padding:7px;font-size:14px}
+.achs{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.ach{background:var(--panel);border-radius:12px;padding:8px 4px;text-align:center;font-size:12px;opacity:.35}
+.ach.on{opacity:1;box-shadow:inset 0 0 0 1.5px var(--accent)}.ach b{display:block;font-size:22px}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:4px 14px;font-size:14px;background:var(--panel);border-radius:14px;padding:10px 12px}
+.stats div{display:flex;justify-content:space-between}.stats span{color:var(--muted)}
+.toast{position:fixed;left:50%;top:calc(14px + env(safe-area-inset-top));transform:translateX(-50%);background:var(--panel2);border:1px solid var(--accent);padding:8px 16px;border-radius:12px;z-index:30;font-weight:700;animation:tin .25s;white-space:nowrap}
+@keyframes tin{from{transform:translate(-50%,-20px);opacity:0}}
+.home{display:none}.home.show{display:block}.game{display:none}.game.show{display:flex;flex-direction:column}
+.back{background:var(--panel);color:var(--text);padding:8px 12px}
 </style>
 </head>
 <body>
 <div class="wrap">
-  <header>
-    <h1>2048</h1>
-    <div class="scores">
-      <div class="score"><small>分數</small><b id="score">0</b></div>
-      <div class="score"><small>最高</small><b id="best">0</b></div>
-    </div>
-  </header>
-  <div class="bar">
-    <span class="hint">手指滑動合併數字</span>
-    <div class="btns">
-      <button class="ghost" id="undo">↶ 上一步</button>
-      <button id="newBtn">重新開始</button>
+  <!-- 首頁 -->
+  <div class="home" id="home">
+    <div class="top"><h1>2048<small>滑動合併數字</small></h1><div class="sc"><small>金幣</small><b class="coin" id="hCoin">0</b></div></div>
+    <div class="sect"><span>選擇模式</span></div>
+    <div class="modes" id="modes"></div>
+    <div class="sect"><span>道具商店</span><span id="hItems"></span></div>
+    <div class="shop" id="shopItems"></div>
+    <div class="sect"><span>主題</span></div>
+    <div class="shop" id="shopThemes"></div>
+    <div class="sect"><span>成就</span><span id="achN"></span></div>
+    <div class="achs" id="achs"></div>
+    <div class="sect"><span>統計</span></div>
+    <div class="stats" id="stats"></div>
+    <p style="color:var(--muted);font-size:13px;line-height:1.6;margin-top:14px">每局結束依分數拿金幣，拼出 256 以上的新數字還有額外獎勵。金幣可以買道具和主題。每個模式的進度都會自動保存。</p>
+  </div>
+  <!-- 遊戲 -->
+  <div class="game" id="game">
+    <div class="top"><button class="back" id="bBack">‹ 模式</button><h1 id="gTitle" style="font-size:22px">經典</h1><div class="sc"><small>分數</small><b id="score">0</b></div><div class="sc"><small>最高</small><b id="best">0</b></div></div>
+    <div class="bar"><span class="grow" id="goal"></span><button class="ghost" id="bNew" style="padding:8px 12px">重新開始</button></div>
+    <div class="timer" id="timer" style="display:none"><i id="timeBar"></i></div>
+    <div class="board" id="board"></div>
+    <div class="tip" id="tip"></div>
+    <div class="items" id="itemBar">
+      <button id="iUndo"><b>↶</b>上一步<i id="nUndo"></i></button>
+      <button id="iBomb"><b>💣</b>炸掉一格<i id="nBomb"></i></button>
+      <button id="iSwap"><b>🔄</b>交換兩格<i id="nSwap"></i></button>
     </div>
   </div>
-  <div class="board" id="board">
-    <div class="grid" id="grid"></div>
-    <div class="overlay" id="overlay">
-      <h2 id="ovTitle">沒步了！</h2>
-      <p id="ovText"></p>
-      <div class="row">
-        <button class="ghost" id="ovCont">繼續玩</button>
-        <button id="ovNew">再來一局</button>
-      </div>
-    </div>
-  </div>
-  <div class="rules">往上下左右滑，相同數字碰在一起會合併。拼出 <b style="color:var(--accent)">2048</b> 就贏了，但可以繼續挑戰更大的數字。手滑可以按「上一步」悔棋，但只能退回最近一步。</div>
 </div>
 <script>
-const N = 4;
-const COLORS = {
-  2:['#3a3f4c','#e8eaf0'], 4:['#475064','#e8eaf0'], 8:['#c7743a','#fff'], 16:['#d9622b','#fff'],
-  32:['#e04a3b','#fff'], 64:['#e8302a','#fff'], 128:['#d9b23c','#1a1a1a'], 256:['#e3be3a','#1a1a1a'],
-  512:['#ecc72f','#1a1a1a'], 1024:['#f2cf2a','#1a1a1a'], 2048:['#f7d81c','#1a1a1a']
-};
-let board, score, best = 0, prev = null, won = false, keepGoing = false;
+'use strict';
 const $ = id => document.getElementById(id);
-const gridEl = $('grid');
-const cells = [];
-for (let i = 0; i < N*N; i++) { const d = document.createElement('div'); d.className = 'cell'; gridEl.appendChild(d); cells.push(d); }
+const MODES = {
+  classic: { n: '經典', d: '4×4，拼出 2048', size: 4, goal: 2048, ic: '🎯' },
+  mini: { n: '小盤挑戰', d: '3×3，空間超擠，拼出 256', size: 3, goal: 256, ic: '🧩' },
+  big: { n: '大盤', d: '5×5，拼出 4096', size: 5, goal: 4096, ic: '🏰' },
+  huge: { n: '巨盤', d: '6×6，拼出 8192', size: 6, goal: 8192, ic: '🌌' },
+  time: { n: '限時衝分', d: '4×4・3 分鐘，合併越大分越高', size: 4, time: 180, ic: '⏱' },
+  stone: { n: '石頭陣', d: '5×5，有推不動的石頭，拼出 2048', size: 5, goal: 2048, stones: 3, ic: '🪨' },
+  daily: { n: '每日挑戰', d: '每天同一盤面，不能用道具', size: 4, goal: 2048, daily: 1, ic: '📅' },
+};
+const THEMES = {
+  dark: { n: '暗夜', p: 0, bg: '#12141b', panel: '#1d212b', cell: '#2a2f3c', t: ['#3a3f4c', '#475064', '#c7743a', '#d9622b', '#e04a3b', '#e8302a', '#d9b23c', '#e3be3a', '#ecc72f', '#f2cf2a', '#f7d81c', '#9b5de5', '#7b3fe4', '#5a2ad8'], dk: 0 },
+  candy: { n: '糖果', p: 300, bg: '#2a1830', panel: '#3a2242', cell: '#4a2e52', t: ['#ffd6e8', '#ffc1dc', '#ff9ec7', '#ff7ab2', '#ff5a9a', '#ff3a7a', '#c08aff', '#a86aff', '#8a4aff', '#6a3ae8', '#ffd84a', '#5ad0ff', '#3ab0ff', '#2a8aff'], dk: 6 },
+  neon: { n: '霓虹', p: 500, bg: '#05050f', panel: '#0e0e22', cell: '#16163a', t: ['#1e2a4a', '#24345a', '#00c8ff', '#00a8ff', '#3a6aff', '#7a3aff', '#c03aff', '#ff3ad8', '#ff3a8a', '#ff5a3a', '#ffd23a', '#3affb0', '#3aff5a', '#ffffff'], dk: 0 },
+  wa: { n: '和風', p: 500, bg: '#1e1a16', panel: '#2c2620', cell: '#3a322a', t: ['#e8dcc8', '#dccab0', '#c8a878', '#b8885a', '#a86a4a', '#983a3a', '#5a7a5a', '#4a6a8a', '#3a4a7a', '#7a4a7a', '#c8a03a', '#d8b84a', '#e8c85a', '#f8e8a8'], dk: 4 },
+  ocean: { n: '深海', p: 800, bg: '#04121e', panel: '#0a1e30', cell: '#102a40', t: ['#1a3a5a', '#1e4a6a', '#1e6a8a', '#1e8aaa', '#1eaac8', '#3ac8d8', '#5ae0c8', '#5ae0a8', '#8ae08a', '#c8e06a', '#ffd84a', '#ffaa4a', '#ff7a4a', '#ff4a4a'], dk: 0 },
+};
+const ITEMS = { undo: { n: '上一步', ic: '↶', p: 30 }, bomb: { n: '炸彈', ic: '💣', p: 60 }, swap: { n: '交換', ic: '🔄', p: 50 } };
+const ACHS = [
+  ['t128', '128', '🥉', s => s.maxT >= 128], ['t512', '512', '🥈', s => s.maxT >= 512], ['t1024', '1024', '🥇', s => s.maxT >= 1024], ['t2048', '2048！', '🏆', s => s.maxT >= 2048],
+  ['t4096', '4096', '💎', s => s.maxT >= 4096], ['t8192', '8192', '👑', s => s.maxT >= 8192], ['mini', '小盤 256', '🧩', s => s.mini], ['stone', '破石 2048', '🪨', s => s.stone],
+  ['time', '限時 2 萬分', '⏱', s => s.timeBest >= 20000], ['g10', '玩 10 局', '🎮', s => s.games >= 10], ['g50', '玩 50 局', '🕹', s => s.games >= 50], ['m1k', '合併 1000 次', '✨', s => s.merges >= 1000],
+  ['d3', '每日挑戰 3 天', '📅', s => Object.keys(s.days || {}).length >= 3], ['d7', '每日挑戰 7 天', '🗓', s => Object.keys(s.days || {}).length >= 7], ['rich', '存到 1000 金幣', '💰', () => P.coins >= 1000],
+];
+// ---------- 存檔 ----------
+let P;
+function loadP() {
+  try { P = JSON.parse(localStorage.getItem('g2048v2')); } catch (e) { }
+  if (!P) { P = { coins: 50, items: { undo: 3, bomb: 1, swap: 1 }, themes: { dark: 1 }, theme: 'dark', best: {}, saves: {}, st: { games: 0, merges: 0, maxT: 0, timeBest: 0, days: {} }, ach: {} }; try { const b = +localStorage.getItem('best2048'); if (b) P.best.classic = b; } catch (e) { } }
+}
+const saveP = () => { try { localStorage.setItem('g2048v2', JSON.stringify(P)); } catch (e) { } };
+loadP();
+function toast(t) { const d = document.createElement('div'); d.className = 'toast'; d.textContent = t; document.body.appendChild(d); setTimeout(() => d.remove(), 2200); }
+function checkAch() { for (const [k, n, i, f] of ACHS) if (!P.ach[k] && f(P.st)) { P.ach[k] = 1; P.coins += 50; toast(`${i} 成就：${n}（+50 金幣）`); } }
 
-try { best = +localStorage.getItem('best2048') || 0; } catch(e) {}
+// ---------- 主題 ----------
+function applyTheme() { const t = THEMES[P.theme]; const r = document.documentElement.style; r.setProperty('--bg', t.bg); r.setProperty('--panel', t.panel); r.setProperty('--cell', t.cell); }
+function tileCol(v) { const t = THEMES[P.theme]; const e = Math.log2(v) - 1; const bg = t.t[Math.min(e, t.t.length - 1)]; const dark = e < t.dk; return [bg, dark ? '#2a2420' : '#fff']; }
 
-function empty() { const r=[]; for(let i=0;i<N*N;i++) if(!board[i]) r.push(i); return r; }
-function addTile() { const e = empty(); if(!e.length) return -1; const i = e[Math.floor(Math.random()*e.length)]; board[i] = Math.random()<0.9?2:4; return i; }
+// ---------- 隨機（每日挑戰用固定種子） ----------
+let rngS = 0; const rnd = () => G && G.seed ? ((G.seed = (G.seed * 16807) % 2147483647) / 2147483647) : Math.random();
+const today = () => { const d = new Date(); return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`; };
 
-function newGame() {
-  board = Array(N*N).fill(0); score = 0; prev = null; won = false; keepGoing = false;
-  const a = addTile(), b = addTile();
-  $('overlay').classList.remove('show');
-  render(new Set([a,b]), new Set());
+// ---------- 遊戲狀態 ----------
+let G = null, nid = 1, busy = false, queued = null, tool = null, sel = null, timerT = null;
+function newGame(mode) {
+  const M = MODES[mode];
+  G = { mode, n: M.size, tiles: [], stones: [], score: 0, won: false, over: false, hist: [], maxT: 0, rewarded: {} };
+  if (M.daily) { const d = today(); let h = 0; for (const c of d) h = (h * 31 + c.charCodeAt(0)) % 2147483647; G.seed = h || 1; G.day = d; }
+  if (M.stones) { const cs = []; while (cs.length < M.stones) { const i = Math.floor(rnd() * G.n * G.n); if (!cs.includes(i)) cs.push(i); } G.stones = cs; }
+  if (M.time) G.left = M.time;
+  spawn(); spawn(); persist();
+}
+const at = (r, c) => G.tiles.find(t => t.r === r && t.c === c && !t.dead);
+const isStone = (r, c) => G.stones.includes(r * G.n + c);
+function emptyCells() { const o = []; for (let r = 0; r < G.n; r++) for (let c = 0; c < G.n; c++) if (!at(r, c) && !isStone(r, c)) o.push([r, c]); return o; }
+function spawn() { const e = emptyCells(); if (!e.length) return null; const [r, c] = e[Math.floor(rnd() * e.length)]; const t = { id: nid++, v: rnd() < 0.9 ? 2 : 4, r, c, isNew: 1 }; G.tiles.push(t); return t; }
+function snapshot() { return { tiles: G.tiles.filter(t => !t.dead).map(t => ({ id: t.id, v: t.v, r: t.r, c: t.c })), score: G.score, won: G.won, seed: G.seed }; }
+function persist() { P.saves[G.mode] = { ...snapshot(), mode: G.mode, stones: G.stones, maxT: G.maxT, left: G.left, day: G.day, rewarded: G.rewarded, hist: G.hist.slice(-1) }; saveP(); }
+function resume(mode) {
+  const s = P.saves[mode]; const M = MODES[mode];
+  if (!s || (M.daily && s.day !== today()) || s.over) return newGame(mode);
+  G = { mode, n: M.size, tiles: s.tiles.map(t => ({ ...t })), stones: s.stones || [], score: s.score, won: s.won, over: false, hist: s.hist || [], maxT: s.maxT || 0, left: s.left, seed: s.seed, day: s.day, rewarded: s.rewarded || {} };
+  nid = Math.max(1, ...G.tiles.map(t => t.id)) + 1;
 }
 
-function render(popped = new Set(), merged = new Set()) {
-  board.forEach((v,i) => {
-    const c = cells[i];
-    c.className = 'cell';
-    c.textContent = v || '';
-    const col = COLORS[v] || (v ? ['#9b5de5','#fff'] : null);
-    c.style.background = col ? col[0] : '';
-    c.style.color = col ? col[1] : '';
-    c.style.fontSize = v >= 1024 ? 'clamp(18px,6vw,30px)' : v >= 128 ? 'clamp(20px,7vw,34px)' : '';
-    if (v) { void c.offsetWidth; if (popped.has(i)) c.classList.add('pop'); else if (merged.has(i)) c.classList.add('merge'); }
-  });
-  if (score > best) { best = score; try { localStorage.setItem('best2048', best); } catch(e) {} }
-  $('score').textContent = score; $('best').textContent = best;
-  $('undo').disabled = !prev;
+// ---------- 移動 ----------
+function lines(dir) {
+  // 回傳每一行的座標序列（從要靠過去的那一端開始），石頭會把一行切成好幾段
+  const out = [], n = G.n;
+  for (let k = 0; k < n; k++) {
+    let seg = [];
+    for (let j = 0; j < n; j++) {
+      let r, c; if (dir < 2) { r = k; c = dir === 0 ? j : n - 1 - j; } else { c = k; r = dir === 2 ? j : n - 1 - j; }
+      if (isStone(r, c)) { if (seg.length) out.push(seg); seg = []; } else seg.push([r, c]);
+    }
+    if (seg.length) out.push(seg);
+  }
+  return out;
 }
-
-// dir: 0=左 1=右 2=上 3=下
 function move(dir) {
-  const before = board.slice(), beforeScore = score;
-  const merged = new Set(); let moved = false;
-  for (let k = 0; k < N; k++) {
-    const idx = [];
-    for (let j = 0; j < N; j++) {
-      let r, c;
-      if (dir < 2) { r = k; c = dir===0 ? j : N-1-j; } else { c = k; r = dir===2 ? j : N-1-j; }
-      idx.push(r*N+c);
+  if (busy) { queued = dir; return; }
+  if (G.over || tool) return;
+  const before = snapshot(); let moved = false, gained = 0; const mergedTiles = [];
+  G.tiles = G.tiles.filter(t => !t.dead); G.tiles.forEach(t => { t.isNew = 0; t.merged = 0; });
+  for (const seg of lines(dir)) {
+    const ts = seg.map(([r, c]) => at(r, c)).filter(Boolean); let pos = 0, last = null;
+    for (const t of ts) {
+      if (last && last.v === t.v && !last.merged) {
+        const [r, c] = seg[pos - 1]; if (t.r !== r || t.c !== c) moved = true; t.r = r; t.c = c; t.dead = 1; last.v *= 2; last.merged = 1; gained += last.v; mergedTiles.push(last); last = null; moved = true;
+      } else {
+        const [r, c] = seg[pos]; if (t.r !== r || t.c !== c) moved = true; t.r = r; t.c = c; pos++; last = t;
+      }
     }
-    const vals = idx.map(i => board[i]).filter(v => v);
-    const out = [], mergedPos = [];
-    for (let j = 0; j < vals.length; j++) {
-      if (vals[j] === vals[j+1]) { out.push(vals[j]*2); score += vals[j]*2; mergedPos.push(out.length-1); j++; }
-      else out.push(vals[j]);
-    }
-    while (out.length < N) out.push(0);
-    idx.forEach((i,j) => { if (board[i] !== out[j]) moved = true; board[i] = out[j]; });
-    mergedPos.forEach(j => merged.add(idx[j]));
   }
-  if (!moved) return;
-  prev = { board: before, score: beforeScore, won };
-  const t = addTile();
-  render(new Set([t]), merged);
-  if (!won && board.includes(2048)) { won = true; if (!keepGoing) showOverlay(true); }
-  else if (!canMove()) showOverlay(false);
+  if (!moved) { nudge(dir); return; }
+  G.hist.push(before); if (G.hist.length > 5) G.hist.shift();
+  G.score += gained; P.st.merges += mergedTiles.length;
+  busy = true; draw();
+  if (gained) floatScore(gained, mergedTiles.length > 1);
+  setTimeout(() => {
+    G.tiles = G.tiles.filter(t => !t.dead); spawn(); busy = false; draw(); afterMove();
+    if (queued !== null) { const q = queued; queued = null; move(q); }
+  }, 115);
 }
-
+function afterMove() {
+  const M = MODES[G.mode]; const mx = Math.max(...G.tiles.map(t => t.v));
+  if (mx > G.maxT) { G.maxT = mx; if (mx >= 256 && !G.rewarded[mx]) { G.rewarded[mx] = 1; const c = Math.round(Math.log2(mx) * 3 - 15) * (G.n <= 3 ? 2 : 1); P.coins += c; toast(`拼出 ${mx}！+${c} 金幣`); } }
+  if (mx > P.st.maxT) P.st.maxT = mx;
+  if (M.goal && !G.won && mx >= M.goal) { G.won = true; if (G.mode === 'mini') P.st.mini = 1; if (G.mode === 'stone') P.st.stone = 1; P.coins += 100; showWin(); }
+  else if (!canMove()) endGame('沒步了！');
+  if (G.score > (P.best[G.mode] || 0)) P.best[G.mode] = G.score;
+  checkAch(); persist(); drawHud();
+}
 function canMove() {
-  if (empty().length) return true;
-  for (let r=0;r<N;r++) for (let c=0;c<N;c++) {
-    const v = board[r*N+c];
-    if (c<N-1 && v===board[r*N+c+1]) return true;
-    if (r<N-1 && v===board[(r+1)*N+c]) return true;
-  }
+  if (emptyCells().length) return true;
+  for (let r = 0; r < G.n; r++) for (let c = 0; c < G.n; c++) { const t = at(r, c); if (!t) continue; const a = at(r, c + 1), b = at(r + 1, c); if ((a && a.v === t.v) || (b && b.v === t.v)) return true; }
   return false;
 }
+function nudge(dir) { const b = $('board'); b.animate([{ transform: 'translate(0,0)' }, { transform: `translate(${[-6, 6, 0, 0][dir]}px,${[0, 0, -6, 6][dir]}px)` }, { transform: 'translate(0,0)' }], { duration: 140 }); }
 
-function showOverlay(win) {
-  $('ovTitle').textContent = win ? '🎉 拼出 2048！' : '沒步了！';
-  $('ovText').textContent = '這局得分 ' + score;
-  $('ovCont').textContent = win ? '繼續挑戰' : '上一步';
-  $('ovCont').style.display = (win || prev) ? '' : 'none';
-  $('overlay').classList.add('show');
+// ---------- 道具 ----------
+const itemsOn = () => !MODES[G.mode].daily;
+function useUndo() {
+  if (!G.hist.length || !itemsOn()) return; if (P.items.undo <= 0) return toast('沒有「上一步」了，到商店買');
+  const s = G.hist.pop(); P.items.undo--; G.tiles = s.tiles.map(t => ({ ...t })); G.score = s.score; G.won = s.won; if (s.seed) G.seed = s.seed; G.over = false; closeOv(); draw(); drawHud(); persist();
+}
+function setTool(k) {
+  if (!itemsOn()) return toast('每日挑戰不能用道具');
+  if (tool === k) { tool = null; sel = null; draw(); drawHud(); return; }
+  if (P.items[k] <= 0) return toast(`沒有${ITEMS[k].n}了，到商店買`);
+  tool = k; sel = null; drawHud(); draw();
+}
+function tapTile(t) {
+  if (!tool) return;
+  if (tool === 'bomb') { if (G.tiles.length <= 1) return; const el = document.querySelector(`[data-id="${t.id}"]`); if (el) el.classList.add('boom'); G.hist.push(snapshot()); P.items.bomb--; tool = null; setTimeout(() => { G.tiles = G.tiles.filter(x => x !== t); G.over = false; closeOv(); draw(); drawHud(); persist(); }, 280); return; }
+  if (tool === 'swap') { if (!sel) { sel = t; draw(); return; } if (sel === t) { sel = null; draw(); return; } G.hist.push(snapshot()); const r = sel.r, c = sel.c; sel.r = t.r; sel.c = t.c; t.r = r; t.c = c; P.items.swap--; tool = null; sel = null; G.over = false; closeOv(); draw(); drawHud(); persist(); }
 }
 
-function undo() {
-  if (!prev) return;
-  board = prev.board; score = prev.score; won = prev.won; prev = null;
-  $('overlay').classList.remove('show');
-  render();
+// ---------- 畫面 ----------
+let geo = {};
+function layout() {
+  const b = $('board'), n = G.n, W = b.clientWidth, gap = n >= 6 ? 6 : n >= 5 ? 8 : 10;
+  b.style.setProperty('--gap', gap + 'px');
+  const inner = W - gap * 2, cs = (inner - gap * (n - 1)) / n; geo = { gap, cs };
+  b.innerHTML = '';
+  for (let r = 0; r < n; r++) for (let c = 0; c < n; c++) { const d = document.createElement('div'); d.className = 'bgc' + (isStone(r, c) ? ' stone' : ''); d.style.cssText = `width:${cs}px;height:${cs}px;left:${gap + c * (cs + gap)}px;top:${gap + r * (cs + gap)}px`; b.appendChild(d); }
+}
+function draw() {
+  const b = $('board'), { gap, cs } = geo; if (!cs) return;
+  const alive = new Set(G.tiles.map(t => t.id));
+  b.querySelectorAll('.tile').forEach(el => { if (!alive.has(+el.dataset.id)) el.remove(); });
+  for (const t of G.tiles) {
+    let el = b.querySelector(`[data-id="${t.id}"]`);
+    if (!el) { el = document.createElement('div'); el.className = 'tile'; el.dataset.id = t.id; el.innerHTML = '<span></span>'; el.style.width = el.style.height = cs + 'px'; el.style.left = gap + 'px'; el.style.top = gap + 'px'; el.onclick = () => tapTile(G.tiles.find(x => x.id === t.id)); b.appendChild(el); if (t.isNew) el.classList.add('new'); }
+    el.style.transform = `translate(${t.c * (cs + gap)}px,${t.r * (cs + gap)}px)`;
+    el.style.zIndex = t.dead ? 1 : 2;
+    if (!t.dead) {
+      const [bg, fg] = tileCol(t.v); el.style.background = bg; el.style.color = fg;
+      const digits = String(t.v).length; el.style.fontSize = Math.min(cs * 0.45, cs * (digits <= 2 ? 0.45 : digits === 3 ? 0.36 : digits === 4 ? 0.28 : 0.23)) + 'px';
+      el.style.boxShadow = t.v >= 128 ? `0 0 ${Math.min(24, Math.log2(t.v) * 2)}px ${bg}` : 'none';
+      const sp = el.firstChild; if (t.merged && !t.dead) { el.classList.remove('merged'); void el.offsetWidth; el.classList.add('merged'); sp.textContent = t.v; setTimeout(() => { sp.textContent = t.v; }, 0); } else sp.textContent = t.v;
+      el.classList.toggle('sel', sel === t);
+      el.style.cursor = tool ? 'pointer' : '';
+    }
+  }
+}
+function floatScore(v, multi) { const f = document.createElement('div'); f.className = 'float'; f.textContent = '+' + v + (multi ? ' 連鎖!' : ''); f.style.left = '50%'; f.style.top = '30%'; f.style.transform = 'translateX(-50%)'; $('board').appendChild(f); setTimeout(() => f.remove(), 800); }
+function drawHud() {
+  const M = MODES[G.mode];
+  $('gTitle').textContent = M.ic + ' ' + M.n; $('score').textContent = G.score; $('best').textContent = Math.max(P.best[G.mode] || 0, G.score);
+  $('goal').innerHTML = M.time ? `剩 <b>${Math.ceil(G.left)}</b> 秒・金幣 <span class="coin">${P.coins}</span>` : `目標 <b>${M.goal}</b>・目前最大 <b>${G.maxT || Math.max(...G.tiles.map(t => t.v))}</b>・金幣 <span class="coin">${P.coins}</span>`;
+  $('itemBar').style.display = itemsOn() ? '' : 'none';
+  $('nUndo').textContent = '×' + P.items.undo; $('nBomb').textContent = '×' + P.items.bomb; $('nSwap').textContent = '×' + P.items.swap;
+  $('iUndo').disabled = !G.hist.length || P.items.undo <= 0; $('iBomb').classList.toggle('on', tool === 'bomb'); $('iSwap').classList.toggle('on', tool === 'swap');
+  $('tip').textContent = tool === 'bomb' ? '點一格把它炸掉（再按一次取消）' : tool === 'swap' ? (sel ? '再點另一格交換' : '點兩格交換位置（再按一次取消）') : M.daily ? `今天的盤面：${G.day}` : '';
+  if (M.time) { $('timer').style.display = ''; $('timeBar').style.width = (G.left / M.time * 100) + '%'; } else $('timer').style.display = 'none';
 }
 
-$('newBtn').onclick = newGame;
-$('ovNew').onclick = newGame;
-$('undo').onclick = undo;
-$('ovCont').onclick = () => {
-  if (won && board.includes(2048) && canMove()) { keepGoing = true; $('overlay').classList.remove('show'); }
-  else undo();
-};
+// ---------- 結束 ----------
+function ov(html) { closeOv(); const o = document.createElement('div'); o.className = 'ov'; o.id = 'ov'; o.innerHTML = `<div class="box">${html}</div>`; document.body.appendChild(o); return o; }
+function closeOv() { const o = $('ov'); if (o) o.remove(); }
+function showWin() {
+  const M = MODES[G.mode];
+  const o = ov(`<h2>🎉 拼出 ${M.goal}！</h2><p>${M.n}模式過關，得分 ${G.score}<br>獎勵 <span class="coin">+100 金幣</span></p><div class="row"><button id="oCont">繼續挑戰更大</button><button class="ghost" id="oNew">再來一局</button></div>`);
+  $('oCont').onclick = closeOv; $('oNew').onclick = () => { finish(); startMode(G.mode, 1); };
+}
+function finish() {
+  if (G.finished) return; G.finished = 1;
+  const c = Math.floor(G.score / (G.mode === 'time' ? 150 : 120)); P.coins += c; P.st.games++;
+  if (G.mode === 'time') P.st.timeBest = Math.max(P.st.timeBest || 0, G.score);
+  if (G.mode === 'daily') P.st.days[G.day] = Math.max(P.st.days[G.day] || 0, G.score);
+  delete P.saves[G.mode]; checkAch(); saveP(); return c;
+}
+function endGame(title) {
+  G.over = true; clearInterval(timerT);
+  const canUndo = itemsOn() && G.hist.length && P.items.undo > 0 && !MODES[G.mode].time;
+  const o = ov(`<h2>${title}</h2><p>得分 <b>${G.score}</b>・最大 <b>${G.maxT}</b>${G.score >= (P.best[G.mode] || 0) && G.score ? '<br>🏅 新紀錄！' : ''}</p><div class="row">${canUndo ? `<button class="ghost" id="oUndo">↶ 上一步（剩 ${P.items.undo}）</button>` : ''}${itemsOn() && P.items.bomb > 0 && !MODES[G.mode].time ? '<button class="ghost" id="oBomb">💣 炸一格續命</button>' : ''}<button id="oEnd">結算</button></div>`);
+  if ($('oUndo')) $('oUndo').onclick = () => { closeOv(); useUndo(); };
+  if ($('oBomb')) $('oBomb').onclick = () => { closeOv(); G.over = false; setTool('bomb'); };
+  $('oEnd').onclick = () => { const c = finish(); ov(`<h2>結算</h2><p>${MODES[G.mode].n}・得分 ${G.score}<br>獲得 <span class="coin">${c} 金幣</span></p><div class="row"><button id="oAgain">再來一局</button><button class="ghost" id="oHome">回模式選單</button></div>`); $('oAgain').onclick = () => startMode(G.mode, 1); $('oHome').onclick = () => { closeOv(); showHome(); }; };
+}
 
-// 觸控滑動
-let sx=0, sy=0, touching=false;
-document.addEventListener('touchstart', e => { const t=e.touches[0]; sx=t.clientX; sy=t.clientY; touching=true; }, {passive:true});
-document.addEventListener('touchmove', e => { if (e.target.tagName !== 'BUTTON') e.preventDefault(); }, {passive:false});
+// ---------- 首頁 ----------
+function showHome() {
+  clearInterval(timerT); $('home').classList.add('show'); $('game').classList.remove('show'); applyTheme();
+  $('hCoin').textContent = P.coins;
+  $('modes').innerHTML = Object.entries(MODES).map(([k, m]) => `<button class="mode" data-m="${k}"><span class="big">${m.ic}</span><b>${m.n}</b><small>${m.d}</small><small style="color:var(--accent);margin-top:4px">最高 ${P.best[k] || 0}${P.saves[k] && !(m.daily && P.saves[k].day !== today()) ? '・有進度' : ''}${m.daily && P.st.days[today()] ? '・今天 ' + P.st.days[today()] : ''}</small></button>`).join('');
+  $('hItems').textContent = `持有 ↶${P.items.undo} 💣${P.items.bomb} 🔄${P.items.swap}`;
+  $('shopItems').innerHTML = Object.entries(ITEMS).map(([k, it]) => `<div class="si"><b style="font-size:26px">${it.ic}</b><b>${it.n}</b><small style="color:var(--muted)">持有 ${P.items[k]}</small><button data-b="${k}" ${P.coins < it.p ? 'disabled' : ''}>${it.p} 金幣</button></div>`).join('') + `<div class="si"><b style="font-size:26px">🎁</b><b>道具福袋</b><small style="color:var(--muted)">三種各 2 個</small><button data-b="pack" ${P.coins < 240 ? 'disabled' : ''}>240 金幣</button></div>`;
+  $('shopThemes').innerHTML = Object.entries(THEMES).map(([k, t]) => `<div class="si" style="background:${t.panel}"><div class="sw">${t.t.slice(1, 12).filter((_, i) => i % 2 === 0).map(c => `<i style="background:${c}"></i>`).join('')}</div><b>${t.n}</b><button data-t="${k}" ${P.theme === k ? 'disabled' : (!P.themes[k] && P.coins < t.p) ? 'disabled' : ''}>${P.theme === k ? '使用中' : P.themes[k] ? '使用' : t.p + ' 金幣'}</button></div>`).join('');
+  $('achN').textContent = `${Object.keys(P.ach).length}/${ACHS.length}`;
+  $('achs').innerHTML = ACHS.map(([k, n, i]) => `<div class="ach ${P.ach[k] ? 'on' : ''}"><b>${i}</b>${n}</div>`).join('');
+  $('stats').innerHTML = `<div><span>總局數</span><b>${P.st.games}</b></div><div><span>最大數字</span><b>${P.st.maxT}</b></div><div><span>合併次數</span><b>${P.st.merges}</b></div><div><span>限時最高</span><b>${P.st.timeBest || 0}</b></div>`;
+  document.querySelectorAll('[data-m]').forEach(b => b.onclick = () => startMode(b.dataset.m));
+  document.querySelectorAll('[data-b]').forEach(b => b.onclick = () => { const k = b.dataset.b; if (k === 'pack') { P.coins -= 240; for (const x in P.items) P.items[x] += 2; } else { P.coins -= ITEMS[k].p; P.items[k]++; } saveP(); toast('購買成功'); showHome(); });
+  document.querySelectorAll('[data-t]').forEach(b => b.onclick = () => { const k = b.dataset.t; if (!P.themes[k]) { P.coins -= THEMES[k].p; P.themes[k] = 1; } P.theme = k; checkAch(); saveP(); showHome(); });
+}
+function startMode(mode, fresh) {
+  closeOv(); tool = null; sel = null; busy = false; queued = null; clearInterval(timerT);
+  if (fresh) newGame(mode); else resume(mode);
+  $('home').classList.remove('show'); $('game').classList.add('show'); applyTheme();
+  requestAnimationFrame(() => { layout(); G.tiles.forEach(t => t.isNew = 1); draw(); drawHud(); });
+  if (MODES[mode].time) timerT = setInterval(() => { if (!G || G.over || $('ov') || document.hidden) return; G.left -= 1; if (G.left <= 0) { G.left = 0; drawHud(); endGame('⏱ 時間到！'); } else drawHud(); if (G.left % 5 === 0) persist(); }, 1000);
+}
+$('bBack').onclick = () => { if (G) persist(); showHome(); };
+$('bNew').onclick = () => { if (G.score > 0 && !confirm('放棄這局重新開始？')) return; startMode(G.mode, 1); };
+$('iUndo').onclick = useUndo; $('iBomb').onclick = () => setTool('bomb'); $('iSwap').onclick = () => setTool('swap');
+window.addEventListener('resize', () => { if (G && $('game').classList.contains('show')) { layout(); draw(); } });
+
+// ---------- 操作 ----------
+let sx = 0, sy = 0, touching = false;
+const inGame = () => $('game').classList.contains('show') && !$('ov');
+$('board').addEventListener('touchstart', e => { const t = e.touches[0]; sx = t.clientX; sy = t.clientY; touching = true; }, { passive: true });
+document.addEventListener('touchmove', e => { if (inGame() && touching) e.preventDefault(); }, { passive: false });
 document.addEventListener('touchend', e => {
-  if (!touching) return; touching=false;
-  if ($('overlay').classList.contains('show')) return;
-  const t=e.changedTouches[0], dx=t.clientX-sx, dy=t.clientY-sy;
-  if (Math.max(Math.abs(dx),Math.abs(dy)) < 25) return;
-  if (Math.abs(dx) > Math.abs(dy)) move(dx<0?0:1); else move(dy<0?2:3);
+  if (!touching) return; touching = false; if (!inGame()) return;
+  const t = e.changedTouches[0], dx = t.clientX - sx, dy = t.clientY - sy;
+  if (Math.max(Math.abs(dx), Math.abs(dy)) < 24) return;
+  if (Math.abs(dx) > Math.abs(dy)) move(dx < 0 ? 0 : 1); else move(dy < 0 ? 2 : 3);
 });
-// 電腦鍵盤也能玩
-document.addEventListener('keydown', e => {
-  if ($('overlay').classList.contains('show')) return;
-  const m = {ArrowLeft:0,ArrowRight:1,ArrowUp:2,ArrowDown:3,a:0,d:1,w:2,s:3}[e.key];
-  if (m !== undefined) { e.preventDefault(); move(m); }
-});
+// 整個畫面都能滑（不只棋盤）
+document.addEventListener('touchstart', e => { if (inGame() && !e.target.closest('button')) { const t = e.touches[0]; sx = t.clientX; sy = t.clientY; touching = true; } }, { passive: true });
+document.addEventListener('keydown', e => { if (!inGame()) return; const m = { ArrowLeft: 0, ArrowRight: 1, ArrowUp: 2, ArrowDown: 3, a: 0, d: 1, w: 2, s: 3 }[e.key]; if (m !== undefined) { e.preventDefault(); move(m); } });
+document.addEventListener('visibilitychange', () => { if (document.hidden && G) persist(); });
 
-newGame();
+showHome();
 </script>
 <a href="./" id="gbHome" style="position:fixed;top:calc(4px + env(safe-area-inset-top));left:50%;transform:translateX(-50%);z-index:9999;background:rgba(0,0,0,.45);color:#fff;text-decoration:none;font:600 13px -apple-system,sans-serif;padding:4px 12px;border-radius:12px;opacity:.6">⌂ 遊戲盒</a>
 <script>if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});document.addEventListener('error',function(e){var t=e.target;if(!t||t.tagName!=='IMG'||!t.src||t.src.indexOf('data:')===0)return;var n=(t._rt||0)+1;if(n>4)return;t._rt=n;setTimeout(function(){t.src=t.src.split('?')[0]+'?r='+n+'_'+Date.now()},600*n)},true);</script>
