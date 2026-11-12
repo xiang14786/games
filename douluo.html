@@ -844,9 +844,12 @@ function beastUnit(a, b) {
   u.el = b.el; return u;
 }
 const ringC = a => { const t = RINGC[ringTier(a)]; return t.edge || t.c; };
-function npcUnit(nm, lv, soulId, sex, side = 1) {
+// 等級上限：一般魂師最多 97 級（99 級極限斗羅千年難見），超出部分只轉成實力不顯示
+function npcUnit(nm, lv, soulId, sex, side = 1, cap = 97) {
   const s = SOUL[soulId] || pick(SOULS);
-  return mkUnit({ nm, side, lv, type: s.t, col: s.col, seed: nm + lv, sex, hair: pick(sex ? HAIR_M : HAIR_F), hcol: pick(HAIRCOL), look: { img: pick(sex ? PORT_NM : PORT_NF) }, rings: autoRings(lv, s.q), skills: s.sk, con: 10 + lv * 0.6, atk: 10 + lv * 0.65, agi: 10 + lv * 0.5 });
+  const shown = Math.max(1, Math.min(cap, Math.round(lv)));
+  const u = mkUnit({ nm, side, lv, type: s.t, col: s.col, seed: nm + lv, sex, hair: pick(sex ? HAIR_M : HAIR_F), hcol: pick(HAIRCOL), look: { img: pick(sex ? PORT_NM : PORT_NF) }, rings: autoRings(shown, s.q), skills: s.sk, con: 10 + lv * 0.6, atk: 10 + lv * 0.65, agi: 10 + lv * 0.5 });
+  u.lv = shown; return u;
 }
 
 // ---------------- 戰鬥模擬（產出步驟，給動畫播放） ----------------
@@ -931,6 +934,7 @@ const CANON_AD = { dmb: 2, osc: 1, mhj: 0, zzq: -1, nrr: -1, xw: 0 };
 function compAge(c) { if (c.ad === undefined) c.ad = CANON_AD[c.id] !== undefined ? CANON_AD[c.id] : RI(-2, 3); return Math.max(6, Math.floor(age() + c.ad)); }
 function mkComp(o) {
   const c = Object.assign({ id: 'c' + Math.random().toString(36).slice(2, 8), aff: 10, love: 0, seed: o.n + Math.random(), rings: [], away: 0, dead: 0 }, o);
+  if (!c.canon && c.lv > 95) c.lv = 95;
   if (!c.look) c.look = { img: portFor(c.sex) }; if (o.lookO && o.lookO.img) c.look = { img: o.lookO.img };
   c.rings = autoRings(c.lv, SOUL[c.soul].q); return c;
 }
@@ -1207,7 +1211,7 @@ const STORY = {
   },
   sunsetHerb: () => { const h = pick(HERBS.filter(x => !S.herbs.includes(x.id))); return { t: '落日森林的仙草', ic: 'flower-twirl', body: `在落日森林深處，你發現了一株<b>${h.n}</b>！<br>${h.d}`, ch: [{ t: '立刻服用', f: () => { eatHerb(h.id); log(`服用了仙草${h.n}。`, 'flower-twirl', 2); return '藥力運轉全身，效果顯著！'; } }, { t: '賣掉（8000 金魂幣）', f: () => { S.money += 8000; return '一位收藏家出高價買下了它。'; } }] }; },
   rabbitSecret: () => ({ t: '小舞的秘密', ic: 'rabbit', body: '武魂殿的封號斗羅突然出現，指著小舞說：「十萬年魂獸化形，也敢混在人類之中！」<br>小舞臉色煞白，緊緊抓住你的衣角……', ch: [
-    { t: '擋在她身前', f: () => battleEvent([npcUnit('菊斗羅', Math.max(S.lv + 25, 92), 'flower', 1)], w => rabbitEnd(w)) },
+    { t: '擋在她身前', f: () => battleEvent([npcUnit('菊斗羅', Math.max(S.lv + 25, 92), 'flower', 1, 1, 95)], w => rabbitEnd(w)) },
     { t: '帶她逃進星斗大森林', f: () => { if (chance(0.55 + S.agi / 400)) { const c = S.comps.find(x => x.id === 'xw'); if (c) c.aff = Math.min(100, c.aff + 25); S.fame += 5; return '你們在密林中甩開了追兵。小舞握著你的手，久久沒有放開。'; } return rabbitEnd(false); } },
   ] }),
   tourInfo: () => ({ t: '全大陸高級魂師學院精英大賽', ic: 'trophy', body: '五年一度的全大陸精英大賽即將開打！你和夥伴們可以組隊參賽（你＋兩名夥伴）。<br>每兩個月一輪：預選、晉級、十六強、四強、總決賽。<br>冠軍獎勵：<b>萬年魂骨</b>、大量名聲與金魂幣。', ch: [{ t: '報名參賽', f: () => { S.tour.started = 1; return '報名成功！好好準備。'; } }, { t: '不參加', f: () => { S.tour.r = 99; return '你決定專心修煉。'; } }] }),
@@ -1541,7 +1545,7 @@ function ringFX(a, ov) {
 function questList() {
   if (!S.quests || S.quests.t !== S.t) {
     const L = S.lv; const Q = [['護送商隊', 'caravan', 1, 0.9], ['剿滅邪魂師', 'evil-minion', 1.6, 1.08], ['採集靈藥', 'herbs-bundle', 0.8, 0.8], ['調查失蹤案', 'magnifying-glass', 1.2, 1], ['討伐魂獸群', 'wolf-howl', 1.4, 1.05]];
-    S.quests = { t: S.t, list: Array.from({ length: 3 }, () => { const q = pick(Q); const lv = Math.max(3, Math.round(L * q[3] + RI(-3, 4))); return { n: q[0], ic: q[1], lv, pay: Math.round((60 + lv * lv * 0.9) * q[2] * R(0.8, 1.25)), done: 0 }; }) };
+    S.quests = { t: S.t, list: Array.from({ length: 3 }, () => { const q = pick(Q); const lv = Math.min(97, Math.max(3, Math.round(L * q[3] + RI(-3, 4)))); return { n: q[0], ic: q[1], lv, pay: Math.round((60 + lv * lv * 0.9) * q[2] * R(0.8, 1.25)), done: 0 }; }) };
   }
   return S.quests.list.map((q, i) => `<div class="card row quest ${q.done ? 'done' : ''}"><div class="qic">${ic(q.ic)}</div><div class="grow"><b>${q.n}</b><small>對手約 ${q.lv} 級・報酬 ${fmt(q.pay)} 金魂幣・耗時一個月</small></div><button class="btn sm" data-q="${i}" ${q.done ? 'disabled' : ''}>${q.done ? '完成' : '接取'}</button></div>`).join('');
 }
@@ -1557,7 +1561,7 @@ function arena() {
   if (S.arena.n >= 3) return toast('這個月的鬥魂場已經打夠了', 'crossed-swords', 'b');
   if (S.inj >= 2) return toast('受傷中無法上場', 'arm-bandage', 'b');
   S.arena.n++; S.fat = Math.min(100, S.fat + 8);
-  const lv = Math.max(1, S.lv + RI(-2, 3)), sx = RI(0, 1), foe = npcUnit(genName(sx), lv, pick(SOULS.filter(s => s.q <= 5)).id, sx);
+  const lv = Math.min(97, Math.max(1, S.lv + RI(-2, 3))), sx = RI(0, 1), foe = npcUnit(genName(sx), lv, pick(SOULS.filter(s => s.q <= 5)).id, sx);
   const res = simBattle([playerUnit()], [foe]);
   playBattle(res, `鬥魂場・vs ${foe.nm}`, () => { const pay = Math.round((20 + lv * lv * 0.5) * gm()); if (res.win) { S.money += pay; S.fame += 1; S.bx += 0.8; S.wins++; result('laurel-crown', '鬥魂勝利', `擊敗了 ${foe.nm}（${lv} 級），獎金 <b>${fmt(pay)}</b>。`); } else { S.bx += 0.4; S.loss++; result('broken-shield', '鬥魂落敗', `${foe.nm}技高一籌。`); } save(); }, 'arena');
 }
@@ -1567,7 +1571,7 @@ function killCity() {
   let i = 0; const next = () => {
     if (i >= 5) { S.flags.killGod = 1; S.fame += 40; S.atk += 10; log('走過地獄路，領悟殺神領域！', 'bloody-sword', 2); save(); return result('bloody-sword', '殺神領域', '你踏著屍山血海走出地獄路，一股血紅色的領域在你周身展開——<b>殺神領域</b>！<br>戰鬥中敵人攻擊降低、你的攻擊大幅提升。'); }
     const lv = Math.round(S.lv * (0.95 + i * 0.05)) + (i === 4 ? 6 : 0);
-    const foes = i === 4 ? [npcUnit('地獄路・殺神殘念', lv, 'sevenKill', 1), npcUnit('血魂', lv - 6, 'ghost', 1)] : [npcUnit(`殺戮者 ${i + 1}`, lv, pick(SOULS).id, RI(0, 1))];
+    const foes = i === 4 ? [npcUnit('地獄路・殺神殘念', lv, 'sevenKill', 1, 1, 99), npcUnit('血魂', lv - 6, 'ghost', 1, 1, 96)] : [npcUnit(`殺戮者 ${i + 1}`, lv, pick(SOULS).id, RI(0, 1))];
     const res = simBattle([playerUnit()], foes);
     playBattle(res, i === 4 ? '地獄路' : `殺戮之都・第 ${i + 1} 戰`, () => { if (!res.win) { S.inj = Math.max(S.inj, 5); S.killT = S.t + 24; save(); return result('broken-shield', '敗退', `在第 ${i + 1} 戰倒下，被扔出殺戮之都。（兩年後可再挑戰）`); } i++; next(); });
   };
