@@ -800,8 +800,10 @@ function autoRings(lv, q) {
 
 // ---------------- 戰鬥單位 ----------------
 function baseOf(lv) { return 18 + lv * 5.5 + lv * lv * 0.09; }
+// 封號斗羅之後每一級都是鴻溝：91–95 每級 ×1.10，96–99 每級 ×1.25（99 級約 3.9 倍）
+function lvGap(lv) { lv = Math.min(99, lv); return Math.pow(1.10, Math.max(0, Math.min(lv, 95) - 90)) * Math.pow(1.25, Math.max(0, lv - 95)); }
 function mkUnit(o) {
-  const b = baseOf(o.lv), rs = o.rings || [], rf = rs.reduce((s, r) => s + ringFactor(r.age), 0);
+  const b = baseOf(Math.min(99, o.lv)) * (o.beast ? 1 : lvGap(o.lv)) * (o.overX || 1), rs = o.rings || [], rf = rs.reduce((s, r) => s + ringFactor(r.age), 0);
   const ov = rs.reduce((s, r) => s + (r.over ? Math.min(1.5, r.over - 1) : 0), 0);
   const m = 1 + rf * 0.15 + ov * 0.08;
   const u = {
@@ -848,7 +850,7 @@ const ringC = a => { const t = RINGC[ringTier(a)]; return t.edge || t.c; };
 function npcUnit(nm, lv, soulId, sex, side = 1, cap = 97) {
   const s = SOUL[soulId] || pick(SOULS);
   const shown = Math.max(1, Math.min(cap, Math.round(lv)));
-  const u = mkUnit({ nm, side, lv, type: s.t, col: s.col, seed: nm + lv, sex, hair: pick(sex ? HAIR_M : HAIR_F), hcol: pick(HAIRCOL), look: { img: pick(sex ? PORT_NM : PORT_NF) }, rings: autoRings(shown, s.q), skills: s.sk, con: 10 + lv * 0.6, atk: 10 + lv * 0.65, agi: 10 + lv * 0.5 });
+  const u = mkUnit({ nm, side, lv: shown, overX: 1 + Math.max(0, lv - shown) * 0.035, type: s.t, col: s.col, seed: nm + lv, sex, hair: pick(sex ? HAIR_M : HAIR_F), hcol: pick(HAIRCOL), look: { img: pick(sex ? PORT_NM : PORT_NF) }, rings: autoRings(shown, s.q), skills: s.sk, con: 10 + lv * 0.6, atk: 10 + lv * 0.65, agi: 10 + lv * 0.5 });
   u.lv = shown; return u;
 }
 
@@ -1235,7 +1237,7 @@ const STORY = {
   war: () => {
     const side = S.fac === 'hall' ? '武魂殿' : '天斗・星羅聯軍';
     return { t: '大陸戰爭', ic: 'battle-gear', body: `武魂殿與兩大帝國全面開戰！${S.fac === 'free' ? '你雖是自由魂師，但戰火燒到眼前，無法置身事外。' : `你身為${side}的一員，被徵召上前線。`}`, ch: [
-      { t: '奔赴戰場', f: () => battleEvent([npcUnit('敵方魂斗羅', S.lv + 4, pick(SOULS).id, 1), npcUnit('敵方魂聖', S.lv - 2, pick(SOULS).id, 0), npcUnit('敵方魂聖', S.lv - 3, pick(SOULS).id, 1)], w => {
+      { t: '奔赴戰場', f: () => battleEvent([npcUnit('敵方魂斗羅', S.lv + (S.lv >= 90 ? 1 : 4), pick(SOULS).id, 1), npcUnit('敵方魂聖', S.lv - 2, pick(SOULS).id, 0), npcUnit('敵方魂聖', S.lv - 3, pick(SOULS).id, 1)], w => {
         if (w) { S.fame += 50; S.money += 30000; S.flags.warHero = 1; log('在大陸戰爭中立下赫赫戰功。', 'battle-gear', 2); return '你力挽狂瀾，成為戰爭英雄！名聲 +50，賞金 30000'; }
         S.inj = Math.max(S.inj, 6); S.fame += 10; return '戰況慘烈，你身負重傷被抬下戰場……';
       }, { team: [playerUnit(), ...team().map(compUnit)], title: '大陸戰爭' }) },
@@ -1513,7 +1515,7 @@ function showEncounters(f, enc) {
     const e = enc[+b.dataset.e]; const hire = $('esc').checked && S.money >= escortCost();
     if (hire) S.money -= escortCost();
     closeSheet(true);
-    const A = [playerUnit(), ...helpers()]; if (hire) A.push(npcUnit('護衛魂聖', Math.min(95, S.lv + 22), 'turtle', 1, 0));
+    const A = [playerUnit(), ...helpers()]; if (hire) A.push(npcUnit('護衛魂聖', Math.min(79, S.lv + 22), 'turtle', 1, 0));
     const B = [beastUnit(e.age, e.b)];
     if (e.age > 2e4 && chance(0.3)) B.push(beastUnit(Math.round(e.age * 0.3)));
     const res = simBattle(A, B);
@@ -1545,7 +1547,7 @@ function ringFX(a, ov) {
 function questList() {
   if (!S.quests || S.quests.t !== S.t) {
     const L = S.lv; const Q = [['護送商隊', 'caravan', 1, 0.9], ['剿滅邪魂師', 'evil-minion', 1.6, 1.08], ['採集靈藥', 'herbs-bundle', 0.8, 0.8], ['調查失蹤案', 'magnifying-glass', 1.2, 1], ['討伐魂獸群', 'wolf-howl', 1.4, 1.05]];
-    S.quests = { t: S.t, list: Array.from({ length: 3 }, () => { const q = pick(Q); const lv = Math.min(97, Math.max(3, Math.round(L * q[3] + RI(-3, 4)))); return { n: q[0], ic: q[1], lv, pay: Math.round((60 + lv * lv * 0.9) * q[2] * R(0.8, 1.25)), done: 0 }; }) };
+    S.quests = { t: S.t, list: Array.from({ length: 3 }, () => { const q = pick(Q); const lv = Math.min(97, Math.max(3, (L >= 90 ? L + Math.round((q[3] - 1) * 20) + RI(-3, 1) : Math.round(L * q[3] + RI(-3, 4))))); return { n: q[0], ic: q[1], lv, pay: Math.round((60 + lv * lv * 0.9) * q[2] * R(0.8, 1.25)), done: 0 }; }) };
   }
   return S.quests.list.map((q, i) => `<div class="card row quest ${q.done ? 'done' : ''}"><div class="qic">${ic(q.ic)}</div><div class="grow"><b>${q.n}</b><small>對手約 ${q.lv} 級・報酬 ${fmt(q.pay)} 金魂幣・耗時一個月</small></div><button class="btn sm" data-q="${i}" ${q.done ? 'disabled' : ''}>${q.done ? '完成' : '接取'}</button></div>`).join('');
 }
@@ -1561,7 +1563,7 @@ function arena() {
   if (S.arena.n >= 3) return toast('這個月的鬥魂場已經打夠了', 'crossed-swords', 'b');
   if (S.inj >= 2) return toast('受傷中無法上場', 'arm-bandage', 'b');
   S.arena.n++; S.fat = Math.min(100, S.fat + 8);
-  const lv = Math.min(97, Math.max(1, S.lv + RI(-2, 3))), sx = RI(0, 1), foe = npcUnit(genName(sx), lv, pick(SOULS.filter(s => s.q <= 5)).id, sx);
+  const lv = Math.min(97, Math.max(1, S.lv + (S.lv >= 90 ? RI(-3, 1) : RI(-2, 3)))), sx = RI(0, 1), foe = npcUnit(genName(sx), lv, pick(SOULS.filter(s => s.q <= 5)).id, sx);
   const res = simBattle([playerUnit()], [foe]);
   playBattle(res, `鬥魂場・vs ${foe.nm}`, () => { const pay = Math.round((20 + lv * lv * 0.5) * gm()); if (res.win) { S.money += pay; S.fame += 1; S.bx += 0.8; S.wins++; result('laurel-crown', '鬥魂勝利', `擊敗了 ${foe.nm}（${lv} 級），獎金 <b>${fmt(pay)}</b>。`); } else { S.bx += 0.4; S.loss++; result('broken-shield', '鬥魂落敗', `${foe.nm}技高一籌。`); } save(); }, 'arena');
 }
@@ -1570,8 +1572,8 @@ function killCity() {
   monthTick(['spar']); monthTick(['spar']); monthTick(['spar']); flushNews();
   let i = 0; const next = () => {
     if (i >= 5) { S.flags.killGod = 1; S.fame += 40; S.atk += 10; log('走過地獄路，領悟殺神領域！', 'bloody-sword', 2); save(); return result('bloody-sword', '殺神領域', '你踏著屍山血海走出地獄路，一股血紅色的領域在你周身展開——<b>殺神領域</b>！<br>戰鬥中敵人攻擊降低、你的攻擊大幅提升。'); }
-    const lv = Math.round(S.lv * (0.95 + i * 0.05)) + (i === 4 ? 6 : 0);
-    const foes = i === 4 ? [npcUnit('地獄路・殺神殘念', lv, 'sevenKill', 1, 1, 99), npcUnit('血魂', lv - 6, 'ghost', 1, 1, 96)] : [npcUnit(`殺戮者 ${i + 1}`, lv, pick(SOULS).id, RI(0, 1))];
+    const lv = S.lv >= 90 ? S.lv + [-3, -2, -1, 0, 1][i] : Math.round(S.lv * (0.95 + i * 0.05)) + (i === 4 ? 6 : 0);
+    const foes = i === 4 ? [npcUnit('地獄路・殺神殘念', lv, 'sevenKill', 1, 1, 99), npcUnit('血魂', S.lv >= 90 ? lv - 3 : lv - 6, 'ghost', 1, 1, 96)] : [npcUnit(`殺戮者 ${i + 1}`, lv, pick(SOULS).id, RI(0, 1))];
     const res = simBattle([playerUnit()], foes);
     playBattle(res, i === 4 ? '地獄路' : `殺戮之都・第 ${i + 1} 戰`, () => { if (!res.win) { S.inj = Math.max(S.inj, 5); S.killT = S.t + 24; save(); return result('broken-shield', '敗退', `在第 ${i + 1} 戰倒下，被扔出殺戮之都。（兩年後可再挑戰）`); } i++; next(); });
   };
