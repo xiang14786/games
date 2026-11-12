@@ -201,6 +201,6 @@ document.addEventListener('keydown', e => {
 newGame();
 </script>
 <a href="./" id="gbHome" style="position:fixed;top:calc(4px + env(safe-area-inset-top));left:50%;transform:translateX(-50%);z-index:9999;background:rgba(0,0,0,.45);color:#fff;text-decoration:none;font:600 13px -apple-system,sans-serif;padding:4px 12px;border-radius:12px;opacity:.6">⌂ 遊戲盒</a>
-<script>if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});</script>
+<script>if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});document.addEventListener('error',function(e){var t=e.target;if(!t||t.tagName!=='IMG'||!t.src||t.src.indexOf('data:')===0)return;var n=(t._rt||0)+1;if(n>4)return;t._rt=n;setTimeout(function(){t.src=t.src.split('?')[0]+'?r='+n+'_'+Date.now()},600*n)},true);</script>
 </body>
 </html>
