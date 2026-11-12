@@ -49,6 +49,33 @@
     touch-action:none; background:#5a3a2a; box-shadow:0 0 0 3px #8a5a3a, 0 14px 30px rgba(0,0,0,.45); gap:0; }
   .cell { position:relative; display:flex; align-items:center; justify-content:center; border:1px solid rgba(60,30,20,.18);
     font-size:clamp(18px,7vw,34px); line-height:1; box-shadow:inset 0 2px 0 rgba(255,255,255,.28), inset 0 -2px 0 rgba(0,0,0,.08); }
+  .catsvg{width:84%;height:84%;display:block;filter:drop-shadow(0 2px 2px rgba(0,0,0,.25))}
+  .catsvg.big{width:130px;height:130px;margin:0 auto;animation:bob 2.4s ease-in-out infinite}
+  .cell.cat .catsvg{animation:catin .35s ease-out}
+  @keyframes catin{0%{transform:translateY(-40%) scale(.4)}70%{transform:translateY(4%) scale(1.08,.92)}100%{transform:none}}
+  .coll{display:grid!important;grid-template-columns:repeat(4,1fr)!important;gap:6px!important}
+  .coll .cc{background:rgba(255,255,255,.07);box-shadow:none;border:2px solid transparent;border-radius:14px;padding:6px 2px;color:#fff4e8;font-weight:700;display:flex;flex-direction:column;align-items:center;font-size:12px}
+  .coll .cc .catsvg{width:52px;height:52px}.coll .cc small{font-size:12px;margin-top:2px;color:var(--c)}
+  .coll .cc.on{border-color:#ffc98a;background:rgba(255,200,140,.18)}.coll .cc.lock{opacity:.45}.coll .cc .q{font-size:30px;height:52px;line-height:52px;color:var(--c)}
+  .room{position:relative;height:150px;border-radius:16px;overflow:hidden;background:linear-gradient(180deg,#ffe2c4 0,#ffd0a8 55%,#c88a5a 55%,#a86a4a 100%);box-shadow:inset 0 0 0 3px rgba(90,50,30,.4)}
+  .room::before{content:'';position:absolute;left:8%;top:10%;width:26%;height:34%;background:linear-gradient(#bfe6ff,#e8f6ff);border:5px solid #fff;border-radius:6px;box-shadow:0 2px 0 rgba(0,0,0,.15)}
+  .room::after{content:'🪴';position:absolute;right:6%;top:18%;font-size:34px}
+  .room .rc{position:absolute;width:16%;animation:wander 6s ease-in-out infinite}.room .rc .catsvg{width:100%;height:auto}
+  @keyframes wander{0%,100%{transform:translateX(0)}25%{transform:translateX(18px) rotate(4deg)}50%{transform:translateX(0) translateY(-6px)}75%{transform:translateX(-14px) rotate(-4deg)}}
+  .gacha{display:flex;gap:6px;align-items:center;margin-top:12px}.gacha button{flex:1;font-size:15px;padding:10px 6px}.fishc{font-size:18px;font-weight:900;padding:0 6px;color:#9ad8ff}
+  .gres{display:grid;grid-template-columns:repeat(auto-fill,minmax(64px,1fr));gap:6px;margin:6px 0 4px}
+  .gi{background:rgba(255,255,255,.06);border:2px solid var(--c);border-radius:12px;padding:4px;animation:pop .4s backwards}.gi .catsvg{width:52px;height:52px;margin:0 auto}.gi b{display:block;font-size:13px}.gi small{font-size:11px;color:var(--c)}
+  .gi.SSR{box-shadow:0 0 16px var(--c);background:rgba(255,207,58,.15)}.gi:nth-child(2){animation-delay:.08s}.gi:nth-child(3){animation-delay:.16s}.gi:nth-child(4){animation-delay:.24s}.gi:nth-child(5){animation-delay:.32s}.gi:nth-child(6){animation-delay:.4s}.gi:nth-child(7){animation-delay:.48s}.gi:nth-child(8){animation-delay:.56s}.gi:nth-child(9){animation-delay:.64s}.gi:nth-child(10){animation-delay:.72s}
+  .achm{display:grid;grid-template-columns:repeat(5,1fr);gap:5px}.am{background:rgba(255,255,255,.06);border-radius:10px;padding:6px 2px;text-align:center;font-size:11px;opacity:.35}.am.on{opacity:1;box-shadow:inset 0 0 0 1.5px #ffc98a}.am b{display:block;font-size:20px}
+  .newcat .catsvg{width:70px;height:70px;display:inline-block;vertical-align:middle}
+  .mtoast{position:fixed;left:50%;top:calc(env(safe-area-inset-top) + 40px);transform:translateX(-50%);background:#4a3050;border:2px solid #ffc98a;padding:8px 16px;border-radius:14px;z-index:20;font-weight:800;white-space:nowrap;animation:pop .3s}
+  .conf .catsvg{width:32px;height:32px}
+  body[data-area="1"]{background-color:#1e2e1e;background-image:radial-gradient(circle at 20% 0%,#3a5a32 0,transparent 55%),radial-gradient(circle at 100% 100%,#2a3a1e 0,transparent 50%)}
+  body[data-area="2"]{background-color:#2e2018;background-image:radial-gradient(circle at 20% 0%,#7a3a2a 0,transparent 55%),radial-gradient(circle at 100% 100%,#3a2a4a 0,transparent 50%)}
+  body[data-area="3"]{background-color:#10202e;background-image:radial-gradient(circle at 20% 0%,#2a4a6a 0,transparent 55%),radial-gradient(circle at 100% 100%,#1e3a3a 0,transparent 50%)}
+  body[data-area="4"]{background-color:#2e2018;background-image:radial-gradient(circle at 20% 0%,#6a4a2a 0,transparent 55%),radial-gradient(circle at 100% 100%,#4a2a2a 0,transparent 50%)}
+  body[data-area="5"]{background-color:#2a1018;background-image:radial-gradient(circle at 20% 0%,#7a2a3a 0,transparent 55%),radial-gradient(circle at 100% 100%,#5a3a1a 0,transparent 50%)}
+  body[data-area="6"]{background-color:#0a0a20;background-image:radial-gradient(circle at 20% 0%,#2a2a6a 0,transparent 55%),radial-gradient(circle at 100% 100%,#3a1a4a 0,transparent 50%)}
   .cell.x::after { content:'✕'; color:rgba(70,35,30,.5); font-size:.6em; font-weight:900; }
   .cell.cat { font-size:clamp(20px,8vw,38px); }
   .cell { isolation:isolate; }
@@ -89,7 +116,7 @@
 <div class="wrap">
   <!-- 主選單 -->
   <div class="screen" id="home">
-    <div class="hero"><svg viewBox="0 0 120 96"><path d="M22 40 L18 8 L44 26 Z" fill="#ffb36b"/><path d="M98 40 L102 8 L76 26 Z" fill="#ffb36b"/><path d="M24 34 L22 16 L38 28 Z" fill="#ffd9e6"/><path d="M96 34 L98 16 L82 28 Z" fill="#ffd9e6"/><ellipse cx="60" cy="56" rx="44" ry="36" fill="#ffb36b"/><path d="M40 30 Q60 22 80 30 Q70 34 60 33 Q50 34 40 30Z" fill="#e8873d"/><ellipse cx="44" cy="56" rx="6" ry="8" fill="#2a1a12"/><ellipse cx="76" cy="56" rx="6" ry="8" fill="#2a1a12"/><circle cx="46" cy="53" r="2" fill="#fff"/><circle cx="78" cy="53" r="2" fill="#fff"/><path d="M56 66 L64 66 L60 70Z" fill="#ff7b9c"/><path d="M60 70 Q55 76 50 72 M60 70 Q65 76 70 72" stroke="#2a1a12" stroke-width="2" fill="none" stroke-linecap="round"/><ellipse cx="34" cy="68" rx="7" ry="4" fill="#ff8fa8" opacity=".6"/><ellipse cx="86" cy="68" rx="7" ry="4" fill="#ff8fa8" opacity=".6"/><path d="M14 62 L32 64 M14 70 L32 68 M106 62 L88 64 M106 70 L88 68" stroke="#fff" stroke-width="1.6" stroke-linecap="round" opacity=".8"/></svg></div><h1>喵喵找位子</h1>
+    <div class="hero" id="heroCat"><svg viewBox="0 0 120 96"><path d="M22 40 L18 8 L44 26 Z" fill="#ffb36b"/><path d="M98 40 L102 8 L76 26 Z" fill="#ffb36b"/><path d="M24 34 L22 16 L38 28 Z" fill="#ffd9e6"/><path d="M96 34 L98 16 L82 28 Z" fill="#ffd9e6"/><ellipse cx="60" cy="56" rx="44" ry="36" fill="#ffb36b"/><path d="M40 30 Q60 22 80 30 Q70 34 60 33 Q50 34 40 30Z" fill="#e8873d"/><ellipse cx="44" cy="56" rx="6" ry="8" fill="#2a1a12"/><ellipse cx="76" cy="56" rx="6" ry="8" fill="#2a1a12"/><circle cx="46" cy="53" r="2" fill="#fff"/><circle cx="78" cy="53" r="2" fill="#fff"/><path d="M56 66 L64 66 L60 70Z" fill="#ff7b9c"/><path d="M60 70 Q55 76 50 72 M60 70 Q65 76 70 72" stroke="#2a1a12" stroke-width="2" fill="none" stroke-linecap="round"/><ellipse cx="34" cy="68" rx="7" ry="4" fill="#ff8fa8" opacity=".6"/><ellipse cx="86" cy="68" rx="7" ry="4" fill="#ff8fa8" opacity=".6"/><path d="M14 62 L32 64 M14 70 L32 68 M106 62 L88 64 M106 70 L88 68" stroke="#fff" stroke-width="1.6" stroke-linecap="round" opacity=".8"/></svg></div><h1>喵喵找位子</h1>
     <div class="sub">每隻貓都想要自己的地盤</div>
     <div class="card">
       <h3>🏆 闖關模式</h3>
@@ -104,10 +131,16 @@
       <div class="row"><button id="bDaily" style="flex:1">一般 8×8</button><button id="bDailyH" style="flex:1;background:#ff7b9c">困難 10×10</button></div>
     </div>
     <div class="card">
-      <h3>🐾 貓咪圖鑑 <span id="collInfo" style="font-size:15px;color:#d9c4d6;font-weight:600"></span></h3>
-      <p>每過 5 關收集一隻新貓咪，點一下就換成盤面上的貓。</p>
-      <div class="coll" id="coll"></div>
+      <h3>⏱ 限時挑戰</h3><p id="taInfo"></p><button id="bTA" style="width:100%">開始挑戰</button>
     </div>
+    <div class="card">
+      <h3>🏡 貓咪之家 <span id="collInfo" style="font-size:15px;color:#d9c4d6;font-weight:600"></span></h3>
+      <div class="room" id="room"></div>
+      <p style="margin-top:10px">闖關每 5 關會有新貓咪加入；也可以用小魚乾扭蛋。點一下就換成盤面上的貓。</p>
+      <div class="coll" id="coll"></div>
+      <div class="gacha"><div class="fishc">🐟 <b id="fishN">0</b></div><button id="bG1" class="sm">扭蛋 100</button><button id="bG10" class="sm" style="background:linear-gradient(180deg,#e8b0ff,#a86aff);box-shadow:0 4px 0 #6a3aa8;color:#fff">十連 900（必出 SR）</button></div>
+    </div>
+    <div class="card"><h3>🏅 成就</h3><div class="achm" id="achM"></div><p style="margin:8px 0 0">每個成就送 50 小魚乾。過關、每日挑戰、每天登入都能拿小魚乾。</p></div>
     <div class="card">
       <h3>🎲 自由練習</h3>
       <p>隨機出題，選盤面大小</p>
@@ -234,7 +267,7 @@ const CATS = [ ['🐱','小橘'], ['😺','笑笑'], ['😸','瞇瞇'], ['😹',
   ['🐈','散步貓'], ['🐈‍⬛','黑貓'], ['🐯','虎斑'], ['🦁','獅子王'], ['🐆','花豹'], ['🐅','老虎'], ['🐼','熊貓（？）'], ['🦊','狐狸（？）'], ['🐰','兔兔（？）'], ['👑','貓王'] ];
 const $ = id => document.getElementById(id);
 
-let store = { level:1, daily:{}, dailyH:{}, best:{}, stars:{}, cat:0 };
+let store = { level:1, daily:{}, dailyH:{}, best:{}, stars:{}, cat:0, fish:100, owned:null, ach:{}, login:'' };
 try { Object.assign(store, JSON.parse(localStorage.getItem('meowSeat')) || {}); } catch(e) {}
 function persist() { try { localStorage.setItem('meowSeat', JSON.stringify(store)); } catch(e) {} }
 try { const a = localStorage.getItem('meowAutoX'); if (a !== null) $('autoX').checked = a === '1'; } catch(e) {}
@@ -243,12 +276,94 @@ $('autoX').onchange = () => { try { localStorage.setItem('meowAutoX', $('autoX')
 function today() { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0'); }
 function dateSeed(s) { let h = 2166136261; for (const ch of s) { h ^= ch.charCodeAt(0); h = Math.imul(h, 16777619); } return h >>> 0; }
 if (!(store.level >= 1)) { const ks = Object.keys(store.stars || {}).map(Number).filter(x => x >= 1); store.level = ks.length ? Math.max(...ks) + 1 : 1; persist(); }
-store.dailyH = store.dailyH || {}; store.stars = store.stars || {}; store.cat = store.cat || 0;
+store.dailyH = store.dailyH || {}; store.stars = store.stars || {}; store.cat = store.cat || 0; store.ach = store.ach || {}; if (store.fish === undefined) store.fish = 100;
+if (!store.owned) { store.owned = []; const k = Math.min(14, 1 + Math.floor((store.level - 1) / 5)); for (let i = 0; i < k; i++) store.owned.push(i); }
+// ===== 貓咪美術（SVG） =====
+const CATDEF = [
+  ['小橘', '#ffad60', 'tabby', '#e8a020', '', 'N'], ['小白', '#f8f4ee', '', '#5ab0ff', '', 'N'], ['黑炭', '#2e2a30', '', '#ffd23a', '', 'N'], ['灰灰', '#9aa0aa', 'tabby', '#7ad86a', '', 'N'],
+  ['奶茶', '#d8b48a', '', '#8a5a2a', '', 'N'], ['三花', '#fffaf2', 'calico', '#7ad86a', '', 'N'], ['乳牛', '#fffaf2', 'spots', '#5ab0ff', '', 'N'], ['賓士', '#26222a', 'tux', '#7ad86a', 'bell', 'R'],
+  ['暹羅', '#f2e2c8', 'siamese', '#3a8aff', '', 'R'], ['虎斑', '#c08a4a', 'tabby', '#7ad86a', '', 'R'], ['花花', '#ffad60', 'tabby', '#e8a020', 'flower', 'R'], ['鈴鐺', '#f8f4ee', '', '#5ab0ff', 'bell', 'R'],
+  ['書呆', '#9aa0aa', 'tabby', '#7ad86a', 'glasses', 'R'], ['蝴蝶結', '#ffc8dc', '', '#ff6a9a', 'bow', 'R'], ['星星', '#3a3468', '', '#ffd23a', 'star', 'SR'], ['魔法師', '#6a4a9a', '', '#c88aff', 'wizard', 'SR'],
+  ['圍巾', '#ff8a5a', 'tabby', '#e8a020', 'scarf', 'SR'], ['櫻花', '#ffe0ec', 'calico', '#ff7aa8', 'flower', 'SR'], ['天使', '#ffffff', '', '#7ad0ff', 'halo', 'SR'], ['小惡魔', '#2a2232', '', '#ff4a5a', 'horns', 'SR'],
+  ['貓王', '#ffd24a', 'tabby', '#e8a020', 'crown', 'SSR'], ['月光', '#c8d4ff', '', '#d8e4ff', 'moon', 'SSR'], ['彩虹', 'rainbow', '', 'hetero', 'star', 'SSR'], ['黃金', '#f2c46b', 'shine', '#ffe680', 'crown', 'SSR'],
+];
+const RARC = { N: '#b8c0cc', R: '#5ab0ff', SR: '#c88aff', SSR: '#ffcf3a' };
+let _cid = 0;
+function catSVG(i, cls = '') {
+  const [nm, coat, pat, eye, acc] = CATDEF[i]; const id = 'c' + (_cid++);
+  const dark = ['#2e2a30', '#26222a', '#2a2232', '#3a3468', '#6a4a9a'].includes(coat);
+  const fill = coat === 'rainbow' ? `url(#${id}r)` : coat === '#f2c46b' ? `url(#${id}g)` : coat;
+  const line = dark ? '#0e0a10' : '#5a3a2a';
+  const inner = dark ? '#6a4a5a' : '#ffb8c8';
+  let defs = `<linearGradient id="${id}r" x1="0" x2="1"><stop offset="0" stop-color="#ff8a8a"/><stop offset=".25" stop-color="#ffd26a"/><stop offset=".5" stop-color="#8ae08a"/><stop offset=".75" stop-color="#7ab8ff"/><stop offset="1" stop-color="#c88aff"/></linearGradient><linearGradient id="${id}g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff0b0"/><stop offset=".5" stop-color="#f2c46b"/><stop offset="1" stop-color="#c8902a"/></linearGradient>`;
+  let p = '';
+  if (pat === 'tabby') p = `<path d="M50 26 v10 M40 28 l3 9 M60 28 l-3 9" stroke="${dark ? '#000' : 'rgba(120,60,20,.45)'}" stroke-width="4" stroke-linecap="round"/><path d="M14 54 h9 M15 62 h8 M86 54 h-9 M85 62 h-8" stroke="rgba(120,60,20,.35)" stroke-width="3.5" stroke-linecap="round"/>`;
+  if (pat === 'calico') p = `<path d="M20 40 Q30 24 46 28 Q42 42 28 48Z" fill="#ff9a4a"/><path d="M62 26 Q80 28 84 46 Q70 44 64 36Z" fill="#3a3030"/>`;
+  if (pat === 'spots') p = `<ellipse cx="30" cy="40" rx="10" ry="8" fill="#2a2a2a"/><ellipse cx="72" cy="70" rx="7" ry="6" fill="#2a2a2a"/>`;
+  if (pat === 'tux') p = `<path d="M30 86 Q32 58 50 56 Q68 58 70 86Z" fill="#fff"/>`;
+  if (pat === 'siamese') p = `<ellipse cx="50" cy="66" rx="20" ry="16" fill="#6a4a3a" opacity=".75"/>`;
+  if (pat === 'shine') p = `<path d="M30 34 l4 -8 l4 8 l-4 8z" fill="#fff" opacity=".8"/>`;
+  const eL = eye === 'hetero' ? '#5ab0ff' : eye, eR = eye === 'hetero' ? '#ffd23a' : eye;
+  const eyes = `<ellipse cx="36" cy="58" rx="7" ry="8.5" fill="${eL}"/><ellipse cx="64" cy="58" rx="7" ry="8.5" fill="${eR}"/><ellipse cx="36" cy="59" rx="3" ry="6.5" fill="#1a1010"/><ellipse cx="64" cy="59" rx="3" ry="6.5" fill="#1a1010"/><circle cx="38.5" cy="54.5" r="2.4" fill="#fff"/><circle cx="66.5" cy="54.5" r="2.4" fill="#fff"/>`;
+  let a = '', b = '';
+  if (acc === 'bell') a = `<path d="M30 88 Q50 96 70 88" stroke="#e84a4a" stroke-width="5" fill="none"/><circle cx="50" cy="93" r="6" fill="#ffd23a" stroke="#c8902a" stroke-width="1.5"/>`;
+  if (acc === 'flower') a = `<g transform="translate(76 26)">${[0, 72, 144, 216, 288].map(r => `<ellipse rx="5" ry="8" transform="rotate(${r}) translate(0 -7)" fill="#ff8ab8"/>`).join('')}<circle r="4" fill="#ffd23a"/></g>`;
+  if (acc === 'glasses') a = `<circle cx="36" cy="58" r="11" fill="none" stroke="#2a2a2a" stroke-width="3"/><circle cx="64" cy="58" r="11" fill="none" stroke="#2a2a2a" stroke-width="3"/><path d="M47 58 h6" stroke="#2a2a2a" stroke-width="3"/>`;
+  if (acc === 'bow') a = `<path d="M70 22 l-12 -8 v16z M70 22 l12 -8 v16z" fill="#ff5a8a"/><circle cx="70" cy="22" r="4" fill="#ff2a6a"/>`;
+  if (acc === 'star') a = `<path d="M78 18 l3 7 7 1 -5 5 1 7 -6 -4 -6 4 1 -7 -5 -5 7 -1z" fill="#ffd23a" stroke="#c8902a" stroke-width="1"/>`;
+  if (acc === 'wizard') b = `<path d="M24 34 L50 -6 L76 34 Z" fill="#3a2a7a"/><path d="M20 34 h60" stroke="#3a2a7a" stroke-width="7" stroke-linecap="round"/><circle cx="54" cy="12" r="3" fill="#ffd23a"/><circle cx="44" cy="22" r="2" fill="#ffd23a"/>`;
+  if (acc === 'scarf') a = `<path d="M24 84 Q50 96 76 84 L78 92 Q50 104 22 92Z" fill="#e84a4a"/><path d="M64 90 l6 12 l6 -2 l-4 -12z" fill="#c83a3a"/>`;
+  if (acc === 'halo') b = `<ellipse cx="50" cy="10" rx="20" ry="6" fill="none" stroke="#ffe680" stroke-width="4"/>`;
+  if (acc === 'horns') b = `<path d="M26 22 q-6 -14 4 -18 q-2 10 6 14z M74 22 q6 -14 -4 -18 q2 10 -6 14z" fill="#e84a4a"/>`;
+  if (acc === 'crown') b = `<path d="M30 22 L34 6 L42 16 L50 2 L58 16 L66 6 L70 22 Z" fill="#ffd23a" stroke="#c8902a" stroke-width="2"/><circle cx="50" cy="12" r="3" fill="#ff4a6a"/>`;
+  if (acc === 'moon') b = `<path d="M62 4 a12 12 0 1 0 12 16 a9 9 0 1 1 -12 -16z" fill="#fff6c0"/>`;
+  return `<svg class="catsvg ${cls}" viewBox="-4 -8 108 112"><defs>${defs}</defs>${b}
+  <path d="M16 46 L14 10 L42 26 Z" fill="${fill}" stroke="${line}" stroke-width="3" stroke-linejoin="round"/><path d="M84 46 L86 10 L58 26 Z" fill="${fill}" stroke="${line}" stroke-width="3" stroke-linejoin="round"/>
+  <path d="M20 38 L19 18 L34 28Z" fill="${pat === 'siamese' ? '#6a4a3a' : inner}"/><path d="M80 38 L81 18 L66 28Z" fill="${pat === 'siamese' ? '#6a4a3a' : inner}"/>
+  <ellipse cx="50" cy="60" rx="40" ry="34" fill="${fill}" stroke="${line}" stroke-width="3"/>${p}${eyes}
+  <path d="M46 70 h8 l-4 4z" fill="#ff7a9a"/><path d="M50 74 q-4 6 -9 3 M50 74 q4 6 9 3" stroke="${line}" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+  <ellipse cx="25" cy="72" rx="6" ry="3.5" fill="#ff8fa8" opacity=".55"/><ellipse cx="75" cy="72" rx="6" ry="3.5" fill="#ff8fa8" opacity=".55"/>
+  <path d="M4 66 l16 2 M5 74 l15 -2 M96 66 l-16 2 M95 74 l-15 -2" stroke="${dark ? '#ddd' : '#fff'}" stroke-width="1.6" stroke-linecap="round" opacity=".85"/>${a}</svg>`;
+}
+const curCat = () => (store.owned.includes(store.cat) ? store.cat : store.owned[0]);
+// ===== 小魚乾、扭蛋、成就 =====
+function addFish(n, why) { store.fish += n; if (why) toastM(`🐟 +${n} ${why}`); }
+function toastM(t) { const d = document.createElement('div'); d.className = 'mtoast'; d.textContent = t; document.body.appendChild(d); setTimeout(() => d.remove(), 2200); }
+const GW = { N: 55, R: 30, SR: 12, SSR: 3 }, DUP = { N: 10, R: 25, SR: 60, SSR: 150 };
+function pull(guarSR) {
+  let rr = Math.random() * 100, rar = 'N'; for (const k of ['SSR', 'SR', 'R', 'N']) { if (rr < GW[k]) { rar = k; break; } rr -= GW[k]; }
+  if (guarSR && (rar === 'N' || rar === 'R')) rar = 'SR';
+  const pool = CATDEF.map((c, i) => i).filter(i => CATDEF[i][5] === rar); const i = pool[Math.floor(Math.random() * pool.length)];
+  const dup = store.owned.includes(i); if (dup) store.fish += DUP[rar]; else store.owned.push(i);
+  return { i, dup, rar };
+}
+function gacha(n) {
+  const cost = n === 10 ? 900 : 100; if (store.fish < cost) return toastM('小魚乾不夠');
+  store.fish -= cost; const res = []; for (let k = 0; k < n; k++) res.push(pull(n === 10 && k === 9 && !res.some(r => r.rar === 'SR' || r.rar === 'SSR')));
+  persist(); checkAchM();
+  overlay(n === 10 ? '🎰 十連扭蛋' : '🎰 扭蛋', `<div class="gres">${res.map(r => `<div class="gi ${r.rar}" style="--c:${RARC[r.rar]}">${catSVG(r.i)}<b>${CATDEF[r.i][0]}</b><small>${r.rar}${r.dup ? `・重複 +${DUP[r.rar]}🐟` : '・NEW!'}</small></div>`).join('')}</div>`, [['好耶', refreshHome]]);
+}
+const ACHM = [
+  ['l10', '第 10 關', '🏘️', () => store.level > 10], ['l50', '第 50 關', '🏠', () => store.level > 50], ['l100', '第 100 關', '🏯', () => store.level > 100], ['l130', '無盡夜空', '🌙', () => store.level > 131],
+  ['c10', '10 隻貓', '🐱', () => store.owned.length >= 10], ['c24', '全圖鑑', '👑', () => store.owned.length >= CATDEF.length], ['ssr', '抽到 SSR', '✨', () => store.owned.some(i => CATDEF[i][5] === 'SSR')],
+  ['p30', '30 個三星', '⭐', () => Object.values(store.stars).filter(x => x >= 3).length >= 30], ['d7', '每日 7 天', '📅', () => Object.keys(store.daily).length >= 7], ['ta10', '限時解 10 題', '⏱', () => (store.taBest || 0) >= 10],
+];
+function checkAchM() { store.ach = store.ach || {}; for (const [k, n, i, f] of ACHM) if (!store.ach[k] && f()) { store.ach[k] = 1; store.fish += 50; toastM(`${i} 成就：${n}（+50🐟）`); } persist(); }
+// ===== 限時挑戰 =====
+let TA = null;
+function startTA() { TA = { left: 240, solved: 0, hearts: 3, seed: (Math.random() * 1e9) | 0 }; nextTA(); }
+function nextTA() { const n = 5 + Math.min(3, Math.floor(TA.solved / 3)); start('time', n, TA.seed + TA.solved * 7717, `⏱ 已解 ${TA.solved}`); G.hearts = TA.hearts; render(); }
+function endTA(why) {
+  const n = TA.solved; const best = n > (store.taBest || 0); if (best) store.taBest = n; const f = n * 8; store.fish += f; TA = null; persist(); checkAchM();
+  overlay(why, `四分鐘內讓 <b>${n}</b> 盤貓咪入座${best ? '<br><span class="done">新紀錄！</span>' : `（最佳 ${store.taBest}）`}<br>🐟 +${f}`, [['回選單', home, true], ['再挑戰', startTA]]);
+}
+
+if (store.login !== today()) { const first = !store.login; store.login = today(); store.fish += 20; persist(); setTimeout(() => toastM(first ? '🐟 歡迎！送你 100 小魚乾' : '🐟 每日登入 +20'), 600); }
 function levelSize(l) { return l <= 5 ? 5 : l <= 15 ? 6 : l <= 30 ? 7 : l <= 55 ? 8 : l <= 85 ? 9 : 10; }
 function levelSpread(l) { return l <= 10 ? 1.7 : l % 3 === 0 ? 0.6 : l % 3 === 1 ? 1.1 : 1.6; }
 function areaOf(l) { let a = AREAS[0], i = 0; AREAS.forEach((x, k) => { if (l >= x[0]) { a = x; i = k; } }); return { a, i, next: AREAS[i + 1] }; }
 const catsOwned = () => Math.min(CATS.length, 1 + Math.floor((store.level - 1) / 5));
-const catIcon = () => CATS[Math.min(store.cat, catsOwned() - 1)][0];
+const catIcon = () => catSVG(curCat());
 function fmt(s) { return Math.floor(s/60) + ':' + String(s%60).padStart(2,'0'); }
 
 let G = null, timerH = null;
@@ -264,10 +379,14 @@ function refreshHome() {
   $('bLevel').textContent = A.next ? `繼續闖關（再 ${end - l} 關到 ${A.next[1]}）` : '繼續闖關';
   const dh = store.dailyH[today()];
   if (dh) $('dailyInfo').innerHTML += `<br><span class="done">困難題已完成 ✓</span>　用時 ${fmt(dh)}`;
-  const own = catsOwned(); $('collInfo').textContent = `${own}/${CATS.length}`;
-  $('coll').innerHTML = '';
-  CATS.forEach(([e, nm], i) => { const b = document.createElement('button'); b.className = i === Math.min(store.cat, own - 1) ? 'on' : ''; b.disabled = i >= own;
-    b.innerHTML = i < own ? `${e}<small>${nm}</small>` : `❓<small>第 ${i * 5 + 1} 關</small>`; b.onclick = () => { store.cat = i; persist(); refreshHome(); }; $('coll').appendChild(b); });
+  $('collInfo').textContent = `${store.owned.length}/${CATDEF.length}`; $('fishN').textContent = store.fish;
+  $('room').innerHTML = store.owned.slice(0, 12).map((i, k) => `<div class="rc" style="left:${8 + (k % 6) * 15}%;bottom:${k < 6 ? 6 : 34}%;animation-delay:${-k * 0.7}s">${catSVG(i)}</div>`).join('');
+  $('coll').innerHTML = CATDEF.map((c, i) => { const own = store.owned.includes(i); return `<button class="cc ${curCat() === i ? 'on' : ''} ${own ? '' : 'lock'}" style="--c:${RARC[c[5]]}" data-ci="${i}" ${own ? '' : 'disabled'}>${own ? catSVG(i) : '<span class="q">？</span>'}<small>${own ? c[0] : c[5]}</small></button>`; }).join('');
+  document.querySelectorAll('[data-ci]').forEach(b => b.onclick = () => { store.cat = +b.dataset.ci; persist(); refreshHome(); });
+  $('bG1').disabled = store.fish < 100; $('bG10').disabled = store.fish < 900;
+  $('taInfo').textContent = `四分鐘內能讓幾盤貓咪入座？最佳 ${store.taBest || 0} 盤`;
+  $('achM').innerHTML = ACHM.map(([k, n, i]) => `<div class="am ${store.ach[k] ? 'on' : ''}"><b>${i}</b>${n}</div>`).join('');
+  document.body.dataset.area = areaOf(store.level).i;
 }
 
 function start(mode, n, seed, title, spread = 1.5) {
@@ -276,8 +395,9 @@ function start(mode, n, seed, title, spread = 1.5) {
   $('home').classList.add('hide'); $('game').classList.remove('hide');
   buildBoard(); render();
   clearInterval(timerH);
-  timerH = setInterval(() => { if (!G.done) { G.t++; $('gTime').textContent = fmt(G.t); } }, 1000);
-  $('gTime').textContent = '0:00';
+  timerH = setInterval(() => { if (G.mode === 'time') { if (!TA || document.hidden) return; TA.left--; $('gTime').textContent = fmt(Math.max(0, TA.left)); if (TA.left <= 0 && !G.done) { G.done = true; clearInterval(timerH); endTA('⏱ 時間到！'); } return; } if (!G.done) { G.t++; $('gTime').textContent = fmt(G.t); } }, 1000);
+  $('gTime').textContent = mode === 'time' && TA ? fmt(TA.left) : '0:00';
+  document.body.dataset.area = mode === 'level' ? areaOf(Math.min(store.level, G.lvl || store.level)).i : document.body.dataset.area;
 }
 
 let cells = [];
@@ -302,7 +422,7 @@ function render() {
   cells.forEach((d, i) => {
     d.classList.toggle('x', G.st[i] === 1);
     d.classList.toggle('cat', G.st[i] === 2);
-    d.textContent = G.st[i] === 2 ? catIcon() : '';
+    d.innerHTML = G.st[i] === 2 ? catIcon() : '';
   });
   $('gTitle').textContent = G.title;
   $('gHearts').textContent = '❤️'.repeat(G.hearts) + '🖤'.repeat(3 - G.hearts);
@@ -380,7 +500,7 @@ $('bHint').onclick = () => {
 $('bClear').onclick = () => { G.st = G.st.map(v => v === 1 ? 0 : v); render(); };
 function restartG() { const l = G.lvl, sp = G.spread; start(G.mode, G.n, G.seed, G.title, sp); G.lvl = l; }
 $('bRestart').onclick = restartG;
-$('bBack').onclick = home;
+$('bBack').onclick = () => { if (TA) { TA = null; } home(); };
 
 function home() { clearInterval(timerH); $('game').classList.add('hide'); $('home').classList.remove('hide'); $('ov').classList.add('hide'); refreshHome(); }
 
@@ -392,29 +512,33 @@ function overlay(t, p, btns) {
 }
 
 function win() {
-  G.done = true; clearInterval(timerH);
+  G.done = true; if (G.mode === 'time') { TA.solved++; TA.hearts = G.hearts; confetti(); setTimeout(() => { if (TA) nextTA(); }, 700); return; }
+  clearInterval(timerH);
   const stars = G.hints ? 1 : G.mistakes === 0 ? 3 : G.mistakes === 1 ? 2 : 1;
   const key = 'n' + G.n; let rec = '';
   if (!G.hints && (!store.best[key] || G.t < store.best[key])) { store.best[key] = G.t; rec = '<br><span class="done">新的最快紀錄！</span>'; }
   let btns = [['回選單', home, true]];
   let extra = '';
-  if (G.mode === 'daily') { const d = today(), D = G.n === 10 ? store.dailyH : store.daily; if (!D[d] || G.t < D[d]) D[d] = G.t; }
+  if (G.mode === 'daily') { const d = today(), D = G.n === 10 ? store.dailyH : store.daily; if (!D[d]) { const fz = G.n === 10 ? 60 : 40; store.fish += fz; extra += `<br>🐟 每日挑戰 +${fz}`; } if (!D[d] || G.t < D[d]) D[d] = G.t; }
+  if (G.mode === 'free') { store.fish += 5; extra += '<br>🐟 +5'; }
   if (G.mode === 'level') {
     const before = catsOwned(), A0 = areaOf(G.lvl).i;
     store.stars[G.lvl] = Math.max(store.stars[G.lvl] || 0, stars);
     if (G.lvl >= 1) store.level = Math.max(store.level || 1, G.lvl + 1);
-    if (catsOwned() > before) { const c = CATS[catsOwned() - 1]; extra += `<br><br>🎁 新貓咪加入圖鑑：<b style="font-size:26px">${c[0]}</b> ${c[1]}`; }
+    if (store.level - 1 === G.lvl && G.lvl % 5 === 0) { const nx = [...Array(14).keys()].find(i => !store.owned.includes(i)); if (nx !== undefined) { store.owned.push(nx); extra += `<br><br>🎁 新貓咪加入：<span class="newcat">${catSVG(nx)}</span><b>${CATDEF[nx][0]}</b>`; } }
+    const fz = 8 + stars * 4 + G.n; store.fish += fz; extra += `<br>🐟 小魚乾 +${fz}`;
     if (areaOf(store.level).i > A0) extra += `<br>🗺️ 解鎖新地區：<b>${areaOf(store.level).a[1]}</b>（${levelSize(store.level)}×${levelSize(store.level)}）`;
     btns.push(['下一關', playLevel]);
   }
   if (G.mode === 'free') btns.push(['再來一題', () => playFree(G.n)]);
-  persist();
+  persist(); checkAchM();
   confetti();
   setTimeout(() => overlay('🎉 全部入座！', `${'⭐'.repeat(stars)}${'☆'.repeat(3-stars)}<br>用時 <b>${fmt(G.t)}</b>　失誤 ${G.mistakes}　提示 ${G.hints}<br>${G.n}×${G.n} 最快 ${store.best[key] ? fmt(store.best[key]) : '—'}${rec}${extra}`, btns), 450);
 }
-function confetti() { for (let i = 0; i < 26; i++) { const d = document.createElement('div'); d.className = 'conf'; d.textContent = ['🐾', '⭐', '🎉', '💛', catIcon()][i % 5]; d.style.left = Math.random() * 100 + 'vw'; d.style.animationDuration = (1.6 + Math.random() * 1.6) + 's'; d.style.animationDelay = Math.random() * 0.4 + 's'; document.body.appendChild(d); setTimeout(() => d.remove(), 3800); } }
+function confetti() { for (let i = 0; i < 26; i++) { const d = document.createElement('div'); d.className = 'conf'; d.innerHTML = i % 5 === 4 ? catIcon() : ['🐾', '⭐', '🎉', '💛'][i % 5]; d.style.left = Math.random() * 100 + 'vw'; d.style.animationDuration = (1.6 + Math.random() * 1.6) + 's'; d.style.animationDelay = Math.random() * 0.4 + 's'; document.body.appendChild(d); setTimeout(() => d.remove(), 3800); } }
 function lose() {
-  G.done = true; clearInterval(timerH);
+  G.done = true; if (G.mode === 'time') { setTimeout(() => endTA('😿 愛心用完了'), 500); return; }
+  clearInterval(timerH);
   setTimeout(() => overlay('😿 愛心用完了', '再仔細推理一次吧！', [['回選單', home, true], ['重來這題', restartG]]), 500);
 }
 
@@ -424,8 +548,9 @@ $('bDaily').onclick = () => start('daily', 8, dateSeed('meow' + today()), '每�
 $('bLevel').onclick = playLevel;
 $('bDailyH').onclick = () => start('daily', 10, dateSeed('meowH' + today()), '困難 ' + today().slice(5).replace('-', '/'), 0.7);
 document.querySelectorAll('.sizes button').forEach(b => b.onclick = () => playFree(+b.dataset.n));
+$('bTA').onclick = startTA; $('bG1').onclick = () => gacha(1); $('bG10').onclick = () => gacha(10);
 
-refreshHome();
+refreshHome(); $('heroCat').innerHTML = catSVG(curCat(), 'big'); checkAchM();
 </script>
 <a href="./" id="gbHome" style="position:fixed;top:calc(4px + env(safe-area-inset-top));left:50%;transform:translateX(-50%);z-index:9999;background:rgba(0,0,0,.45);color:#fff;text-decoration:none;font:600 13px -apple-system,sans-serif;padding:4px 12px;border-radius:12px;opacity:.6">⌂ 遊戲盒</a>
 <script>if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});document.addEventListener('error',function(e){var t=e.target;if(!t||t.tagName!=='IMG'||!t.src||t.src.indexOf('data:')===0)return;var n=(t._rt||0)+1;if(n>4)return;t._rt=n;setTimeout(function(){t.src=t.src.split('?')[0]+'?r='+n+'_'+Date.now()},600*n)},true);</script>

@@ -606,12 +606,12 @@ function renderWeek() {
     const me = ME(), sub = k === 'rest' ? '疲勞 -45' : k === 'iq' ? `球商 ${C.iq}` : k === 'bond' ? `默契 ${Math.round(C.chem)}` : k === 'pitch' ? '選一種練' : k === 'dev' ? `${C.dev.p} ${Math.round(C.dev.lv)}/40` : `${{ velo:'球速', ctrl:'控球', sta:'體力' }[k]} ${Math.round(me.a[k])}`;
     b.innerHTML = `<span class="ic">${ic}</span><span>${n}<small>${sub}</small></span>`;
     if (C.injury && k !== 'rest') b.disabled = true;
-    b.onclick = () => k === 'pitch' ? pitchMenu() : train(k); $('trainBtns').appendChild(b);
+    b.onclick = () => k === 'pitch' ? pitchMenu() : (['rest', 'iq', 'bond', 'dev'].includes(k) || C.injury) ? train(k) : MG.go('pitch', `${TRAIN.find(x => x[0] === k)[1]} ${TRAIN.find(x => x[0] === k)[2]}・親自練習`, () => train(k)); $('trainBtns').appendChild(b);
   }
   if (C.injury) $('trainBtns').lastChild.innerHTML = `<span class="ic">🩹</span><span>復健<small>傷停 ${C.injury} 週</small></span>`;
   if ($('bRetire')) $('bRetire').onclick = () => scene('引退', `你今年 ${C.age} 歲。要在這裡畫下句點嗎？`, [{ label:'宣布引退', main:true, fn:() => retire() }, { label:'再投一年', fn:() => closeScene() }], 'night');
 }
-function pitchMenu() { scene('變化球練習', '要練哪一種？', Object.keys(ME().pi).filter(p => p !== '直球').map(p => ({ label:`🌀 ${p}（${Math.round(ME().pi[p])}）`, fn:() => { closeScene(); train('pitch', p); } })).concat([{ label:'取消', fn:() => closeScene() }]), 'bullpen'); }
+function pitchMenu() { scene('變化球練習', '要練哪一種？', Object.keys(ME().pi).filter(p => p !== '直球').map(p => ({ label:`🌀 ${p}（${Math.round(ME().pi[p])}）`, fn:() => { closeScene(); C.injury ? train('pitch', p) : MG.go('pitch', `🌀 ${p}・親自練習`, () => train('pitch', p)); } })).concat([{ label:'取消', fn:() => closeScene() }]), 'bullpen'); }
 function potGrade(v) { return v >= 92 ? 'S' : v >= 87 ? 'A+' : v >= 82 ? 'A' : v >= 77 ? 'B+' : v >= 72 ? 'B' : 'C'; }
 function renderMe() {
   const me = ME(), K = me.car;
@@ -687,8 +687,8 @@ function train(k, pitch) {
   else {
     const tired = C.fatigue >= 65 ? 0.6 : 1, before = ovr();
     if (k === 'dev') { const g = rnd(4, 6) * tired * ageF() * 1.1 * trainMult(); C.dev.lv += g; t = `🧪 ${C.dev.p}（開發中）+${g.toFixed(1)}`; if (C.dev.lv >= 40) { me.pi[C.dev.p] = 40; t += `\n\n<b class="gold">${C.dev.p}完成！可以在比賽中使用了。</b>`; C.dev = null; } }
-    else if (k === 'pitch') { const g = grow(null, rnd(4, 6) * tired * trainMult(), pitch); t = `🌀 ${pitch} <span class="good">+${g.toFixed(1)}</span>`; }
-    else { const g = grow(k, rnd(4, 6) * tired * trainMult()); if (k === 'velo') grow('sta', g * 0.15); if (k === 'sta') grow('velo', g * 0.1); t = `${TRAIN.find(x => x[0] === k)[1]} ${{ velo:'球速', ctrl:'控球', sta:'體力' }[k]} <span class="good">+${g.toFixed(1)}</span>`; }
+    else if (k === 'pitch') { const g = grow(null, rnd(4, 6) * tired * trainMult() * MG.take(), pitch); t = `🌀 ${pitch} <span class="good">+${g.toFixed(1)}</span>`; }
+    else { const g = grow(k, rnd(4, 6) * tired * trainMult() * MG.take()); if (k === 'velo') grow('sta', g * 0.15); if (k === 'sta') grow('velo', g * 0.1); t = `${TRAIN.find(x => x[0] === k)[1]} ${{ velo:'球速', ctrl:'控球', sta:'體力' }[k]} <span class="good">+${g.toFixed(1)}</span>`; }
     C.fatigue += rnd(5, 7);
     if (tired < 1) t += '\n<span class="muted">太疲勞，效果打折</span>';
     if (ovr() > before) t += `\n\n總評 <b class="gold">${before} → ${ovr()}</b>`;
@@ -1264,6 +1264,93 @@ $('bHall').onclick = () => {
 };
 $('bHallBack').onclick = title_;
 title_();
+// ===================== 親自訓練小遊戲 =====================
+const MG = (() => {
+  let x = 1;
+  const css = `.mgov{position:fixed;inset:0;z-index:999;background:rgba(5,8,16,.92);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:16px;color:#fff;font-family:inherit;touch-action:none;user-select:none;-webkit-user-select:none}
+  .mgov h3{margin:0;font-size:22px}.mgov .mgs{font-size:15px;color:#a8b4c8;text-align:center;line-height:1.5}.mgov canvas{width:min(92vw,360px);height:min(92vw,360px);border-radius:18px;background:#101a2a;box-shadow:0 10px 30px rgba(0,0,0,.5)}
+  .mgov .mgr{display:flex;gap:6px;font-size:26px;min-height:32px}.mgov button{border:0;border-radius:14px;padding:12px 20px;font-size:17px;font-weight:800;font-family:inherit;cursor:pointer}
+  .mgov .mgb{background:linear-gradient(180deg,#ffd27a,#ff9a3a);color:#3a1a00}.mgov .mgg{background:rgba(255,255,255,.1);color:#fff}.mgov label{font-size:14px;color:#a8b4c8;display:flex!important;gap:6px;align-items:center;white-space:nowrap;width:auto!important}.mgov label input{width:18px!important;height:18px!important;margin:0}
+  .mgov .mgbig{font-size:22px;font-weight:900;color:#ffd27a;text-align:center}`;
+  const st = document.createElement('style'); st.textContent = css; document.head.appendChild(st);
+  const skip = () => { try { return localStorage.getItem('mgSkip') === '1'; } catch (e) { return false; } };
+  function go(kind, label, cb) {
+    if (skip()) { x = 1; return cb(); }
+    const o = document.createElement('div'); o.className = 'mgov';
+    o.innerHTML = `<h3>${label}</h3><div class="mgs">${kind === 'hoop' ? '指針到<b style="color:#5ae0a8">綠色區</b>時點一下出手，正中央是空心球！<br>投 5 球，命中越多訓練效果越好（最高 ×1.7）' : '準星移到<b style="color:#ffd27a">金色格子</b>時點一下投球！<br>投 5 球，進好球帶有分、命中目標格分數加倍（最高 ×1.7）'}</div>
+      <div class="mgr" id="mgR"></div><canvas id="mgC" width="720" height="720"></canvas><div class="mgbig" id="mgT">點畫面開始</div>
+      <div style="display:flex;gap:8px"><button class="mgg" id="mgSkip">快速練習（×1.0）</button></div><label><input type="checkbox" id="mgAuto"> 以後都直接快速練習</label>`;
+    document.body.appendChild(o);
+    const cv = o.querySelector('#mgC'), g = cv.getContext('2d'); g.scale(2, 2);
+    let shot = 0, pts = 0, t0 = performance.now(), phase = 'aim', anim = null, res = [], tgt = 0, raf;
+    const done = () => { cancelAnimationFrame(raf); try { localStorage.setItem('mgSkip', o.querySelector('#mgAuto').checked ? '1' : '0'); } catch (e) { } o.remove(); cb(); };
+    o.querySelector('#mgSkip').onclick = e => { e.stopPropagation(); x = 1; done(); };
+    o.querySelector('#mgAuto').onclick = e => e.stopPropagation(); o.querySelector('label').onclick = e => e.stopPropagation();
+    const speed = () => 1 + shot * 0.18;
+    const needle = t => 0.5 + 0.5 * Math.sin(t / 1000 * Math.PI * 1.5 * speed());
+    const ret = t => { const s = t / 1000 * speed(); return [0.5 + 0.42 * Math.sin(s * 2.1), 0.5 + 0.42 * Math.sin(s * 2.9 + 1)]; };
+    const newTarget = () => { tgt = [0, 2, 6, 8, 1, 3, 5, 7, 4][Math.floor(Math.random() * (shot < 2 ? 9 : 8))]; };
+    newTarget();
+    function drawHoop(t) {
+      g.clearRect(0, 0, 360, 360);
+      const bg = g.createLinearGradient(0, 0, 0, 360); bg.addColorStop(0, '#1a2a4a'); bg.addColorStop(1, '#3a2a1a'); g.fillStyle = bg; g.fillRect(0, 0, 360, 360);
+      g.fillStyle = '#c8884a'; g.fillRect(0, 280, 360, 80); g.strokeStyle = 'rgba(255,255,255,.5)'; g.lineWidth = 2; g.beginPath(); g.ellipse(160, 330, 90, 22, 0, 0, 7); g.stroke();
+      g.fillStyle = '#eee'; g.fillRect(110, 50, 100, 66); g.strokeStyle = '#e84a3a'; g.lineWidth = 3; g.strokeRect(140, 76, 40, 30); g.fillStyle = '#666'; g.fillRect(156, 116, 8, 170);
+      g.strokeStyle = '#ff6a2a'; g.lineWidth = 4; g.beginPath(); g.ellipse(160, 118, 22, 6, 0, 0, 7); g.stroke();
+      g.strokeStyle = 'rgba(255,255,255,.8)'; g.lineWidth = 1.2; for (let i = -3; i <= 3; i++) { g.beginPath(); g.moveTo(160 + i * 7, 120); g.lineTo(160 + i * 4, 146); g.stroke(); }
+      // 能量條
+      const zw = Math.max(0.07, 0.17 - shot * 0.02);
+      g.fillStyle = 'rgba(0,0,0,.5)'; g.fillRect(310, 60, 26, 240); g.fillStyle = '#5ae0a8'; g.fillRect(310, 60 + 240 * (0.5 - zw), 26, 240 * zw * 2); g.fillStyle = '#ffd27a'; g.fillRect(310, 60 + 240 * 0.47, 26, 240 * 0.06);
+      const n = phase === 'aim' || !anim ? needle(t - t0) : anim.v; g.fillStyle = '#fff'; g.fillRect(304, 60 + 240 * n - 2, 38, 4);
+      // 球
+      let bx = 160, by = 300, br = 15;
+      if (anim) { const p = Math.min(1, (t - anim.t) / 650); const ex = anim.ok ? 160 : 160 + anim.dx, ey = anim.ok ? 128 : 112; bx = 160 + (ex - 160) * p; by = 300 + (ey - 300) * p - Math.sin(p * Math.PI) * 170; br = 15 - p * 5; if (p >= 1 && anim.ok) by = 128 + (t - anim.t - 650) * 0.12; }
+      g.fillStyle = '#ff8a2a'; g.beginPath(); g.arc(bx, by, br, 0, 7); g.fill(); g.strokeStyle = '#7a3a10'; g.lineWidth = 1.5; g.beginPath(); g.moveTo(bx - br, by); g.lineTo(bx + br, by); g.moveTo(bx, by - br); g.lineTo(bx, by + br); g.stroke();
+      return zw;
+    }
+    function drawZone(t) {
+      g.clearRect(0, 0, 360, 360);
+      const bg = g.createLinearGradient(0, 0, 0, 360); bg.addColorStop(0, '#0a2a1a'); bg.addColorStop(1, '#1a3a2a'); g.fillStyle = bg; g.fillRect(0, 0, 360, 360);
+      const Z = { x: 90, y: 70, w: 180, h: 220 };
+      g.fillStyle = 'rgba(255,255,255,.06)'; g.fillRect(Z.x, Z.y, Z.w, Z.h);
+      const cw = Z.w / 3, ch = Z.h / 3; g.fillStyle = 'rgba(255,210,122,.45)'; g.fillRect(Z.x + (tgt % 3) * cw, Z.y + Math.floor(tgt / 3) * ch, cw, ch);
+      g.strokeStyle = 'rgba(255,255,255,.7)'; g.lineWidth = 2; g.strokeRect(Z.x, Z.y, Z.w, Z.h); g.lineWidth = 1; for (let i = 1; i < 3; i++) { g.beginPath(); g.moveTo(Z.x + i * cw, Z.y); g.lineTo(Z.x + i * cw, Z.y + Z.h); g.moveTo(Z.x, Z.y + i * ch); g.lineTo(Z.x + Z.w, Z.y + i * ch); g.stroke(); }
+      g.fillStyle = '#e8e0d0'; g.beginPath(); g.moveTo(140, 320); g.lineTo(220, 320); g.lineTo(220, 332); g.lineTo(180, 348); g.lineTo(140, 332); g.fill();
+      const [rx, ry] = phase === 'aim' || !anim ? ret(t - t0) : anim.p; const px = 30 + rx * 300, py = 20 + ry * 300;
+      if (anim) { const p = Math.min(1, (t - anim.t) / 400); g.fillStyle = '#fff'; g.beginPath(); g.arc(180 + (px - 180) * p, 360 + (py - 360) * p, 6 + p * 8, 0, 7); g.fill(); g.strokeStyle = '#e84a4a'; g.lineWidth = 1.5; g.beginPath(); g.arc(180 + (px - 180) * p, 360 + (py - 360) * p, 6 + p * 8, 0.6, 2.5); g.stroke(); }
+      else { g.strokeStyle = '#ff4a4a'; g.lineWidth = 2.5; g.beginPath(); g.arc(px, py, 14, 0, 7); g.moveTo(px - 22, py); g.lineTo(px + 22, py); g.moveTo(px, py - 22); g.lineTo(px, py + 22); g.stroke(); }
+      return { Z, cw, ch, px, py };
+    }
+    const T = o.querySelector('#mgT'), Rr = o.querySelector('#mgR');
+    function frame(t) { kind === 'hoop' ? drawHoop(t) : drawZone(t); raf = requestAnimationFrame(frame); }
+    raf = requestAnimationFrame(frame);
+    o.onclick = () => {
+      if (phase !== 'aim' || shot >= 5) return;
+      const t = performance.now();
+      if (kind === 'hoop') {
+        const v = needle(t - t0), zw = Math.max(0.07, 0.17 - shot * 0.02), d = Math.abs(v - 0.5);
+        const perfect = d < 0.03, ok = d < zw; pts += perfect ? 2 : ok ? 1 : 0; res.push(perfect ? '💯' : ok ? '🏀' : '❌');
+        T.textContent = perfect ? '空心！' : ok ? '進了！' : pick2(['打框彈出', '麵包球…', '偏了']);
+        anim = { t, v, ok, dx: (v < 0.5 ? -1 : 1) * (30 + d * 80) };
+      } else {
+        const { Z, cw, ch, px, py } = drawZone(t); const inZ = px >= Z.x && px <= Z.x + Z.w && py >= Z.y && py <= Z.y + Z.h;
+        const cell = inZ ? Math.min(2, Math.floor((py - Z.y) / ch)) * 3 + Math.min(2, Math.floor((px - Z.x) / cw)) : -1;
+        const hit = cell === tgt; pts += hit ? 2 : inZ ? 1 : 0; res.push(hit ? '🎯' : inZ ? '⚾' : '❌');
+        T.textContent = hit ? '完美進壘點！' : inZ ? '好球！' : '壞球';
+        anim = { t, p: ret(t - t0) };
+      }
+      Rr.textContent = res.join(' '); phase = 'anim'; shot++;
+      setTimeout(() => {
+        anim = null; phase = 'aim'; t0 = performance.now(); if (kind !== 'hoop') newTarget();
+        if (shot >= 5) { phase = 'end'; x = Math.min(1.7, 1 + pts * 0.07); T.innerHTML = `訓練效果 <b>×${x.toFixed(2)}</b>`; const b = document.createElement('button'); b.className = 'mgb'; b.textContent = '完成訓練'; b.onclick = e => { e.stopPropagation(); done(); }; o.querySelector('#mgSkip').replaceWith(b); }
+        else T.textContent = `第 ${shot + 1} 球`;
+      }, 900);
+    };
+  }
+  const pick2 = a => a[Math.floor(Math.random() * a.length)];
+  return { go, take: () => { const v = x; x = 1; return v; } };
+})();
+
 </script>
 <a href="./" id="gbHome" style="position:fixed;top:calc(4px + env(safe-area-inset-top));left:50%;transform:translateX(-50%);z-index:9999;background:rgba(0,0,0,.45);color:#fff;text-decoration:none;font:600 13px -apple-system,sans-serif;padding:4px 12px;border-radius:12px;opacity:.6">⌂ 遊戲盒</a>
 <script>if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});document.addEventListener('error',function(e){var t=e.target;if(!t||t.tagName!=='IMG'||!t.src||t.src.indexOf('data:')===0)return;var n=(t._rt||0)+1;if(n>4)return;t._rt=n;setTimeout(function(){t.src=t.src.split('?')[0]+'?r='+n+'_'+Date.now()},600*n)},true);</script>
