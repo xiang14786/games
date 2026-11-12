@@ -375,10 +375,10 @@ const CHIBI = (() => {
     const r = rand(seed); const p = a => a[Math.floor(r() * a.length)];
     const male = !!sex;
     return {
-      sex: male ? 1 : 0, skin: p(OPT.skin.slice(0, 4)), hair: p(OPT.hairCol), eyeC: p(OPT.eyeCol),
-      front: male ? p([1, 2, 3, 4, 3]) : p([0, 1, 2, 4, 5]), back: male ? p([0, 0, 1, 6, 3]) : p([1, 2, 3, 4, 5, 6, 7]),
-      eye: male ? p([1, 0, 3, 4]) : p([0, 2, 3, 0]), brow: male ? p([0, 1]) : p([0, 2]), mouth: p([0, 1, 2, 3]),
-      outfit: male ? p([0, 1, 2, 4]) : p([0, 1, 3, 2]), c1: p(OPT.clothCol), c2: p(OPT.clothCol), acc: male ? p([0, 0, 2, 4]) : p([0, 1, 2, 3, 5]),
+      sex: male ? 1 : 0, skin: p(OPT.skin.slice(0, 4)), hair: male ? p(['#2a2230', '#2a2230', '#4a3428', '#7a4a2a', '#b8c0d0', '#4a6ae8', '#c83a3a', '#f4f0e8', '#c8903a']) : p(OPT.hairCol), eyeC: p(OPT.eyeCol),
+      front: male ? p([1, 2, 3, 4, 3]) : p([0, 1, 2, 4, 5]), back: male ? p([0, 0, 0, 0, 6, 3]) : p([1, 2, 3, 4, 5, 6, 7]),
+      eye: male ? p([1, 0, 3, 1]) : p([0, 2, 3, 0]), brow: male ? p([0, 1, 1]) : p([0, 2]), mouth: male ? p([0, 1, 2]) : p([0, 1, 2, 3]),
+      outfit: male ? p([0, 1, 2, 4]) : p([0, 1, 3, 2]), c1: p(OPT.clothCol), c2: p(OPT.clothCol), acc: male ? p([0, 0, 0, 2, 4]) : p([0, 1, 2, 3, 5]),
     };
   }
   // ---------- 頭髮 ----------
@@ -423,21 +423,22 @@ const CHIBI = (() => {
   // ---------- 五官 ----------
   function eyes(st, C, sex) {
     const one = (cx, flip) => {
-      const f = flip ? -1 : 1; const rx = 13, ry = st === 0 ? 16 : st === 1 ? 12 : st === 2 ? 15 : st === 3 ? 14 : 4;
+      const f = flip ? -1 : 1; const rx = sex ? 11.5 : 13, ry = (st === 0 ? 16 : st === 1 ? 12 : st === 2 ? 15 : st === 3 ? 14 : 4) * (sex ? 0.72 : 1);
       if (st === 4) return `<path d="M${cx - 12},${112} Q${cx},${102} ${cx + 12},${112}" fill="none" stroke="${LINE}" stroke-width="3.2" stroke-linecap="round"/>`;
       const cy = 112;
       const lash = st === 1 ? `M${cx - 14 * f},${cy - 2} Q${cx},${cy - ry - 6} ${cx + 15 * f},${cy - ry + 4} L${cx + 18 * f},${cy - ry}` : st === 2 ? `M${cx - 14 * f},${cy - ry + 6} Q${cx},${cy - ry - 4} ${cx + 15 * f},${cy - ry + 10}` : st === 3 ? `M${cx - 14 * f},${cy - ry + 4} Q${cx - 2 * f},${cy - ry - 4} ${cx + 15 * f},${cy - ry - 2} L${cx + 19 * f},${cy - ry - 6}` : `M${cx - 14 * f},${cy - ry + 6} Q${cx},${cy - ry - 5} ${cx + 15 * f},${cy - ry + 6} L${cx + 18 * f},${cy - ry + 2}`;
       return `<g><ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" fill="#fff"/><clipPath id="ec${cx}"><ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}"/></clipPath>
         <g clip-path="url(#ec${cx})"><ellipse cx="${cx + f}" cy="${cy + 2}" rx="${rx - 2.5}" ry="${ry - 0.5}" fill="url(#ig)"/><ellipse cx="${cx + f}" cy="${cy + 3}" rx="${(rx - 2.5) * 0.45}" ry="${(ry - 0.5) * 0.5}" fill="${shade(C, -0.6)}"/><path d="M${cx - rx},${cy - ry + 2} Q${cx},${cy - ry + 10} ${cx + rx},${cy - ry + 2} L${cx + rx},${cy - ry - 4} L${cx - rx},${cy - ry - 4}Z" fill="${shade(C, -0.5)}" opacity=".55"/></g>
-        <circle cx="${cx - 4 * f}" cy="${cy - ry * 0.35}" r="${ry * 0.28}" fill="#fff"/><circle cx="${cx + 5 * f}" cy="${cy + ry * 0.4}" r="${ry * 0.12}" fill="#fff" opacity=".9"/>
-        <path d="${lash}" fill="none" stroke="${LINE}" stroke-width="${sex ? 3.4 : 4}" stroke-linecap="round" stroke-linejoin="round"/>
+        <circle cx="${cx - 4 * f}" cy="${cy - ry * 0.35}" r="${ry * (sex ? 0.22 : 0.28)}" fill="#fff"/><circle cx="${cx + 5 * f}" cy="${cy + ry * 0.4}" r="${ry * 0.12}" fill="#fff" opacity=".9"/>
+        <path d="${lash}" fill="none" stroke="${LINE}" stroke-width="${sex ? 2.8 : 4}" stroke-linecap="round" stroke-linejoin="round"/>
         ${sex ? '' : `<path d="M${cx + 14 * f},${cy - ry + 6} l${5 * f},-3 M${cx + 12 * f},${cy - ry + 2} l${4 * f},-5" stroke="${LINE}" stroke-width="2" stroke-linecap="round"/>`}
-        <path d="M${cx - 10 * f},${cy + ry - 1} Q${cx},${cy + ry + 2} ${cx + 9 * f},${cy + ry - 2}" fill="none" stroke="${LINE}" stroke-width="1.3" opacity=".5"/></g>`;
+        ${sex ? '' : `<path d="M${cx - 10 * f},${cy + ry - 1} Q${cx},${cy + ry + 2} ${cx + 9 * f},${cy + ry - 2}" fill="none" stroke="${LINE}" stroke-width="1.3" opacity=".5"/>`}</g>`;
     };
     return one(77, 1) + one(123, 0);
   }
-  function brows(st, H) {
+  function brows(st, H, sex) {
     const c = shade(H, -0.45);
+    if (sex) { const q = st === 2 ? ['M62,94 L88,96', 'M138,94 L112,96'] : st === 1 ? ['M60,90 L90,96', 'M140,90 L110,96'] : ['M62,93 Q76,89 89,94', 'M138,93 Q124,89 111,94']; return q.map(d => `<path d="${d}" fill="none" stroke="${c}" stroke-width="5" stroke-linecap="round"/>`).join(''); }
     const p = st === 1 ? ['M62,84 L90,86', 'M138,84 L110,86'] : st === 2 ? ['M64,82 Q76,84 88,90', 'M136,82 Q124,84 112,90'] : ['M64,86 Q76,80 88,83', 'M136,86 Q124,80 112,83'];
     return p.map(d => `<path d="${d}" fill="none" stroke="${c}" stroke-width="${st === 1 ? 4 : 3}" stroke-linecap="round"/>`).join('');
   }
@@ -448,6 +449,7 @@ const CHIBI = (() => {
       case 3: return `<path d="M88,136 Q94,142 100,137 Q106,142 112,136" fill="none" stroke="${LINE}" stroke-width="2.4" stroke-linecap="round"/>`;
       case 4: return `<ellipse cx="100" cy="140" rx="7" ry="6" fill="#a83a4a" stroke="${LINE}" stroke-width="2"/><ellipse cx="100" cy="143" rx="4" ry="2.4" fill="#f07a8a"/>`;
     }
+    if (arguments[1]) return `<path d="M92,139 Q100,143 108,139" fill="none" stroke="${LINE}" stroke-width="2.6" stroke-linecap="round"/>`;
     return `<path d="M90,136 Q100,145 110,136" fill="none" stroke="${LINE}" stroke-width="2.6" stroke-linecap="round"/>`;
   }
   // ---------- 身體與服裝 ----------
@@ -455,7 +457,7 @@ const CHIBI = (() => {
     const c1 = o.c1, c2 = o.c2 === o.c1 ? shade(o.c1, 0.5) : o.c2, d1 = shade(c1, -0.35), L = LINE;
     const legs = `<path d="M84,262 L82,300 L96,300 L98,262 Z M102,262 L104,300 L118,300 L116,262 Z" fill="${o.outfit === 3 ? SK : shade(c1, -0.5)}" stroke="${L}" stroke-width="2"/>
       <path d="M78,296 Q78,310 92,310 L98,310 L98,296 Z M102,296 L102,310 L108,310 Q122,310 122,296 Z" fill="${shade(c2, -0.4)}" stroke="${L}" stroke-width="2" stroke-linejoin="round"/>`;
-    const neck = `<path d="M90,148 L90,172 L110,172 L110,148 Z" fill="${shade(SK, -0.08)}" stroke="${L}" stroke-width="2"/>`;
+    const neck = `<path d="${o.sex ? 'M87,148 L87,172 L113,172 L113,148 Z' : 'M90,148 L90,172 L110,172 L110,148 Z'}" fill="${shade(SK, -0.08)}" stroke="${L}" stroke-width="2"/>`;
     let torso, arms;
     const armL = (col, cuff) => `<path d="M72,176 C60,190 54,214 52,236 L72,240 C74,222 78,204 84,190 Z" fill="${col}" stroke="${L}" stroke-width="2" stroke-linejoin="round"/><path d="M52,234 L72,238 L71,244 L51,240Z" fill="${cuff}" stroke="${L}" stroke-width="1.5"/><circle cx="61" cy="250" r="8" fill="${SK}" stroke="${L}" stroke-width="2"/>`;
     const armR = (col, cuff) => `<path d="M128,176 C140,190 146,214 148,236 L128,240 C126,222 122,204 116,190 Z" fill="${col}" stroke="${L}" stroke-width="2" stroke-linejoin="round"/><path d="M148,234 L128,238 L129,244 L149,240Z" fill="${cuff}" stroke="${L}" stroke-width="1.5"/><circle cx="139" cy="250" r="8" fill="${SK}" stroke="${L}" stroke-width="2"/>`;
@@ -496,13 +498,14 @@ const CHIBI = (() => {
     const id = '';
     const defs = `<defs><linearGradient id="hg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${shade(H, 0.15)}"/><stop offset="1" stop-color="${shade(H, -0.25)}"/></linearGradient><linearGradient id="hgb" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${shade(H, -0.15)}"/><stop offset="1" stop-color="${shade(H, -0.45)}"/></linearGradient><linearGradient id="ig" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${shade(C, -0.35)}"/><stop offset=".6" stop-color="${C}"/><stop offset="1" stop-color="${shade(C, 0.5)}"/></linearGradient></defs>`;
     const face = `<path d="M60,150 Q100,170 140,150" fill="none"/><ellipse cx="46" cy="114" rx="7" ry="10" fill="${SK}" stroke="${LINE}" stroke-width="2"/><ellipse cx="154" cy="114" rx="7" ry="10" fill="${SK}" stroke="${LINE}" stroke-width="2"/>
-      <path d="M46,100 C46,56 74,40 100,40 C126,40 154,56 154,100 C154,130 134,154 100,158 C66,154 46,130 46,100 Z" fill="${SK}" stroke="${LINE}" stroke-width="2.2"/>
-      <ellipse cx="68" cy="130" rx="9" ry="5" fill="#ff8a9a" opacity=".35"/><ellipse cx="132" cy="130" rx="9" ry="5" fill="#ff8a9a" opacity=".35"/>
+      <path d="${o.sex ? 'M46,98 C46,56 74,40 100,40 C126,40 154,56 154,98 C154,124 142,144 118,156 L100,160 L82,156 C58,144 46,124 46,98 Z' : 'M46,100 C46,56 74,40 100,40 C126,40 154,56 154,100 C154,130 134,154 100,158 C66,154 46,130 46,100 Z'}" fill="${SK}" stroke="${LINE}" stroke-width="2.2"/>
+      <ellipse cx="68" cy="130" rx="9" ry="5" fill="#ff8a9a" opacity="${o.sex ? 0.1 : 0.35}"/><ellipse cx="132" cy="130" rx="9" ry="5" fill="#ff8a9a" opacity="${o.sex ? 0.1 : 0.35}"/>
       <path d="M100,124 l-1.5,3" stroke="${shade(SK, -0.3)}" stroke-width="1.8" stroke-linecap="round"/>`;
     const shine = `<path d="M60,58 Q100,40 140,58" fill="none" stroke="#fff" stroke-width="5" opacity=".28" stroke-linecap="round"/>`;
-    const head = face + eyes(o.eye, C, o.sex) + brows(o.brow, H) + mouth(o.mouth) + sidelocks(o.front, H, D, o.sex) + bangs(o.front, H, D) + shine + acc(o.acc, H, D);
+    const head = face + eyes(o.eye, C, o.sex) + brows(o.brow, H, o.sex) + mouth(o.mouth, o.sex) + sidelocks(o.front, H, D, o.sex) + bangs(o.front, H, D) + shine + acc(o.acc, H, D);
     const vb = opt.head ? '22 4 156 156' : '0 0 200 316';
-    const all = backHair(o.back, H, D) + (opt.head ? head : (b.legs + b.torso + b.arms + b.neck + head));
+    const bodyG = o.sex ? `<g transform="translate(100 0) scale(1.12 1) translate(-100 0)">${b.legs + b.torso + b.arms}</g>` : b.legs + b.torso + b.arms;
+    const all = backHair(o.back, H, D) + (opt.head ? head : (bodyG + b.neck + head));
     return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${vb}">${defs}${all}</svg>`;
   }
   const cache = new Map();
