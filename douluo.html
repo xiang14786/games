@@ -875,7 +875,8 @@ function simBattle(A, B, opt = {}) {
       }
       // 選技能
       const ready = u.sk.filter(s => !(u.cd[s.n] > 0)); for (const k in u.cd) u.cd[k]--;
-      let s = ready.length && Math.random() < 0.82 ? ready.sort((a, b) => b.mult - a.mult)[0] : null;
+      const rb = ready.filter(x => x.k === 10);
+      let s = rb.length && Math.random() < 0.55 ? pick(rb) : ready.length && Math.random() < 0.82 ? ready.sort((a, b) => b.mult - a.mult)[0] : null;
       const kind = s ? s.kind : 'atk';
       if (s) u.cd[s.n] = s.cd;
       const mult = s ? s.mult : 1;
