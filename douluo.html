@@ -836,7 +836,7 @@ function talent() {
   return t;
 }
 function env() { let e = STAGES[S.stage].env; if (S.flags.master) e += 0.08; if (S.flags.killGod) e += 0.05; return e; }
-function ringBonus() { return S.rings.reduce((s, r) => s + ringFactor(r.age), 0) * 0.2; }
+function ringBonus() { return S.rings.reduce((s, r) => s + ringFactor(r.age), 0) * 0.2 + (S.rings2 || []).reduce((s, r) => s + ringFactor(r.age), 0) * 0.1; }
 
 // ---------------- 屬性 ----------------
 function boneSum(st) { let v = 0; for (const b of BONES) { const x = S.bones[b.k]; if (!x) continue; const f = ringFactor(x.age) * 38; if (b.st === st) v += f; else if (b.st === 'all') v += f * 0.4; } return v; }
@@ -857,8 +857,8 @@ function baseOf(lv) { return 18 + lv * 5.5 + lv * lv * 0.09; }
 // 封號斗羅之後每一級都是鴻溝：91–95 每級 ×1.10，96–99 每級 ×1.25（99 級約 3.9 倍）
 function lvGap(lv) { lv = Math.min(99, lv); return Math.pow(1.10, Math.max(0, Math.min(lv, 95) - 90)) * Math.pow(1.25, Math.max(0, lv - 95)); }
 function mkUnit(o) {
-  const b = baseOf(Math.min(99, o.lv)) * (o.beast ? 1 : lvGap(o.lv)) * (o.overX || 1), rs = o.rings || [], rf = rs.reduce((s, r) => s + ringFactor(r.age), 0);
-  const ov = rs.reduce((s, r) => s + (r.over ? Math.min(1.5, r.over - 1) : 0), 0);
+  const b = baseOf(Math.min(99, o.lv)) * (o.beast ? 1 : lvGap(o.lv)) * (o.overX || 1) * (o.twin ? 1.08 : 1), rs = o.rings || [], rs2 = o.rings2 || [], rf = rs.reduce((s, r) => s + ringFactor(r.age), 0) + rs2.reduce((s, r) => s + ringFactor(r.age), 0) * 0.85;
+  const ov = [...rs, ...rs2].reduce((s, r) => s + (r.over ? Math.min(1.5, r.over - 1) : 0), 0);
   const m = 1 + rf * 0.15 + ov * 0.08;
   const u = {
     nm: o.nm, side: o.side, lv: o.lv, type: o.type || '強攻', col: o.col || '#8ab', ic: o.ic, seed: o.seed, hair: o.hair, hcol: o.hcol, sex: o.sex, beast: o.beast, bimg: o.bimg, age: o.age,
@@ -875,13 +875,13 @@ function mkUnit(o) {
     const names = o.skills || []; const t = ringTier(r.age);
     u.sk.push({ n: names[i] || `第${i + 1}魂技`, k: i + 1, age: r.age, tier: t, mult: (1.25 + ringFactor(r.age) * 2.6 + i * 0.08) * (r.over ? 1.15 : 1), cd: 1 + Math.floor(i / 2), kind: o.kinds ? o.kinds[i] : skKind(u.type, i) });
   });
-  if (o.skills2) rs.forEach((r, i) => { if (i % 2 === 1) u.sk.push({ n: o.skills2[i], k: i + 1, age: r.age, tier: ringTier(r.age), mult: 1.4 + ringFactor(r.age) * 2.8, cd: 2 + Math.floor(i / 2), kind: '強攻' }); });
+  if (o.skills2) rs2.forEach((r, i) => { u.sk.push({ n: o.skills2[i], k: i + 1, two: 1, age: r.age, tier: ringTier(r.age), mult: (1.25 + ringFactor(r.age) * 2.6 + i * 0.08) * (r.over ? 1.15 : 1), cd: 1 + Math.floor(i / 2), kind: skKind(o.type2 || '強攻', i) }); });
   return u;
 }
 function playerUnit() {
   const s = soulOf(); const s2 = S.soul2 ? SOUL[S.soul2] : null;
   const u = mkUnit({
-    nm: S.name, side: 0, lv: S.lv, type: s.t, col: s.col, seed: S.seed, hair: S.hair, hcol: S.hcol, sex: S.sex, rings: S.rings, skills: s.sk, skills2: s2 && s2.sk,
+    nm: S.name, side: 0, lv: S.lv, type: s.t, col: s.col, seed: S.seed, hair: S.hair, hcol: S.hcol, sex: S.sex, rings: S.rings, rings2: S.soul2 ? (S.rings2 = S.rings2 || []) : null, type2: s2 && s2.t, twin: !!s2, skills: s.sk, skills2: s2 && s2.sk,
     con: stat('con'), atk: stat('atk') + (S.herbAtk || 0) * 100, agi: stat('agi'), fusion: S.flags.fusion, hidden: S.items.hidden > 0 || !!sectArms(), hidN: sectArms() ? sectArms()[0] : '諸葛神弩', hidM: sectArms() ? sectArms()[1] : 0.9, hidAll: S.sect && S.sect.bld.arms >= 5, sausage: S.items.sausage > 0, domain: S.flags.killGod,
     look: S.look, extra: hasSp('time'), critB: hasSp('thunder') ? 0.25 : 0, nirvana: hasSp('nirvana'), reflect: hasSp('mirror') ? 0.3 : 0,
     atkX: (1 + S.bx / 400) * (S.flags.killGod ? 1.2 : 1) * (1 + boneSum('spi') / 300), defX: 1 + S.bx / 600,
@@ -977,7 +977,7 @@ function cloneUnits(us) { return us.map(u => ({ ...u, hp: u.hpM, cd: {}, sk: u.s
 // ---------------- 新遊戲 ----------------
 function newGame(o) {
   S = {
-    v: 1, name: o.name, sex: o.sex, seed: o.seed, look: o.look, soul: o.soul, soul2: o.soul2 || null, innate: o.innate,
+    v: 1, name: o.name, sex: o.sex, seed: o.seed, look: o.look, soul: o.soul, soul2: o.soul2 || null, rings2: [], innate: o.innate,
     lv: o.innate, xp: 0, con: o.con, spi: o.spi, agi: o.agi, atk: o.atk, wit: o.wit, cha: o.cha, luck: o.luck, bx: 0,
     rings: [], bones: {}, herbs: [], items: { potion: 2 }, money: o.money, fame: 0, fat: 0, inj: 0, t: 0, stage: 'village', fac: null,
     sched: ['medit', 'medit', 'body'], comps: [], log: [], evq: [], flags: {}, ach: {}, over: null, boost: 0, kills: 0, wins: 0, loss: 0, best: 0, origin: o.origin, title: null, godPath: null, trial: 0,
@@ -1090,8 +1090,9 @@ function ringLimit(k) {
   if (S.flags.tulip) m += 0.3; if (hasSp('devour')) m *= 1.7; if (S.flags.master) m += 0.06; if (S.soul2) m += 0.05;
   return Math.round(base * m);
 }
-function absorbChance(a) {
-  const k = S.rings.length + 1; const lim = ringLimit(k); const r = a / lim;
+const slot2 = () => !!S.soul2 && (S.rings2 = S.rings2 || []).length < Math.min(9, Math.floor(S.lv / 10));
+function absorbChance(a, k = S.rings.length + 1) {
+  const lim = ringLimit(k); const r = a / lim;
   if (r <= 1) return 1;
   return clamp(1 - (r - 1) * 0.55 + S.luck / 600, 0.03, 0.97);
 }
@@ -1099,9 +1100,18 @@ function team() {
   const cs = S.comps.filter(c => !c.dead && !c.away && c.aff >= 30).sort((a, b) => b.lv - a.lv).slice(0, 2);
   return cs;
 }
-function absorb(a, b) {
-  const k = S.rings.length + 1, p = absorbChance(a), lim = ringLimit(k);
-  if (Math.random() < p) {
+function absorb(a, b, two) {
+  const k = (two ? S.rings2.length : S.rings.length) + 1, p = absorbChance(a, k), lim = ringLimit(k);
+  if (two && Math.random() < p) {
+    const ov = a > lim ? Math.round(a / lim * 100) / 100 : 0;
+    S.rings2.push(ov ? { age: a, beast: b.n, over: ov } : { age: a, beast: b.n });
+    const f = ringFactor(a) * (hasSp('book') ? 1.5 : 1) * (ov ? 1.6 : 1); S.con += f * 5; S.spi += f * 5; S.atk += f * 5; S.agi += f * 3;
+    if (ov) S.fame += 5 + Math.round(ov * 5);
+    const sk = SOUL[S.soul2].sk[k - 1];
+    log(`${ov ? '【逆天吸收】' : ''}第二武魂【${SOUL[S.soul2].n}】吸收了 ${fmt(a)} 年${b.n}的魂環，成為它的第 ${k} 魂環，獲得魂技【${sk}】。`, 'fire-ring', 2);
+    return { ok: 1, bonus: 0, sk, ov, f, two: 1 };
+  }
+  if (!two && Math.random() < p) {
     const ov = a > lim ? Math.round(a / lim * 100) / 100 : 0;
     S.rings.push(ov ? { age: a, beast: b.n, over: ov } : { age: a, beast: b.n });
     const bonus = ov ? Math.min(8, 3 + Math.floor((ov - 1) * 5)) : a > lim * 0.7 ? 2 : 1;
@@ -1193,7 +1203,7 @@ function checkAch() { for (const [k, n, i, f] of ACHS) if (!S.ach[k] && f()) { S
 
 // ---------------- 存讀檔 ----------------
 function save() { if (S) try { localStorage.setItem(SAVE_KEY, JSON.stringify(S)); } catch (e) { } }
-function load() { try { const s = localStorage.getItem(SAVE_KEY); if (s) { S = JSON.parse(s); return true; } } catch (e) { } return false; }
+function load() { try { const s = localStorage.getItem(SAVE_KEY); if (s) { S = JSON.parse(s); if (S.soul2 && !S.rings2) S.rings2 = S.rings.filter((r, i) => i % 2 === 1).map(r => ({ ...r })); return true; } } catch (e) { } return false; }
 
 // ---------------- 史萊克七怪 & 夥伴互動 ----------------
 const isShrek7 = () => !!(S.flags.shrek7 || S.comps.some(c => c.met === '史萊克七怪'));
@@ -1678,7 +1688,7 @@ function vMe(bd) {
   setTimeout(() => { if ($('hFace')) $('hFace').onclick = () => lookPicker(S.look, S.sex, L => { S.look = L; save(); render(); }); }, 0);
   const s = soulOf(), L = lifespan();
   const stats = Object.entries(STN).map(([k, v]) => { const val = k === 'luck' || k === 'bx' ? S[k] : stat(k); return `<div class="st"><span>${ic(v[1])}${v[0]}</span><b>${Math.round(val)}</b></div>`; }).join('');
-  const rings = S.rings.length ? S.rings.map((r, i) => `<div class="ringrow" style="--c:${ringC(r.age)}"><div class="rn">${i + 1}</div><div class="grow"><b>${s.sk[i]}</b>${S.soul2 && i % 2 ? `<span class="dim">／${SOUL[S.soul2].sk[i]}</span>` : ''}<small>${fmt(r.age)} 年${esc(r.beast || '')}</small><small class="skd">${skDesc(s.t, i, r.age)}${r.over ? '<span class="gold">・超限 +15%</span>' : ''}</small></div>${r.over ? `<span class="tag q6">超限 ×${r.over}</span>` : ''}${ringChip(r.age)}</div>`).join('') : '<div class="empty">還沒有魂環。魂力到 10 級後去「歷練」獵取第一魂環。</div>';
+  const rings = S.rings.length ? S.rings.map((r, i) => `<div class="ringrow" style="--c:${ringC(r.age)}"><div class="rn">${i + 1}</div><div class="grow"><b>${s.sk[i]}</b><small>${fmt(r.age)} 年${esc(r.beast || '')}</small><small class="skd">${skDesc(s.t, i, r.age)}${r.over ? '<span class="gold">・超限 +15%</span>' : ''}</small></div>${r.over ? `<span class="tag q6">超限 ×${r.over}</span>` : ''}${ringChip(r.age)}</div>`).join('') : '<div class="empty">還沒有魂環。魂力到 10 級後去「歷練」獵取第一魂環。</div>';
   const bones = BONES.map(b => { const x = S.bones[b.k]; return `<div class="bone ${x ? 'on' : ''}" data-bone="${b.k}" style="--c:${x ? ringC(x.age) : '#556'}">${ic(b.ic)}<b>${b.n}</b><small>${x ? fmt(x.age) + '年' : '空'}</small>${x ? `<i class="bsk">${BONE_SK[b.k][0]}</i>` : ''}</div>`; }).join('');
   const st = STAGES[S.stage];
   bd.innerHTML = heroHTML() + `
@@ -1687,7 +1697,7 @@ function vMe(bd) {
     ${S.flags.killGod ? '<div class="tag q5" style="margin-top:6px">'+ic('bloody-sword')+' 殺神領域</div>' : ''}${S.flags.fusion ? `<div class="tag q6" style="margin-top:6px">${ic('double-dragon')} 融合技【${esc(S.flags.fusion)}】</div>` : ''}${S.godPath ? `<div class="tag q6" style="margin-top:6px">${ic('angel-wings')} ${S.godPath}傳承・第 ${S.trial}/9 考</div>` : ''}
   </div>
   ${S.flags.stay ? `<div class="card row"><div class="grow small">${ic('angel-wings')} 神界的大門一直為你敞開。</div><button class="btn gold sm" id="bAsc">飛升神界</button></div>` : ''}
-  <h3>${ic('fire-ring')} 魂環與魂技 <small>${S.rings.length}/9</small></h3>${capped() ? `<div class="card warn">${ic('fire-ring')} 魂力卡在 ${S.lv} 級瓶頸。下一環安全上限約 <b>${fmt(ringLimit(S.rings.length + 1))} 年</b>，到「歷練」去獵魂！</div>` : ''}<div class="card">${rings}</div>
+  <h3>${ic('fire-ring')} 魂環與魂技 <small>${S.rings.length}/9</small></h3>${capped() ? `<div class="card warn">${ic('fire-ring')} 魂力卡在 ${S.lv} 級瓶頸。下一環安全上限約 <b>${fmt(ringLimit(S.rings.length + 1))} 年</b>，到「歷練」去獵魂！</div>` : ''}<div class="card">${rings}</div>${S.soul2 ? (() => { const s2 = SOUL[S.soul2], r2 = S.rings2 || []; return `<h3>${ic(s2.ic)} 第二武魂【${s2.n}】<small>${r2.length}/${Math.min(9, Math.floor(S.lv / 10))}</small></h3><div class="card">${r2.length ? r2.map((r, i) => `<div class="ringrow" style="--c:${ringC(r.age)}"><div class="rn">${i + 1}</div><div class="grow"><b>${s2.sk[i]}</b><small>${fmt(r.age)} 年${esc(r.beast || '')}</small><small class="skd">${skDesc(s2.t, i, r.age)}${r.over ? '<span class="gold">・超限 +15%</span>' : ''}</small></div>${r.over ? `<span class="tag q6">超限 ×${r.over}</span>` : ''}${ringChip(r.age)}</div>`).join('') : ''}${slot2() ? `<div class="empty">還能附加 ${Math.min(9, Math.floor(S.lv / 10)) - r2.length} 個魂環。去「歷練」獵殺魂獸時可以選擇賦予第二武魂。</div>` : ''}</div>`; })() : ''}
   <h3>${ic('muscle-up')} 屬性</h3><div class="card"><div class="stg">${stats}</div></div>
   <h3>${ic('crowned-skull')} 魂骨 <small>${Object.keys(S.bones).length}/7</small></h3><div class="bones">${bones}</div>
   ${S.herbs.length ? `<h3>${ic('flower-twirl')} 已服用仙草</h3><div class="card">${S.herbs.map(h => `<div class="herbr"><span class="tag q5">${HERB[h].n}</span><small>${HERB[h].d.split('：').pop()}</small></div>`).join('')}</div>` : ''}`;
@@ -1774,8 +1784,15 @@ function afterHunt(res, e) {
   const loot = beastLoot(e.age);
   const lootTxt = `獲得魂獸材料，賣得 <b>${fmt(loot.money)}</b> 金魂幣。` + (loot.bone ? `<br><b class="gold">${ic('crowned-skull')} 掉落了 ${fmt(loot.bone.age)} 年的${BONES.find(b => b.k === loot.bone.k).n}！</b>` : '');
   const doBone = () => { if (loot.bone) { const ok = equipBone(loot.bone); if (ok) log(`獲得 ${fmt(loot.bone.age)} 年${BONES.find(b => b.k === loot.bone.k).n}並融合。`, 'crowned-skull', 2); else { S.money += Math.round(loot.bone.age * 0.5); } } };
-  if (capped()) {
-    const p = absorbChance(e.age);
+  if (capped() || slot2()) {
+    const p = absorbChance(e.age), two = slot2(), p2 = two ? absorbChance(e.age, S.rings2.length + 1) : 0, s2n = two ? SOUL[S.soul2].n : '';
+    const okTxt = r => { ringFX(e.age, r.ov); const n = r.two ? S.rings2.length : S.rings.length, who = r.two ? `第二武魂【${s2n}】的` : ''; if (r.ov) return `<div style="text-align:center">${ringChip(e.age)}</div><div class="overt">逆 天 吸 收</div>這枚魂環超出你的安全上限 <b>${r.ov} 倍</b>，你硬是把它煉化了！<br>${r.bonus ? `・魂力暴增 <b class="gold">+${r.bonus} 級</b><br>` : ''}・體質、精神、力量、敏捷大幅提升（一般吸收的 1.6 倍）<br>・${who}第 ${n} 魂技【<b>${r.sk}</b>】成為<b class="gold">超限魂技</b>：威力 +15%`; return `<div style="text-align:center">${ringChip(e.age)}</div>成功吸收！${who}第 ${n} 魂技【<b>${r.sk}</b>】覺醒${r.bonus ? `，魂力 +${r.bonus} 級` : '，屬性大幅提升'}！`; };
+    const doAbs = tw => { doBone(); const r = absorb(e.age, e.b, tw); if (r.dead) { save(); setTimeout(gameOver, 300); return '…………'; } return r.ok ? okTxt(r) : '吸收失敗，經脈重創……'; };
+    if (two) return showEv({ t: '擊殺成功', ic: 'fire-ring', body: `${fmt(e.age)} 年的${e.b.n}倒下了，一枚<b style="color:${ringC(e.age)}">${RINGC[ringTier(e.age)].n}魂環</b>緩緩浮現。<br>${lootTxt}<br><br>${capped() ? `主武魂第 ${S.rings.length + 1} 環成功率：<b class="${p < 1 ? 'red' : 'ok'}">${Math.round(p * 100)}%</b>（突破瓶頸）<br>` : ''}第二武魂【${s2n}】第 ${S.rings2.length + 1} 環成功率：<b class="${p2 < 1 ? 'red' : 'ok'}">${Math.round(p2 * 100)}%</b><br><span class="dim small">雙生武魂兩個都能附加魂環；第二武魂的魂環不會突破等級，但會增加魂技與戰力。</span>${(capped() ? p : 1) < 1 || p2 < 1 ? '<br><span class="red small">失敗會重傷，嚴重超限甚至可能爆體而亡！</span>' : ''}`, ch: [
+      ...(capped() ? [{ t: `吸收到主武魂【${soulOf().n}】`, f: () => doAbs(0) }] : []),
+      { t: `賦予第二武魂【${s2n}】`, f: () => doAbs(1) },
+      { t: '放棄，另尋魂獸', f: () => { doBone(); return '你放棄了這枚魂環。'; } },
+    ] });
     return showEv({ t: '擊殺成功', ic: 'fire-ring', body: `${fmt(e.age)} 年的${e.b.n}倒下了，一枚<b style="color:${ringC(e.age)}">${RINGC[ringTier(e.age)].n}魂環</b>緩緩浮現。<br>${lootTxt}<br><br>吸收成功率：<b class="${p < 1 ? 'red' : 'ok'}">${Math.round(p * 100)}%</b>${p < 1 ? '<br><span class="red small">失敗會重傷，嚴重超限甚至可能爆體而亡！</span>' : ''}`, ch: [
       { t: '吸收魂環', f: () => { doBone(); const r = absorb(e.age, e.b); if (r.dead) { save(); setTimeout(gameOver, 300); return '…………'; } if (r.ok) { ringFX(e.age, r.ov); if (r.ov) return `<div style="text-align:center">${ringChip(e.age)}</div><div class="overt">逆 天 吸 收</div>這枚魂環超出你的安全上限 <b>${r.ov} 倍</b>，你硬是把它煉化了！<br>・魂力暴增 <b class="gold">+${r.bonus} 級</b><br>・體質、精神、力量、敏捷大幅提升（一般吸收的 1.6 倍）<br>・第 ${S.rings.length} 魂技【<b>${r.sk}</b>】成為<b class="gold">超限魂技</b>：威力 +15%<br>・名聲大增，整個學院都在談論你`; return `<div style="text-align:center">${ringChip(e.age)}</div>成功吸收！第 ${S.rings.length} 魂技【<b>${r.sk}</b>】覺醒，魂力 +${r.bonus} 級！`; } return '吸收失敗，經脈重創……'; } },
       { t: '放棄，另尋魂獸', f: () => { doBone(); return '你放棄了這枚魂環。'; } },
@@ -1994,7 +2011,7 @@ function playBattle(res, title, done, bg) {
     const p = $('apanel'); p.classList.add('on');
     p.innerHTML = `<div class="ah">輪到你了<small>點敵人換目標</small></div><div class="ag">
       <button class="ab na" data-s="-1"><b>普通攻擊</b><small>不耗冷卻</small></button>${res.ask.fusion ? `<button class="ab fu" data-fu="1"><b>${esc(u.fusion)}</b><small>融合技・攻擊全體</small></button>` : ''}
-      ${sks.map(({ s, k, cd }) => `<button class="ab" data-s="${k}" style="--c:${RINGC[Math.min(s.tier, 5)].c}" ${cd > 0 ? 'disabled' : ''}><b>${esc(s.n)}</b><small>${s.k === 10 ? '魂骨・' : `第${s.k}環・`}${KIND_TAG[s.kind] || '強攻'}${cd > 0 ? `・冷卻 ${cd}` : `・威力 ${s.mult.toFixed(1)}`}</small></button>`).join('')}
+      ${sks.map(({ s, k, cd }) => `<button class="ab" data-s="${k}" style="--c:${RINGC[Math.min(s.tier, 5)].c}" ${cd > 0 ? 'disabled' : ''}><b>${esc(s.n)}</b><small>${s.k === 10 ? '魂骨・' : s.two ? `副武魂${s.k}環・` : `第${s.k}環・`}${KIND_TAG[s.kind] || '強攻'}${cd > 0 ? `・冷卻 ${cd}` : `・威力 ${s.mult.toFixed(1)}`}</small></button>`).join('')}
 </div>`;
     p.querySelectorAll('[data-s]').forEach(b => b.onclick = () => pump({ si: +b.dataset.s, t: tgt }));
     p.querySelectorAll('[data-fu]').forEach(b => b.onclick = () => pump({ fusion: true, t: tgt }));
