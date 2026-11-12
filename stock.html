@@ -126,6 +126,11 @@ canvas{display:block;width:100%;touch-action:pan-y}
 .legend{display:flex;flex-wrap:wrap;gap:4px 10px;font-size:12px;color:#9aa6b8}
 .legend i{display:inline-block;width:9px;height:9px;border-radius:3px;margin-right:4px}
 .note{font-size:12px;color:#6f7b90;line-height:1.6;margin-top:8px}
+.bs2{display:flex;gap:6px;margin-top:8px}.bs2 button{flex:1;background:#1b2336;border:1px solid #2a3550;border-radius:12px;padding:8px 2px;font-size:13px;font-weight:700;display:flex;flex-direction:column;align-items:center;gap:3px}.bs2 img{width:26px;height:26px}
+.evt{text-align:center;padding:6px 4px}.evt img{width:84px;height:84px;filter:drop-shadow(0 6px 14px #0008);animation:pop .4s}.evt .et{font-size:22px;font-weight:800;margin:6px 0 4px;color:#ffd877}.evt .eb{font-size:15.5px;line-height:1.75;color:#d8deea;margin:6px 4px 14px;text-align:left}
+@keyframes pop{from{transform:scale(.4);opacity:0}}
+.qk button.on{background:#ffcc5c;color:#1a1300}
+.sum div.note{display:block}
 #gbHome{display:none}
 body:has(.ov) .toast{display:none}
 </style>
@@ -351,7 +356,7 @@ function rate(f){return SYM[f]&&SYM[f].mk==='TW'?1:fx()}
 function avgPx(f){const p=S.pos[f];return p.lc?p.lc/p.q:p.cost/p.q/rate(f)}
 function posVal(f){const p=S.pos[f];return p?p.q*P(f)*rate(f):0}
 function mktVal(){let v=0;for(const f in S.pos)v+=posVal(f);return v}
-function total(){return S.cash+mktVal()}
+function total(){if(!S.mpos)return S.cash+mktVal();const c=crSum();return S.cash+mktVal()+c.mv-c.ln+c.co-c.sv+futMg()}
 function lotOf(f){return SYM[f].mk==='CR'?0.0001:1}
 function qfmt(f,q){if(SYM[f].mk==='CR')return q.toFixed(4)+' 顆';if(SYM[f].mk==='TW'){const z=Math.floor(q/1000),r=Math.round(q%1000);return (z?z+' 張':'')+(r?(z?' ':'')+r+' 股':'')||'0 股'}return fmt(q)+' 股'}
 function curSym(f){return SYM[f].mk==='TW'?'NT$':'US$'}
@@ -364,7 +369,7 @@ function newGame(sc,opt){
   s=Math.max(s,DAT.IDX_TWII.first,DAT.IDX_GSPC.first,DAT.SPY.first);let si=CAL.findIndex(d=>d>=s);let ei=lowerIdx(CAL,e);if(ei<0)ei=CAL.length-1;
   S={v:1,sc:sc.id,name:sc.name,i:si,s0:si,end:ei,cap0:cap,cash:cap,sal,blind,pos:{},orders:[],trades:[],news:[],hist:[],bTW:[],bUS:[],
      dep:cap,divIn:0,fees:0,tax:0,real:0,oid:1,mile:{},lastMo:0,bench:{tw:0,us:0,usC:0},peak:cap,started:Date.now()};
-  syncPtrs();
+  initX();syncPtrs();
   S.lastMo=mo(today());
   S.bench.tw=cap/P('IDX_TWII');S.bench.us=cap/(P('SPY')*fx());
   for(const f in DAT){const t=f==='IDX_TWII'?'tw':f==='IDX_GSPC'?'us':null;if(t)S.mile[f]=Math.floor(P(f)/1000)}
@@ -413,6 +418,257 @@ function execTrade(f,side,q,px,why){
   return 'ok';
 }
 
+// ====================== 信用交易・當沖・期貨・定期定額 ======================
+const CRR={TW:{mr:0.6,sd:0.9,ir:0.065,bf:0.0008,sf:0},US:{mr:0.5,sd:0.5,ir:0.075,bf:0,sf:0.03}};
+const FUT={TX:{n:'小型台指期',f:'IDX_TWII',mult:50,mk:'TW',mr:0.075,fee:50,unit:'口',desc:'每點 NT$50'},ES:{n:'微型 S&P 500 期貨',f:'IDX_GSPC',mult:5,mk:'US',mr:0.065,fee:1.5,unit:'口',desc:'每點 US$5'}};
+function initX(){
+  S.mpos=S.mpos||{};S.spos=S.spos||{};S.fut=S.fut||[];S.dt=S.dt||[];S.dca=S.dca||{};S.evq=S.evq||[];S.intPaid=S.intPaid||0;
+  S.life=S.life||{ins:0,kids:0,married:0,ban:-1,jobless:0,salBase:S.sal,divYr:{},loans:[],group:0,lastEv:0,dcaMo:0};
+}
+const canCredit=f=>SYM[f].mk!=='CR';
+function creditLock(){
+  if(S.life.ban>S.i)return '曾經違約交割，信用帳戶被停權中（約 '+Math.ceil((S.life.ban-S.i)/250*12)+' 個月後恢復）';
+  if(S.i-S.s0<40)return '開立信用帳戶需要開戶滿 2 個月（還要 '+(40-(S.i-S.s0))+' 個交易日）';
+  if(S.trades.length<5)return '開立信用帳戶需要至少 5 筆成交紀錄（目前 '+S.trades.length+' 筆）';
+  return '';
+}
+const mval=f=>S.mpos[f].q*P(f)*rate(f), sval=f=>S.spos[f].q*P(f)*rate(f);
+function crSum(){let mv=0,ln=0,co=0,sv=0;for(const f in S.mpos){mv+=mval(f);ln+=S.mpos[f].loan}for(const f in S.spos){co+=S.spos[f].coll;sv+=sval(f)}return {mv,ln,co,sv}}
+function maintRatio(){const c=crSum();const d=c.ln+c.sv;return d>0?(c.mv+c.co)/d:Infinity}
+function futMg(){return S.fut.reduce((s,x)=>s+x.mg,0)}
+function hasCredit(){return Object.keys(S.mpos).length||Object.keys(S.spos).length}
+function rec(f,sd,q,px,amt,fee,tax,why,pnl){S.trades.push({d:today(),f,sd,q,px,amt,fee,tax,why,pnl});S.fees+=fee;S.tax+=tax;if(pnl!=null)S.real+=pnl;if(S.trades.length>600)S.trades.splice(0,S.trades.length-600)}
+function marginBuy(f,q){
+  const px=P(f),r=CRR[SYM[f].mk];const st=settle(f,'B',q,px);const loan=Math.floor(q*px*rate(f)*r.mr/1000)*1000;const own=st.ntd-loan;
+  if(own>S.cash+0.5)return 'cash';
+  S.cash-=own;const m=S.mpos[f]||(S.mpos[f]={q:0,loan:0,cost:0});m.q+=q;m.loan+=loan;m.cost+=st.ntd;
+  rec(f,'B',q,px,st.ntd,st.fee,0,'融資買進');return 'ok';
+}
+function marginSell(f,q,why){
+  const m=S.mpos[f];if(!m||q>m.q+1e-9)return 'pos';const px=P(f);const st=settle(f,'S',q,px);const k=q/m.q;const rp=m.loan*k,c0=m.cost*k;
+  S.cash+=st.ntd-rp;m.loan-=rp;m.cost-=c0;m.q-=q;if(m.q<1e-9)delete S.mpos[f];
+  rec(f,'S',q,px,st.ntd,st.fee,st.tax,why||'融資賣出',st.ntd-c0);return 'ok';
+}
+function shortSell(f,q){
+  const px=P(f),r=CRR[SYM[f].mk];const st=settle(f,'S',q,px);const amt=q*px*rate(f);const dep=Math.ceil(amt*r.sd/100)*100,bf=Math.round(amt*r.bf);
+  if(dep+bf>S.cash+0.5)return 'cash';
+  S.cash-=dep+bf;const s=S.spos[f]||(S.spos[f]={q:0,coll:0,ent:0});s.q+=q;s.coll+=st.ntd+dep;s.ent+=st.ntd;
+  rec(f,'S',q,px,st.ntd,st.fee+bf,st.tax,'融券賣出');return 'ok';
+}
+function shortCover(f,q,why){
+  const s=S.spos[f];if(!s||q>s.q+1e-9)return 'pos';const px=P(f);const st=settle(f,'B',q,px);const k=q/s.q;const cp=s.coll*k,e0=s.ent*k;
+  S.cash+=cp-st.ntd;s.coll-=cp;s.ent-=e0;s.q-=q;if(s.q<1e-9)delete S.spos[f];
+  rec(f,'B',q,px,st.ntd,st.fee,0,why||'融券回補',e0-st.ntd);return 'ok';
+}
+function liquidateCredit(why){
+  let n=0;for(const f in S.mpos){if(traded(f)){marginSell(f,S.mpos[f].q,why);n++}}for(const f in S.spos){if(traded(f)){shortCover(f,S.spos[f].q,why);n++}}return n;
+}
+function futOpen(k,dir,n){
+  const F=FUT[k],px=P(F.f),rt=F.mk==='TW'?1:fx();const mg=Math.ceil(px*F.mult*F.mr*rt*n/100)*100,fee=F.fee*n*rt,tax=F.mk==='TW'?Math.round(px*F.mult*n*0.00002):0;
+  if(mg+fee+tax>S.cash+0.5)return 'cash';
+  S.cash-=mg+fee+tax;S.fees+=fee;S.tax+=tax;S.fut.push({id:S.oid++,k,dir,n,px,last:px,mg,mg0:mg,paid:mg});
+  pushNews(today(),'【期貨】'+(dir>0?'做多 ':'放空 ')+F.n+' '+n+' 口 @ '+fmt(px,0)+'，原始保證金 '+ntdF(mg)+'。','st_bolt',1);return 'ok';
+}
+function futClose(id,why){
+  const x=S.fut.find(z=>z.id===id);if(!x)return;const F=FUT[x.k],px=P(F.f),rt=F.mk==='TW'?1:fx();
+  const fee=F.fee*x.n*rt,tax=F.mk==='TW'?Math.round(px*F.mult*x.n*0.00002):0;const back=x.mg-fee-tax;S.cash+=back;S.fees+=fee;S.tax+=tax;
+  const pnl=back-x.paid;S.real+=pnl;S.fut=S.fut.filter(z=>z!==x);
+  pushNews(today(),'【期貨'+(why?'・'+why:'')+'】平倉 '+F.n+' '+x.n+' 口 @ '+fmt(px,0)+'，損益 '+(pnl>=0?'+':'')+fmt(pnl)+'。',pnl>=0?'air_up':'air_down',1);
+}
+function futMaint(x){const F=FUT[x.k];return P(F.f)*F.mult*F.mr*(F.mk==='TW'?1:fx())*x.n*0.75}
+function dcaRun(){
+  for(const f in S.dca){if(!traded(f))continue;const d=S.dca[f];if(d.mo===mo(today()))continue;const dd=new Date((today()+D0)*864e5).getUTCDate();if(dd<6)continue;
+    d.mo=mo(today());const amt=Math.min(d.amt,Math.max(0,S.cash));if(amt<1000){pushNews(today(),'【定期定額】'+SYM[f].name+' 扣款失敗：現金不足。','air_warn',1);continue}
+    const px=P(f),rt=rate(f);let q=amt/(px*rt*1.002);q=SYM[f].mk==='CR'?Math.floor(q*1e4)/1e4:Math.floor(q);if(q<=0)continue;
+    const fee=SYM[f].mk==='TW'?Math.max(1,Math.round(q*px*0.001425*0.6)):q*px*rt*0.001;const cost=q*px*rt*(SYM[f].mk==='TW'?1:1.001)+fee;
+    S.cash-=cost;const p=S.pos[f]||(S.pos[f]={q:0,cost:0,lc:0});p.q+=q;p.cost+=cost;p.lc=(p.lc||0)+q*px+(SYM[f].mk==='TW'?fee:fee/rt);S.fees+=fee;
+    S.trades.push({d:today(),f,sd:'B',q,px,amt:cost,fee,tax:0,why:'定期定額'});
+    pushNews(today(),'【定期定額】扣款 '+ntdF(cost)+'，買進 '+SYM[f].name+' '+qfmt(f,q)+' @ '+pfmt(px)+'。','air_cal',1)}
+}
+// 當沖：隔一個交易日開盤進場，觸價停損停利，否則收盤平倉
+function runDayTrades(){
+  const keep=[];
+  for(const o of S.dt){
+    if(!traded(o.f)){keep.push(o);continue}
+    const D=DAT[o.f],k=D.ptr,op=D.o[k],hi=D.h[k],lo=D.l[k],cl=D.c[k];let ex=cl,how='收盤平倉';
+    const stop=o.dir>0?op*(1-o.sl):op*(1+o.sl),tgt=o.dir>0?op*(1+o.tp):op*(1-o.tp);
+    if(o.sl>0&&(o.dir>0?lo<=stop:hi>=stop)){ex=stop;how='觸發停損'}else if(o.tp>0&&(o.dir>0?hi>=tgt:lo<=tgt)){ex=tgt;how='達到停利'}
+    const mk=SYM[o.f].mk,rt=rate(o.f);const bpx=o.dir>0?op:ex,spx=o.dir>0?ex:op;
+    let fee,tax=0;if(mk==='TW'){fee=Math.max(20,Math.floor(o.q*bpx*0.001425*0.6))+Math.max(20,Math.floor(o.q*spx*0.001425*0.6));tax=Math.floor(o.q*spx*(yr(today())>=2017?0.0015:0.003))}else fee=(Math.max(3,o.q*bpx*0.001)+Math.max(3,o.q*spx*0.001))*rt;
+    const pnl=(spx-bpx)*o.q*rt-fee-tax;S.cash+=pnl;S.fees+=fee;S.tax+=tax;S.real+=pnl;
+    S.trades.push({d:today(),f:o.f,sd:o.dir>0?'B':'S',q:o.q,px:op,amt:Math.abs(o.q*op*rt),fee,tax,why:'當沖'+(o.dir>0?'多':'空')+'・'+how,pnl});
+    pushNews(today(),'【當沖'+(o.dir>0?'做多':'做空')+'】'+SYM[o.f].name+' '+qfmt(o.f,o.q)+'：開盤 '+pfmt(op)+' → '+how+' '+pfmt(ex)+'，損益 '+(pnl>=0?'+':'')+fmt(pnl)+'。',pnl>=0?'air_up':'air_down',1);
+  }
+  S.dt=keep;
+}
+// 每日：利息、借券費、追繳、斷頭、期貨結算
+function creditDaily(pd,d){
+  const days=Math.max(1,d-pd);let it=0;
+  for(const f in S.mpos)it+=S.mpos[f].loan*CRR[SYM[f].mk].ir/365*days;
+  for(const f in S.spos)if(CRR[SYM[f].mk].sf)it+=sval(f)*CRR[SYM[f].mk].sf/365*days;
+  if(S.cash<0)it+=-S.cash*0.15/365*days;
+  if(it){S.cash-=it;S.intPaid+=it}
+  // 融券遇除權息：強制回補（台股）、補償股利（美股）
+  for(const f in S.spos){const D=DAT[f];
+    for(const v of D.div){if(SYM[f].mk==='TW'&&v.day>d&&v.day<=d+6&&traded(f)){shortCover(f,S.spos[f].q,'除權息強制回補');pushNews(d,'【強制回補】'+SYM[f].name+' 即將除權息，融券部位依規定強制回補。','st_police',1);break}
+      if(SYM[f].mk==='US'&&v.day>pd&&v.day<=d&&S.spos[f]){const pay=S.spos[f].q*v.a*fx();S.cash-=pay;pushNews(d,'【放空補償股利】'+SYM[f].name+' 除息，放空者需支付股利 '+ntdF(pay)+'。','air_cash',1)}}
+  }
+  // 期貨每日結算
+  for(const x of S.fut.slice()){const F=FUT[x.k];if(!traded(F.f))continue;const px=P(F.f),rt=F.mk==='TW'?1:fx();x.mg+=x.dir*x.n*F.mult*(px-x.last)*rt;x.last=px;
+    if(x.mg<futMaint(x)/0.75*0.25){futClose(x.id,'砍倉');pushNews(d,'【期貨斷頭】保證金跌破風險指標 25%，'+F.n+' 被期貨商強制平倉！','st_skull',2);S._big=1}
+    else if(x.mg<futMaint(x)&&!x.call){x.call=1;S.evq.push({k:'futcall',id:x.id})}else if(x.mg>=futMaint(x))x.call=0}
+  // 信用帳戶維持率
+  if(hasCredit()){const r=maintRatio();
+    if(r<1.2||(S.call&&S.i>=S.call.dl&&r<1.3)){const n=liquidateCredit('斷頭');if(n){pushNews(d,'【斷頭】整戶維持率只剩 '+(r*100).toFixed(0)+'%，券商強制賣出你的信用部位！','st_skull',2);S._big=1;S.call=null}}
+    else if(r<1.3){if(!S.call){S.call={dl:S.i+2};S.evq.push({k:'call'})}}else S.call=null}
+  else S.call=null;
+  // 違約交割
+  if(S.cash<-1000&&S.i-(S.life.defAt||-999)>20&&!S.evq.some(e=>e.k==='default')){S.life.defAt=S.i;S.evq.push({k:'default'})}
+}
+// ====================== 人生事件 ======================
+function lifeBracket(){const inc=(S.life.salBase||S.sal||0)*14;return inc<560000?0.05:inc<1260000?0.12:inc<2520000?0.2:0.3}
+function randListed(mk){const fs=Object.keys(SYM).filter(f=>listed(f)&&traded(f)&&(!mk||SYM[f].mk===mk)&&SYM[f].mk!=='CR'&&!SYM[f].etf);return fs.length?pickA(fs):null}
+function pickA(a){return a[Math.floor(Math.random()*a.length)]}
+const RR=(a,b)=>a+Math.random()*(b-a),chance=p=>Math.random()<p;
+function lifeMonthly(d){
+  const m=new Date((d+D0)*864e5).getUTCMonth()+1,L=S.life;
+  // 固定支出
+  if(L.ins){S.cash-=2500}
+  if(L.kids){S.cash-=12000*L.kids}
+  if(L.jobless>0){L.jobless--;if(!L.jobless){S.sal=L.salBase;S.evq.push({k:'rehired'})}}
+  for(const l of L.loans.slice()){if(S.i>=l.due){L.loans=L.loans.filter(x=>x!==l);S.evq.push({k:'loanBack',amt:l.amt,ok:l.ok})}}
+  if(L.group&&S.i>=L.group){L.group=0;S.evq.push({k:'groupEnd'})}
+  if(S.blind)return;
+  // 季節事件
+  if(m===2&&S.sal)S.evq.push({k:'bonus'});
+  const y=yr(d);if(m===5&&(L.divYr[y-1]||0)>0)S.evq.push({k:'tax',div:L.divYr[y-1]});
+  if(m===6&&Object.keys(S.pos).some(f=>SYM[f].mk==='TW'))S.evq.push({k:'souvenir'});
+  // 隨機事件
+  if(chance(0.32)){const pool=Object.keys(LIFE).filter(k=>LIFE[k].w&&LIFE[k].w()>0);if(pool.length){let t=Math.random()*pool.reduce((s,k)=>s+LIFE[k].w(),0);for(const k of pool){t-=LIFE[k].w();if(t<=0){S.evq.push({k});break}}}}
+}
+function crisis(){const D=DAT.IDX_TWII,k=D.ptr;if(k<250)return 0;let hi=0;for(let i=k-250;i<=k;i++)hi=Math.max(hi,D.c[i]);return 1-D.c[k]/hi}
+const LIFE={
+  sick:{w:()=>1,ev:()=>{const c=Math.round(RR(30000,180000)/1000)*1000;return {ic:'st_hosp',t:'生病住院',b:'突然急性腸胃炎住院一週，醫藥費加看護費共 '+ntdF(c)+'。'+(S.life.ins?'<br>還好你有買醫療險，保險理賠 80%！':''),ch:[['支付',()=>{const pay=S.life.ins?c*0.2:c;S.cash-=pay;return '支付了 '+ntdF(pay)+'。'}]]}}},
+  insure:{w:()=>S.life.ins?0:0.7,ev:()=>({ic:'st_shield',t:'保險業務員',b:'大學同學轉職當保險業務，推薦你一張醫療險，每月 NT$2,500。<br>「人生意外很多，有備無患啦！」',ch:[['投保',()=>{S.life.ins=1;return '你買了醫療險，之後住院可以理賠 80%。'}],['婉拒',()=>'同學有點失望地走了。']]})},
+  car:{w:()=>0.8,ev:()=>{const c=Math.round(RR(15000,80000)/1000)*1000;return {ic:'st_car',t:'車子拋錨',b:'早上出門車子發不動，拖去修車廠：電瓶、發電機都要換，'+ntdF(c)+'。',ch:[['修車',()=>{S.cash-=c;return '付了 '+ntdF(c)+' 修車費。'}]]}}},
+  tip:{w:()=>1.1,ev:()=>{const f=randListed();if(!f)return null;const nm=SYM[f].name;return {ic:'st_shush',t:'朋友報明牌',b:'喝酒時朋友神秘兮兮地說：「我表哥在 <b>'+nm+'</b> 上班，聽說下個月有大利多，現在不買就來不及了！」',ch:[['重押！（現金的 30%）',()=>tipBuy(f,0.3)],['小買一點（5%）',()=>tipBuy(f,0.05)],['聽聽就好',()=>'你笑笑沒有理他。（之後可以回頭看看 '+nm+' 到底有沒有漲）']]}}},
+  group:{w:()=>S.life.group?0:0.7,ev:()=>({ic:'st_fish',t:'飆股群組',b:'你被加進一個 LINE 群組「股神老師帶你飛」，裡面每天都有人曬對帳單賺好幾百萬。<br>老師說加入 VIP 只要 NT$36,000，保證年賺 300%。',ch:[['加入 VIP',()=>{S.cash-=36000;S.life.group=S.i+40;return '你付了 36,000 元……老師說明牌下週就會發。'}],['檢舉詐騙',()=>{S.cash+=1000;return '你向 165 反詐騙專線檢舉，警察局頒給你 1,000 元獎勵。'}],['退出群組',()=>'你默默退出了群組。']]})},
+  lend:{w:()=>S.cash>200000?0.6:0,ev:()=>{const a=Math.round(RR(50000,300000)/10000)*10000;return {ic:'st_sweat',t:'親戚借錢',b:'表哥說他的店周轉不靈，想跟你借 '+ntdF(a)+'，「半年內一定還，還多給你利息！」',ch:[['借他',()=>{S.cash-=a;S.life.loans.push({amt:a,due:S.i+125,ok:chance(0.5)});return '你把錢轉給了表哥。'}],['婉拒',()=>'表哥有點不高興，但也沒說什麼。']]}}},
+  raise:{w:()=>S.sal&&!S.life.jobless?0.6:0,ev:()=>{const r=RR(0.04,0.12);return {ic:'st_tie',t:'加薪',b:'表現優秀，老闆幫你加薪 '+(r*100).toFixed(0)+'%！',ch:[['太好了',()=>{S.sal=Math.round(S.sal*(1+r)/100)*100;S.life.salBase=S.sal;return '月薪調整為 '+ntdF(S.sal)+'。'}]]}}},
+  layoff:{w:()=>S.sal&&!S.life.jobless?(crisis()>0.2?2:0.15):0,ev:()=>({ic:'st_scissors',t:'公司裁員',b:crisis()>0.2?'景氣急凍，公司宣布大裁員，你也在名單上……':'公司組織調整，你被資遣了。',ch:[['領資遣費，找新工作',()=>{const sv=S.sal*3;S.cash+=sv;S.life.jobless=Math.floor(RR(3,9));S.life.salBase=S.sal;S.sal=0;return '領到資遣費 '+ntdF(sv)+'。接下來幾個月沒有薪水，要撐住！'}]]})},
+  marry:{w:()=>!S.life.married&&S.i-S.s0>250?0.35:0,ev:()=>{const c=Math.round(RR(300000,800000)/10000)*10000,g=Math.round(c*RR(0.4,0.8)/1000)*1000;return {ic:'st_ring',t:'結婚',b:'交往多年的另一半答應了你的求婚！婚宴、婚紗、蜜月預估 '+ntdF(c)+'，可以收到大約 '+ntdF(g)+' 紅包。',ch:[['辦婚禮',()=>{S.cash+=g-c;S.life.married=1;return '婚禮很圓滿！淨支出 '+ntdF(c-g)+'。'}],['公證就好',()=>{S.cash-=30000;S.life.married=1;return '你們低調公證，省下一大筆錢。'}]]}}},
+  baby:{w:()=>S.life.married&&S.life.kids<3?0.3:0,ev:()=>({ic:'st_baby',t:'寶寶誕生',b:'恭喜！你當'+(chance(.5)?'爸爸':'媽媽')+'了！之後每個月要多花 NT$12,000 養小孩。',ch:[['太幸福了',()=>{S.life.kids++;S.cash-=50000;return '坐月子與嬰兒用品花了 50,000 元。'}]]})},
+  lottery:{w:()=>1,ev:()=>{const r=Math.random();const win=r<0.0002?10000000:r<0.003?200000:r<0.03?4000:r<0.3?200:0;return {ic:'st_receipt',t:'統一發票',b:'對發票時間到了！你翻出一疊發票……',ch:[['對獎',()=>{S.cash+=win;return win?'中了 '+ntdF(win)+'！'+(win>=200000?'（要扣 20% 稅）':''):'一張都沒中。'}]]}}},
+  ipo:{w:()=>yr(today())>=2005?1:0,ev:()=>{const p=Math.round(RR(40,200)),amt=p*1000;return {ic:'st_ticket',t:'新股抽籤',b:'有一檔新股要上市，承銷價 '+p+' 元，市場預估上市後會大漲。抽籤需要準備 '+ntdF(amt)+'（沒中會退還），手續費 20 元。',ch:[['參加抽籤',()=>{if(S.cash<amt+20)return '現金不足，無法參加。';S.cash-=20;if(chance(0.025)){const g=Math.round(amt*RR(0.15,1.2));S.cash+=g;return '<b>中籤了！</b>上市後賣出，賺了 '+ntdF(g)+'！'}return '沒抽中……中籤率只有大約 2%。'}],['不參加',()=>'']]}}},
+  rent:{w:()=>0.3,ev:()=>({ic:'st_house',t:'房東漲房租',b:'房東說物價上漲，下個月起房租每月漲 NT$3,000。',ch:[['只好接受',()=>{S.life.rent=(S.life.rent||0)+3000;return '每月多 3,000 元支出。'}],['搬家',()=>{S.cash-=40000;return '搬家花了 40,000 元，但房租維持不變。'}]]})},
+  scam:{w:()=>0.4,ev:()=>({ic:'st_phone',t:'假冒券商簡訊',b:'你收到簡訊：「您的證券帳戶異常，請點擊連結重新驗證，否則將凍結交易。」',ch:[['點連結輸入帳密',()=>{const l=Math.round(Math.min(S.cash*0.3,300000));S.cash-=l;return '這是釣魚簡訊！你的帳戶被盜轉了 '+ntdF(l)+'……記得：券商不會用簡訊要你輸入密碼。'}],['打給券商查證',()=>'營業員說這是詐騙簡訊，請不要點。你逃過一劫！']]})},
+  inherit:{w:()=>0.08,ev:()=>{const a=Math.round(RR(300000,2000000)/10000)*10000;return {ic:'air_moneywings',t:'意外之財',b:'遠房的舅公過世，留給你一筆遺產 '+ntdF(a)+'。',ch:[['收下',()=>{S.cash+=a;S.dep+=a;return '帳戶多了 '+ntdF(a)+'。'}]]}}},
+};
+function tipBuy(f,fr){
+  const px=P(f),rt=rate(f);let q=Math.floor(Math.max(0,S.cash)*fr/(px*rt*1.003));if(SYM[f].mk==='TW'&&q>=1000)q=Math.floor(q/1000)*1000;
+  if(q<=0)return '現金不夠，買不了。';const r=execTrade(f,'B',q,px,'明牌');S.tips=(S.tips||[]);S.tips.push({f,px,i:S.i});
+  return r==='ok'?'你以 '+pfmt(px)+' 買進 '+SYM[f].name+' '+qfmt(f,q)+'。一個月後會告訴你明牌準不準。':'下單失敗。';
+}
+const EVX={
+  bonus:()=>{const b=Math.round(S.sal*RR(0.5,3.5)/1000)*1000;return {ic:'air_party',t:'年終獎金',b:'過年前公司發年終，你拿到 '+(b/S.sal).toFixed(1)+' 個月，共 '+ntdF(b)+'！',ch:[['存進交割帳戶',()=>{S.cash+=b;S.dep+=b;return ''}]]}},
+  tax:e=>{const div=e.div,r=lifeBracket();const comb=Math.round(div*r-Math.min(div*0.085,80000)),sep=Math.round(div*0.28);return {ic:'air_scales',t:'五月報稅',b:'去年你領了台股股利 '+ntdF(div)+'，要申報綜合所得稅。你的稅率級距約 '+(r*100)+'%。<br><br>・合併計稅：併入所得，可抵減 8.5%（上限 8 萬）→ '+(comb>=0?'要繳 '+ntdF(comb):'<b>退稅 '+ntdF(-comb)+'</b>')+'<br>・分開計稅：股利單獨課 28% → 要繳 '+ntdF(sep),ch:[['合併計稅',()=>{S.cash-=comb;return comb>=0?'繳了 '+ntdF(comb)+' 的稅。':'退稅 '+ntdF(-comb)+' 入帳！'}],['分開計稅',()=>{S.cash-=sep;return '繳了 '+ntdF(sep)+' 的稅。'+(sep>comb?'（其實合併計稅比較划算喔）':'')}]]}},
+  souvenir:()=>({ic:'st_gift',t:'股東會紀念品',b:'你持有的台股公司開股東會了，排隊領到一份紀念品（'+pickA(['環保餐具組','保溫杯','雨傘','洗碗精','購物袋','面膜'])+'）。',ch:[['開心收下',()=>'零股族的快樂就是這麼簡單。']]}),
+  rehired:()=>({ic:'st_tie',t:'重回職場',b:'找了幾個月，終於找到新工作！月薪恢復 '+ntdF(S.sal)+'。',ch:[['重新出發',()=>'']]}),
+  loanBack:e=>({ic:e.ok?'air_handshake':'st_cry',t:e.ok?'表哥還錢了':'借出去的錢',b:e.ok?'表哥的店撐過來了，還你 '+ntdF(e.amt*1.05)+'（含利息），還請你吃了一頓大餐。':'表哥一直已讀不回……那筆錢大概要不回來了。',ch:[['好',()=>{if(e.ok)S.cash+=e.amt*1.05;return ''}]]}),
+  groupEnd:()=>({ic:'st_cry',t:'老師失聯了',b:'那個「股神老師」的群組突然解散了，老師的帳號也消失了——典型的投資詐騙。',ch:[['報警',()=>'警察說這種案子很多，錢很難追回來。學到教訓了。']]}),
+  call:()=>{const r=maintRatio();return {ic:'st_police',t:'追繳通知！',b:'你的信用帳戶整戶維持率跌到 <b class="dn">'+(r*100).toFixed(0)+'%</b>，低於 130%。<br>請在 <b>2 個交易日內</b>補足（回到 166% 以上），否則券商將強制賣出（斷頭）。<br>跌破 120% 會立刻斷頭。',ch:[['補繳保證金',()=>{const c=crSum();const need=Math.max(0,(1.66*(c.ln+c.sv)-(c.mv+c.co)));if(need>S.cash)return '現金不足（需要 '+ntdF(need)+'）。到「信用」頁自行減少部位吧。';S.cash-=need;let rest=need;for(const f in S.mpos){const m=S.mpos[f];const k=Math.min(m.loan,rest);m.loan-=k;rest-=k}for(const f in S.spos){if(rest<=0)break;S.spos[f].coll+=rest;rest=0}S.call=null;return '補繳 '+ntdF(need)+'，維持率恢復到 '+(maintRatio()*100).toFixed(0)+'%。'}],['自己處理',()=>{tab='cr';return ''}],['賭它會漲回來',()=>'希望行情站在你這邊……']]}},
+  futcall:e=>{const x=S.fut.find(z=>z.id===e.id);if(!x)return null;const F=FUT[x.k],need=Math.max(0,Math.ceil(futMaint(x)/0.75-x.mg));return {ic:'st_police',t:'期貨保證金追繳',b:F.n+' 部位虧損，保證金只剩 '+ntdF(x.mg)+'，低於維持保證金。<br>補足到原始保證金需要 '+ntdF(need)+'。不補的話，跌破風險指標 25% 會被砍倉。',ch:[['補繳',()=>{if(need>S.cash)return '現金不足。';S.cash-=need;x.mg+=need;x.paid+=need;x.call=0;return '已補繳 '+ntdF(need)+'。'}],['直接平倉',()=>{futClose(x.id,'認賠');return ''}],['先觀望',()=>'']]}},
+  default:()=>({ic:'st_skull',t:'違約交割！',b:'你的交割帳戶餘額不足 <b class="dn">'+ntdF(S.cash)+'</b>，構成<b>違約交割</b>！<br>券商會強制賣出你的股票抵償，並收取違約金 7%。信用帳戶與當沖資格停權兩年。',ch:[['接受處分',()=>{const debt=-S.cash;S.cash-=debt*0.07;liquidateCredit('違約處分');for(const f of Object.keys(S.pos)){if(S.cash>=0)break;if(!traded(f))continue;const p=S.pos[f];const need=-S.cash;const q=Math.min(p.q,SYM[f].mk==='CR'?need/(P(f)*rate(f))*1.01:Math.ceil(need/(P(f)*rate(f))*1.01));execTrade(f,'S',SYM[f].mk==='CR'?+q.toFixed(4):q,P(f),'違約處分')}S.life.ban=S.i+500;return '帳戶被強制處分，兩年內不能使用融資融券與當沖。'}]]}),
+};
+function tipCheck(){
+  if(!S.tips)return;for(const t of S.tips.slice()){if(S.i-t.i>=22){S.tips=S.tips.filter(x=>x!==t);if(!listed(t.f))continue;const r=P(t.f)/t.px-1;pushNews(today(),'【明牌追蹤】一個月前朋友報的 '+SYM[t.f].name+'，到現在'+(r>=0?'漲了 ':'跌了 ')+pct(Math.abs(r))+'。'+(r>0.1?'這次被他說中了！':r<-0.05?'明牌果然不可信……':'差不多沒動。'),r>=0?'air_up':'air_down',1)}}
+}
+function nextLife(){
+  if(!S||!S.evq.length||$('ov'))return;
+  const e=S.evq.shift();const src=EVX[e.k]||(LIFE[e.k]&&LIFE[e.k].ev);if(!src)return nextLife();const ev=src(e);if(!ev)return nextLife();
+  if(playT)togglePlay();
+  sheet('<div class="evt"><img src="'+ico(ev.ic)+'"><div class="et">'+ev.t+'</div><div class="eb">'+ev.b+'</div>'+ev.ch.map((c,i)=>'<button class="bigbtn'+(i?' sec':'')+'" onclick="lifeCh('+i+')">'+c[0]+'</button>').join('')+'</div>',0,1);
+  window._ev=ev;
+}
+function lifeCh(i){const r=window._ev.ch[i][1]();closeSheet();save();render();if(r){sheet('<div class="evt"><img src="'+ico(window._ev.ic)+'"><div class="eb">'+r+'</div><button class="bigbtn" onclick="closeSheet();nextLife()">好</button></div>',0,1)}else setTimeout(nextLife,100)}
+
+// ====================== 信用頁 ======================
+function viewCr(){
+  const c=crSum(),r=maintRatio(),lock=creditLock();
+  let h='<div class="card"><div class="hd" style="margin:0 0 6px"><img src="'+ico('air_scales')+'">信用帳戶</div>'+(lock?'<div class="note" style="color:#ff9f43">'+lock+'</div>':'')+
+   '<div class="kv"><div><span>整戶維持率</span><b class="'+(r<1.3?'dn':r<1.66?'':'up')+'">'+(isFinite(r)?(r*100).toFixed(0)+'%':'—')+'</b></div><div><span>追繳狀態</span><b class="'+(S.call?'dn':'')+'">'+(S.call?'追繳中！':'正常')+'</b></div>'+
+   '<div><span>融資市值</span><b>'+ntd(c.mv)+'</b></div><div><span>融資金額</span><b>'+ntd(c.ln)+'</b></div><div><span>融券市值</span><b>'+ntd(c.sv)+'</b></div><div><span>融券擔保品</span><b>'+ntd(c.co)+'</b></div>'+
+   '<div><span>期貨保證金</span><b>'+ntd(futMg())+'</b></div><div><span>累計利息</span><b class="dn">'+fmt(S.intPaid)+'</b></div></div>'+
+   '<div class="note">台股：融資自備 4 成（年息 6.5%）、融券保證金 9 成；美股：融資 5 成（年息 7.5%）、放空保證金 5 成＋年 3% 借券費。維持率低於 130% 會追繳，低於 120% 立即斷頭。</div></div>';
+  const rowM=f=>{const m=S.mpos[f],v=mval(f),pl=v-m.loan-(m.cost-m.loan);return '<div class="row">'+logo(f)+'<div class="nm"><b><span class="tag b">融資</span> '+SYM[f].name+'</b><small>'+qfmt(f,m.q)+'・借 '+ntd(m.loan)+'</small></div><div class="px"><b>'+ntd(v)+'</b><span class="'+cls(pl)+'">'+(pl>=0?'+':'')+fmt(pl)+'</span></div><button class="chip" onclick="crAct(\'ms\',\''+f+'\')">賣出</button></div>'};
+  const rowS=f=>{const s=S.spos[f],v=sval(f),pl=s.ent-v;return '<div class="row">'+logo(f)+'<div class="nm"><b><span class="tag s">融券</span> '+SYM[f].name+'</b><small>'+qfmt(f,s.q)+'・均價 '+pfmt(s.ent/s.q/rate(f))+'</small></div><div class="px"><b>'+ntd(v)+'</b><span class="'+cls(pl)+'">'+(pl>=0?'+':'')+fmt(pl)+'</span></div><button class="chip" onclick="crAct(\'sc\',\''+f+'\')">回補</button></div>'};
+  const ms=Object.keys(S.mpos),ss=Object.keys(S.spos);
+  h+='<div class="grp"><span>融資・融券部位</span><span>損益</span></div>'+(ms.length||ss.length?ms.map(rowM).join('')+ss.map(rowS).join(''):'<div class="empty" style="padding:14px">沒有信用部位<br><small>在個股頁按「融資買進」或「融券放空」</small></div>');
+  h+='<div class="grp"><span>期貨</span><span>原始保證金</span></div>';
+  for(const k in FUT){const F=FUT[k];if(!listed(F.f))continue;const px=P(F.f),mg=px*F.mult*F.mr*(F.mk==='TW'?1:fx());h+='<div class="row"><div class="lg" style="background:'+(F.mk==='TW'?'#c0392b':'#2c5aa0')+'">'+(F.mk==='TW'?'小台':'MES')+'</div><div class="nm"><b>'+F.n+'</b><small>'+F.desc+'・指數 '+fmt(px,0)+'・保證金 '+ntd(mg)+'/口</small></div><button class="chip" style="color:#ff6b7a" onclick="futSheet(\''+k+'\',1)">做多</button><button class="chip" style="color:#25d49a" onclick="futSheet(\''+k+'\',-1)">放空</button></div>'}
+  for(const x of S.fut){const F=FUT[x.k],pl=x.mg-x.paid;h+='<div class="row"><div class="nm"><b><span class="tag '+(x.dir>0?'b':'s')+'">'+(x.dir>0?'多':'空')+'</span> '+F.n+' '+x.n+' 口</b><small>進場 '+fmt(x.px,0)+' → '+fmt(P(F.f),0)+'・保證金 '+ntd(x.mg)+(x.mg<futMaint(x)?' <span class="dn">（低於維持）</span>':'')+'</small></div><div class="px"><b class="'+cls(pl)+'">'+(pl>=0?'+':'')+fmt(pl)+'</b></div><button class="chip" onclick="futClose('+x.id+');save();render()">平倉</button></div>'}
+  h+='<div class="grp"><span>當沖預約（下個交易日執行）</span><span>'+S.dt.length+'</span></div>';
+  h+=S.dt.length?S.dt.map(o=>'<div class="row"><div class="nm"><b><span class="tag '+(o.dir>0?'b':'s')+'">'+(o.dir>0?'做多':'做空')+'</span> '+SYM[o.f].name+' '+qfmt(o.f,o.q)+'</b><small>停損 '+(o.sl*100).toFixed(1)+'%・停利 '+(o.tp?(o.tp*100).toFixed(1)+'%':'無')+'</small></div><button class="chip" onclick="S.dt=S.dt.filter(z=>z.id!=='+o.id+');save();render()">取消</button></div>').join(''):'<div class="note" style="margin:0 6px 10px">在個股頁按「當沖」預約。下個交易日開盤進場、收盤前一定出場（觸價停損停利）。台股當沖證交稅減半（0.15%）。</div>';
+  const dc=Object.keys(S.dca);h+='<div class="grp"><span>定期定額</span><span>每月 6 日扣款</span></div>'+(dc.length?dc.map(f=>'<div class="row">'+logo(f)+'<div class="nm"><b>'+SYM[f].name+'</b><small>每月 '+ntdF(S.dca[f].amt)+'</small></div><button class="chip" onclick="delete S.dca[\''+f+'\'];save();render()">停扣</button></div>').join(''):'<div class="note" style="margin:0 6px">在個股頁按「定期定額」設定，每月自動買進（台股可買零股，手續費最低 1 元）。</div>');
+  return h;
+}
+// ====================== 信用下單 ======================
+let X={};
+function crAct(kind,f){f=f||detailF;const mk=SYM[f].mk;X={kind,f,q:kind==='ms'?S.mpos[f].q:kind==='sc'?S.spos[f].q:mk==='TW'?1000:mk==='CR'?0.01:10,dir:1,sl:0.02,tp:0.03,amt:3000};drawCr()}
+function drawCr(){
+  const f=X.f,s=SYM[f],mk=s.mk,px=P(f),rt=rate(f),r=CRR[mk]||CRR.US;const step=mk==='TW'?1000:mk==='CR'?0.01:1;
+  const T={mb:'融資買進',ms:'融資賣出',ss:'融券放空',sc:'融券回補',dt:'當沖',dca:'定期定額'}[X.kind];
+  let h='<div class="hd">'+logo(f)+' '+T+'・'+s.name+'<span style="flex:1"></span><button class="x" onclick="closeSheet()">✕</button></div>';
+  if(['mb','ss','dt'].includes(X.kind)){const lk=creditLock();if(lk){sheet(h+'<div class="note" style="font-size:14px;color:#ff9f43">'+lk+'</div><button class="bigbtn sec" onclick="closeSheet()">知道了</button>',1);return}}
+  if(!traded(f)&&X.kind!=='dca'&&X.kind!=='dt'){sheet(h+'<div class="note" style="font-size:14px">今天休市，無法交易。</div>',1);return}
+  if(X.kind==='dca'){
+    h+='<div class="lbl">每月扣款金額（NT$）</div><div class="inp"><button onclick="X.amt=Math.max(1000,X.amt-1000);drawCr()">−</button><input inputmode="numeric" value="'+X.amt+'" onchange="X.amt=Math.max(1000,parseInt(this.value)||1000);drawCr()"><button onclick="X.amt+=1000;drawCr()">＋</button></div><div class="qk">'+[3000,5000,10000,30000,50000].map(a=>'<button onclick="X.amt='+a+';drawCr()">'+fmt(a)+'</button>').join('')+'</div>'+
+      '<div class="note">每月 6 日（遇休市順延）自動以收盤價買進。'+(S.dca[f]?'<br>目前設定：每月 '+ntdF(S.dca[f].amt):'')+'</div><button class="bigbtn" onclick="S.dca[X.f]={amt:X.amt,mo:-1};closeSheet();save();render();toast(\'已設定定期定額\',\'air_cal\')">設定</button>';
+    return sheet(h,1);
+  }
+  if(X.kind==='dt'){
+    h+='<div class="tabs"><button class="'+(X.dir>0?'on':'')+'" onclick="X.dir=1;drawCr()">做多（先買後賣）</button><button class="'+(X.dir<0?'on':'')+'" onclick="X.dir=-1;drawCr()">做空（先賣後買）</button></div>';
+  }
+  h+='<div class="lbl">數量</div><div class="inp"><button onclick="X.q=Math.max(0,X.q-'+step+');drawCr()">−</button><input inputmode="decimal" value="'+X.q+'" onchange="X.q=Math.max(0,parseFloat(this.value)||0);drawCr()"><button onclick="X.q+='+step+';drawCr()">＋</button></div>';
+  h+='<div class="qk">'+(mk==='TW'?[['1 張',1000],['5 張',5000],['10 張',10000],['50 張',50000]]:[['10',10],['50',50],['100',100],['500',500]]).map(q=>'<button onclick="X.q='+q[1]+';drawCr()">'+q[0]+'</button>').join('')+(X.kind==='ms'?'<button onclick="X.q=S.mpos[X.f].q;drawCr()">全部</button>':X.kind==='sc'?'<button onclick="X.q=S.spos[X.f].q;drawCr()">全部</button>':'')+'</div>';
+  const amt=X.q*px*rt;let sum='<div><span>成交金額（約）</span><b>'+ntdF(amt)+'</b></div>',need=0,err='';
+  if(X.kind==='mb'){const ln=Math.floor(amt*r.mr/1000)*1000;need=settle(f,'B',X.q,px).ntd-ln;sum+='<div><span>向券商借（'+r.mr*100+'%）</span><b>'+ntdF(ln)+'</b></div><div><span>自備款</span><b class="up">'+ntdF(need)+'</b></div><div><span>年利率</span><b>'+(r.ir*100).toFixed(1)+'%</b></div>'}
+  if(X.kind==='ss'){need=Math.ceil(amt*r.sd/100)*100+Math.round(amt*r.bf);sum+='<div><span>保證金（'+r.sd*100+'%）</span><b class="up">'+ntdF(need)+'</b></div>'+(r.sf?'<div><span>借券費</span><b>年 '+(r.sf*100)+'%</b></div>':'<div><span>借券費 0.08%</span><b>'+ntdF(amt*r.bf)+'</b></div>')+'<div class="note" style="margin:0">股價漲越多你虧越多，理論上虧損無上限！</div>'}
+  if(X.kind==='ms'){const m=S.mpos[f];const k=Math.min(1,X.q/m.q);sum+='<div><span>償還融資</span><b>'+ntdF(m.loan*k)+'</b></div><div><span>預估入帳</span><b>'+ntdF(settle(f,'S',X.q,px).ntd-m.loan*k)+'</b></div>';if(X.q>m.q+1e-9)err='超過部位'}
+  if(X.kind==='sc'){const s2=S.spos[f];const k=Math.min(1,X.q/s2.q);sum+='<div><span>預估損益</span><b class="'+cls(s2.ent*k-settle(f,'B',X.q,px).ntd)+'">'+fmt(s2.ent*k-settle(f,'B',X.q,px).ntd)+'</b></div>';if(X.q>s2.q+1e-9)err='超過部位'}
+  if(X.kind==='dt'){need=amt*0.2;h+='<div class="lbl">停損（跌破進場價幾 % 就出場）</div><div class="qk">'+[0,0.01,0.02,0.03,0.05].map(v=>'<button class="'+(X.sl===v?'on':'')+'" onclick="X.sl='+v+';drawCr()">'+(v?(v*100)+'%':'不設')+'</button>').join('')+'</div><div class="lbl">停利</div><div class="qk">'+[0,0.02,0.03,0.05,0.08].map(v=>'<button class="'+(X.tp===v?'on':'')+'" onclick="X.tp='+v+';drawCr()">'+(v?(v*100)+'%':'不設')+'</button>').join('')+'</div>';
+    sum+='<div><span>當沖額度需求（2 成）</span><b>'+ntdF(need)+'</b></div><div class="note" style="margin:0">下個交易日開盤進場，盤中觸價停損／停利，否則收盤自動平倉。虧損會直接從現金扣，現金不足就是<b class="dn">違約交割</b>！</div>'}
+  h+='<div class="sum">'+sum+'<div><span>可用現金</span><b>'+ntdF(S.cash)+'</b></div></div>';
+  if(X.q<=0)err='請輸入數量';else if(need>S.cash)err='現金不足';
+  h+='<button class="bigbtn" style="'+(err?'opacity:.45':'')+'" onclick="doCr()">'+(err||'確認'+T)+'</button>';
+  sheet(h,1);
+}
+function doCr(){
+  const f=X.f;let r='ok';const q=SYM[f].mk==='CR'?+X.q.toFixed(4):Math.round(X.q);if(q<=0)return;
+  if(X.kind==='mb')r=marginBuy(f,q);else if(X.kind==='ms')r=marginSell(f,q);else if(X.kind==='ss')r=shortSell(f,q);else if(X.kind==='sc')r=shortCover(f,q);
+  else if(X.kind==='dt'){if(P(f)*q*rate(f)*0.2>S.cash){toast('現金不足','air_warn');return}S.dt.push({id:S.oid++,f,dir:X.dir,q,sl:X.sl,tp:X.tp});toast('已預約當沖，下個交易日執行','air_cal')}
+  if(r!=='ok'){toast(r==='cash'?'現金不足':'部位不足','air_warn');return}
+  if(X.kind!=='dt')toast(({mb:'融資買進 ',ms:'融資賣出 ',ss:'融券放空 ',sc:'融券回補 '})[X.kind]+SYM[f].name+' '+qfmt(f,q),'air_hand');
+  closeSheet();save();render();
+}
+let FX={};
+function futSheet(k,dir){
+  const lk=creditLock();FX={k,dir,n:1};const F=FUT[k];
+  if(lk){sheet('<div class="hd">'+F.n+'<span style="flex:1"></span><button class="x" onclick="closeSheet()">✕</button></div><div class="note" style="font-size:14px;color:#ff9f43">'+lk+'</div>',1);return}
+  drawFut();
+}
+function drawFut(){
+  const F=FUT[FX.k],px=P(F.f),rt=F.mk==='TW'?1:fx(),mg=Math.ceil(px*F.mult*F.mr*rt*FX.n/100)*100,fee=F.fee*FX.n*rt;
+  let h='<div class="hd"><span class="tag '+(FX.dir>0?'b':'s')+'" style="font-size:15px;padding:3px 10px">'+(FX.dir>0?'做多':'放空')+'</span>'+F.n+'<span style="flex:1"></span><button class="x" onclick="closeSheet()">✕</button></div>';
+  if(!traded(F.f))h+='<div class="note" style="color:#ff9f43">今天休市。</div>';
+  h+='<div class="lbl">口數</div><div class="inp"><button onclick="FX.n=Math.max(1,FX.n-1);drawFut()">−</button><input value="'+FX.n+'" onchange="FX.n=Math.max(1,parseInt(this.value)||1);drawFut()"><button onclick="FX.n++;drawFut()">＋</button></div>';
+  h+='<div class="sum"><div><span>指數</span><b>'+fmt(px,0)+'</b></div><div><span>契約價值</span><b>'+ntdF(px*F.mult*rt*FX.n)+'</b></div><div><span>原始保證金</span><b class="up">'+ntdF(mg)+'</b></div><div><span>手續費</span><b>'+ntdF(fee)+'</b></div><div><span>指數每動 1%</span><b>'+ntdF(px*0.01*F.mult*rt*FX.n)+'</b></div><div><span>可用現金</span><b>'+ntdF(S.cash)+'</b></div></div>';
+  h+='<div class="note">約 '+(1/F.mr).toFixed(0)+' 倍槓桿。每天依收盤價結算盈虧；保證金低於維持保證金會追繳，低於 25% 直接砍倉。</div>';
+  const err=!traded(F.f)?'今日休市':mg+fee>S.cash?'現金不足':'';
+  h+='<button class="bigbtn" style="'+(err?'opacity:.45':'')+'" onclick="if(!\''+err+'\'){futOpen(FX.k,FX.dir,FX.n);closeSheet();save();render()}">'+(err||'確認'+(FX.dir>0?'做多':'放空'))+'</button>';
+  sheet(h,1);
+}
+
 // ====================== 時間推進 ======================
 function stepDay(){
   if(S.i>=S.end)return false;
@@ -425,13 +681,16 @@ function stepDay(){
       if(p){const nq=SYM[f].mk==='CR'?p.q*s.r:Math.floor(p.q*s.r+1e-6);const add=nq-p.q;p.q=nq;
         pushNews(d,(SYM[f].mk==='TW'?'【配股】':'【股票分割】')+SYM[f].name+' 每股配發／分割比例 '+s.r.toFixed(3).replace(/\.?0+$/,'')+'，你的持股增加 '+qfmt(f,add)+'。','air_party',1)}
       for(const o of S.orders)if(o.f===f){o.q=Math.floor(o.q*s.r);o.px/=s.r}
+      if(S.mpos[f])S.mpos[f].q=Math.floor(S.mpos[f].q*s.r+1e-6);if(S.spos[f])S.spos[f].q=Math.floor(S.spos[f].q*s.r+1e-6);
     }
     // 除息
     for(const v of D.div)if(v.day>pd&&v.day<=d){
+      if(S.mpos[f]){const gm=S.mpos[f].q*v.a*(SYM[f].mk==='TW'?1:0.7*fx());S.cash+=gm;S.divIn+=gm}
       const p=S.pos[f];if(!p||p.q<=0)continue;
       let g=p.q*v.a,net,note='';
       if(SYM[f].mk==='TW'){net=g;if(g>=20000&&yr(d)>=2013){net=g*(1-0.0211);note='（扣二代健保補充保費 2.11%）'}}
       else{net=g*0.7*fx();note='（美股預扣 30% 股利稅）'}
+      if(SYM[f].mk==='TW'){const yy=yr(d);S.life.divYr[yy]=(S.life.divYr[yy]||0)+g}
       S.cash+=net;S.divIn+=net;
       pushNews(d,'【除息】'+SYM[f].name+' 每股配息 '+curSym(f)+pfmt(v.a)+'，入帳 '+ntdF(net)+note+'。','air_cash',1);
     }
@@ -451,9 +710,11 @@ function stepDay(){
     else pushNews(d,'【委託取消】'+nm+' '+(r==='cash'?'現金不足':'庫存不足')+'，委託已刪除。','air_warn',1);
   }
   S.orders=keep;
+  runDayTrades();dcaRun();creditDaily(pd,d);tipCheck();
   // 薪水
   const m=mo(d);
   if(S.sal&&m!==S.lastMo){S.cash+=S.sal;S.dep+=S.sal;S.bench.tw+=S.sal/P('IDX_TWII');S.bench.us+=S.sal/(P('SPY')*fx());pushNews(d,'【薪水入帳】'+ntdF(S.sal)+' 已存入交割帳戶。','air_cash')}
+  if(m!==S.lastMo){if(S.life.rent)S.cash-=S.life.rent;lifeMonthly(d)}
   S.lastMo=m;
   // 基準 SPY 股利再投入
   for(const v of DAT.SPY.div)if(v.day>pd&&v.day<=d){S.bench.us+=S.bench.us*v.a*0.7/P('SPY')}
@@ -476,11 +737,12 @@ function stepDay(){
 let playT=null,lastNewsN=0;
 function adv(n){
   if(!S)return;const n0=S.news.length;let st=0;S._big=null;
-  for(let k=0;k<n;k++){if(!stepDay())break;st++;if(S._big&&playT)break}
+  for(let k=0;k<n;k++){if(!stepDay())break;st++;if(S._big&&playT)break;if(S.evq&&S.evq.length)break}
   const fresh=S.news.slice(n0).filter(x=>x.k);
   fresh.slice(-3).forEach(x=>toast(x.t,x.ic));
   if(S._big&&playT){togglePlay()}
-  save();render();
+  if(S.evq&&S.evq.length&&playT)togglePlay();
+  save();render();if(S.evq&&S.evq.length)setTimeout(nextLife,150);
   if(S.i>=S.end){if(playT)togglePlay();setTimeout(finish,300)}
 }
 function togglePlay(){
@@ -533,7 +795,7 @@ function begin(id){
   if(localStorage.getItem('stockSim')){try{const o=JSON.parse(localStorage.getItem('stockSim'));if(o.i<o.end&&!confirm('會覆蓋目前進行中的「'+o.name+'」，確定嗎？'))return}catch(e){}}
   newGame(sc,opt);enterGame();
 }
-function cont(){S=JSON.parse(localStorage.getItem('stockSim'));syncPtrs();enterGame()}
+function cont(){S=JSON.parse(localStorage.getItem('stockSim'));initX();syncPtrs();enterGame()}
 function enterGame(){
   $('start').style.display='none';['top','main','ctrl'].forEach(i=>$(i).style.display='');$('nav').style.display='flex';
   tab='mkt';render();
@@ -541,7 +803,7 @@ function enterGame(){
 
 // ====================== 畫面：主遊戲 ======================
 let tab='mkt';
-const TABS=[['mkt','行情','air_stock'],['pos','持股','moneybag'],['ord','委託','air_brief'],['news','新聞','air_news'],['perf','績效','air_trophy']];
+const TABS=[['mkt','行情','air_stock'],['pos','持股','moneybag'],['cr','信用','air_scales'],['ord','委託','air_brief'],['news','新聞','air_news'],['perf','績效','air_trophy']];
 function render(){
   if(!S)return;
   const d=today(),t=total(),r=t/S.dep-1;
@@ -558,6 +820,7 @@ function render(){
   const m=$('main');
   if(tab==='mkt')m.innerHTML=viewMkt();
   else if(tab==='pos'){m.innerHTML=viewPos();drawWorth()}
+  else if(tab==='cr')m.innerHTML=viewCr();
   else if(tab==='ord')m.innerHTML=viewOrd();
   else if(tab==='news')m.innerHTML=viewNews();
   else if(tab==='perf')m.innerHTML=viewPerf();
@@ -641,7 +904,7 @@ function viewPerf(){
   '<div><span>台股大盤</span><b class="'+cls(s.rTW)+'">'+pct(s.rTW)+'</b></div><div><span>S&P 500</span><b class="'+cls(s.rUS)+'">'+pct(s.rUS)+'</b></div>'+
   '<div><span>賣出筆數</span><b>'+s.sells+'</b></div><div><span>勝率</span><b>'+(s.sells?(s.win/s.sells*100).toFixed(0)+'%':'-')+'</b></div>'+
   '<div><span>手續費</span><b>'+fmt(S.fees)+'</b></div><div><span>交易稅</span><b>'+fmt(S.tax)+'</b></div>'+
-  '<div><span>股利收入</span><b class="up">'+fmt(S.divIn)+'</b></div><div><span>已實現</span><b class="'+cls(S.real)+'">'+fmt(S.real)+'</b></div></div>'+
+  '<div><span>利息支出</span><b class="dn">'+fmt(S.intPaid||0)+'</b></div><div><span>股利收入</span><b class="up">'+fmt(S.divIn)+'</b></div><div><span>已實現</span><b class="'+cls(S.real)+'">'+fmt(S.real)+'</b></div></div>'+
   '<div class="note">大盤比較：台股為加權指數（不含息）買進持有；美股為 S&P 500 ETF（SPY）含息再投入、以台幣計價。'+(S.sal?'每月薪水也會同步投入大盤做比較。':'')+'</div></div>'+
   '<button class="bigbtn sec" onclick="if(confirm(\'提前結算這局？\'))finish()">提前結算</button><button class="bigbtn sec" onclick="quit()">回到主選單（自動存檔）</button>';
 }
@@ -667,6 +930,8 @@ function renderDetail(){
      '<div><span>成交量</span><b>'+vfmt(D.v[k],f)+'</b></div><div><span>殖利率(近1年)</span><b>'+(dv?(dv/c*100).toFixed(2)+'%':'-')+'</b></div><div><span>52 週高</span><b>'+pfmt(hi)+'</b></div><div><span>52 週低</span><b>'+pfmt(lo)+'</b></div></div></div>';
   if(p){const v=posVal(f),pl=v-p.cost;h+='<div class="card"><div class="kv"><div><span>持有</span><b>'+qfmt(f,p.q)+'</b></div><div><span>均價</span><b>'+pfmt(avgPx(f))+'</b></div><div><span>市值</span><b>'+ntdF(v)+'</b></div><div><span>損益</span><b class="'+cls(pl)+'">'+(pl>=0?'+':'')+fmt(pl)+' ('+pct(pl/p.cost,1)+')</b></div></div></div>'}
   h+='<div class="bs"><button class="buy" onclick="orderSheet(\'B\')">買進</button><button class="sell" onclick="orderSheet(\'S\')"'+(p?'':' disabled style="opacity:.4"')+'>賣出</button></div>';
+  h+='<div class="bs2">'+(canCredit(f)?'<button onclick="crAct(\'mb\')"><img src="'+ico('st_magnet')+'">融資買進</button><button onclick="crAct(\'ss\')"><img src="'+ico('st_bear')+'">'+(s.mk==='TW'?'融券放空':'放空')+'</button><button onclick="crAct(\'dt\')"><img src="'+ico('st_bolt')+'">當沖</button>':'')+'<button onclick="crAct(\'dca\')"><img src="'+ico('air_cal')+'">定期定額</button></div>';
+  if(S.mpos[f]||S.spos[f]){const m=S.mpos[f],sp=S.spos[f];h+='<div class="card"><div class="kv">'+(m?'<div><span>融資部位</span><b>'+qfmt(f,m.q)+'</b></div><div><span>融資損益</span><b class="'+cls(mval(f)-m.cost)+'">'+fmt(mval(f)-m.cost)+'</b></div>':'')+(sp?'<div><span>融券部位</span><b>'+qfmt(f,sp.q)+'</b></div><div><span>融券損益</span><b class="'+cls(sp.ent-sval(f))+'">'+fmt(sp.ent-sval(f))+'</b></div>':'')+'</div><div class="bs" style="margin-top:8px">'+(m?'<button class="sell" onclick="crAct(\'ms\')">融資賣出</button>':'')+(sp?'<button class="buy" onclick="crAct(\'sc\')">融券回補</button>':'')+'</div></div>'}
   const evs=D.div.filter(v=>v.day<=today()).slice(-4).reverse();
   if(evs.length)h+='<div class="grp" style="margin-top:16px"><span>近期配息</span></div><div class="card">'+evs.map(v=>'<div class="tr"><span>'+(S.blind?'除息':dstr(v.day))+'</span><b>'+curSym(f)+pfmt(v.a)+' / 股</b></div>').join('')+'</div>';
   box.innerHTML=h;box.parentNode.scrollTop=st;
