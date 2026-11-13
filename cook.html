@@ -276,16 +276,19 @@ function menuAt(R, l) { const m = []; for (const [x, it] of R.unlock) if (l >= x
 function levelCfg(r, l) {
   const R = RESTS[r], menu = menuAt(R, l), d = r * 5 + l;
   let n = 8 + l + r * 2, pat = Math.max(20, 38 - d * 0.35), gap = Math.max(3, 7 - d * 0.09), maxItems = l < 3 ? 2 : l < 8 ? 3 : 4, minItems = 1, gf = [0.5, 0.8, 1.15];
-  if (l > LPR) { // 第 16 關以後：越來越難，需要升級才過得去
-    const x = l - LPR, t = Math.min(1, x / (maxL(r) - LPR)), n15 = 8 + LPR + r * 2;
-    n = Math.min(44 + r * 2, n15 + Math.floor(31 * t));
+  let t = 0, e = 0;
+  if (l > LPR) { // 第 16 關以後：越來越難，65 關左右到達高峰，之後還會繼續加壓
+    const x = l - LPR, n15 = 8 + LPR + r * 2;
+    t = Math.min(1, x / 50); e = Math.max(0, Math.min(1, (x - 50) / 35));
+    n = Math.min(52 + r * 2, n15 + Math.floor(28 * t + 10 * e));
     const d15 = r * 5 + LPR, p15 = Math.max(20, 38 - d15 * 0.35), g15 = Math.max(3, 7 - d15 * 0.09);
-    pat = Math.max(13, p15 - (p15 - 12.8) * t);
-    gap = Math.max(1.7, g15 - (g15 - 1.6) * t);
-    minItems = t > 0.65 ? 2 : 1;
-    gf = [0.5 + 0.22 * t, 0.8 + 0.18 * t, 1.15 + 0.12 * t];
+    pat = Math.max(11, p15 - (p15 - 14.5) * t - 2.5 * e);
+    gap = Math.max(1.4, g15 - (g15 - 1.8) * t - 0.35 * e);
+    minItems = e > 0.5 ? 3 : t > 0.35 ? 2 : 1; maxItems = 4;
+    gf = [0.55 + 0.3 * t + 0.15 * e, 0.85 + 0.3 * t + 0.15 * e, 1.2 + 0.3 * t + 0.2 * e];
   }
-  pat *= decorOf(SV.up.decor);
+  // 裝潢加成到高關卡會被稀釋（客人越來越挑）
+  pat *= Math.pow(decorOf(SV.up.decor), 1 - 0.3 * t);
   const rnd = mulberry(r * 7777 + l * 911 + 7), orders = [];
   const asm = menu.filter(k => R.dishes[k].base || cookerFor(R, k)), side = menu.filter(k => !asm.includes(k));
   for (let i = 0; i < n; i++) { const k = minItems + Math.floor(rnd() * (maxItems - minItems + 1)), o = []; for (let j = 0; j < k; j++) o.push(rnd() < 0.55 || !side.length ? asm[Math.floor(rnd() * asm.length)] : side[Math.floor(rnd() * side.length)]); orders.push(o); }
@@ -504,7 +507,7 @@ function pay(i) {
 // ===================== 主迴圈 =====================
 let last = 0;
 function loop(t) { if (!running) return; const dt = Math.min(0.1, (t - last) / 1000); last = t; if (!paused) step(dt); requestAnimationFrame(loop); }
-function custKind() { const r = Math.random(), l = G.l; if (l >= 4 && r < 0.09) return 'vip'; if (l >= 6 && r < 0.15) return 'critic'; if (r < 0.27) return 'kid'; if (l >= 3 && r < 0.37) return 'rush'; return null; }
+function custKind() { const r = Math.random(), l = G.l, h = Math.min(1, Math.max(0, (l - 20) / 60)); if (l >= 4 && r < 0.09) return 'vip'; if (l >= 6 && r < 0.15 + 0.08 * h) return 'critic'; if (r < 0.27 - 0.12 * h + 0.08 * h) return 'kid'; if (l >= 3 && r < 0.37 + 0.18 * h) return 'rush'; return null; }
 const KIND_TAG = { vip: ['vip', '👑 VIP'], critic: ['vip critic', '📝 評論家'], kid: ['vip kid', '🧒 小朋友'], rush: ['vip rush', '⏱ 趕時間'] };
 function step(dt) {
   G.t += dt; G.next -= dt;
