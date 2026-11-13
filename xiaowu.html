@@ -121,6 +121,7 @@ button{font-family:inherit;cursor:pointer}
 
 .ch.pop img{animation:pop .35s ease}
 @keyframes pop{40%{transform:translateY(-8px) scale(1.02)}}
+.ch.wide{width:88%}.ch.wide.pc{left:6%}.ch.wide.pl{left:-18%}.ch.wide.pr{right:-18%}
 </style></head>
 <body>
 <div id="game" class="hide"><div id="stage"><div class="bg" id="bgA"></div><div class="bg" id="bgB"></div><div id="chars"></div><div class="cg" id="cg"></div><div id="fx"></div></div>
@@ -668,6 +669,7 @@ osc：最深處好像還住著十萬年的魂獸呢，想想就腿軟。
 （大明、二明，就住在最深處。）
 @hide all
 @show ts c
+@face ts worry
 ts：小舞，你臉色好白。不舒服嗎？
 xw：沒、沒有啦！只是……有點緊張。
 ts：別怕。我會一直在你旁邊。
@@ -792,6 +794,7 @@ xw：不行。武魂殿要找的就是十萬年魂獸。你們如果出森林，
 @show ts c
 他站在一棵倒下的大樹旁邊，渾身都是泥和血，衣服被荊棘劃得破破爛爛，手臂上的傷口還在流血。
 他好像一整夜都沒有停下來過。
+@face ts worry
 ts：……小舞？
 他看見我的那一刻，整個人晃了一下，好像隨時會倒下去。
 然後他衝了過來，用力地、用力地抱住了我。
@@ -899,11 +902,13 @@ xw：唔……！
 @fx red
 我還沒爬起來，就聽到了一個我從來沒聽過的聲音。
 @show ts c
+@face ts angry
 ts：……你敢碰她。
 那是哥的聲音，可是冷得嚇人。
 那一刻，他身上的氣勢完全變了。藍銀草像潮水一樣淹沒了整個擂台，對面的人連叫都來不及叫，就被一層一層地纏了起來。
 比賽結束得很快。
 他跳下擂台，第一件事是跑到我身邊，小心翼翼地托著我的手臂。
+@face ts off
 ts：會痛就說。我幫你接回去。
 @face xw shy
 xw：……哥，你剛才好可怕。
@@ -1031,6 +1036,7 @@ SCRIPT.c6 = `
 整座城市都是金色和白色的。高聳的尖塔，巨大的神殿，到處都是六翼天使的雕像。
 所有人都在讚嘆它的壯麗。只有我，覺得喘不過氣來。
 @show ts c
+@face ts off
 ts：小舞。
 他在人群裡，悄悄握住了我的手。
 @if $told>=1 c6t
@@ -1217,6 +1223,7 @@ ts：老師——！
 那兩個人只用了三招。
 第一招，藍銀草被燒成了灰。第二招，八蛛矛被折斷。第三招……
 哥的身體飛出去，重重地摔在懸崖邊。他咳出一大口血，還想爬起來，可是手撐了三次，都撐不住。
+@face ts worry
 ts：小舞……快……快跑……
 （跑去哪裡？）
 （後面是懸崖，前面是你。）
@@ -1257,6 +1264,7 @@ bbd：真感人。可惜，到此為止了。
 ……好痛。
 可是，比起看見他死在我面前，這一點痛，根本不算什麼。
 @show ts c
+@face ts worry
 ts：小舞……小舞！不……不要……
 他抱住我，手在發抖，抖得比那天在森林裡還要厲害。
 （我知道的。這一擊，我撐不過去了。）
@@ -1344,6 +1352,7 @@ bbd：……星斗大森林的守護者，竟然為了一隻兔子，離開了�
 @hide all
 @show ts c
 哥撐著地，慢慢地站了起來。他滿身是血，可是他的眼睛，比任何時候都亮。
+@face ts angry
 ts：小舞把她的秘密，親口告訴了我。
 ts：所以這一次，我不會再讓她一個人去面對任何事。
 他手裡那柄漆黑的巨錘，亮了起來。
@@ -1416,6 +1425,7 @@ SCRIPT.c8 = `
 最初的那幾個月，是最難熬的。
 @show ts c
 哥不說話，不吃東西，也不修煉。他每天坐在雨裡，一坐就是一整天，手緊緊地握著胸前的香囊。
+@face ts worry
 ts：……小舞，你冷不冷？
 ts：今天下雨了。你以前最討厭下雨，說毛會濕掉。
 （我現在沒有毛了啦，笨蛋。）
@@ -1492,6 +1502,7 @@ SCRIPT.c9 = `
 @title 第九章|海神歸來
 @bg sea
 @fx gold
+@form ts god
 @cg haishen 海神歸來
 金光從天而降，大海為他分開了一條路。
 他穿著藍金色的戰甲，手裡握著一柄三叉戟，長長的黑髮在風裡飛揚。
@@ -2007,8 +2018,8 @@ function setBg(k, fast) {
   nx.classList.add('on'); cur.classList.remove('on');
   if (fast) requestAnimationFrame(() => { nx.style.transition = ''; cur.style.transition = ''; });
 }
-const FACES = { xw: ['shy', 'cry', 'laugh', 'firm', 'surp'] };
-const imgOf = k => { const f = S.face && S.face[k]; return f && FACES[k] && FACES[k].includes(f) ? `assets/xiaowu/ch/${k}_${f}.webp` : CH[k].img; };
+const FACES = { xw: ['shy', 'cry', 'laugh', 'firm', 'surp'], ts: ['worry', 'angry', 'god'] };
+const imgOf = k => { const f = (S.face && S.face[k]) || (S.form && S.form[k]); return f && FACES[k] && FACES[k].includes(f) ? `assets/xiaowu/ch/${k}_${f}.webp` : CH[k].img; };
 function renderChars(speaker) {
   const box = $('chars');
   for (const pos of ['l', 'c', 'r']) {
@@ -2019,6 +2030,7 @@ function renderChars(speaker) {
       el = document.createElement('div'); el.className = `ch p${pos} in` + (CH[k].beast ? ' beast' : ''); el.dataset.k = k;
       el.innerHTML = `<img src="${imgOf(k)}" alt="">`; box.appendChild(el); setTimeout(() => el.classList.remove('in'), 30);
     } else { const im = el.querySelector('img'), src = imgOf(k); if (im.getAttribute('src') !== src) { im.src = src; el.classList.remove('pop'); void el.offsetWidth; el.classList.add('pop'); } }
+    el.classList.toggle('wide', imgOf(k).includes('_god'));
     el.classList.toggle('dim', !!speaker && speaker !== k);
     el.classList.toggle('talk', speaker === k);
   }
@@ -2120,6 +2132,7 @@ function cmd(line) {
     case 'face': { S.face = S.face || {}; const k = rest[0]; if (rest[1] && rest[1] !== 'off') S.face[k] = rest[1]; else delete S.face[k];
       if (!Object.values(S.show).includes(k)) { if (rest[2]) S.show[rest[2]] = k; else if (!S.show.c) S.show.c = k; else if (!S.show.l && !S.show.r) { S.show.r = S.show.c; delete S.show.c; S.show.l = k; } else S.show[S.show.l ? 'r' : 'l'] = k; }
       renderChars(); break; }
+    case 'form': S.form = S.form || {}; if (rest[1] && rest[1] !== 'off') S.form[rest[0]] = rest[1]; else delete S.form[rest[0]]; renderChars(); break;
     case 'cg': showCG(rest[0], rest.slice(1).join(' ')); break;
     case 'cgoff': hideCG(); break;
     case 'fx': fx(rest[0]); break;
