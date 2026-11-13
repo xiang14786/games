@@ -1385,6 +1385,7 @@ xw：嗯。以後不會了。因為有你們在。
 @hide all
 @bg starCore
 @fx firefly
+@form xw adult2
 @cg xingdou 星斗之月
 後來，我們一起回到了星斗大森林。
 大明和二明說，森林裡有一個地方，連武魂殿的人都找不到。
@@ -1556,6 +1557,7 @@ ts：……那你們會怎麼樣？
 - 「我答應過他。下一次，我要親手接過他的花。」 => c9back | @set bond +3
 #c9back
 @fx petal
+@form xw adult
 @cg chongfeng 重逢
 我睜開了眼睛。
 第一眼看見的，是一片粉色的花海。
@@ -1696,6 +1698,7 @@ xw：我等這句話，等了十萬年了。
 一位是海神，另一位，是他的妻子。
 他們說了很多關於我們的故事，有的是真的，有的是假的。
 可是，他們大概都不知道這個——
+@form xw adult2
 @show xw c
 我是一隻兔子。
 我在星斗大森林裡，活了十萬年。
@@ -2018,8 +2021,8 @@ function setBg(k, fast) {
   nx.classList.add('on'); cur.classList.remove('on');
   if (fast) requestAnimationFrame(() => { nx.style.transition = ''; cur.style.transition = ''; });
 }
-const FACES = { xw: ['shy', 'cry', 'laugh', 'firm', 'surp'], ts: ['worry', 'angry', 'god'] };
-const imgOf = k => { const f = (S.face && S.face[k]) || (S.form && S.form[k]); return f && FACES[k] && FACES[k].includes(f) ? `assets/xiaowu/ch/${k}_${f}.webp` : CH[k].img; };
+const FACES = { xw: ['shy', 'cry', 'laugh', 'firm', 'surp', 'adult', 'adult2'], ts: ['worry', 'angry', 'god'] };
+const imgOf = k => { const fm = S.form && S.form[k]; const f = (fm && /adult/.test(fm)) ? fm : ((S.face && S.face[k]) || fm); return f && FACES[k] && FACES[k].includes(f) ? `assets/xiaowu/ch/${k}_${f}.webp` : CH[k].img; };
 function renderChars(speaker) {
   const box = $('chars');
   for (const pos of ['l', 'c', 'r']) {
@@ -2030,7 +2033,7 @@ function renderChars(speaker) {
       el = document.createElement('div'); el.className = `ch p${pos} in` + (CH[k].beast ? ' beast' : ''); el.dataset.k = k;
       el.innerHTML = `<img src="${imgOf(k)}" alt="">`; box.appendChild(el); setTimeout(() => el.classList.remove('in'), 30);
     } else { const im = el.querySelector('img'), src = imgOf(k); if (im.getAttribute('src') !== src) { im.src = src; el.classList.remove('pop'); void el.offsetWidth; el.classList.add('pop'); } }
-    el.classList.toggle('wide', imgOf(k).includes('_god') || k === 'bbd');
+    el.classList.toggle('wide', /_god|_adult/.test(imgOf(k)) || k === 'bbd');
     el.classList.toggle('dim', !!speaker && speaker !== k);
     el.classList.toggle('talk', speaker === k);
   }
