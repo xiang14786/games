@@ -26,8 +26,8 @@ button{font-family:inherit;cursor:pointer}
 .ch.in{opacity:0;transform:translateY(20px)}.ch.gone{opacity:0}
 .ch.dim{filter:brightness(.55) saturate(.7)}
 .ch.talk{transform:translateY(-6px)}
-.ch.beast{width:92%;bottom:6%}.ch.beast.pc{left:4%}.ch.beast.pl{left:-26%}.ch.beast.pr{right:-26%;left:auto}
-.ch.beast img{max-height:70%;filter:drop-shadow(0 0 24px rgba(255,220,180,.35))}
+.ch.beast{width:92%;bottom:6%}.ch.beast.pc{left:4%}.ch.beast.pl{left:-6%;width:62%}.ch.beast.pr{right:-6%;left:auto;width:62%}
+.ch.beast img{max-height:62%;filter:drop-shadow(0 0 24px rgba(255,220,180,.35))}
 .cg{position:absolute;inset:0;opacity:0;transition:opacity 1.2s;pointer-events:none;z-index:3}
 .cg.on{opacity:1}
 .cg .cgfb{position:absolute;inset:-5%;background-size:cover;background-position:center;filter:blur(6px) brightness(.6) saturate(1.3)}
@@ -152,6 +152,8 @@ SCRIPT.c1 = `
 @title 第一章|月光下的兔子
 @bg starCore
 @fx firefly
+@bgm forest
+@amb amb_forest
 星斗大森林的最深處，終年不見人跡。
 參天古樹把天空切成碎片，月光從縫隙裡漏下來，落在一片柔軟的草地上。
 草地中央，有一隻雪白的兔子。
@@ -160,12 +162,14 @@ SCRIPT.c1 = `
 （然後，夢的最後，總是一片紫金色的光。）
 @fx flash
 @fx shake
+@bgm sad
 （一個穿著紫金長袍的女人，站在娘親倒下的地方。她的眼睛冷得像冬天的湖。）
 （娘親的十萬年修為，化成一道光環，落在了她的手上。）
 @fx off
 @fx firefly
+@bgm forest
 我猛地驚醒。四周很安靜，只有遠處溪水的聲音。
-@show dm c
+@show dm l
 大明：小舞，又作惡夢了？
 低沉的聲音從頭頂傳來。一隻比古樹還高的巨猿，小心翼翼地把手掌放在我身邊，像怕把我壓碎似的。
 他是大明，泰坦巨猿，星斗大森林的守護者之一。
@@ -214,7 +218,7 @@ xw：可是只要我化成人形，重新從人類魂師開始修煉，就能避
 #c1e
 大明沉默了很久很久，久到月亮都往西邊移了一點。
 最後，他抬起手，用指尖從自己的胸口拔下一撮金色的毛。
-@show dm c
+@show dm l
 大明：拿著。
 二明也低下頭，從頸邊咬下一片最亮的青色鱗片，輕輕放在我面前。
 二明：這片鱗片裡有我的一縷魂力。如果有一天，你遇到真正過不去的難關……
@@ -236,6 +240,7 @@ xw：我收下。可是我不會讓你們為了我冒險的。森林需要你們
 @hide all
 @bg starOut
 @fx stars
+@bgm romance
 那一夜，月亮特別圓。
 我站在森林邊緣最高的那塊石頭上，回頭望了一眼。大明和二明的身影在黑暗裡，像兩座安靜的山。
 （再見了，我的家。）
@@ -257,6 +262,8 @@ xw：哎唷！
 （娘親，你看見了嗎？我變成人了。）
 （我會好好活下去，帶著你的那一份。）
 @fx petal
+@bgm daily
+@amb off
 天快亮的時候，我終於學會了走路。
 我把大明的金毛和二明的鱗片，用一根草繩綁好，藏在貼身的衣服裡，然後朝著人類的城鎮走去。
 那年，我給自己取了一個名字。
@@ -269,6 +276,8 @@ SCRIPT.c2 = `
 @title 第二章|七舍的老大
 @bg nuoding
 @fx petal
+@bgm daily
+@amb off
 諾丁城，諾丁初級魂師學院。
 我花了兩年，學會了人類的話、人類的字、人類怎麼吃飯怎麼睡覺，還找到一個好心的老奶奶，幫我報了名。
 武魂覺醒的時候，我召喚出了一隻小小的白兔。所有人都在笑：兔子？那能打什麼？
@@ -373,6 +382,7 @@ xw：好厲害！那可以做一個給我嗎？
 ts：……你已經夠危險了，不需要。
 xw：哼！
 @show xiao r
+@bgm daily
 有一天，幾個高年級的學生在路上攔住了我們。
 同學：喲，這不是七舍的廢草跟兔子嗎？聽說你們在班上很囂張啊？
 哥往前站了一步，把我擋在身後。
@@ -401,6 +411,7 @@ ts：……下次讓我來就好。
 @hide all
 @bg sunset
 @fx stars
+@bgm romance
 那天晚上，我睡不著，爬上了宿舍的屋頂。
 @cg wuding 屋頂的月亮
 沒想到，哥已經坐在那裡了。
@@ -449,6 +460,7 @@ SCRIPT.c3 = `
 @title 第三章|只收怪物的學院
 @bg city
 @fx petal
+@bgm daily
 六年後。
 我們從諾丁學院畢業了。哥說，大師推薦我們去一所叫「史萊克」的學院。
 @show ts l
@@ -511,6 +523,7 @@ nrr：……你、你想學？算了，看你可憐，本小姐就勉為其難�
 @hide all
 @bg arena
 @show fld c
+@bgm battle
 fld：好！你們七個，從今天起就是史萊克的學員了。
 fld：不過我們學院有個傳統——考你們的團隊合作。對手是我們的趙無極老師。魂聖級，七個魂環。
 osc：魂、魂聖？！我們加起來都不夠他打！
@@ -551,6 +564,7 @@ xw：就是現在！
 @show fld c
 fld：……一炷香，到了。
 @hide all
+@bgm daily
 那天晚上，我們七個人圍著篝火，吃著奧斯卡的香腸，笑到肚子痛。
 @show dmb l
 dmb：從今天起，我們就是「史萊克七怪」了！
@@ -561,6 +575,7 @@ mhj：七怪！聽起來好帥！
 @bg sunset
 @fx stars
 @show ds c
+@bgm tension
 大家都睡了以後，大師把我叫到了一邊。
 大師是哥的老師。他的武魂很弱，可是他懂得的東西，比任何人都多。
 ds：小舞，你的魂環，是在哪裡獵到的？
@@ -591,6 +606,8 @@ ds：小舞。如果有一天，你遇到了麻煩，記得告訴小三。他會
 @goto c3j
 #c3j
 @hide all
+@bgm forest
+@amb amb_forest
 那天深夜，我一個人坐在榕樹下。
 @fx firefly
 風從很遠的地方吹過來，帶著一股熟悉的味道。樹葉、泥土、溪水……
@@ -661,6 +678,8 @@ SCRIPT.c4 = `
 @title 第四章|回家的路
 @bg hunt
 @fx firefly
+@bgm forest
+@amb amb_forest
 大師說，我們該去獵取新的魂環了。
 目的地是——星斗大森林。
 @show dmb l
@@ -685,6 +704,7 @@ ts：別怕。我會一直在你旁邊。
 ds：前面那片區域，魂獸的年份會一下子提高很多。所有人提高警覺。
 @hide all
 @fx shake
+@bgm battle
 話音剛落，地面開始震動。
 @show xiao c
 樹叢被撞開，三頭渾身漆黑、爪子泛著暗金光芒的巨熊衝了出來。
@@ -710,6 +730,7 @@ ts：榮榮加持！竹清、戴老大正面！小舞——
 @fx flash
 @fx shake
 那是一場苦戰。就在我們快要撐不住的時候——
+@bgm tension
 整片森林，突然安靜了。
 連風都停了。
 @hide all
@@ -734,6 +755,7 @@ ts：小舞——！
 @fx firefly
 @show dm l
 @show em r
+@bgm forest
 二明：小舞！真的是你！
 二明的大頭湊過來，冰涼的鱗片蹭著我的臉。
 大明：我們感覺到你的氣息，就知道你回來了。
@@ -791,6 +813,7 @@ xw：不行。武魂殿要找的就是十萬年魂獸。你們如果出森林，
 @hide all
 @bg starOut
 @fx firefly
+@bgm romance
 大明把我送到森林外圍的時候，天已經快亮了。
 我遠遠地，就看到了一個身影。
 @show ts c
@@ -860,6 +883,8 @@ ts：每個人都有不想說的事。等你想說的那天，我會好好聽。
 #c4end
 @hide all
 @bg hunt
+@bgm daily
+@amb off
 那次獵魂之旅，大家都獲得了很適合自己的魂環。
 哥也是。他的藍銀草武魂，又多了一道光環。
 @show nrr l
@@ -875,6 +900,8 @@ SCRIPT.c5 = `
 @title 第五章|月下之約
 @bg city
 @fx petal
+@bgm battle
+@amb off
 天斗城，全大陸高級魂師精英大賽。
 來自大陸各地最強的年輕魂師隊伍，都聚集到了這裡。
 @show fld c
@@ -920,6 +947,7 @@ xw：沒有。
 @hide all
 @fx off
 @show xiao c
+@bgm tension
 就在那一天，我在觀眾席的最高處，看見了一抹金色。
 那是一群穿著金白長袍的人，胸前繡著六隻翅膀的標誌。
 @hide xiao
@@ -931,6 +959,7 @@ xw：沒、沒什麼。可能是剛剛被打到，有點暈。
 @hide all
 @bg sunset
 @fx stars
+@bgm daily
 那天晚上，榮榮和竹清偷偷溜進了我的房間。
 @show nrr l
 @show zzq r
@@ -968,6 +997,8 @@ nrr：我什麼都沒說喔～
 @hide all
 @bg sunset
 @fx firefly
+@bgm romance
+@amb amb_forest
 第二天晚上，我按照約定，來到了城外的小湖邊。
 月亮很大，很圓，倒映在湖面上，像是天上和水裡各有一個。
 @show ts c
@@ -1034,6 +1065,8 @@ SCRIPT.c6 = `
 @title 第六章|武魂城
 @bg wuhun
 @fx gold
+@bgm tension
+@amb off
 大賽的決賽，在武魂殿的總部——武魂城舉行。
 整座城市都是金色和白色的。高聳的尖塔，巨大的神殿，到處都是六翼天使的雕像。
 所有人都在讚嘆它的壯麗。只有我，覺得喘不過氣來。
@@ -1053,6 +1086,7 @@ xw：嗯。
 #c6a
 @hide all
 @bg arena
+@bgm battle
 決賽的對手，是武魂殿培養的黃金一代。
 @show xiao c
 其中有一個紅頭髮的女孩子，她的武魂是狐狸，一雙眼睛能勾走人的魂魄。
@@ -1089,6 +1123,7 @@ mhj：我們贏了！！史萊克贏了！！
 （我們做到了。七個怪物，打敗了全大陸最強的天才。）
 @bg wuhun
 @fx gold
+@bgm tension
 頒獎的時候，所有人都跪了下來。
 因為，親自來頒獎的，是武魂殿的教皇。
 @show bbd c
@@ -1145,6 +1180,7 @@ ts：小舞——！！
 @hide all
 @bg sunset
 @show ds c
+@bgm sad
 頒獎典禮結束以後，大師把我和哥叫到了一個沒有人的角落。
 他的臉色，是我從沒見過的凝重。
 ds：你們必須立刻離開武魂城。現在，馬上。
@@ -1166,6 +1202,7 @@ xw：嗯。
 #c6cage
 @bg hall
 @fx off
+@bgm sad
 我再醒來的時候，是在一個金色的籠子裡。
 籠子很漂亮，每一根欄杆都雕著六翼天使，地上鋪著柔軟的毯子。
 可是它很小。小到我只能抱著膝蓋坐著。
@@ -1191,11 +1228,14 @@ SCRIPT.c7 = `
 @title 第七章|十萬年的獻祭
 @bg north
 @fx off
+@bgm tension
+@amb amb_wind
 我們逃了三天三夜。
 大師帶著我們專挑沒有人走的山路，翻過一座又一座山。哥一直走在我前面，替我撥開荊棘，替我擋住風。
 可是第三天的黃昏，我們還是被追上了。
 @bg cliff
 @fx shake
+@bgm battle
 前面，是看不見底的懸崖。雲海在腳下翻滾。
 後面，是三道身影。
 @show ju l
@@ -1259,6 +1299,7 @@ bbd：真感人。可惜，到此為止了。
 @goto c7sac
 #c7sac
 @fx off
+@bgm sad
 我沒有想。身體自己就動了。
 我撲過去，擋在了哥的身前。
 @fx flash
@@ -1320,12 +1361,14 @@ ts：小舞————！！！
 然後，天空裂開了。
 @hide all
 @show th c
+@bgm battle
 一個男人，從天而降。他披頭散髮，手裡握著一柄比山還重的黑色巨錘。
 那是哥的爸爸。那個每天喝酒、很少說話的鐵匠。
 （原來，他是那麼強的人。）
 那一天，武魂殿的教皇，第一次受了傷，退走了。
 可是，一切都太晚了。
 @hide all
+@bgm sad
 （我看著哥抱著我留下的那件衣服，跪在懸崖邊，一動也不動。）
 （我想摸摸他的頭，可是我已經沒有手了。）
 @next c8
@@ -1334,6 +1377,7 @@ ts：小舞————！！！
 @fx flash
 @fx gold
 鱗片在掌心碎開的瞬間——
+@bgm battle
 天，黑了。
 @fx shake
 不是夜晚的那種黑。是整片天空，被兩道巨大的影子遮住了。
@@ -1389,6 +1433,8 @@ xw：嗯。以後不會了。因為有你們在。
 @fx firefly
 @form xw adult2
 @cg xingdou 星斗之月
+@bgm hope
+@amb amb_forest
 後來，我們一起回到了星斗大森林。
 大明和二明說，森林裡有一個地方，連武魂殿的人都找不到。
 哥在那裡蓋了一間小小的木屋。他每天打鐵、修煉、研究那些我看不懂的機關；我每天在森林裡跑來跑去，跟大明比力氣，跟二明比誰曬太陽曬得久。
@@ -1410,6 +1456,8 @@ SCRIPT.c8 = `
 @title 第八章|香囊裡的守候
 @bg sunset
 @fx rain
+@bgm sad
+@amb off
 我以為，我會就這樣消失。
 可是，我沒有。
 我醒來的時候，四周很暗，很暖，還有一股淡淡的、熟悉的草香。
@@ -1465,6 +1513,7 @@ ts：不管要花多少年，不管要走多遠……我一定會帶你回來。
 @hide all
 @bg sea
 @fx stars
+@bgm tension
 從那天起，我陪著他，走過了很多很多地方。
 我陪他去了一座全是殺氣的城市，看他在血和黑暗裡，一次一次地倒下，又一次一次地站起來。
 我陪他去了大海的中央，一座神聖的小島。島上有一位海神的守護者，給了他九道幾乎不可能完成的試煉。
@@ -1481,6 +1530,8 @@ ts：好久沒有被你罵了。
 （……笨蛋。）
 @hide all
 @fx petal
+@bgm romance
+@amb off
 每年我的生日，不管他在哪裡，都會用藍銀草開一朵藍色的小花，放在香囊旁邊。
 @show ts c
 ts：小舞，今年你十萬零……算了，我算不清楚了。反正你永遠十六歲。
@@ -1494,6 +1545,8 @@ ts：生日快樂。
 @hide all
 @bg sea
 @fx gold
+@bgm hope
+@amb amb_sea
 終於，有一天——
 大海的中央，天空裂開了一道金色的光。
 那是第九道試煉，完成的光。
@@ -1507,6 +1560,8 @@ SCRIPT.c9 = `
 @fx gold
 @form ts god
 @cg haishen 海神歸來
+@bgm hope
+@amb amb_sea
 金光從天而降，大海為他分開了一條路。
 他穿著藍金色的戰甲，手裡握著一柄三叉戟，長長的黑髮在風裡飛揚。
 那是海神。
@@ -1514,6 +1569,8 @@ SCRIPT.c9 = `
 @cgoff
 @bg starCore
 @fx firefly
+@bgm forest
+@amb amb_forest
 他回到了星斗大森林。
 回到了我出生的地方，回到了我化形的那塊大石頭旁邊。
 @show dm l
@@ -1541,6 +1598,7 @@ ts：……那你們會怎麼樣？
 二明：幾萬年而已。對我們來說，就是睡一覺。
 @hide all
 @fx gold
+@bgm hope
 那一天，金色的海神之力，和兩道巨大的魂獸之力，一起湧進了那具小小的身體裡。
 香囊在哥的胸前，發出了刺眼的光。
 @fx white
@@ -1561,6 +1619,7 @@ ts：……那你們會怎麼樣？
 @fx petal
 @form xw adult
 @cg chongfeng 重逢
+@bgm romance
 我睜開了眼睛。
 第一眼看見的，是一片粉色的花海。
 第二眼看見的，是他。
@@ -1590,6 +1649,7 @@ xw：大明、二明……！
 @cgoff
 @bg starCore
 @show ts c
+@bgm sad
 冰晶融化了，金光散去了。
 可是，那個女孩，沒有睜開眼睛。
 ts：……小舞？
@@ -1617,6 +1677,8 @@ SCRIPT.c10 = `
 @title 終章|結髮
 @bg village
 @fx petal
+@bgm daily
+@amb off
 後來，我們回到了史萊克。
 @show nrr l
 @show zzq r
@@ -1653,6 +1715,8 @@ th：……以後，他就交給你了。
 @bg sunset
 @fx stars
 @show ts c
+@bgm romance
+@amb amb_forest
 那天晚上，哥把我帶到了城外的那個小湖邊。
 月亮還是那麼大，那麼圓，倒映在湖面上。
 ts：小舞。
@@ -1684,6 +1748,8 @@ xw：我等這句話，等了十萬年了。
 @bg hall
 @fx petal
 @cg hunli 結髮
+@bgm hope
+@amb off
 那是史萊克學院，有史以來最熱鬧的一天。
 胖子負責放煙火，結果差點把禮堂燒了。奧斯卡做了一千根香腸，說是喜餅。榮榮把我打扮了三個時辰，竹清在旁邊一直說「夠了，已經很美了」。
 戴老大負責主持，緊張到把台詞全都忘光了。
@@ -1699,6 +1765,7 @@ xw：我等這句話，等了十萬年了。
 @bg starCore
 @fx firefly
 @cg shendian 海神之妻
+@bgm romance
 很多很多年以後，人們說，這個大陸上出現了兩位神。
 一位是海神，另一位，是他的妻子。
 他們說了很多關於我們的故事，有的是真的，有的是假的。
@@ -1776,6 +1843,7 @@ xw：我是十……我是十歲的小孩子呀！
 @hide all
 @bg village
 @fx off
+@bgm sad
 那年冬天，哥生病了。
 他每天修煉到半夜，又在冷風裡打鐵，終於有一天早上起不來了。他整個人燒得通紅，嘴唇卻是白的。
 @show ts c
@@ -1818,6 +1886,7 @@ xw：你才是笨蛋！
 insertBefore('c3', '@show ds c', `
 @bg village
 @fx off
+@bgm daily
 史萊克的日子，比我想像中還要辛苦。
 趙老師說，要成為真正的強者，就要先學會吃苦。
 @show xiao c
@@ -1899,6 +1968,7 @@ nrr：……謝謝。
 insertBefore('c5', '那天晚上，榮榮和竹清偷偷溜進了我的房間。', `
 @bg arena
 @fx off
+@bgm battle
 晉級賽的對手，是天斗皇家學院的皇鬥戰隊。
 他們的隊長，有一條會放雷的藍色巨龍武魂，傳說是最接近龍的血脈。
 @show dmb l
@@ -1954,6 +2024,8 @@ ts：……不對。你才不會躲。你一定會衝在我前面，然後一邊
 @hide all
 @bg sea
 @fx stars
+@bgm romance
+@amb amb_sea
 海神島上的最後一夜，他坐在海邊，看著月亮。
 @show ts c
 ts：小舞，明天是最後一道試煉了。
@@ -2017,6 +2089,24 @@ function saveSlot(n) { if (!S) return; S.t = Date.now(); try { localStorage.setI
 function loadSlot(n) { try { const s = JSON.parse(localStorage.getItem('xw_save_' + n)); return s && s.ch ? s : null; } catch (e) { return null; } }
 const chapOf = id => CHAP.find(c => c.id === id);
 
+
+// ---------------- 聲音（檔案缺少時自動略過） ----------------
+const AU = 'assets/xiaowu/audio/';
+const AUD = { bgm: null, bgmK: null, amb: null, ambK: null };
+const vol = t => (P.snd ?? 1) * (t === 'bgm' ? 0.55 : t === 'amb' ? 0.35 : 0.7);
+function fadeTo(a, v, ms, done) { if (!a) return done && done(); const s = a.volume, t0 = performance.now(); const step = () => { const p = Math.min(1, (performance.now() - t0) / ms); try { a.volume = Math.max(0, Math.min(1, s + (v - s) * p)); } catch (e) { } if (p < 1) requestAnimationFrame(step); else done && done(); }; step(); }
+function loopTrack(kind, k) {
+  const key = kind === 'bgm' ? 'bgmK' : 'ambK';
+  if (S && kind === 'bgm') S.bgm = k; if (S && kind === 'amb') S.amb = k;
+  if (AUD[key] === k) return; AUD[key] = k;
+  const old = AUD[kind]; if (old) fadeTo(old, 0, 1200, () => old.pause());
+  AUD[kind] = null; if (!k || k === 'off') return;
+  const a = new Audio(AU + k + '.mp3'); a.loop = true; a.volume = 0; AUD[kind] = a;
+  a.play().then(() => fadeTo(a, vol(kind), 1500)).catch(() => { });
+}
+function se(k) { if (!(P.snd ?? 1) || skip) return; const a = new Audio(AU + k + '.mp3'); a.volume = vol('se'); a.play().catch(() => { }); }
+function sndRefresh() { if (AUD.bgm) AUD.bgm.volume = vol('bgm'); if (AUD.amb) AUD.amb.volume = vol('amb'); }
+
 // ---------------- 畫面 ----------------
 function toast(t) { const d = document.createElement('div'); d.className = 'toast'; d.innerHTML = t; $('toasts').appendChild(d); setTimeout(() => d.classList.add('out'), 1800); setTimeout(() => d.remove(), 2300); }
 function setBg(k, fast) {
@@ -2054,14 +2144,16 @@ function hideCG() { S.cg = null; $('cg').className = 'cg'; }
 const FXS = { snow: 26, petal: 22, stars: 40, rain: 50, firefly: 22, ice: 26, gold: 30 };
 function fx(k) {
   const L = $('fx');
+  if (k === 'off' || (FXS[k] && k !== 'rain')) { if (AUD.ambK === 'amb_rain') loopTrack('amb', 'off'); }
   if (k === 'off') { L.innerHTML = ''; L.className = ''; return; }
+  if (k === 'flash' || k === 'white') se('se_flash'); if (k === 'shake') se('se_hit'); if (k === 'rain') loopTrack('amb', 'amb_rain');
   if (k === 'flash' || k === 'white' || k === 'black' || k === 'red') { const d = document.createElement('div'); d.className = 'flash ' + k; document.body.appendChild(d); setTimeout(() => d.remove(), k === 'flash' ? 600 : 1600); return; }
   if (k === 'shake') { $('stage').classList.remove('shake'); void $('stage').offsetWidth; $('stage').classList.add('shake'); return; }
   if (k === 'heart') { heart(); return; }
   L.innerHTML = ''; L.className = 'fx-' + k;
   for (let i = 0; i < (FXS[k] || 20); i++) { const p = document.createElement('i'); p.style.left = Math.random() * 100 + '%'; p.style.animationDelay = (-Math.random() * 10).toFixed(2) + 's'; p.style.animationDuration = (6 + Math.random() * 7).toFixed(2) + 's'; p.style.setProperty('--s', (0.5 + Math.random()).toFixed(2)); p.style.setProperty('--x', ((Math.random() - 0.5) * 120).toFixed(0) + 'px'); L.appendChild(p); }
 }
-function heart(t) { const d = document.createElement('div'); d.className = 'hfx'; d.innerHTML = t || '♥'; document.body.appendChild(d); setTimeout(() => d.remove(), 1400); }
+function heart(t) { se('se_heart'); const d = document.createElement('div'); d.className = 'hfx'; d.innerHTML = t || '♥'; document.body.appendChild(d); setTimeout(() => d.remove(), 1400); }
 
 // ---------------- 文字 ----------------
 function say(name, text, kind, speaker) {
@@ -2143,6 +2235,9 @@ function cmd(line) {
       if (!Object.values(S.show).includes(k)) { if (rest[2]) S.show[rest[2]] = k; else if (!S.show.c) S.show.c = k; else if (!S.show.l && !S.show.r) { S.show.r = S.show.c; delete S.show.c; S.show.l = k; } else S.show[S.show.l ? 'r' : 'l'] = k; }
       renderChars(); break; }
     case 'form': S.form = S.form || {}; if (rest[1] && rest[1] !== 'off') S.form[rest[0]] = rest[1]; else delete S.form[rest[0]]; renderChars(); break;
+    case 'bgm': loopTrack('bgm', rest[0]); break;
+    case 'amb': loopTrack('amb', rest[0]); break;
+    case 'se': se(rest[0]); break;
     case 'cg': showCG(rest[0], rest.slice(1).join(' ')); break;
     case 'cgoff': hideCG(); break;
     case 'fx': fx(rest[0]); break;
@@ -2178,7 +2273,7 @@ function choice(prompt) {
   }).join('');
   box.classList.add('on');
   box.querySelectorAll('[data-o]').forEach(b => b.onclick = (e) => {
-    e.stopPropagation();
+    e.stopPropagation(); se('se_choice');
     const [txt, rest = ''] = opts[+b.dataset.o].split('=>');
     box.classList.remove('on'); box.innerHTML = '';
     logArr.push({ n: '▶', t: txt.trim(), k: 'pick' });
@@ -2190,7 +2285,7 @@ function choice(prompt) {
   });
 }
 function ending(k) {
-  const E = ENDS[k]; P.end[k] = Date.now(); saveP(); localStorage.removeItem('xw_save_0');
+  const E = ENDS[k]; loopTrack('amb', 'off'); loopTrack('bgm', E.kind === 'sad' || E.kind === 'bad' ? 'sad' : 'hope'); P.end[k] = Date.now(); saveP(); localStorage.removeItem('xw_save_0');
   hideCG(); S.show = {}; renderChars(); auto = false; skip = false; updBtns();
   $('box').classList.add('hide');
   const d = $('endc'); d.className = 'endc on ' + (E.kind || '');
@@ -2212,11 +2307,12 @@ function logUI() {
   $('lX').onclick = () => o.remove(); const lg = o.querySelector('.log'); lg.scrollTop = lg.scrollHeight;
 }
 function menuUI() {
-  const o = modal(`<h2>選單</h2><div class="mgrid"><button class="btn" data-m="save">存檔</button><button class="btn" data-m="load">讀檔</button><button class="btn" data-m="log">對話紀錄</button><button class="btn" data-m="speed">文字速度：${['', '一般', '快', '瞬間'][P.speed]}</button><button class="btn" data-m="skipall">快進：${P.skipAll ? '全部' : '只跳已讀'}</button><button class="btn ghost" data-m="title">回到標題</button></div><button class="btn ghost" id="mX">繼續故事</button>`);
+  const o = modal(`<h2>選單</h2><div class="mgrid"><button class="btn" data-m="save">存檔</button><button class="btn" data-m="load">讀檔</button><button class="btn" data-m="log">對話紀錄</button><button class="btn" data-m="speed">文字速度：${['', '一般', '快', '瞬間'][P.speed]}</button><button class="btn" data-m="skipall">快進：${P.skipAll ? '全部' : '只跳已讀'}</button><button class="btn" data-m="snd">聲音：${['關', '小聲', '中等', '大聲'][Math.round((P.snd ?? 1) * 3)] || '大聲'}</button><button class="btn ghost" data-m="title">回到標題</button></div><button class="btn ghost" id="mX">繼續故事</button>`);
   $('mX').onclick = () => o.remove();
   o.querySelectorAll('[data-m]').forEach(b => b.onclick = () => {
     const m = b.dataset.m; if (m === 'save' || m === 'load') { o.remove(); slotsUI(m); } else if (m === 'log') { o.remove(); logUI(); }
     else if (m === 'speed') { P.speed = P.speed % 3 + 1; saveP(); o.remove(); menuUI(); }
+    else if (m === 'snd') { const lv = [0, 1 / 3, 2 / 3, 1], i = lv.findIndex(x => Math.abs(x - (P.snd ?? 1)) < .01); P.snd = lv[(i + 1) % 4]; saveP(); sndRefresh(); o.remove(); menuUI(); }
     else if (m === 'skipall') { P.skipAll = !P.skipAll; saveP(); o.remove(); menuUI(); }
     else if (m === 'title') { saveSlot(0); o.remove(); title(); }
   });
@@ -2225,7 +2321,7 @@ function menuUI() {
 // ---------------- 標題 ----------------
 function title() {
   auto = skip = false; updBtns(); clearTimeout(autoT); if (typing) clearInterval(typing);
-  $('game').classList.add('hide'); const t = $('title'); t.classList.remove('hide');
+  $('game').classList.add('hide'); const t = $('title'); t.classList.remove('hide'); loopTrack('amb', 'off'); loopTrack('bgm', 'title');
   const cont = loadSlot(0), ne = Object.keys(P.end).length;
   t.innerHTML = `<div class="tbg"></div><div class="tfx" id="tfx"></div><div class="tin"><div class="tsub">斗羅大陸・小舞篇</div><h1>舞・十萬年</h1><div class="tline">我是一隻兔子。<br>我用十萬年，等到了一個人。</div>
   <div class="tbtn">${cont ? `<button class="btn" id="tC">繼續故事<small>${chapOf(cont.ch).t}</small></button>` : ''}<button class="btn ${cont ? 'ghost' : ''}" id="tN">新的故事</button><button class="btn ghost" id="tL">讀取存檔</button><button class="btn ghost" id="tCh">章節回顧</button><button class="btn ghost" id="tE">結局與回憶（${ne}/${Object.keys(ENDS).length}）</button></div></div>`;
@@ -2258,6 +2354,7 @@ function resume(s) {
   $('chars').innerHTML = ''; fx('off'); $('choices').classList.remove('on'); $('bgA').classList.remove('on'); $('bgB').classList.remove('on');
   if (S.bg) setBg(S.bg, true);
   if (S.cg) showCG(S.cg.k, S.cg.title); else hideCG();
+  loopTrack('bgm', S.bgm || 'off'); loopTrack('amb', S.amb || 'off');
   renderChars();
   // 往回退到最近一句台詞或選項
   const L = lines(); let i = Math.max(0, S.i - 1);
@@ -2269,7 +2366,7 @@ function resume(s) {
 // ---------------- 綁定 ----------------
 window.addEventListener('load', () => {
   loadP();
-  $('stage').onclick = () => { if ($('choices').classList.contains('on')) return; if (skip) { skip = false; updBtns(); return; } next(); };
+  $('stage').onclick = () => { if ($('choices').classList.contains('on')) return; if (!typing) se('se_click'); if (skip) { skip = false; updBtns(); return; } next(); };
   $('box').onclick = $('stage').onclick;
   $('bMenu').onclick = e => { e.stopPropagation(); menuUI(); };
   $('bLog').onclick = e => { e.stopPropagation(); logUI(); };
