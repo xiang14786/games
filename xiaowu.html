@@ -31,9 +31,10 @@ button{font-family:inherit;cursor:pointer}
 .cg{position:absolute;inset:0;opacity:0;transition:opacity 1.2s;pointer-events:none;z-index:3}
 .cg.on{opacity:1}
 .cg .cgfb{position:absolute;inset:-5%;background-size:cover;background-position:center;filter:blur(6px) brightness(.6) saturate(1.3)}
-.cg img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity 1.2s}
+.cg img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;object-position:center 30%;opacity:0;transition:opacity 1.2s}
 .cg.hasimg img{opacity:1}
 .cgt{position:absolute;left:0;right:0;top:20%;text-align:center;font-family:'LXGW WenKai TC',serif;font-size:30px;letter-spacing:6px;color:#fff;text-shadow:0 0 18px #ff8ac0,0 0 40px #ff5aa0}
+.cg.hasimg .cgfb{filter:blur(18px) brightness(.45) saturate(1.2)}
 .cg.hasimg .cgt{top:auto;bottom:190px;font-size:20px;letter-spacing:4px;opacity:.9}
 #fx{position:absolute;inset:0;pointer-events:none;z-index:4;overflow:hidden}
 #fx i{position:absolute;top:-6%;display:block;animation:fall linear infinite}
@@ -2041,7 +2042,7 @@ function renderChars(speaker) {
 function showCG(k, title) {
   S.cg = { k, title }; P.cg[k] = title; saveP();
   const c = $('cg'); c.className = 'cg on'; c.innerHTML = `<div class="cgfb" style="background-image:url(${BG(S.bg || 'title')})"></div><img alt=""><div class="cgt">${title || ''}</div>`;
-  const im = c.querySelector('img'); im.onload = () => c.classList.add('hasimg'); im.src = CGD + k + '.webp';
+  const im = c.querySelector('img'); im.onload = () => { c.classList.add('hasimg'); c.querySelector('.cgfb').style.backgroundImage = `url(${CGD + k}.webp)`; }; im.src = CGD + k + '.webp';
 }
 function hideCG() { S.cg = null; $('cg').className = 'cg'; }
 const FXS = { snow: 26, petal: 22, stars: 40, rain: 50, firefly: 22, ice: 26, gold: 30 };
