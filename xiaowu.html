@@ -118,6 +118,9 @@ button{font-family:inherit;cursor:pointer}
 #title h1{font-family:'LXGW WenKai TC',serif;font-size:52px;letter-spacing:10px;margin:6px 0 10px;color:#fff;text-shadow:0 0 20px #ff6aa8,0 0 50px #ff3a8a}
 .tline{font-family:'LXGW WenKai TC',serif;color:#ffe0ee;line-height:1.9;font-size:16px;margin-bottom:26px}
 .tbtn{width:100%}
+
+.ch.pop img{animation:pop .35s ease}
+@keyframes pop{40%{transform:translateY(-8px) scale(1.02)}}
 </style></head>
 <body>
 <div id="game" class="hide"><div id="stage"><div class="bg" id="bgA"></div><div class="bg" id="bgB"></div><div id="chars"></div><div class="cg" id="cg"></div><div id="fx"></div></div>
@@ -241,10 +244,12 @@ xw：我收下。可是我不會讓你們為了我冒險的。森林需要你們
 細細的，白白的，五根手指頭會動。
 @cgoff
 @show xw c
+@face xw surp
 xw：……這、這就是人類的身體？
 我試著邁出一步，結果腳一軟，整個人摔進了草叢裡。
 xw：哎唷！
 （……原來用兩條腿走路，這麼難。）
+@face xw cry
 我趴在草地上，忍不住笑了出來。笑著笑著，眼淚卻掉了下來。
 （娘親，你看見了嗎？我變成人了。）
 （我會好好活下去，帶著你的那一份。）
@@ -252,6 +257,7 @@ xw：哎唷！
 天快亮的時候，我終於學會了走路。
 我把大明的金毛和二明的鱗片，用一根草繩綁好，藏在貼身的衣服裡，然後朝著人類的城鎮走去。
 那年，我給自己取了一個名字。
+@face xw laugh
 xw：我叫小舞。跳舞的舞。
 （因為娘親說過，我們柔骨兔一族，跳起舞來是全森林最好看的。）
 `.trim().split('\n');
@@ -328,6 +334,7 @@ ts：你的身法很漂亮。我從來沒看過有人身體能彎成那樣。
 xw：哼。那、那是當然的。好吧，算你厲害。以後你是七舍老大，我就勉強當你妹妹吧。
 @goto c2g
 #c2e
+@face xw shy
 xw：……你好厲害。
 我低著頭，聲音小得像蚊子叫。
 xw：以後你當老大。我……我當你妹妹。
@@ -346,6 +353,7 @@ xw：好啦，被子還你。你厲害，你當老大。我嘛……就當你妹
 ts：妹妹？
 xw：對呀。以後有人欺負你，我幫你打；有人欺負我，你幫我打。
 ts：……好。那我以後就是你哥。
+@face xw shy
 （哥。）
 （我在心裡把這個字念了好多遍。這是我在人類世界，第一個屬於自己的東西。）
 @hide all
@@ -371,6 +379,7 @@ ts：小舞，你先走。
 - 「才不走！說好了有人欺負你，我幫你打！」 => c2h | @set bond +5 | @set courage +1
 - 乖乖退到一邊，看看哥打算怎麼做 => c2i | @set secret +1
 #c2h
+@face xw firm
 xw：才不走！說好了，有人欺負你，我幫你打！
 我從他身後跳出來，一個旋身，辮子像鞭子一樣掃了出去。
 @fx shake
@@ -399,6 +408,7 @@ xw：嗯。哥，你為什麼每天都那麼拼命呀？
 他看著月亮，很久才回答。
 ts：我爸爸……是個鐵匠。他喝很多酒，很少跟我說話。但我知道他以前一定不是這樣的。
 ts：我想變強。強到有一天，他會為我驕傲。強到……能保護所有我想保護的人。
+@face xw shy
 xw：那，我也在裡面嗎？
 ts：……嗯。你也在。
 （心臟好像被什麼東西撞了一下。）
@@ -442,6 +452,7 @@ SCRIPT.c3 = `
 @show xw r
 xw：史萊克？好奇怪的名字。
 ts：聽說，那裡只收怪物，不收普通人。
+@face xw laugh
 xw：那正好！我就是怪物！
 （真正意義上的那種。）
 @hide all
@@ -478,6 +489,7 @@ nrr：我說，你那隻兔子武魂，是用來當寵物的嗎？
 - 「那就來試試看，看誰是寵物！」 => c3a | @set courage +1
 - 「榮榮對吧？你的衣服好漂亮，可以教我怎麼搭配嗎？」 => c3b | @set team +1
 #c3a
+@face xw firm
 xw：那就來試試看，看誰是寵物！
 我們兩個差點在操場上打起來，最後是戴沐白和哥一人拉一個，才把我們分開。
 nrr：哼！
@@ -551,6 +563,7 @@ mhj：七怪！聽起來好帥！
 ds：小舞，你的魂環，是在哪裡獵到的？
 （……！）
 ds：我研究武魂幾十年了。你的魂環和你的身體，契合得太完美了。完美到……像是本來就長在你身上的一樣。
+@face xw surp
 我的手心開始冒汗。
 ?大師銳利的目光盯著小舞。
 - 「我、我運氣好嘛！那隻魂獸剛好很適合我！」笑著帶過 => c3g | @set secret +1
@@ -586,6 +599,7 @@ ds：小舞。如果有一天，你遇到了麻煩，記得告訴小三。他會
 （如果我現在回去，就再也不用擔心被人發現。不用躲，不用騙人。我可以一直當那隻被寵著的小兔子。）
 @show ts c
 ts：小舞？這麼晚了，還不睡？
+@face xw cry
 xw：……哥。
 他走過來，在我身邊坐下，把外套披在我肩上。
 ts：今天你摔趙老師那一下，真漂亮。
@@ -595,6 +609,7 @@ ts：以後，我們七個人一起，一定會成為全大陸最強的隊伍。
 - 「哥……如果有一天我突然不見了，你會怎麼樣？」 => c3l | @set bond +4
 - 我想回家了…… => c3m
 #c3k
+@face xw laugh
 xw：嗯！我們七個，要一直、一直在一起！
 我把頭靠在他肩膀上。森林的呼喚，好像變得很遠很遠了。
 （對不起，大明、二明。我想再待一下。再待一下就好。）
@@ -718,6 +733,7 @@ ts：小舞——！
 二明：小舞！真的是你！
 二明的大頭湊過來，冰涼的鱗片蹭著我的臉。
 大明：我們感覺到你的氣息，就知道你回來了。
+@face xw cry
 xw：大明、二明……我好想你們。
 我抱著二明的脖子，哭得像小時候一樣。
 可是哭完以後，我想起了哥最後的喊聲。
@@ -741,6 +757,7 @@ xw：大明，你快送我回去！我的朋友們還在外面，他們會擔心
 xw：……不行。我要回去。
 @goto c4d
 #c4d
+@face xw firm
 xw：大明、二明，我要回去。那裡有我的哥哥，還有我最好的朋友們。
 xw：我不能因為害怕，就躲一輩子。
 大明和二明對望了很久。最後，二明嘆了一口氣。
@@ -801,6 +818,7 @@ ts：就好像……牠認識你一樣。
 - 「……也許牠只是覺得我很可愛吧。」 => c4hide | @set secret +1
 - 「哥，如果我說，我有一個不能說的秘密，你會生氣嗎？」 => c4half | @set bond +3
 #c4tell
+@face xw cry
 xw：哥……其實，我不是人類。
 他的腳步頓了一下，但沒有停。
 xw：我是一隻十萬年的柔骨兔。那隻泰坦巨猿叫大明，是我的哥哥，從小把我養大的。
@@ -815,6 +833,7 @@ xw：……嗯。
 ts：小舞。你是兔子也好，是人也好，是十萬年魂獸也好——
 ts：你都是我的小舞。這一點，永遠都不會變。
 @fx petal
+@face xw cry
 我把臉埋進他的肩膀，眼淚怎麼也停不下來。
 ts：這個秘密，我會用命守著。誰敢傷害你，我就跟誰拼命。
 @set $told 1
@@ -886,6 +905,7 @@ ts：……你敢碰她。
 比賽結束得很快。
 他跳下擂台，第一件事是跑到我身邊，小心翼翼地托著我的手臂。
 ts：會痛就說。我幫你接回去。
+@face xw shy
 xw：……哥，你剛才好可怕。
 ts：嚇到你了？
 xw：沒有。
@@ -918,6 +938,7 @@ zzq：……他今天在台上，為了你發火的樣子。我從沒見過他�
 - 「才、才沒有！我們就是兄妹！」把臉埋進枕頭 => c5b | @set team +1
 #c5a
 我抱著枕頭，很久很久，才小小聲地說：
+@face xw shy
 xw：……我喜歡他。不是喜歡哥哥的那種喜歡。
 nrr：我就知道！！
 寧榮榮激動得差點把床都掀了，竹清的嘴角也微微揚了起來。
@@ -926,6 +947,7 @@ nrr：交給我們吧！本小姐出馬，保證讓那塊木頭開竅！
 xw：不准亂來啦！
 @goto c5c
 #c5b
+@face xw shy
 xw：才、才沒有！我們就是兄妹！普通的、正常的兄妹！
 我把整張臉埋進枕頭裡，連耳朵都燙得要燒起來。
 nrr：哦——普通的兄妹會臉紅成這樣？
@@ -957,6 +979,7 @@ ts：我知道它不是什麼貴重的東西。可是，這是我身上最好的
 - 「這是我收過最好的禮物。」踮起腳抱住他 => c5d | @set bond +8
 - 「笨蛋……你試了多久？」 => c5e | @set bond +6
 #c5d
+@face xw cry
 xw：這是我這輩子，收過最好最好的禮物。
 我踮起腳，用力地抱住了他。他整個人僵住了，過了好久，才慢慢地，回抱住我。
 @goto c5f
@@ -965,6 +988,7 @@ xw：笨蛋……你試了多久？
 ts：……三個月。
 xw：三個月？！你每天修煉到半夜，原來還偷偷在做這個？
 ts：嗯。因為我想讓你笑。
+@face xw cry
 （我沒有笑。我哭了。）
 @goto c5f
 #c5f
@@ -1066,6 +1090,7 @@ mhj：我們贏了！！史萊克贏了！！
 我抬起頭的那一瞬間——
 我認出了那雙眼睛。
 （冷得像冬天的湖。）
+@face xw surp
 （是她。在夢裡出現了十萬年……不，在夢裡出現了一次又一次的那個女人。）
 （殺了娘親的那個女人。）
 @cgoff
@@ -1076,6 +1101,7 @@ bbd：……好特別的孩子。
 - 抬起頭，直直地瞪回去 => c6f | @set courage +1
 #c6f
 我抬起頭，直直地看著她。
+@face xw firm
 （你殺了我娘親。我不會在你面前低頭。）
 @if secret<2 c6bad
 她的笑容深了一點。
@@ -1237,6 +1263,7 @@ ts：小舞……小舞！不……不要……
 （化形以後的身體，太脆弱了。）
 （可是，我還有一件事可以做。）
 @if $told>=1 c7known
+@face xw cry
 xw：哥……我一直有一個秘密……沒有告訴你。
 xw：我不是人類。我是一隻……十萬年的柔骨兔。
 他愣住了。
@@ -1244,6 +1271,7 @@ xw：我們魂獸啊……在最後的時候，可以選擇……把自己的一
 xw：變成他的魂環，變成他的魂骨，永遠……永遠陪著他。
 @goto c7last
 #c7known
+@face xw cry
 xw：哥……你還記得嗎？我跟你說過，我是一隻十萬年的柔骨兔。
 ts：別說話……我帶你走，我帶你去找大夫——
 xw：我們魂獸啊……在最後的時候，可以選擇……把自己的一切，獻給一個人。
@@ -1331,6 +1359,7 @@ ts：所以這一次，我不會再讓她一個人去面對任何事。
 教皇看著眼前的一切，看了很久。
 bbd：……今天，算你們走運。
 bbd：可是十萬年的柔骨兔，我總有一天會得到你。
+@face xw firm
 xw：不。你永遠都得不到。
 @set courage +1
 xw：因為我不再是一個人了。
@@ -1340,6 +1369,7 @@ xw：因為我不再是一個人了。
 我跑過去，抱住了哥。抱得那麼用力，好像怕他會不見。
 @show ts c
 ts：小舞。你剛才……沒有想要做什麼傻事吧？
+@face xw shy
 xw：……有。差一點點。
 ts：以後不准。
 xw：嗯。以後不會了。因為有你們在。
@@ -1534,6 +1564,7 @@ ts：……嗯。
 兩隻小小的動物，從花叢裡鑽了出來。一隻毛茸茸的小猴子，和一條細細的小青蛇。
 大明：嘿嘿，妹妹，你看我現在比你還小了！
 二明：……我以後，要叫你姐姐嗎？
+@face xw laugh
 xw：大明、二明……！
 我把他們兩個一起抱進懷裡，又哭又笑。
 @goto c9next
@@ -1575,12 +1606,14 @@ SCRIPT.c10 = `
 nrr：小舞——！！
 榮榮第一個衝過來，抱著我哭到妝都花了。竹清站在旁邊，眼眶也是紅的。
 nrr：你知不知道我們有多想你！你知不知道那個木頭這些年過得多慘！
+@face xw cry
 xw：……對不起。讓你們等這麼久。
 @hide all
 @show mhj l
 @show osc r
 mhj：小舞姐！我、我胖子我……哇啊啊啊——
 osc：來，吃根香腸壓壓驚。這是我新研發的，專門給剛復活的人吃的。
+@face xw laugh
 xw：哪有這種香腸啦！
 @hide all
 @show dmb c
@@ -1608,6 +1641,7 @@ th：……以後，他就交給你了。
 ts：小舞。
 ts：那天在這裡，我跟你說，我想保護你一輩子。
 ts：結果，是你保護了我。
+@face xw laugh
 xw：那是因為你太弱了嘛。
 ts：嗯。所以這一次，換我。
 他單膝跪了下來。手心裡，是一圈藍色的小花。和那天一模一樣，只是這一次，每一朵花的中間，都多了一顆小小的、金色的光點。
@@ -1619,11 +1653,13 @@ ts：嫁給我，好不好？
 ts：……十年。
 ts：每年你的生日，我都會做一圈。這是第十圈，我覺得最好看。
 xw：笨蛋。
+@face xw shy
 xw：……好。我嫁給你。
 @goto c10c
 #c10a
 xw：好。
 我說得很快，快到他都愣住了。
+@face xw laugh
 xw：我等這句話，等了十萬年了。
 @goto c10c
 #c10c
@@ -1971,6 +2007,8 @@ function setBg(k, fast) {
   nx.classList.add('on'); cur.classList.remove('on');
   if (fast) requestAnimationFrame(() => { nx.style.transition = ''; cur.style.transition = ''; });
 }
+const FACES = { xw: ['shy', 'cry', 'laugh', 'firm', 'surp'] };
+const imgOf = k => { const f = S.face && S.face[k]; return f && FACES[k] && FACES[k].includes(f) ? `assets/xiaowu/ch/${k}_${f}.webp` : CH[k].img; };
 function renderChars(speaker) {
   const box = $('chars');
   for (const pos of ['l', 'c', 'r']) {
@@ -1979,8 +2017,8 @@ function renderChars(speaker) {
     if (!el || el.dataset.k !== k) {
       if (el) el.remove();
       el = document.createElement('div'); el.className = `ch p${pos} in` + (CH[k].beast ? ' beast' : ''); el.dataset.k = k;
-      el.innerHTML = `<img src="${CH[k].img}" alt="">`; box.appendChild(el); setTimeout(() => el.classList.remove('in'), 30);
-    }
+      el.innerHTML = `<img src="${imgOf(k)}" alt="">`; box.appendChild(el); setTimeout(() => el.classList.remove('in'), 30);
+    } else { const im = el.querySelector('img'), src = imgOf(k); if (im.getAttribute('src') !== src) { im.src = src; el.classList.remove('pop'); void el.offsetWidth; el.classList.add('pop'); } }
     el.classList.toggle('dim', !!speaker && speaker !== k);
     el.classList.toggle('talk', speaker === k);
   }
@@ -2078,7 +2116,10 @@ function cmd(line) {
   switch (c) {
     case 'bg': setBg(rest[0]); break;
     case 'show': S.show[rest[1] || 'c'] = rest[0]; renderChars(); break;
-    case 'hide': if (rest[0] === 'all') S.show = {}; else for (const p in S.show) if (S.show[p] === rest[0]) delete S.show[p]; renderChars(); break;
+    case 'hide': if (rest[0] === 'all') { S.show = {}; S.face = {}; } else for (const p in S.show) if (S.show[p] === rest[0]) delete S.show[p]; renderChars(); break;
+    case 'face': { S.face = S.face || {}; const k = rest[0]; if (rest[1] && rest[1] !== 'off') S.face[k] = rest[1]; else delete S.face[k];
+      if (!Object.values(S.show).includes(k)) { if (rest[2]) S.show[rest[2]] = k; else if (!S.show.c) S.show.c = k; else if (!S.show.l && !S.show.r) { S.show.r = S.show.c; delete S.show.c; S.show.l = k; } else S.show[S.show.l ? 'r' : 'l'] = k; }
+      renderChars(); break; }
     case 'cg': showCG(rest[0], rest.slice(1).join(' ')); break;
     case 'cgoff': hideCG(); break;
     case 'fx': fx(rest[0]); break;
