@@ -1382,6 +1382,288 @@ const MG = (() => {
 })();
 
 </script>
+<!--SPX--><script>const SPX={sport:'hoop'};
+// ======================================================================
+//  運動遊戲大升級：真人風立繪、徽章、國家隊、傷病抉擇、賽後採訪、裝備
+//  （籃球、棒球共用；SPX 由各遊戲先定義）
+// ======================================================================
+(function () {
+  const isHoop = SPX.sport === 'hoop', DIR = 'assets/' + SPX.sport;
+  const $$ = id => document.getElementById(id);
+  const rnd = (a, b) => a + Math.floor(Math.random() * (b - a + 1));
+  const cl = (v, a, b) => Math.max(a, Math.min(b, v));
+  const sx = () => { C.spx = C.spx || { bdg: {}, eq: null, gear: {}, inv: [], medals: [], gp: 0, lastIv: -9, pain: 0, injAsk: 0, intl: {} }; return C.spx; };
+  const mu = () => (C && C.phase === 'HS' ? 0.1 : 1);
+
+  // ---------------- 立繪 ----------------
+  const imgOf = lk => lk && lk.img != null ? lk.img : lk ? ((lk.skin || 0) + (lk.hair || 0) * 2) % 6 : 0;
+  const fig = (i, color) => `<span class="spfig" style="--tc:${color}"><img src="${DIR}/p${i}.webp" alt=""><i style="-webkit-mask-image:url(${DIR}/p${i}m.webp);mask-image:url(${DIR}/p${i}m.webp)"></i></span>`;
+  const bust = (i, color, num) => `<span class="spav" style="--tc:${color}">${fig(i, color)}${num != null ? `<b class="spnum">#${num}</b>` : ''}</span>`;
+  window.spFig = fig; window.spBust = bust;
+  if (isHoop) {
+    avatar = function (look, color, num) { return bust(imgOf(look), color || '#5aa9ff', num); };
+  } else {
+    const _bb = bbAvatar;
+    bbAvatar = function (color = '#f2c14e', num = 18, skin = 1) {
+      let i = null; for (const lk of [typeof C !== 'undefined' && C && C.look, typeof look !== 'undefined' && look]) if (lk && lk.skin === skin && lk.img != null) { i = lk.img; break; }
+      if (i == null) i = skin % 6; return bust(i, color, num);
+    };
+  }
+  // 建立角色：六種造型
+  const _dc = drawCreate;
+  drawCreate = function () {
+    if (look.img == null) look.img = rnd(0, 5);
+    _dc();
+    const el = $$('cAvatar'); if (!el) return;
+    el.insertAdjacentHTML('afterend', `<div class="card"><div class="muted" style="font-size:13px;margin-bottom:6px">選擇造型</div><div class="looks">${[0, 1, 2, 3, 4, 5].map(i => `<button class="lk ${look.img === i ? 'on' : ''}" data-lk="${i}">${fig(i, '#5aa9ff')}</button>`).join('')}</div></div>`);
+    document.querySelectorAll('[data-lk]').forEach(b => b.onclick = () => { look.img = +b.dataset.lk; document.querySelectorAll('.looks').forEach(x => x.closest('.card').remove()); drawCreate(); });
+  };
+  const bgOf = () => `${DIR}/bg${C && C.phase === 'PRO' ? 'PRO' : 'HS'}.webp`;
+  const setBg = () => document.body.style.setProperty('--spbg', `url(${bgOf()})`);
+
+  // NPC 立繪
+  const NPC = isHoop ? { coach: '教練', rival: '宿敵', agent: '經紀人', reporter: '記者' } : { coach: '教練', rival: '宿敵', catcher: '搭檔捕手', agent: '經紀人', reporter: '記者' };
+  const KEYS = [['經紀人', 'agent'], ['記者', 'reporter'], ['採訪', 'reporter'], ['媒體', 'reporter'], ['捕手', 'catcher'], ['宿敵', 'rival'], ['打者', 'rival'], ['對手', 'rival'], ['挑釁', 'rival'], ['教練', 'coach']];
+  const _scene = scene;
+  scene = function (title, text, choices, kind, color, who) {
+    _scene(title, text, choices, kind, color);
+    let w = who; const s = title + ' ' + (text || '');
+    if (!w) for (const [k, v] of KEYS) if (s.includes(k) && NPC[v]) { w = v; break; }
+    if (w && NPC[w]) { const h = $$('sceneIn').querySelector('h2'); if (h) h.insertAdjacentHTML('beforebegin', `<div class="npcp"><span class="npcf"><img src="${DIR}/${w}.webp" alt=""></span><small>${NPC[w]}</small></div>`); }
+  };
+
+  // ---------------- 徽章 ----------------
+  const TIER = [['銅', '#c98a52'], ['銀', '#c8d2e0'], ['金', '#ffd257'], ['名人堂', '#b48aff']];
+  const THR = [62, 72, 82, 91];
+  const BDG = isHoop ? [
+    { k: 'snipe', n: '狙擊手', ic: '🏹', v: () => ME().a.three, b: { three: [1, 2, 3, 5] } },
+    { k: 'mid', n: '中距離大師', ic: '🎯', v: () => ME().a.shoot, b: { shoot: [1, 2, 3, 5] } },
+    { k: 'slash', n: '切入魔術師', ic: '⚡', v: () => ME().a.drive, b: { drive: [1, 2, 3, 5] } },
+    { k: 'dime', n: '指揮官', ic: '🧠', v: () => ME().a.pass, b: { pass: [1, 2, 3, 5] } },
+    { k: 'glass', n: '籃板怪物', ic: '💪', v: () => ME().a.reb, b: { reb: [1, 2, 3, 5] } },
+    { k: 'lock', n: '鎖喉防守', ic: '🛡️', v: () => ME().a.def, b: { def: [1, 2, 3, 5] } },
+    { k: 'iron', n: '鐵人', ic: '🏋️', v: () => ME().a.ath, b: { ath: [1, 2, 3, 5] } },
+    { k: 'brain', n: '球場大腦', ic: '📼', v: () => C.iq, b: { pass: [1, 1, 2, 3], shoot: [0, 1, 1, 2] } },
+    { k: 'star', n: '巨星氣場', ic: '🌟', v: () => cl(40 + (C.fame || 0) * 1.5, 0, 99), b: { shoot: [0, 1, 1, 2], three: [0, 1, 1, 2], drive: [1, 1, 2, 2] } },
+  ] : [
+    { k: 'heat', n: '火球特快', ic: '🔥', v: () => ME().a.velo, b: { velo: [1, 2, 3, 5] } },
+    { k: 'paint', n: '精準制球', ic: '🎯', v: () => ME().a.ctrl, b: { ctrl: [1, 2, 3, 5] } },
+    { k: 'magic', n: '魔球', ic: '🌀', v: () => stuffOf(ME()), b: { stuff: [1, 2, 3, 5] } },
+    { k: 'iron', n: '鐵臂', ic: '💪', v: () => ME().a.sta, b: { sta: [1, 2, 4, 6] } },
+    { k: 'cool', n: '冰山心臟', ic: '🧊', v: () => C.iq || 50, b: { ctrl: [1, 1, 2, 3], stuff: [0, 1, 1, 2] } },
+    { k: 'star', n: '巨星氣場', ic: '🌟', v: () => cl(40 + (C.fame || 0) * 1.5, 0, 99), b: { velo: [0, 1, 1, 2], ctrl: [1, 1, 2, 2] } },
+  ];
+  const tierOf = b => { const v = b.v(); let t = -1; THR.forEach((x, i) => { if (v >= x) t = i; }); return t; };
+  const slots = () => { const o = ovr(); return 1 + (o >= 70) + (o >= 78) + (o >= 86) + (o >= 93); };
+  function equipped() {
+    const S = sx(), own = BDG.filter(b => tierOf(b) >= 0);
+    if (!S.eq) S.eq = own.sort((a, b) => tierOf(b) - tierOf(a)).slice(0, slots()).map(b => b.k);
+    S.eq = S.eq.filter(k => own.some(b => b.k === k)).slice(0, slots());
+    return S.eq;
+  }
+  function checkBadges() {
+    const S = sx(), out = [];
+    for (const b of BDG) { const t = tierOf(b), old = S.bdg[b.k] == null ? -1 : S.bdg[b.k]; if (t > old) { S.bdg[b.k] = t; out.push(`${b.ic} ${b.n}・${TIER[t][0]}`); if (old < 0 && S.eq && S.eq.length < slots()) S.eq.push(b.k); } }
+    if (out.length) toast('🏅 徽章升級！', out.join('、'));
+  }
+
+  // ---------------- 裝備 ----------------
+  const RAR = [['普通', '#b8c2d0', 30], ['稀有', '#5aa9ff', 110], ['史詩', '#b48aff', 380], ['傳說', '#ffb84d', 1100]];
+  const GEAR = isHoop ? {
+    shoes: { n: '球鞋', ic: '👟', items: [['訓練球鞋', { ath: 1 }], ['氣墊籃球鞋', { ath: 2, drive: 1 }], ['碳板戰靴', { ath: 3, drive: 2, def: 1 }], ['飛人簽名鞋', { ath: 4, drive: 3, def: 2, reb: 2 }]] },
+    sleeve: { n: '護具', ic: '🧤', items: [['棉質護腕', { shoot: 1 }], ['射手袖套', { shoot: 2, three: 1 }], ['冠軍頭帶', { shoot: 2, three: 2, pass: 1 }], ['傳奇射手袖', { shoot: 3, three: 4, pass: 2 }]] },
+  } : {
+    glove: { n: '手套', ic: '🧤', items: [['練習手套', { ctrl: 1 }], ['牛皮手套', { ctrl: 2, stuff: 1 }], ['職人訂製手套', { ctrl: 3, stuff: 2 }], ['傳奇金手套', { ctrl: 4, stuff: 3, velo: 1 }]] },
+    spikes: { n: '釘鞋', ic: '👟', items: [['入門釘鞋', { sta: 1 }], ['輕量釘鞋', { sta: 2, velo: 1 }], ['碳纖維釘鞋', { sta: 3, velo: 2 }], ['火箭釘鞋', { sta: 4, velo: 3, ctrl: 1 }]] },
+  };
+  const AN = isHoop ? ATTR : { velo: '球速', ctrl: '控球', stuff: '變化球', sta: '體力' };
+  const bTxt = b => Object.entries(b).filter(([, v]) => v).map(([k, v]) => `${AN[k] || k}+${v}`).join(' ');
+  const gearPrice = r => Math.max(1, Math.round(RAR[r][2] * mu()));
+
+  // ---------------- 能力加成（比賽時套用） ----------------
+  function boosts() {
+    const S = sx(), out = {};
+    const add = (k, v) => { if (v) out[k] = (out[k] || 0) + v; };
+    for (const k of equipped()) { const b = BDG.find(x => x.k === k), t = tierOf(b); if (t >= 0) for (const a in b.b) add(a, b.b[a][t]); }
+    for (const s in GEAR) { const g = S.gear[s]; if (g != null) { const it = GEAR[s].items[g]; for (const a in it[1]) add(a, it[1][a]); } }
+    return out;
+  }
+  let inGame = false;
+  function applyB() {
+    if (C._bx) return; const b = boosts(), me = ME(), done = {};
+    for (const k in b) {
+      if (k === 'stuff' && me.pi) { done.stuff = b[k]; for (const p in me.pi) if (p !== '直球') me.pi[p] += b[k]; }
+      else if (k in me.a) { me.a[k] += b[k]; done[k] = b[k]; }
+    }
+    C._bx = done; inGame = true;
+  }
+  function revertB() {
+    if (!C || !C._bx) return; const me = ME();
+    for (const k in C._bx) { if (k === 'stuff' && me.pi) { for (const p in me.pi) if (p !== '直球') me.pi[p] -= C._bx[k]; } else if (k in me.a) me.a[k] -= C._bx[k]; }
+    delete C._bx; inGame = false;
+  }
+  const _ens = ensureCareer;
+  ensureCareer = function () { _ens(); if (C && C._bx && !inGame) revertB(); if (C) sx(); };
+  const _pg = playGame;
+  playGame = function (h, a, opt) { if (C && !C._bx) applyB(); return _pg(h, a, opt); };
+  const _eg = endGame;
+  endGame = function (G) {
+    revertB(); _eg(G); const S = sx(); S.gp++;
+    // 止痛針風險
+    if (S.pain > 0 && !C.injury && Math.random() < 0.13) {
+      const ks = Object.keys(ME().a).filter(k => typeof ME().a[k] === 'number'); const k = isHoop ? 'ath' : 'sta';
+      C.injury = rnd(4, 7); ME().a[k] = Math.max(20, ME().a[k] - 3); S.pain = 0; S.injAsk = 1;
+      const sc = $$('sceneIn'); if (sc) sc.insertAdjacentHTML('afterbegin', `<div class="card bad">💉 止痛針的藥效退了……舊傷嚴重復發！傷停 ${C.injury} 週，${AN[k]} -3。</div>`);
+    }
+    checkBadges(); saveRun();
+    const btn = $$('bNextG'); if (!btn) return;
+    const tagEl = document.querySelector('#sceneIn .result-tag'); const won = !!(tagEl && tagEl.classList.contains('good'));
+    const m = isHoop ? (G.box && G.box.ME) : (G.pbox && G.pbox.ME);
+    const big = m && (isHoop ? (m.pts >= 25 || m.pts <= 4 && m.min > 20) : (m.k >= 8 || m.r >= 5));
+    if (!m || (isHoop ? !m.min : !m.outs)) return;
+    if (C.phase && S.gp - S.lastIv >= 3 && (big || Math.random() < 0.18)) {
+      const orig = btn.onclick;
+      btn.onclick = () => { S.lastIv = S.gp; interview(won, m, () => orig()); };
+    }
+  };
+
+  // ---------------- 賽後採訪 ----------------
+  function interview(won, m, done) {
+    const opp = isHoop ? '對手' : '對方打線';
+    const stat = m ? (isHoop ? `今天 ${m.pts} 分 ${m.reb} 籃板 ${m.ast} 助攻` : (m.outs ? `今天投 ${Math.floor(m.outs / 3)}${m.outs % 3 ? '又 ' + m.outs % 3 + '/3' : ''} 局、${m.k} 次三振` : '今天沒有登板')) : '';
+    const q = won ? `記者把麥克風遞過來：「恭喜贏球！${stat}，有什麼想說的嗎？」` : `記者追上來：「今天輸球，${stat}。外界有些批評的聲音，你怎麼看？」`;
+    const fin = (t) => { saveRun(); toast('🎤 採訪', t); done(); };
+    scene('🎤 賽後採訪', q, [
+      { label: '「都是隊友的功勞。」', note: '默契 +5、教練信任 +2', fn: () => { C.chem = Math.min(100, C.chem + 5); C.trust = Math.min(100, C.trust + 2); fin('隊友們很感動。'); } },
+      { label: '「我就是這個聯盟最好的。」', note: '人氣 +3、士氣 +6、默契 -3', fn: () => { C.fame = (C.fame || 0) + 3; C.morale = Math.min(100, C.morale + 6); C.chem = Math.max(0, C.chem - 3); fin('這段話上了熱搜。'); } },
+      { label: `「${opp}根本不夠看。」`, note: '人氣 +5、默契 -5、可能惹毛宿敵', fn: () => { C.fame = (C.fame || 0) + 5; C.chem = Math.max(0, C.chem - 5); C.morale = Math.min(100, C.morale + 3); sx().taunt = (sx().taunt || 0) + 1; fin('全網都在吵這段話。'); } },
+      { label: '「我會繼續努力。」', note: '士氣 +3', fn: () => { C.morale = Math.min(100, C.morale + 3); fin('標準答案，穩。'); } },
+    ], null, null, 'reporter');
+  }
+
+  // ---------------- 傷病抉擇 ----------------
+  const _rh = renderHub;
+  renderHub = function () {
+    _rh(); setBg(); heroArt();
+    const S = sx(); if (!C.injury) S.injAsk = 0;
+    if (C.injury && !S.injAsk && $$('scene').classList.contains('hide')) {
+      S.injAsk = 1; const cost = Math.max(1, Math.round(60 * mu()));
+      scene('🩹 受傷了', `醫生說你需要休養 ${C.injury} 週。教練走過來：「你自己決定吧，球隊需要你，但身體是你的。」`, [
+        { label: '乖乖復健', note: '照醫囑休養，最安全', main: true, fn: () => { closeScene(); } },
+        { label: `找名醫加速（${cost} 萬）`, note: '傷停減半', fn: () => { if (C.money < cost) return toast('錢不夠', ''); C.money -= cost; C.injury = Math.ceil(C.injury / 2); saveRun(); closeScene(); } },
+        { label: '打止痛針上場', note: '立刻復出，但接下來 4 週每場有 13% 機率舊傷嚴重復發', fn: () => { C.injury = 0; S.pain = 4; C.trust = Math.min(100, C.trust + 4); saveRun(); toast('💉 打了止痛針', '教練信任 +4'); closeScene(); } },
+      ], null, null, 'coach');
+    }
+  };
+  const _ew = endWeek;
+  endWeek = function () { if (C) { const S = sx(); if (S.pain > 0) S.pain--; } return _ew(); };
+
+  function heroArt() {
+    const h = $$('hero'); if (!h || !C) return; const T = myTeam();
+    h.classList.add('sphero');
+    h.insertAdjacentHTML('afterbegin', `<div class="hbg" style="background-image:url(${bgOf()})"></div>`);
+    const av = h.querySelector('.av'); if (av) { av.classList.add('avfig'); av.innerHTML = fig(imgOf(C.look), T.c); }
+    const S = sx(), eq = equipped();
+    if (eq.length) h.insertAdjacentHTML('beforeend', `<div class="hbdg">${eq.map(k => { const b = BDG.find(x => x.k === k), t = tierOf(b); return `<span style="--c:${TIER[t][1]}">${b.ic}${b.n}</span>`; }).join('')}</div>`);
+  }
+
+  // ---------------- 我的分頁：徽章、裝備、國家隊 ----------------
+  const _rm = renderMe;
+  renderMe = function () {
+    _rm(); const S = sx(), el = $$('tMe'); checkBadges(); const eq = equipped(), n = slots();
+    const bh = BDG.map(b => { const t = tierOf(b), v = Math.round(b.v()), nx = THR.find(x => x > v), on = eq.includes(b.k);
+      const eff = t >= 0 ? bTxt(Object.fromEntries(Object.entries(b.b).map(([k, a]) => [k, a[t]]))) : '';
+      return `<button class="bdg ${t < 0 ? 'lock' : ''} ${on ? 'on' : ''}" data-bd="${b.k}" style="--c:${t >= 0 ? TIER[t][1] : '#555'}"><span class="bi">${b.ic}</span><span class="bt"><b>${b.n}${t >= 0 ? `・${TIER[t][0]}` : ''}</b><small>${t >= 0 ? eff : '未解鎖'}${nx ? `　下一階 ${nx}（現在 ${v}）` : ''}</small></span>${on ? '<i>裝備中</i>' : ''}</button>`; }).join('');
+    const gh = Object.entries(GEAR).map(([s, G]) => { const cur = S.gear[s];
+      return `<div class="gslot"><b>${G.ic} ${G.n}：${cur != null ? `<span style="color:${RAR[cur][1]}">${G.items[cur][0]}</span>（${bTxt(G.items[cur][1])}）` : '<span class="muted">沒有</span>'}</b><div class="gbuy">${G.items.map((it, r) => { const own = S.inv.includes(s + r), p = gearPrice(r);
+        return `<button class="gi" data-g="${s}:${r}" style="--c:${RAR[r][1]}" ${!own && C.money < p ? 'disabled' : ''}><b>${it[0]}</b><small>${RAR[r][0]}・${bTxt(it[1])}</small><small>${own ? (cur === r ? '使用中' : '換上') : `💰 ${p} 萬`}</small></button>`; }).join('')}</div></div>`; }).join('');
+    const md = S.medals.length ? S.medals.map(x => `<span class="chip">${x.m === 'g' ? '🥇' : x.m === 's' ? '🥈' : x.m === 'b' ? '🥉' : '🏳️'} ${x.t}（${x.age} 歲）</span>`).join('') : '<span class="muted">還沒入選過國家隊（總評夠高就會被徵召）</span>';
+    el.insertAdjacentHTML('afterbegin', `<div class="card"><h3>🏅 徽章 <span class="muted" style="font-size:13px;font-weight:400">裝備欄 ${eq.length}/${n}（總評越高欄位越多）・比賽時生效</span></h3><div class="bdgs">${bh}</div></div>
+      <div class="card"><h3>🎒 裝備 <span class="muted" style="font-size:13px;font-weight:400">錢包 ${C.money} 萬</span></h3>${gh}</div>
+      <div class="card"><h3>🌏 國家隊</h3><div class="chips">${md}</div></div>`);
+    el.querySelectorAll('[data-bd]').forEach(b => b.onclick = () => { const k = b.dataset.bd, B = BDG.find(x => x.k === k); if (tierOf(B) < 0) return toast('還沒解鎖', `${B.n} 需要 ${THR[0]}`); const e = equipped(); if (e.includes(k)) S.eq = e.filter(x => x !== k); else { if (e.length >= slots()) return toast('裝備欄滿了', '先卸下一個徽章'); S.eq = e.concat(k); } saveRun(); renderMe(); });
+    el.querySelectorAll('[data-g]').forEach(b => b.onclick = () => { const [s, r] = b.dataset.g.split(':'), ri2 = +r, key = s + r; if (!S.inv.includes(key)) { const p = gearPrice(ri2); if (C.money < p) return; C.money -= p; S.inv.push(key); toast(`${GEAR[s].ic} 買了 ${GEAR[s].items[ri2][0]}`, bTxt(GEAR[s].items[ri2][1])); } S.gear[s] = ri2; saveRun(); renderMe(); });
+  };
+
+  // ---------------- 國家隊（季末） ----------------
+  const _es = endSeason;
+  endSeason = function () {
+    const args = arguments;
+    if (!C) return _es.apply(this, args);
+    const S = sx(), o = ovr(), key = C.phase + C.age;
+    const need = C.phase === 'HS' ? 70 : 79;
+    if (S.intl[key] || o < need || C.injury) return _es.apply(this, args);
+    S.intl[key] = 1;
+    const y = C.phase === 'HS' ? 0 : (C.proYear || 1);
+    const T = C.phase === 'HS' ? 'U18 亞洲盃' : y % 4 === 0 ? '奧運' : y % 4 === 2 ? '世界盃' : '亞洲盃';
+    const hard = T === '奧運' ? 0.12 : T === '世界盃' ? 0.08 : 0;
+    scene('🌏 國家隊徵召', `球季結束後，你接到國家隊的電話：「我們要你代表國家出戰 <b>${T}</b>！」<br><br>這會很累，但能為國爭光。`, [
+      { label: `代表國家出賽`, main: true, note: '人氣、獎金、獎牌', fn: () => runIntl(T, hard, () => _es.apply(this, args)) },
+      { label: '婉拒，好好休息', note: '士氣 +5', fn: () => { C.morale = Math.min(100, C.morale + 5); closeScene(); _es.apply(this, args); } },
+    ], null, null, 'coach');
+  };
+  function runIntl(T, hard, done) {
+    const S = sx(), o = ovr(), base = cl(0.42 + (o - 78) * 0.022 - hard, 0.15, 0.85);
+    const opps = T === 'U18 亞洲盃' || T === '亞洲盃' ? ['日本', '韓國', '澳洲', '伊朗', '菲律賓'] : ['美國', '西班牙', '日本', '阿根廷', '法國', '澳洲', '加拿大'];
+    const ord = opps.slice().sort(() => Math.random() - 0.5);
+    const sc = (w) => isHoop ? (w ? [rnd(78, 98), rnd(60, 77)] : [rnd(60, 79), rnd(80, 99)]) : (w ? [rnd(3, 8), rnd(0, 2)] : [rnd(0, 3), rnd(4, 9)]);
+    const line = (stage, op, w) => { const s = sc(w); return `<div class="intl ${w ? 'w' : 'l'}"><span>${stage}</span><b>對 ${op}</b><span>${s[0]} : ${s[1]}</span><i>${w ? '勝' : '敗'}</i></div>`; };
+    let h = '', gw = 0;
+    for (let i = 0; i < 3; i++) { const w = Math.random() < base + 0.08; if (w) gw++; h += line('小組賽', ord[i], w); }
+    let medal = null;
+    if (gw >= 2) {
+      const sw = Math.random() < base; h += line('四強', ord[3], sw);
+      if (sw) { const fw = Math.random() < base - 0.05; h += line('冠軍戰', ord[4] || ord[0], fw); medal = fw ? 'g' : 's'; }
+      else { const bw = Math.random() < base + 0.05; h += line('季軍戰', ord[4] || ord[1], bw); medal = bw ? 'b' : null; }
+    } else h += '<div class="muted" style="margin:6px 0">小組賽未能晉級……</div>';
+    const fame = medal === 'g' ? 12 : medal === 's' ? 7 : medal === 'b' ? 5 : 2, money = Math.round((medal === 'g' ? 300 : medal === 's' ? 150 : medal === 'b' ? 80 : 20) * mu());
+    C.fame = (C.fame || 0) + fame; C.money += money; S.medals.push({ t: T, m: medal || 'n', age: C.age });
+    if (medal === 'g') { C.morale = 100; if (C.highlights) C.highlights.push(`${C.age} 歲帶領國家隊奪下${T}金牌`); }
+    saveRun();
+    const title = medal === 'g' ? `🥇 ${T} 金牌！` : medal === 's' ? `🥈 ${T} 銀牌` : medal === 'b' ? `🥉 ${T} 銅牌` : `${T} 止步`;
+    scene(title, h + `<div style="margin-top:8px">人氣 +${fame}　獎金 +${money} 萬</div>`, [{ label: '繼續', main: true, fn: () => { closeScene(); done(); } }], medal ? (SPORT.art.happy) : SPORT.art.sad);
+  }
+
+  // ---------------- 樣式 ----------------
+  const css = document.createElement('style');
+  css.textContent = `
+  body::before{content:'';position:fixed;inset:0;background:var(--spbg) center/cover no-repeat;opacity:.13;z-index:-1;pointer-events:none}
+  .spfig{position:relative;display:inline-block;isolation:isolate;height:100%}
+  .spfig img{height:100%;display:block}
+  .spfig i{position:absolute;inset:0;background:var(--tc);mix-blend-mode:multiply;-webkit-mask-size:100% 100%;mask-size:100% 100%;pointer-events:none}
+  .spav{position:relative;display:block;width:100%;height:100%;min-width:56px;min-height:56px;aspect-ratio:1;overflow:hidden;border-radius:inherit;background:radial-gradient(circle at 50% 35%,color-mix(in srgb,var(--tc) 55%,#fff 0%),#10141e 78%)}
+  .spav .spfig{position:absolute;left:50%;top:5%;height:250%;transform:translateX(-50%)}
+  .spnum{position:absolute;right:3px;bottom:2px;font-size:11px;font-weight:900;color:#fff;text-shadow:0 1px 3px #000}
+  .hero.sphero{min-height:168px}
+  .hero .hbg{position:absolute;inset:0;background-size:cover;background-position:center 60%;opacity:.38;mix-blend-mode:screen}
+  .hero .av.avfig{width:96px;height:156px;flex:none;overflow:hidden;position:relative;margin:-6px 0 -16px}
+  .hero .av.avfig .spfig{position:absolute;left:50%;top:0;height:178%;transform:translateX(-50%);filter:drop-shadow(0 6px 10px rgba(0,0,0,.5))}
+  .hbdg{position:relative;display:flex;flex-wrap:wrap;gap:4px;margin-top:8px}
+  .hbdg span{font-size:11px;border:1px solid var(--c);color:var(--c);border-radius:8px;padding:1px 6px;background:rgba(0,0,0,.35)}
+  .looks{display:grid;grid-template-columns:repeat(6,1fr);gap:4px}
+  .lk{height:96px;padding:2px;border-radius:12px;background:rgba(255,255,255,.05);border:2px solid transparent;overflow:hidden;display:flex;justify-content:center}
+  .lk.on{border-color:#ffd257;background:rgba(255,210,87,.12)}
+  .lk .spfig{height:150%}
+  .npcp{float:right;margin:0 0 6px 10px;text-align:center}
+  .npcf{display:block;width:92px;height:118px;overflow:hidden;border-radius:16px;background:radial-gradient(circle at 50% 30%,rgba(255,255,255,.18),rgba(0,0,0,.2));position:relative}
+  .npcf img{position:absolute;left:50%;top:3%;height:245%;transform:translateX(-50%)}
+  .npcp small{font-size:12px;opacity:.75}
+  .bdgs{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+  .bdg{color:#e8ecf4;display:flex;gap:6px;align-items:center;text-align:left;padding:7px;border-radius:12px;background:rgba(255,255,255,.04);border:1px solid color-mix(in srgb,var(--c) 60%,transparent);position:relative;min-height:56px}
+  .bdg.lock{opacity:.5}.bdg.on{background:color-mix(in srgb,var(--c) 18%,transparent);box-shadow:0 0 10px color-mix(in srgb,var(--c) 40%,transparent)}
+  .bdg .bi{font-size:24px}.bdg b{font-size:13px;color:var(--c);display:block}.bdg small{font-size:11px;opacity:.8;display:block;line-height:1.3}
+  .bdg i{position:absolute;top:3px;right:6px;font-style:normal;font-size:10px;color:var(--c)}
+  .gslot{margin-bottom:10px}.gslot>b{font-size:14px;display:block;margin-bottom:6px}
+  .gbuy{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+  .gi{color:#e8ecf4;display:flex;flex-direction:column;align-items:flex-start;text-align:left;padding:7px;border-radius:12px;border:1px solid var(--c);background:rgba(255,255,255,.04)}
+  .gi:disabled{opacity:.45}.gi b{color:var(--c);font-size:13px}.gi small{font-size:11px;opacity:.85}
+  .intl{display:grid;grid-template-columns:56px 1fr 64px 26px;gap:6px;align-items:center;padding:6px 8px;border-radius:10px;margin:4px 0;background:rgba(255,255,255,.05)}
+  .intl.w{border-left:3px solid #5fd68a}.intl.l{border-left:3px solid #ff6b6b}.intl span{font-size:12px;opacity:.8}.intl i{font-style:normal;font-weight:900}
+  `;
+  document.head.appendChild(css);
+  if (typeof C !== 'undefined' && C && document.getElementById('sHub') && !$$('sHub').classList.contains('hide')) renderHub();
+})();
+</script><!--/SPX-->
 <a href="./" id="gbHome" style="position:fixed;top:calc(4px + env(safe-area-inset-top));left:50%;transform:translateX(-50%);z-index:9999;background:rgba(0,0,0,.45);color:#fff;text-decoration:none;font:600 13px -apple-system,sans-serif;padding:4px 12px;border-radius:12px;opacity:.6">⌂ 遊戲盒</a>
 <script>if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});document.addEventListener('error',function(e){var t=e.target;if(!t||t.tagName!=='IMG'||!t.src||t.src.indexOf('data:')===0)return;var n=(t._rt||0)+1;if(n>4)return;t._rt=n;setTimeout(function(){t.src=t.src.split('?')[0]+'?r='+n+'_'+Date.now()},600*n)},true);</script>
 </body>

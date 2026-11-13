@@ -1041,7 +1041,7 @@ Object.assign(STORY, {
 
 // ---------------- 晚晴情緣 ----------------
 Object.assign(STORY, {
-  wq1: () => ({ t: '梨花樹下', ic: 'flower-emblem', who: 'wan', bg: 'garden', body: '你撞見晚晴在梨花樹下，與御前侍衛統領沈牧之說話。兩人隔著三步，誰也沒有越過那條線。<br>晚晴看見你，臉色一白：「他是我的青梅竹馬……我們什麼都沒有做。」', ch: [
+  wq1: () => ({ t: '梨花樹下', ic: 'flower-emblem', who: 'shen', bg: 'garden', body: '你撞見晚晴在梨花樹下，與御前侍衛統領沈牧之說話。兩人隔著三步，誰也沒有越過那條線。<br>晚晴看見你，臉色一白：「他是我的青梅竹馬……我們什麼都沒有做。」', ch: [
     { t: '「我什麼都沒看見。」', f: () => { aff('wan', 20); S.flags.wqHide = 1; S.sus += 4; return '晚晴握住你的手，指尖冰涼。好感 +20'; } },
     { t: '勸她斷了念想', f: () => { aff('wan', -5); S.st.de += 3; return '「宮裡的女人，沒有資格想這些。」晚晴低下頭，沒有說話。德行 +3'; } },
   ] }),
@@ -1110,8 +1110,8 @@ Object.assign(STORY, {
       { t: '下嫁鎮國將軍之子', f: () => { k.fate = 'wed'; k.title = hao + '公主'; S.pow += 15; return `${k.n}封為<b>${k.title}</b>，嫁入將門。勢力 +15`; } },
       { t: '下嫁江南世家', f: () => { k.fate = 'wed'; k.title = hao + '公主'; S.money += 3000; return `${k.n}封為<b>${k.title}</b>，嫁入江南首富之家。娘家送來 3000 兩謝禮。`; } },
     ];
-    if (!heqin) return { t: '公主出降', ic: 'flower-emblem', who: 'gongzhu', bg: 'palace', body: `${KIDN(k)}十五歲了（${st}）。是時候為她挑一門好親事了。`, ch: marry };
-    return { t: '和親', ic: 'camel', who: 'gongzhu', bg: 'hall', body: `北方柔然遣使求親，點名要${KIDN(k)}。朝中主和派紛紛附議。<br>（${st}）`, ch: [
+    if (!heqin) return { t: '公主出降', ic: 'flower-emblem', who: 'gongzhuA', bg: 'palace', body: `${KIDN(k)}十五歲了（${st}）。是時候為她挑一門好親事了。`, ch: marry };
+    return { t: '和親', ic: 'camel', who: 'shichen', bg: 'hall', body: `北方柔然遣使求親，點名要${KIDN(k)}。朝中主和派紛紛附議。<br>（${st}）`, ch: [
       { t: '忍痛答應', f: () => { k.fate = 'heqin'; k.title = hao + '公主'; S.pow += 18; S.pres += 15; S.mood = Math.max(0, S.mood - 35); log(`${k.n}遠嫁柔然和親。`, 'camel', 2); return `送親的隊伍走了三天三夜。${k.n}在城門口回頭喊了一聲「娘」。<br>勢力 +18、威望 +15、<span class="red">心境 -35</span>`; } },
       { t: '據理力爭，留下女兒', f: () => ({ duel: { foeName: '主和派大臣', foeT: '禮部尚書為首', foe: 'su', img: 'wangye', judge: 'emp', title: '和親之爭', rounds: 6, mou: 70, ffav: 50, frank: 6, pow: 1.05, stakes: '敗則女兒遠嫁', win: () => { S.trust += 4; return { next: { t: '公主出降', ic: 'flower-emblem', who: 'gongzhu', bg: 'palace', body: `皇上改派宗室女和親。${k.n}撲進你懷裡哭了好久。<br>現在，為她挑一門好親事吧。`, ch: marry } }; }, lose: () => { k.fate = 'heqin'; k.title = hao + '公主'; S.pow += 10; S.mood = Math.max(0, S.mood - 40); return `你沒能留住她。${k.n}還是遠嫁了柔然。`; } } }) },
     ] };
@@ -1134,7 +1134,7 @@ Object.assign(EVS, {
 // ======================================================================
 //  立繪（有生圖就用圖，沒有就用程式畫的古風剪影）＋場景
 // ======================================================================
-const GIMG = new Set(['emp', 'dowager', 'hou', 'gui', 'liu', 'wan', 'lin', 'ayi', 'qi', 'bai', 'su', 'chun', 'fu', 'kid', 'F1', 'F2', 'F3', 'F4', 'F5', 'F6', 'F1g', 'F2g', 'F3g', 'F4g', 'F5g', 'F6g', 'F1h', 'F2h', 'F3h', 'F4h', 'F5h', 'F6h', 'gongzhu', 'taizi', 'wangye', 'xiunv']); // 之後放進 assets/gong/ch/<id>.webp 就把 id 加進來
+const GIMG = new Set(['emp', 'dowager', 'hou', 'gui', 'liu', 'wan', 'lin', 'ayi', 'qi', 'bai', 'su', 'chun', 'fu', 'kid', 'F1', 'F2', 'F3', 'F4', 'F5', 'F6', 'F1g', 'F2g', 'F3g', 'F4g', 'F5g', 'F6g', 'F1h', 'F2h', 'F3h', 'F4h', 'F5h', 'F6h', 'gongzhu', 'taizi', 'wangye', 'xiunv', 'gongzhuA', 'shen', 'shichen']); // 之後放進 assets/gong/ch/<id>.webp 就把 id 加進來
 const LOOKS = { F1: { col: '#d8506a', hair: 'bun', orn: '#ffd27a' }, F2: { col: '#5a9ad8', hair: 'twin', orn: '#cfe8ff' }, F3: { col: '#8a5ac8', hair: 'high', orn: '#ffd27a' }, F4: { col: '#e8a040', hair: 'bun', orn: '#ff8a5a' }, F5: { col: '#4aa88a', hair: 'side', orn: '#e8f0d0' }, F6: { col: '#c8c8d8', hair: 'high', orn: '#ffb0c8' } };
 const PSTYLE = {
   emp: { col: '#e8b830', hair: 'crown', male: 1, robe2: '#b8860b' }, dowager: { col: '#6a4a8a', hair: 'phoenix', orn: '#ffd27a', old: 1 }, hou: { col: '#c8303a', hair: 'phoenix', orn: '#ffd27a' },
