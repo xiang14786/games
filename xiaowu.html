@@ -1982,7 +1982,7 @@ const CH = {
   nrr: { n: '寧榮榮', img: A + 'ch/S6.webp', col: '#ffe08a' },
   ds: { n: '大師', img: A + 'ch/N1.webp', col: '#c8c8c8' },
   fld: { n: '弗蘭德', img: A + 'ch/N6.webp', col: '#8ab0ff' },
-  bbd: { n: '比比東', img: A + 'ch/F2.webp', col: '#c07aff' },
+  bbd: { n: '比比東', img: 'assets/xiaowu/ch/bbd.webp', col: '#c07aff' },
   qrx: { n: '千仞雪', img: A + 'ch/F5.webp', col: '#ffe6a0' },
   ju: { n: '菊斗羅', img: A + 'ch/N2.webp', col: '#ffcf6a' },
   gui: { n: '鬼斗羅', img: A + 'ch/N3.webp', col: '#8a8aa0' },
@@ -2030,7 +2030,7 @@ function renderChars(speaker) {
       el = document.createElement('div'); el.className = `ch p${pos} in` + (CH[k].beast ? ' beast' : ''); el.dataset.k = k;
       el.innerHTML = `<img src="${imgOf(k)}" alt="">`; box.appendChild(el); setTimeout(() => el.classList.remove('in'), 30);
     } else { const im = el.querySelector('img'), src = imgOf(k); if (im.getAttribute('src') !== src) { im.src = src; el.classList.remove('pop'); void el.offsetWidth; el.classList.add('pop'); } }
-    el.classList.toggle('wide', imgOf(k).includes('_god'));
+    el.classList.toggle('wide', imgOf(k).includes('_god') || k === 'bbd');
     el.classList.toggle('dim', !!speaker && speaker !== k);
     el.classList.toggle('talk', speaker === k);
   }
