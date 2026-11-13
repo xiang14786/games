@@ -123,6 +123,7 @@ button{font-family:inherit;cursor:pointer}
 .ch.pop img{animation:pop .35s ease}
 @keyframes pop{40%{transform:translateY(-8px) scale(1.02)}}
 .ch.wide{width:88%}.ch.wide.pc{left:6%}.ch.wide.pl{left:-18%}.ch.wide.pr{right:-18%}
+.ch.beast.tiny img{max-height:30%}
 </style></head>
 <body>
 <div id="game" class="hide"><div id="stage"><div class="bg" id="bgA"></div><div class="bg" id="bgB"></div><div id="chars"></div><div class="cg" id="cg"></div><div id="fx"></div></div>
@@ -1573,6 +1574,8 @@ ts：……嗯。
 （我真的，回來了。）
 @cgoff
 @hide all
+@form dm small
+@form em small
 @show dm l
 @show em r
 兩隻小小的動物，從花叢裡鑽了出來。一隻毛茸茸的小猴子，和一條細細的小青蛇。
@@ -1990,8 +1993,8 @@ const CH = {
   qrx: { n: '千仞雪', img: A + 'ch/F5.webp', col: '#ffe6a0' },
   ju: { n: '菊斗羅', img: A + 'ch/N2.webp', col: '#ffcf6a' },
   gui: { n: '鬼斗羅', img: A + 'ch/N3.webp', col: '#8a8aa0' },
-  dm: { n: '大明', img: A + 'bs/B11.webp', col: '#c89a6a', beast: 1 },
-  em: { n: '二明', img: A + 'bs/B12.webp', col: '#6ac8a8', beast: 1 },
+  dm: { n: '大明', img: 'assets/xiaowu/ch/dm.webp', col: '#c89a6a', beast: 1 },
+  em: { n: '二明', img: 'assets/xiaowu/ch/em.webp', col: '#6ac8a8', beast: 1 },
   mom: { n: '娘親', img: A + 'wh/rabbit.webp', col: '#ffd0e0', beast: 1 },
   th: { n: '唐昊', img: A + 'ch/M6.webp', col: '#9a7aff' },
   xiao: { n: '同學', img: A + 'ch/M3.webp', col: '#aaa' },
@@ -2022,7 +2025,7 @@ function setBg(k, fast) {
   nx.classList.add('on'); cur.classList.remove('on');
   if (fast) requestAnimationFrame(() => { nx.style.transition = ''; cur.style.transition = ''; });
 }
-const FACES = { xw: ['shy', 'cry', 'laugh', 'firm', 'surp', 'adult', 'adult2'], ts: ['worry', 'angry', 'god'] };
+const FACES = { xw: ['shy', 'cry', 'laugh', 'firm', 'surp', 'adult', 'adult2'], ts: ['worry', 'angry', 'god'], dm: ['small'], em: ['small'] };
 const imgOf = k => { const fm = S.form && S.form[k]; const f = (fm && /adult/.test(fm)) ? fm : ((S.face && S.face[k]) || fm); return f && FACES[k] && FACES[k].includes(f) ? `assets/xiaowu/ch/${k}_${f}.webp` : CH[k].img; };
 function renderChars(speaker) {
   const box = $('chars');
@@ -2035,6 +2038,7 @@ function renderChars(speaker) {
       el.innerHTML = `<img src="${imgOf(k)}" alt="">`; box.appendChild(el); setTimeout(() => el.classList.remove('in'), 30);
     } else { const im = el.querySelector('img'), src = imgOf(k); if (im.getAttribute('src') !== src) { im.src = src; el.classList.remove('pop'); void el.offsetWidth; el.classList.add('pop'); } }
     el.classList.toggle('wide', /_god|_adult/.test(imgOf(k)) || k === 'bbd');
+    el.classList.toggle('tiny', imgOf(k).includes('_small'));
     el.classList.toggle('dim', !!speaker && speaker !== k);
     el.classList.toggle('talk', speaker === k);
   }
