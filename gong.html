@@ -506,7 +506,7 @@ function markEnd(k) { const e = endsSeen(); e[k] = (e[k] || 0) + 1; try { localS
 // ======================================================================
 let D = null;
 function foeInfo(spec) {
-  if (spec.foeName) return { n: spec.foeName, t: spec.foeT || '', mou: spec.mou || 60, fav: spec.ffav || 40, rank: spec.frank || 5, id: spec.foe };
+  if (spec.foeName) return { n: spec.foeName, t: spec.foeT || '', mou: spec.mou || 60, fav: spec.ffav || 40, rank: spec.frank || 5, id: spec.img || spec.foe };
   const n = N(spec.foe), b = NPCS[spec.foe]; return { n: b.n, t: npcRankN(spec.foe), mou: n.mou, fav: n.fav, rank: Math.max(0, n.rank), id: spec.foe };
 }
 function startDuel(spec, cb) {
@@ -798,11 +798,12 @@ STORY.lihou = () => ({ t: '冊封皇后', ic: 'queen-crown', who: 'emp', bg: 'ha
 ] });
 STORY.dowagerDie = () => ({ t: '太后薨逝', ic: 'candle-light', who: 'dowager', bg: 'night', body: '慈寧宮的鐘聲在深夜響起。太后走了。<br>她臨終前召見了你：「後宮……就靠你們了。」', ch: [{ t: '守靈三日', f: () => { N('dowager').alive = 0; S.st.de += 4; S.pres += 5; return '你在靈前守了三天三夜。德行 +4'; } }] });
 STORY.taizi = () => {
+  S._tz = 1;
   const mine = sons().filter(k => kidAge(k) >= 5);
   const rivals = CONSORTS.filter(id => alive(id) && N(id).sons > 0).sort((a, b) => N(b).fav + N(b).rank * 8 - N(a).fav - N(a).rank * 8);
   if (!mine.length) { S.heir = 'npc'; return { t: '立儲', ic: 'throne-king', who: 'emp', bg: 'hall', body: `皇上立${rivals.length ? NPCS[rivals[0]].n + '所出的皇子' : '一位皇子'}為太子。<br>你膝下沒有可以爭的皇子。`, ch: [{ t: '……', f: () => '' }] }; }
   const k = mine.sort((a, b) => b.tal + b.edu / 20 - a.tal - a.edu / 20)[0];
-  if (!rivals.length) { S.heir = 'mine'; S.heirN = k.n; log(`皇子「${k.n}」被立為太子。`, 'throne-king', 2); return { t: '立儲', ic: 'throne-king', who: 'emp', bg: 'hall', body: `皇上下旨：立皇子<b>「${k.n}」</b>為太子！`, ch: [{ t: '謝主隆恩', f: () => { S.pres += 20; return '東宮之位，是你兒子的了。'; } }] }; }
+  if (!rivals.length) { S.heir = 'mine'; S.heirN = k.n; log(`皇子「${k.n}」被立為太子。`, 'throne-king', 2); return { t: '立儲', ic: 'throne-king', who: 'taizi', bg: 'hall', body: `皇上下旨：立皇子<b>「${k.n}」</b>為太子！`, ch: [{ t: '謝主隆恩', f: () => { S.pres += 20; return '東宮之位，是你兒子的了。'; } }] }; }
   const r = rivals[0];
   return { t: '奪嫡', ic: 'throne-king', who: r, bg: 'hall', body: `朝中為立儲吵翻了天。${npcRankN(r)}${NPCS[r].n}的皇子聲勢最大。<br>皇上召你們兩人到御前，要聽聽「母親們」怎麼說。`, ch: [
     { t: `為「${k.n}」力爭`, f: () => ({ duel: { foe: r, judge: 'emp', title: '奪嫡', rounds: 7, pow: 1.15, stakes: '勝：立為太子', win: () => { S.heir = 'mine'; S.heirN = k.n; S.pres += 20; log(`皇子「${k.n}」被立為太子。`, 'throne-king', 2); return `皇上下旨，立<b>「${k.n}」</b>為太子！`; }, lose: () => { S.heir = 'npc'; return `太子之位歸了${NPCS[r].n}的皇子。`; } } }) },
@@ -825,7 +826,7 @@ STORY.finale = () => {
   const canThrone = (heirMine || S.rank === 8) && S.trust >= 75 && S.st.mou >= 100 && S.pow >= 55;
   const body = `${ERA}${Math.floor((S.t + 2) / 12) + 1}年冬，皇帝蕭承璟駕崩。<br>${heirMine ? `太子「${S.heirN}」即位，你的兒子成了新君。` : S.rank === 8 ? '你以皇后之尊主持大喪。' : '新君即位，你成了先帝的遺妃。'}`;
   const ch = [];
-  if (canThrone) ch.push({ t: '垂簾不夠——登基稱帝', f: () => ({ duel: { foeName: '宗室諸王', foeT: '齊王為首的宗親', foe: 'qi', judge: 'dowager', title: '牝雞司晨？', rounds: 7, pow: 1.35, mou: 120, ffav: 60, frank: 7, stakes: '勝：一代女帝　敗：死無葬身之地', bg: 'hall', win: () => { S.over = { k: 'female_emperor', txt: `${S.name}於先帝靈前受百官朝拜，改元「鳳啟」，成為大晟開國以來第一位女帝。` }; return '百官跪伏，山呼萬歲。'; }, lose: () => { S.over = { k: 'death', txt: `${S.name}謀逆失敗，被宗室逼死於慈寧宮，年 ${ageI()} 歲。` }; return '……'; } } }) });
+  if (canThrone) ch.push({ t: '垂簾不夠——登基稱帝', f: () => ({ duel: { foeName: '宗室諸王', foeT: '以老親王為首的宗親', foe: 'qi', img: 'wangye', judge: 'dowager', title: '牝雞司晨？', rounds: 7, pow: 1.35, mou: 120, ffav: 60, frank: 7, stakes: '勝：一代女帝　敗：死無葬身之地', bg: 'hall', win: () => { S.over = { k: 'female_emperor', txt: `${S.name}於先帝靈前受百官朝拜，改元「鳳啟」，成為大晟開國以來第一位女帝。` }; return '百官跪伏，山呼萬歲。'; }, lose: () => { S.over = { k: 'death', txt: `${S.name}謀逆失敗，被宗室逼死於慈寧宮，年 ${ageI()} 歲。` }; return '……'; } } }) });
   ch.push({ t: heirMine ? '垂簾聽政，輔佐新君' : '送先帝最後一程', f: () => { S.over = heirMine ? { k: 'empress_dowager', txt: `${S.name}之子「${S.heirN}」登基，${S.name}被尊為聖母皇太后，垂簾聽政，享年八十一歲。` } : S.rank === 8 ? { k: 'empress', txt: `${S.name}以先帝皇后之尊，被尊為母后皇太后，壽終正寢。` } : { k: 'taifei', txt: `${S.name}被尊為${S.feng || ''}太妃，在壽康宮安度餘生。` }; return ''; } });
   return { t: '大行皇帝', ic: 'candle-light', who: 'emp', bg: 'night', body, ch };
 };
@@ -923,7 +924,7 @@ const EVS = {
     { t: '親自教導', f: () => { const k = S._k; k.edu += 10 + S.st.mou / 10; S.mood += 8; return `${k.n}越來越聰慧了。`; } },
     { t: '帶去給皇上看', f: () => { favUp(5); S.trust += 1; return '皇上抱著孩子笑得很開心。聖寵 +5'; } },
   ] },
-  newGirls: { w: () => S.t > 0 && S.t % 36 === 30 ? 3 : 0, t: '新人入宮', ic: 'flower-emblem', bg: 'palace', body: () => '三年一度的選秀，又一批鮮嫩的秀女進宮了。皇上一連半個月都在新人那裡。', ch: [
+  newGirls: { w: () => S.t > 0 && S.t % 36 === 30 ? 3 : 0, t: '新人入宮', ic: 'flower-emblem', who: 'xiunv', bg: 'palace', body: () => '三年一度的選秀，又一批鮮嫩的秀女進宮了。皇上一連半個月都在新人那裡。', ch: [
     { t: '拉攏新人', f: () => { S.pres += 5; S.money -= 100; favUp(-5); return '你送了見面禮，新人們都對你很恭敬。威望 +5'; } },
     { t: '靜觀其變', f: () => { favUp(-10); return '聖寵 -10'; } },
   ] },
@@ -943,7 +944,7 @@ function randomEvent() {
 // ======================================================================
 //  立繪（有生圖就用圖，沒有就用程式畫的古風剪影）＋場景
 // ======================================================================
-const GIMG = new Set(['emp', 'dowager', 'hou', 'gui', 'liu', 'wan', 'lin', 'ayi', 'qi', 'bai', 'su', 'chun', 'fu', 'kid', 'F1', 'F2', 'F3', 'F4', 'F5', 'F6', 'F1g', 'F2g', 'F3g', 'F4g', 'F5g', 'F6g']); // 之後放進 assets/gong/ch/<id>.webp 就把 id 加進來
+const GIMG = new Set(['emp', 'dowager', 'hou', 'gui', 'liu', 'wan', 'lin', 'ayi', 'qi', 'bai', 'su', 'chun', 'fu', 'kid', 'F1', 'F2', 'F3', 'F4', 'F5', 'F6', 'F1g', 'F2g', 'F3g', 'F4g', 'F5g', 'F6g', 'F1h', 'F2h', 'F3h', 'F4h', 'F5h', 'F6h', 'gongzhu', 'taizi', 'wangye', 'xiunv']); // 之後放進 assets/gong/ch/<id>.webp 就把 id 加進來
 const LOOKS = { F1: { col: '#d8506a', hair: 'bun', orn: '#ffd27a' }, F2: { col: '#5a9ad8', hair: 'twin', orn: '#cfe8ff' }, F3: { col: '#8a5ac8', hair: 'high', orn: '#ffd27a' }, F4: { col: '#e8a040', hair: 'bun', orn: '#ff8a5a' }, F5: { col: '#4aa88a', hair: 'side', orn: '#e8f0d0' }, F6: { col: '#c8c8d8', hair: 'high', orn: '#ffb0c8' } };
 const PSTYLE = {
   emp: { col: '#e8b830', hair: 'crown', male: 1, robe2: '#b8860b' }, dowager: { col: '#6a4a8a', hair: 'phoenix', orn: '#ffd27a', old: 1 }, hou: { col: '#c8303a', hair: 'phoenix', orn: '#ffd27a' },
@@ -1099,7 +1100,7 @@ function pplSheet(id) {
 }
 // ---------------- 子嗣 ----------------
 function vKids(bd) {
-  const ks = S.kids.map(k => `<div class="pc"><img src="${portrait('kid')}" alt=""><div class="grow"><b>${k.sex ? '皇子' : '公主'}・${k.n}</b> <small>${k.alive ? kidAge(k) + ' 歲' : '夭折'}</small><small class="dim">天資 ${k.tal}・學識 ${Math.round(k.edu)}${S.heir === 'mine' && S.heirN === k.n ? '・<b class="gold">太子</b>' : ''}</small></div>${k.alive && kidAge(k) >= 3 && S.ap ? `<button class="btn sm" data-k="${S.kids.indexOf(k)}">教導</button>` : ''}</div>`).join('');
+  const ks = S.kids.map(k => `<div class="pc"><img src="${portrait(k.sex ? (kidAge(k) >= 12 ? 'taizi' : 'kid') : 'gongzhu')}" alt=""><div class="grow"><b>${k.sex ? '皇子' : '公主'}・${k.n}</b> <small>${k.alive ? kidAge(k) + ' 歲' : '夭折'}</small><small class="dim">天資 ${k.tal}・學識 ${Math.round(k.edu)}${S.heir === 'mine' && S.heirN === k.n ? '・<b class="gold">太子</b>' : ''}</small></div>${k.alive && kidAge(k) >= 3 && S.ap ? `<button class="btn sm" data-k="${S.kids.indexOf(k)}">教導</button>` : ''}</div>`).join('');
   bd.innerHTML = `<h2>${ic('baby-face')} 子嗣</h2>${S.preg && !S.preg.hidden ? `<div class="card pink">${ic('baby-face')} 有孕 ${S.t - S.preg.t0 + 1} 個月，${Math.max(0, 10 - (S.t - S.preg.t0))} 個月後臨盆。小心飲食與香料。</div>` : ''}
   ${ks || '<div class="card dim">膝下猶虛。承寵越多、康健越高，越容易有孕。</div>'}
   <div class="card small dim">皇子五歲後能參與立儲之爭；對質時，四歲以上的皇子可以出面求情。${S.heir ? `<br>太子：${S.heir === 'mine' ? `<b class="gold">${S.heirN}（你的兒子）</b>` : '他人之子'}` : ''}</div>`;
