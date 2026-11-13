@@ -1002,7 +1002,7 @@ function steps(c, x, y) { return `<path d="M${x} ${y} v28" stroke="${c}" stroke-
 function shade(hex, p) { const n = parseInt(hex.slice(1), 16); const f = v => clamp(Math.round(v + p * 2.55), 0, 255); const r = f(n >> 16), g = f((n >> 8) & 255), b = f(n & 255); return '#' + ((r << 16) | (g << 8) | b).toString(16).padStart(6, '0'); }
 
 // ---------------- 場景 ----------------
-const GBG = new Set([]);
+const GBG = new Set(['hall', 'palace', 'night', 'garden', 'snow', 'cold', 'title']);
 const BGC = {};
 const SKY = { hall: ['#1a0408', '#5a1018', '#a8402a'], palace: ['#2a3a6a', '#c88a6a', '#f2c8a0'], night: ['#04040e', '#141438', '#2a2050'], garden: ['#3a6a8a', '#a8d0c8', '#f8e8d0'], snow: ['#4a5a7a', '#a8b8d0', '#e8eef8'], cold: ['#0a0c10', '#1a1e26', '#2a2e36'], title: ['#0a0206', '#3a0810', '#8a2a18'] };
 function sceneBG(k) {
