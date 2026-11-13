@@ -2002,7 +2002,7 @@ const CH = {
   xiao: { n: '同學', img: A + 'ch/M3.webp', col: '#aaa' },
 };
 const XBG = { dorm: 'village', cliff: 'north', sea: 'sunset', wuhun: 'hall' }; // 新背景還沒到之前的替代
-const XHAS = {};
+const XHAS = {"sea": 1, "wuhun": 1, "dorm": 1, "cliff": 1};
 const BG = k => k in XBG ? (XHAS[k] ? 'assets/xiaowu/bg/' + k + '.webp' : A + 'bg/' + XBG[k] + '.webp') : A + 'bg/' + k + '.webp';
 const VARS = ['bond', 'courage', 'kin', 'secret', 'team'];
 
