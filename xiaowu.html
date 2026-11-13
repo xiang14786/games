@@ -2048,6 +2048,227 @@ ts：謝謝你，小舞。
 `);
 
 'use strict';
+// 新結局：平凡的幸福、金籠裡的救援、七怪同心；以及新的劇情插畫位置
+function insertAfter(ch, marker, text) {
+  const L = SCRIPT[ch]; const i = L.findIndex(x => x.trim() === marker);
+  if (i < 0) throw new Error('插入點不存在：' + ch + ' ' + marker);
+  L.splice(i + 1, 0, ...text.trim().split('\n'));
+}
+function appendTo(ch, text) { SCRIPT[ch].push(...text.trim().split('\n')); }
+
+// ---------- 插畫位置 ----------
+insertBefore('c2', '酸酸的，甜甜的，咬下去的時候，外面那層糖會「喀」一聲碎開。', '@cg tanghulu 糖葫蘆');
+insertBefore('c2', 'xw：哥，你為什麼不吃？', '@cgoff');
+insertBefore('c2', '那年冬天，哥生病了。', '@cgoff');
+insertBefore('c2', '那天夜裡，七舍的大家都睡了。我坐在他的床邊，看著他在睡夢裡皺著眉頭，一直在喊冷。', '@cg fashao 照顧');
+insertBefore('c2', '#c2x6', '@cgoff');
+insertBefore('c7', '大師衝了出去。他的武魂那麼弱，弱到連一個魂宗都打不過，可是他一步都沒有退。', '@cg dashi 老師的背影');
+insertBefore('c7', 'ts：老師——！', '@cgoff');
+insertBefore('c7', '一個男人，從天而降。他披頭散髮，手裡握著一柄比山還重的黑色巨錘。', '@cg haotian 昊天');
+insertBefore('c7', '（我看著哥抱著我留下的那件衣服，跪在懸崖邊，一動也不動。）', '@cgoff');
+insertBefore('c10', 'ts：嫁給我，好不好？', '@cg qiuhun 湖邊的求婚');
+insertAfter('c10', '#c10b', '@cgoff');
+insertAfter('c10', '#c10a', '@cgoff');
+// 結局插畫
+insertBefore('c3', '從此以後，我再也沒有離開過那片森林。', '@cg huilin 回到森林');
+insertBefore('c9', '（那天以後，星斗大森林的那片花海旁邊，多了一間小木屋。）', '@cg chuntian 香囊裡的春天');
+
+// ---------- 平凡的幸福（第五章結尾分歧） ----------
+appendTo('c5', `
+?回到住處的路上，小舞望著遠方武魂城的方向，心裡有一個念頭越來越清楚……
+- 繼續和大家一起，去武魂城參加決賽 => c5go
+- 「哥……決賽，我們可不可以不要去？」 => c5plain [secret>=5 && bond>=45]
+#c5plain
+@bgm romance
+@show ts c
+ts：……為什麼？
+我停下腳步。這是我第一次，在他面前認真地害怕。
+xw：武魂殿的人……會在那裡。我不知道為什麼，可是我很怕。怕到晚上都睡不著。
+xw：我知道大家為了這場比賽努力了那麼久。我知道我很任性。可是……
+他沒有讓我說完。
+ts：好。我們不去。
+xw：咦？
+ts：冠軍很重要。可是讓你害怕的東西，比冠軍重要一百倍。
+@hide all
+@bg village
+@show dmb l
+@show nrr r
+那天晚上，我們把決定告訴了大家。
+我以為大家會生氣。可是戴老大只是撓了撓頭。
+dmb：……說實話，那個武魂城，我也覺得陰森森的。
+nrr：決賽少了你們兩個，我們也打不贏啦。那就——史萊克集體棄權！
+@hide all
+@show mhj l
+@show osc r
+mhj：欸？那我的冠軍獎金……
+osc：吃香腸吧，胖子。
+@hide all
+@fx petal
+那年的冠軍，是武魂殿的黃金一代。
+大陸上的人都說，史萊克七怪是一群怪人，打到決賽，居然自己棄權了。
+沒有人知道為什麼。也沒有人知道，那一年，有一隻兔子，因為這個決定，躲開了那雙冷得像湖水的眼睛。
+@bg sunset
+@cg pingfan 平凡的幸福
+後來，我們回到了哥長大的那個小村子。
+哥接手了他爸爸的打鐵鋪。他打出來的東西很奇怪，什麼精巧的機關都有，村裡的小孩每天都擠在門口看。
+我在村子的另一頭，開了一間小小的舞蹈教室。教村裡的小女孩們跳舞，教她們怎麼把腰彎成一張弓。
+@cgoff
+@show ts c
+有一天傍晚，他打完鐵，滿身是汗地走進教室，站在門口看我跳舞。
+ts：小舞。你後悔嗎？沒有成為最強的魂師，沒有去看更大的世界。
+xw：後悔什麼？
+我跳到他面前，踮起腳，替他擦掉臉上的煤灰。
+xw：我活了十萬年，看過的世界已經夠大了。
+xw：我想要的，一直都只是這個。
+（一間小房子，一個會打鐵的人，和每天都一樣的、平凡的晚霞。）
+（娘親。原來最好的人生，可以這麼普通。）
+@end plain
+#c5go
+`);
+
+// ---------- 金籠裡的救援 ----------
+insertBefore('c6', '@end cage', `
+@if team>=5 || bond>=45 c6rescue
+`);
+appendTo('c6', `
+#c6rescue
+@bgm tension
+@fx off
+第三天的夜裡，我聽見了一個很輕、很輕的聲音。
+喀。
+籠子的鎖，開了。
+@show zzq c
+zzq：……噓。
+是竹清。她的整個人融在影子裡，像一隻黑色的貓。
+zzq：戴老大和胖子在東邊放火，奧斯卡和榮榮在城門口等。唐三……他在外面。
+xw：你們……怎麼進來的？
+zzq：這種事，交給我。
+@hide all
+@bgm battle
+@bg wuhun
+@fx shake
+那一夜，武魂城的東邊燒成了一片火海。
+我跟著竹清在屋頂上奔跑，風在耳邊呼呼地響。身後是追兵的喊聲，前面是看不見盡頭的黑暗。
+?前方的路分成兩條——
+- 跟著竹清，走她探好的路 => c6r1 | @set team +1
+- 憑著兔子的直覺，往月光的方向跳 => c6r1 | @set courage +1
+#c6r1
+@fx flash
+城門外，一道熟悉的藍色光芒亮了起來。
+@show ts c
+@face ts worry
+ts：小舞——！
+他渾身是傷，眼睛紅得嚇人。他一定好幾天沒有睡了。
+我撲進他懷裡的那一刻，身後的城門，轟的一聲關上了。
+@face ts off
+@hide all
+@cg jiuyuan 金籠裡的救援
+我們七個人，一路逃到了大陸的最東邊，逃到了一個連武魂殿都懶得去的小漁村。
+大家都受了傷。胖子的頭髮被燒掉一半，戴老大斷了一根肋骨，竹清三天三夜沒有闔眼。
+可是，沒有人說後悔。
+@cgoff
+@bgm romance
+@amb amb_sea
+@bg sea
+@show nrr l
+@show osc r
+nrr：所以呢？以後怎麼辦？
+osc：開一間香腸店啊。招牌就叫「史萊克香腸」。
+@hide all
+後來，我們真的在那個小漁村住了下來。
+我們不再參加比賽，不再爭什麼名次。我們七個人，每天出海、修船、吵架、吃香腸。
+@show ts c
+xw：哥，你為了我，放棄了好多東西。
+ts：我沒有放棄任何東西。
+ts：我最想要的，現在就坐在我旁邊。
+（金色的籠子很漂亮。可是這個破破爛爛的小漁村，比它漂亮一萬倍。）
+@end rescue
+`);
+
+// ---------- 七怪同心（第七章懸崖） ----------
+(() => {
+  const L = SCRIPT.c7, i = L.findIndex(x => x.trim() === '- 擋在哥的身前 => c7sac');
+  L.splice(i, 0, '- 「……我聽見了。是大家的聲音！」 => c7team [team>=7 && bond>=50]');
+})();
+appendTo('c7', `
+#c7team
+@bgm battle
+@fx flash
+就在那道紫金色的光落下的瞬間——
+一道火焰，從天而降。
+@show mhj l
+mhj：鳳凰火線——！！胖子我來啦！！
+火焰和紫金色的光撞在一起，炸開了一片刺眼的白。
+@fx shake
+@show dmb r
+dmb：白虎金剛變！小舞，撐住！
+@hide all
+@show zzq l
+@show nrr r
+zzq：……找到你們了。
+nrr：七寶有名——力！速！全部給我加滿！
+榮榮的寶塔在空中轉動，七彩的光芒落在每一個人身上。
+@hide all
+@show osc c
+osc：唐三！接著！
+一根發著光的香腸，飛進了哥的手裡。他咬下去的瞬間，身上的傷口一點一點地癒合了。
+@hide all
+@show bbd c
+bbd：……一群孩子。
+bbd：你們以為，七個魂宗，擋得住我？
+@hide all
+@show ts c
+@face ts angry
+哥站了起來。他擦掉嘴角的血，站在我們七個人的最前面。
+ts：擋不住。
+ts：可是我們七個人，沒有一個會退。
+@face ts off
+@hide all
+@cg qiguai 七怪同心
+那是我這輩子，見過最亂七八糟的一場戰鬥。
+胖子的火、戴老大的爪、竹清的影子、榮榮的光、奧斯卡的香腸、哥的藍銀草和那柄黑色的錘子。
+還有我。
+我們沒有贏。可是我們撐住了。
+撐到了一個披頭散髮的男人，從天而降。
+@cgoff
+@show th c
+th：……你們做得很好。剩下的，交給我。
+@hide all
+@bgm hope
+@fx gold
+那一天，教皇退走了。
+我沒有獻祭，誰都沒有死。只是每個人都躺了整整一個月。
+@bg village
+@show dmb l
+@show mhj r
+mhj：哎唷……胖子的屁股……被燒焦了……
+dmb：你自己的火燒的，怪誰。
+@hide all
+@show xw c
+@face xw laugh
+我坐在病床上，看著隔壁床那六個纏滿繃帶、還在吵架的笨蛋，笑到眼淚都掉下來了。
+@hide all
+@show ts c
+ts：笑什麼？
+xw：哥，你知道嗎？我以前以為，我只能一個人保護自己的秘密。
+xw：原來不是。原來……我有六個人可以依靠。
+ts：是七個。
+ts：還有你自己。
+@fx petal
+（史萊克只收怪物，不收普通人。）
+（我很慶幸，我是一個怪物。而且，我不是唯一的那一個。）
+@end seven
+`);
+
+Object.assign(ENDS, {
+  plain: { n: '平凡的幸福', kind: 'true', d: '她沒有走進那座金色的城市。<br>一間打鐵鋪，一間舞蹈教室，和每天都一樣的晚霞。<br>原來最好的人生，可以這麼普通。', hint: '把秘密藏得很好，並在決賽前說出心裡的害怕' },
+  rescue: { n: '金籠裡的救援', kind: '', d: '金色的籠子被打開了，代價是再也回不去的名聲。<br>七個人逃到大陸的最東邊，在破破爛爛的小漁村，過著吵吵鬧鬧的日子。', hint: '被關進金籠時，有人會來救你嗎？' },
+  seven: { n: '七怪同心', kind: 'true', d: '懸崖上，六道光芒同時亮起。<br>她沒有獻祭，因為她從來就不是一個人。<br>史萊克只收怪物——而她很慶幸，自己是其中之一。', hint: '和史萊克的夥伴們建立最深的羈絆' },
+});
+insertBefore('c6', '籠子很漂亮，每一根欄杆都雕著六翼天使，地上鋪著柔軟的毯子。', '@cg jinlong 金籠');
+insertAfter('c6', '#c6rescue', '@cgoff');
+
+'use strict';
 // ======================================================================
 //  舞・十萬年 —— 影視小說引擎
 // ======================================================================
@@ -2075,6 +2296,8 @@ const CH = {
 };
 const XBG = { dorm: 'village', cliff: 'north', sea: 'sunset', wuhun: 'hall' }; // 新背景還沒到之前的替代
 const XHAS = {"sea": 1, "wuhun": 1, "dorm": 1, "cliff": 1};
+const CHX = {"ts": 1, "dm": 1, "xw": 1, "bbd": 1, "em": 1};
+for (const k in CHX) if (CH[k] && !/assets\/xiaowu/.test(CH[k].img)) CH[k].img = 'assets/xiaowu/ch/' + k + '.webp';
 const BG = k => k in XBG ? (XHAS[k] ? 'assets/xiaowu/bg/' + k + '.webp' : A + 'bg/' + XBG[k] + '.webp') : A + 'bg/' + k + '.webp';
 const VARS = ['bond', 'courage', 'kin', 'secret', 'team'];
 
