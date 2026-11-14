@@ -2506,6 +2506,8 @@ xw：笨、笨蛋！誰笑起來像兔子啦！
 
 // 第三章：七怪的小故事
 insertBefore('c3', '大家都睡了以後，大師把我叫到了一邊。', `
+@hide all
+@fx off
 @bg village
 @bgm daily
 在史萊克的日子裡，我慢慢認識了每一個「怪物」。
@@ -2567,6 +2569,10 @@ xw：再來一次！
 @goto c3y4
 #c3y4
 @hide all
+@bg sunset
+@fx stars
+@show ds c
+@bgm tension
 `);
 
 // 第四章：營火夜
@@ -2658,6 +2664,7 @@ ts：大師那邊，我去說。
 
 // 第五章：大賽空檔
 insertBefore('c5', '那天晚上，榮榮和竹清偷偷溜進了我的房間。', `
+@fx off
 @bg city
 @bgm daily
 大賽的空檔，我們被弗蘭德院長放了一天假。
@@ -2674,6 +2681,7 @@ fld：今天大家可以去天斗城逛逛。不過，花的錢自己出喔。
 xw：哥！那個！那個也要！
 ts：小舞，你已經吃了第七串了。
 xw：這個不一樣！這是糖葫蘆的加大版！
+@bgm romance
 最後，我們在一個賣面具的攤子前停了下來。
 攤子上有一個兔子面具，白白的，耳朵長長的。旁邊是一個藍色的草葉面具。
 xw：哥，我們一人戴一個！
@@ -2721,10 +2729,15 @@ ts：所以至少，讓它代替我保護你。
 @goto c5y3
 #c5y3
 @hide all
+@bg sunset
+@fx stars
+@bgm daily
 `);
 
 // 第六章：決賽前夜
 insertBefore('c6', '決賽的對手，是武魂殿培養的黃金一代。', `
+@hide all
+@fx stars
 @bg sunset
 @bgm romance
 決賽的前一夜，我睡不著。
@@ -2766,8 +2779,9 @@ dmb：好！史萊克七怪，一輩子！
 那一夜，我們七個人在屋頂上，一直坐到天亮。
 遠處，是武魂殿那座金色的城。可是我一點都不怕了。
 @cgoff
-@bg wuhun
-@bgm tension
+@fx off
+@bg arena
+@bgm battle
 `);
 
 // ---------------- 番外：後日談 ----------------
