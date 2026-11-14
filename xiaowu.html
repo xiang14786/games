@@ -3115,26 +3115,26 @@ const chapOf = id => CHAP.find(c => c.id === id) || (typeof EXTRA !== 'undefined
 
 // ---------------- 聲音（手機需先觸碰畫面才能出聲，觸碰後自動補播） ----------------
 const AU = 'assets/xiaowu/audio/';
-const CHN = { bgm: { els: [new Audio(), new Audio()], cur: 0, k: null }, amb: { els: [new Audio(), new Audio()], cur: 0, k: null } };
-for (const c of Object.values(CHN)) for (const el of c.els) { el.loop = true; el.preload = 'auto'; el.setAttribute('playsinline', ''); }
+const CHN = { bgm: { el: new Audio(), k: null, tok: 0 }, amb: { el: new Audio(), k: null, tok: 0 } };
+// 每個聲道只用一個播放器：手機一旦解鎖就一直能播，換曲時先淡出再換歌
+for (const c of Object.values(CHN)) { c.el.loop = true; c.el.preload = 'auto'; c.el.setAttribute('playsinline', ''); }
 const vol = t => (P.snd ?? 1) * (t === 'bgm' ? 0.6 : t === 'amb' ? 0.3 : 0.5);
-function fadeTo(a, v, ms, done) { const s = a.volume, t0 = performance.now(); const step = () => { const p = Math.min(1, (performance.now() - t0) / ms); try { a.volume = Math.max(0, Math.min(1, s + (v - s) * p)); } catch (e) { } if (p < 1) requestAnimationFrame(step); else done && done(); }; step(); }
+function fadeTo(a, v, ms, done) { const my = a._ft = (a._ft || 0) + 1; const s = a.volume, t0 = performance.now(); const step = () => { if (a._ft !== my) return; const p = Math.min(1, (performance.now() - t0) / ms); try { a.volume = Math.max(0, Math.min(1, s + (v - s) * p)); } catch (e) { } if (p < 1) requestAnimationFrame(step); else done && done(); }; step(); }
 function tryPlay(kind) {
-  const c = CHN[kind]; if (!c.k || !(P.snd ?? 1)) return; const el = c.els[c.cur];
+  const c = CHN[kind]; if (!c.k || !(P.snd ?? 1) || c.busy) return; const el = c.el;
   if (el.paused) el.play().then(() => fadeTo(el, vol(kind), 1200)).catch(() => { });
 }
 function loopTrack(kind, k) {
   if (S && kind === 'bgm') S.bgm = k; if (S && kind === 'amb') S.amb = k;
   if (!k || k === 'off') k = null;
   const c = CHN[kind]; if (c.k === k) return tryPlay(kind);
-  const old = c.els[c.cur]; if (!old.paused) fadeTo(old, 0, 1000, () => old.pause()); else old.pause();
-  c.k = k; if (!k) return;
-  c.cur = 1 - c.cur; const el = c.els[c.cur]; el.src = AU + k + '.mp3'; try { el.volume = 0; } catch (e) { }
-  tryPlay(kind);
+  c.k = k; const tok = ++c.tok, el = c.el;
+  let did = false; const go = () => { if (did || c.tok !== tok) return; did = true; c.busy = false; if (!k) { el.pause(); return; } el.src = AU + k + '.mp3'; try { el.volume = 0; } catch (e) { } tryPlay(kind); };
+  if (!el.paused && el.src) { c.busy = true; fadeTo(el, 0, 600, go); setTimeout(go, 900); } else go();
 }
 const SEV = { se_heart: 0.35, se_choice: 0.6, se_flash: 0.6, se_hit: 0.7 };
 function se(k) { if (!(P.snd ?? 1) || skip || !(k in SEV)) return; const a = new Audio(AU + k + '.mp3'); a.volume = vol('se') * SEV[k]; a.play().catch(() => { }); }
-function sndRefresh() { for (const kind of ['bgm', 'amb']) { const el = CHN[kind].els[CHN[kind].cur]; if (!(P.snd ?? 1)) el.pause(); else { try { el.volume = vol(kind); } catch (e) { } tryPlay(kind); } } }
+function sndRefresh() { for (const kind of ['bgm', 'amb']) { const el = CHN[kind].el; if (!(P.snd ?? 1)) el.pause(); else { try { el.volume = vol(kind); } catch (e) { } tryPlay(kind); } } }
 document.addEventListener('pointerdown', () => { tryPlay('bgm'); tryPlay('amb'); }, true);
 document.addEventListener('touchend', () => { tryPlay('bgm'); tryPlay('amb'); }, true);
 
