@@ -127,6 +127,8 @@ button{font-family:inherit;cursor:pointer}
 #tapStart{position:fixed;inset:0;z-index:100;background:radial-gradient(circle at 50% 40%,#3a1430,#06030a 75%);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;transition:opacity .9s}#tapStart.out{opacity:0;pointer-events:none}#tapStart b{font-family:'LXGW WenKai TC',serif;font-size:44px;letter-spacing:10px;color:#fff;text-shadow:0 0 20px #ff6aa8}#tapStart span{color:#ffd6ea;letter-spacing:4px;animation:blink 1.6s infinite}
 #hbox{position:fixed;left:50%;top:34%;transform:translateX(-50%);z-index:20;display:flex;flex-direction:column;align-items:center;gap:8px;pointer-events:none}
 #toasts{position:fixed;left:50%;top:70px;transform:translateX(-50%);z-index:40;display:flex;flex-direction:column;align-items:center;gap:6px;pointer-events:none}#toasts .toast{position:static;transform:none}
+
+.endc.extra{background:radial-gradient(circle at 50% 35%,#4a1a3a,#0c040a 70%)}.endc.extra .ek{color:#ffb0d8}.endi.got.extra{border-color:#ffb0d8;background:rgba(255,176,216,.08)}
 </style></head>
 <body>
 <div id="game" class="hide"><div id="stage"><div class="bg" id="bgA"></div><div class="bg" id="bgB"></div><div id="chars"></div><div class="cg" id="cg"></div><div id="fx"></div></div>
@@ -2275,6 +2277,785 @@ insertAfter('c6', '#c6rescue', '@cgoff');
 
 'use strict';
 // ======================================================================
+//  延伸：序章、中段加厚、後日談、唐三篇
+// ======================================================================
+
+// ---------------- 序章：娘親 ----------------
+CHAP.unshift({ id: 'c0', t: '序章', sub: '娘親', base: {} });
+SCRIPT.c0 = `
+@title 序章|娘親
+@bg starCore
+@bgm forest
+@amb amb_forest
+@fx firefly
+在我很小很小的時候，世界只有一棵樹那麼大。
+那是一棵很老很老的古樹，樹根底下有一個溫暖的洞。洞裡鋪著乾草和娘親掉下來的白毛。
+那就是我的家。
+@show mom c
+mom：小舞，出來曬月亮了。
+（娘親的聲音，是我聽過最好聽的聲音。像溪水，又像風吹過草葉。）
+我從洞裡探出頭。月光下，娘親化成了人的樣子在等我。長長的兔耳朵，頭上戴著藍色小花編的花環，粉色的長裙一直拖到草地上。
+（娘親說，修煉到十萬年，就可以變成這個樣子。我最喜歡她這個樣子，因為可以整隻被她抱在懷裡。）
+?小小的兔子——
+- 一蹦一跳地撲進娘親懷裡 => c0a | @set kin +1
+- 先偷偷躲在樹根後面，想嚇娘親一跳 => c0b | @set courage +1
+#c0a
+我一頭撞進娘親柔軟的肚子裡，她笑得耳朵都在抖。
+mom：你啊，每天都要撞一次，娘親的肚子都要被你撞扁了。
+@goto c0c
+#c0b
+我屏住呼吸，等娘親經過——然後「嘿！」地跳了出去。
+娘親連頭都沒回，耳朵輕輕一動，一隻手就把我拎了回去。
+mom：你的心跳聲，娘親在一里外就聽見了。
+（……不公平。）
+@goto c0c
+#c0c
+mom：今天，娘親教你一樣東西。
+mom：我們柔骨兔一族，沒有尖牙，也沒有利爪。可是我們有一樣，全森林最美的東西。
+xw：是什麼？
+mom：舞。
+@cg mumwu 月下之舞
+娘親輕輕一轉，變回了兔子的樣子。她的身體像柳枝一樣彎下去，又像水一樣流起來。月光落在她身上，她每轉一圈，就有一圈銀色的光在草地上散開。
+森林裡的蟲子都安靜了。連遠處的大明二明，都從樹後探出了頭。
+（那是我這輩子見過，最美的東西。）
+@cgoff
+mom：等你長大了，也要跳給這個世界看。
+mom：不管遇到什麼事，只要還能跳舞，就代表你還好好地活著。
+@hide all
+@bg starOut
+@bgm daily
+@fx petal
+日子一天一天地過去。
+我學會了跳最簡單的舞步，學會了分辨哪種草最甜，學會了在二明的手掌上翻跟斗，在大明的尾巴上溜滑梯。
+@show dm l
+@show em r
+二明：小傢伙，又來爬我了？
+大明：別欺負她，她還小。
+二明：我哪有欺負她！是她一直踩我的頭！
+xw：二明哥哥的頭毛最軟了嘛！
+（那時候，大明和二明還不是我的哥哥。他們是娘親的朋友，森林的守護者。）
+（可是他們對我，一直都像哥哥一樣。）
+@hide all
+@bg sunset
+@bgm romance
+@show mom c
+有一天晚上，娘親帶我爬上了森林邊緣最高的那塊石頭。
+從那裡，可以看見很遠很遠的地方，有一片一閃一閃的光。
+xw：娘親，那是什麼？天上的星星掉下來了嗎？
+mom：那是人類的城鎮。那些光，是他們點的燈。
+mom：人類啊……很奇怪。他們會為了一隻魂獸的魂環，追殺牠幾百里；也會為了一個陌生人，把自己的最後一口飯分出去。
+?小舞望著遠方的燈火——
+- 「我想去看看！」 => c0d | @set courage +1
+- 「好可怕……我不要去。」 => c0e | @set kin +1
+#c0d
+xw：我想去看看！那些燈，是不是跟螢火蟲一樣好看？
+娘親笑了，用額頭輕輕碰了碰我的額頭。
+mom：等你修煉到十萬年，可以化成人形的時候，就可以去了。
+@goto c0f
+#c0e
+xw：好可怕……我不要去。我要一直跟娘親待在這裡。
+mom：傻孩子。
+娘親把我抱進懷裡，暖暖的。
+mom：總有一天，你會想去的。到那時候，不要怕。
+@goto c0f
+#c0f
+mom：答應娘親一件事。
+mom：如果有一天，你真的去了人類的世界……不要因為害怕，就不敢相信別人。
+mom：會有人，值得你相信的。
+（那時候的我，還不懂這句話的意思。）
+（很多很多年以後，在一間破舊的宿舍裡，我才終於懂了。）
+@hide all
+@bg starCore
+@bgm tension
+@amb off
+@fx off
+那一夜，森林安靜得很奇怪。
+沒有蟲鳴，沒有風聲。連總是吵吵鬧鬧的二明，都不見了。
+@show mom c
+mom：小舞，進洞裡去。
+娘親的聲音，第一次在發抖。
+xw：娘親？
+mom：進去。不管聽到什麼，都不要出來。
+她把我推進樹洞最深處，然後轉過身，張開雙手擋住了洞口。
+@hide all
+@fx flash
+然後，我看見了光。
+紫金色的光，從森林的盡頭一路燒過來。古樹一棵一棵地倒下，像被風吹倒的草。
+@show bbd c
+一個女人，從光裡走了出來。
+她很年輕，很美。可是她的眼睛……冷得像冬天的湖。
+bbd：十萬年的柔骨兔。終於找到你了。
+@hide all
+@cg shudong 樹洞裡的那一夜
+mom：……你要的是我。這個森林裡，沒有其他東西是你要的。
+bbd：是嗎？
+@fx shake
+@cgoff
+?小舞在黑暗的樹洞裡，渾身發抖——
+- 拼命忍住，一動也不動 => c0g | @set kin +1
+- 想衝出去……卻被一根樹根死死地纏住了 => c0h | @set courage +1
+#c0g
+我咬著自己的爪子，咬到流血。
+（娘親說，不管聽到什麼，都不要出來。）
+（我要聽娘親的話。我要聽娘親的話。我要聽——）
+@goto c0i
+#c0h
+我想衝出去。可是一根古樹的樹根，不知道什麼時候纏住了我的身體，怎麼掙都掙不開。
+後來我才知道，那是娘親最後的魂力。她早就知道，我一定會想衝出來。
+@goto c0i
+#c0i
+@bgm sad
+@fx flash
+@fx red
+那一夜很長。
+我聽見了娘親的聲音。不是哭聲，也不是叫聲。
+是一首歌。
+她在唱歌。一首我很小很小的時候，她每天晚上哄我睡覺時唱的歌。
+（那是她在告訴我：別怕，娘親在這裡。）
+@fx white
+然後，歌聲停了。
+@hide all
+@fx off
+天亮的時候，大明和二明找到了我。
+@show dm l
+@show em r
+@cg gege 哥哥們
+二明一句話都沒說，只是用他那雙大得嚇人的手，小心翼翼地把我從樹洞裡捧了出來。
+大明盤在旁邊，把頭低到我面前。他的眼睛紅紅的。
+大明：……從今天起，我們就是你的哥哥。
+二明：誰敢再動你一根毛，我就讓他後悔生下來。
+我縮在二明的手心裡，一直哭，一直哭。
+@cgoff
+?哭了很久很久以後，小舞——
+- 擦乾眼淚：「我要變強。」 => c0j | @set courage +1
+- 把自己縮得更小：「我哪裡都不要去了。」 => c0k | @set kin +1
+#c0k
+大明：……好。哪裡都不去。哥哥們會一直陪著你。
+二明：外面的人類，沒一個好東西。你就待在這裡，誰都別想再碰你。
+（娘親說過，要我去人類的世界看看。）
+（可是外面，有那道紫金色的光。）
+?真的要永遠留在森林裡嗎？
+- 「嗯。我不要再失去任何人了。」 => c0song
+- 「……不。娘親說過，會有人值得我相信。」 => c0j | @set courage +1
+#c0song
+@hide all
+@bgm sad
+@fx firefly
+我把自己藏進了森林最深的地方。
+我修煉，我長大。一千年，一萬年，十萬年。我終於可以化成人形了。
+可是我一次都沒有走出過森林。
+大明和二明守著我，像守著一顆不能碰的寶石。森林很安靜，很安全。什麼都不會發生。
+@cg end_song 沒唱完的歌
+很多很多年以後的一個晚上，我又坐在那棵倒下的古樹旁邊，看月亮。
+我想把娘親那首歌唱完。
+可是我只記得前半段。後半段……娘親還沒來得及教我。
+（娘親。）
+（我好好地活著。可是我好像……從來沒有跳過舞給誰看。）
+@cgoff
+@end song
+#c0j
+（娘親，你看見了嗎？）
+（我會活下去。我會好好地修煉，修到十萬年，化成人形。）
+（然後，我會去人類的世界，跳舞給這個世界看。）
+@hide all
+@bgm forest
+@amb amb_forest
+@fx firefly
+後來，過了很多很多年。
+多到我已經記不清娘親的臉，只記得那片紫金色的光，和那首沒唱完的歌。
+`.trim().split('\n');
+
+// ---------------- 中段加厚 ----------------
+// 第二章：哥的第一份禮物
+appendTo('c2', `
+@hide all
+@bg dorm
+@bgm daily
+@amb off
+過了幾天，哥在我的枕頭底下，放了一個小東西。
+是一支木頭做的髮簪。簪頭刻著一隻小小的兔子，耳朵長長的，還在笑。
+@show ts c
+xw：哥！這是你做的？
+ts：……嗯。用廢木頭刻的，不值錢。
+xw：好可愛！可是，你為什麼刻兔子？
+ts：因為你的武魂是兔子啊。
+（……嚇死我了。）
+ts：而且……你笑起來的時候，很像兔子。
+?握著那支小小的髮簪——
+- 馬上插在辮子上，轉一圈給他看 => c2y1 | @set bond +4
+- 「笨蛋……誰笑起來像兔子啦！」臉紅著跑掉 => c2y2 | @set bond +3
+#c2y1
+@face xw laugh
+@cg fazan 兔子髮簪
+我把髮簪插進辮子裡，在他面前轉了一圈。
+xw：好看嗎？
+ts：……嗯。很好看。
+他說完就轉過頭去，耳朵紅得像糖葫蘆。
+@cgoff
+@goto c2y3
+#c2y2
+@face xw shy
+xw：笨、笨蛋！誰笑起來像兔子啦！
+我抓著髮簪跑出了七舍。跑到沒有人的地方，才偷偷把它插進辮子裡，對著水缸照了好久好久。
+@goto c2y3
+#c2y3
+（那支髮簪，我戴了整整六年。）
+（直到很久以後，它斷在了一片懸崖上。）
+@hide all
+`);
+
+// 第三章：七怪的小故事
+insertBefore('c3', '大家都睡了以後，大師把我叫到了一邊。', `
+@bg village
+@bgm daily
+在史萊克的日子裡，我慢慢認識了每一個「怪物」。
+?今天休息日，小舞想找誰？
+- 去找胖子和奧斯卡 => c3y1 | @set team +1
+- 去找戴老大和竹清 => c3y2 | @set team +1
+- 去找哥 => c3y3 | @set bond +3
+#c3y1
+@show mhj l
+@show osc r
+我在廚房後面找到了他們。胖子正蹲在灶前，用鳳凰火烤一隻雞，奧斯卡在旁邊不停地變香腸往火裡丟。
+mhj：小舞姐！快來，胖子我發明了「鳳凰烤雞配香腸」！
+osc：理論上，用我的香腸當柴火，烤出來的東西會有恢復效果。
+xw：……那實際上呢？
+osc：實際上，三隻雞已經燒成炭了。
+@fx shake
+話還沒說完，灶裡「轟」的一聲，第四隻雞也變成了一團黑煙。
+我們三個頂著一臉的黑灰，笑到在地上打滾。
+mhj：小舞姐，你說胖子以後……能不能也找到一個像唐三對你那樣好的人？
+xw：咦？哥對我很普通啊。
+osc：……你是全學院唯一一個這樣覺得的人。
+@goto c3y4
+#c3y2
+@show dmb l
+@show zzq r
+戴老大和竹清在後山的樹林裡練習合體技。他們一個是白虎，一個是幽冥靈貓，兩道身影在樹林裡快得像風。
+可是練到一半，竹清突然停了下來。
+zzq：……戴沐白。你又在讓我。
+dmb：我沒有。
+zzq：你有。你每次都慢半拍，等我跟上。
+戴老大撓了撓頭，看起來有點尷尬。我躲在樹後面，偷偷聽。
+dmb：因為我想跟你一起到。不是我先到，也不是你先到。是一起。
+竹清愣住了，過了很久，才轉過頭去。
+zzq：……笨蛋。
+（原來，竹清臉紅的時候，是這個樣子。）
+@hide all
+@show zzq c
+後來，竹清發現我在偷聽，但她沒有生氣，只是坐到我身邊。
+zzq：你和唐三，不也一樣嗎？
+xw：哪、哪裡一樣！
+zzq：……你自己知道。
+@goto c3y4
+#c3y3
+@show ts c
+哥在後山的小溪邊，一個人在練習一種奇怪的手法。他的手快得看不見，一片樹葉被他丟出去，在空中轉了三圈，又飛回了他的手裡。
+xw：哥，你在練什麼？
+ts：……一種家傳的手法。
+xw：教我！
+他想了想，把一片樹葉放在我的手心，然後握住我的手，慢慢地帶著我甩出去。
+他的手很暖，很穩。
+ts：手腕要放鬆。像你跳舞的時候一樣。
+xw：……嗯。
+（我根本沒在聽。我只聽見自己的心跳，吵得要命。）
+樹葉掉進了小溪裡，一路漂走了。
+ts：失敗了。
+xw：再來一次！
+（再來一百次都可以。）
+@set bond +2
+@goto c3y4
+#c3y4
+@hide all
+`);
+
+// 第四章：營火夜
+appendTo('c4', `
+@bg hunt
+@bgm romance
+@amb amb_forest
+@fx firefly
+獵完魂環的那天晚上，我們在森林外圍生了一堆營火。
+大家圍著火堆，有的在療傷，有的在吃東西，有的在打瞌睡。
+?小舞坐到了——
+- 寧榮榮的旁邊 => c4y1 | @set team +1
+- 胖子的旁邊 => c4y2 | @set team +1
+- 哥的旁邊 => c4y3 | @set bond +3
+#c4y1
+@show nrr c
+榮榮抱著膝蓋，盯著火看。
+nrr：小舞，今天那隻泰坦巨猿抓走你的時候，你知道唐三是什麼表情嗎？
+xw：……什麼表情？
+nrr：我從來沒看過一個人，可以害怕成那樣。
+nrr：他一整夜都在找你。我們叫他休息，他理都不理。最後是戴老大把他打昏，他醒過來又繼續找。
+（我不知道。我什麼都不知道。）
+nrr：所以啊，小舞。你以後不准再這樣嚇人了。
+nrr：……我也很害怕的。
+她說完，把頭靠在我肩膀上，假裝睡著了。
+@goto c4y4
+#c4y2
+@show mhj c
+胖子正在烤一隻他自己獵到的野兔。
+……野兔。
+mhj：小舞姐，要不要來一塊？很香喔！
+xw：……
+mhj：咦？小舞姐，你臉色怎麼這麼白？
+xw：……我、我不餓。
+（同類。那是我的同類啊，胖子。）
+mhj：那你吃香腸吧。奧斯卡！給小舞姐一根香腸！
+那天晚上，我吃了五根香腸，一口兔肉都沒碰。胖子一直以為我在減肥。
+@goto c4y4
+#c4y3
+@show ts c
+哥坐在離火堆最遠的地方，一個人看著森林。
+xw：哥，你在看什麼？
+ts：……我在想，如果今天那隻巨猿沒有放你回來，我該怎麼辦。
+xw：那你會怎麼辦？
+ts：我會變強。強到可以打進星斗大森林最深處，把你搶回來。
+xw：……就算那裡是我想待的地方？
+他愣了一下，轉過頭看著我。
+ts：如果那裡是你想待的地方……
+ts：那我就在森林外面，蓋一間小房子。每天去看你。
+（笨蛋。）
+（你為什麼總是說這種話。）
+?看著他認真的側臉——
+- 把頭靠在他的肩膀上 => c4y3b | @set bond +2
+- 「……那就現在吧。哥，我們不要回去了。」 => c4bride [kin>=4 && bond>=30]
+#c4y3b
+@cg yinghuo 營火夜
+我把頭靠在他肩膀上。營火劈啪地響著，螢火蟲在我們周圍飛。
+（再一下下就好。讓我再靠一下下。）
+@cgoff
+@goto c4y4
+#c4bride
+ts：……小舞？
+xw：你說要在森林外面蓋一間小房子。那就蓋啊。現在就蓋。
+xw：我不想再比賽，不想再變強了。我只想要……每天都看得到森林，也看得到你。
+他看了我很久很久。久到營火都快熄了。
+ts：……好。
+ts：大師那邊，我去說。
+@hide all
+@bg starOut
+@bgm daily
+@fx petal
+我們真的沒有回去。
+哥用藍銀草和他那雙什麼都會做的手，在星斗大森林的外圍，蓋了一間小木屋。
+大師來過一次。他看著那間屋子，看了很久，最後只說了一句：「蓋得不錯。」
+戴老大他們每年都會來。胖子每次都帶一隻烤雞，每次都被我趕出去。
+@cg end_forest 森林的新娘
+森林裡的小魂獸們，慢慢地不怕我們了。小狐狸會趴在台階上曬太陽，小鹿會從我手裡吃草。
+二明偶爾會從樹林裡探出頭，故意用很兇的聲音說：「小子，對我妹妹好一點。」
+哥每次都很認真地回答：「是。」
+（我沒有成為最強的魂師。他也沒有成為神。）
+（可是每天黃昏，我坐在台階上，看他劈柴。斧頭落下的聲音，一下，又一下。）
+（娘親，這就是我想跳給這個世界看的舞。很小，很安靜。可是很幸福。）
+@cgoff
+@end bride
+#c4y4
+@hide all
+@fx off
+`);
+
+// 第五章：大賽空檔
+insertBefore('c5', '那天晚上，榮榮和竹清偷偷溜進了我的房間。', `
+@bg city
+@bgm daily
+大賽的空檔，我們被弗蘭德院長放了一天假。
+@show fld c
+fld：今天大家可以去天斗城逛逛。不過，花的錢自己出喔。
+@hide all
+?小舞和哥去了——
+- 天斗城的夜市 => c5y1 | @set bond +3
+- 城裡最有名的魂導器店 => c5y2 | @set bond +2 | @set courage +1
+#c5y1
+@show ts c
+天斗城的夜市比諾丁城大了十倍。到處都是燈籠，到處都是好吃的。
+我拉著哥的手，從街頭吃到街尾。
+xw：哥！那個！那個也要！
+ts：小舞，你已經吃了第七串了。
+xw：這個不一樣！這是糖葫蘆的加大版！
+最後，我們在一個賣面具的攤子前停了下來。
+攤子上有一個兔子面具，白白的，耳朵長長的。旁邊是一個藍色的草葉面具。
+xw：哥，我們一人戴一個！
+他戴上了那個藍色的草葉面具，我戴上了兔子面具。
+我們戴著面具，在人群裡走了很久很久。
+（沒有人認識我們。沒有人知道我是什麼。）
+（在面具底下，我只是一個普通的女孩，牽著一個普通的男孩的手。）
+@cg mianju 夜市面具
+走到夜市盡頭的時候，他回過頭，隔著面具對我笑了一下。
+@cgoff
+?夜市快要結束了，燈籠一盞一盞地熄滅——
+- 摘下面具：「回去吧，大家在等我們。」 => c5y3
+- 「哥……我們就這樣，一直走下去好不好？」 => c5run [bond>=45]
+#c5run
+ts：……一直走下去？
+xw：不要回客棧，不要比賽，不要武魂殿。就我們兩個。
+xw：戴著面具，誰都不會認出我們。
+他沒有說話。我以為他會拒絕。他是唐三，他從來不會丟下任何人。
+可是他把我的手，握得更緊了。
+ts：小舞。你在害怕什麼，對不對？
+xw：……嗯。
+ts：那就走吧。
+@hide all
+@bgm romance
+@fx firefly
+@cg end_elope 面具下的私奔
+我們穿過城門的時候，月亮又大又圓。
+身後是天斗城的燈火，前面是一條不知道通到哪裡的小路。
+我們沒有摘下面具。一直走，一直走，走到天亮。
+（後來，史萊克七怪少了兩個人。大家都說，他們去了一個很遠很遠的地方。）
+（每年的那一天，史萊克學院都會收到一封沒有署名的信。信封裡，只有一片藍色的草葉，和一根白色的兔毛。）
+@cgoff
+@end elope
+#c5y2
+@show ts c
+哥在魂導器店裡，盯著一把小小的匕首看了很久。
+xw：哥，你想要那個？
+ts：不是。我在看它的構造。我覺得……我可以做出更好的。
+那天晚上，他在客棧的房間裡敲敲打打了一整夜。
+第二天早上，他交給我一個手鐲。銀色的，上面刻著小小的花紋。
+ts：按這裡，會射出三根針。危險的時候用。
+xw：哥……你一整夜沒睡，就是在做這個？
+ts：嗯。比賽越來越危險了。我不能每一秒都在你身邊。
+ts：所以至少，讓它代替我保護你。
+@goto c5y3
+#c5y3
+@hide all
+`);
+
+// 第六章：決賽前夜
+insertBefore('c6', '決賽的對手，是武魂殿培養的黃金一代。', `
+@bg sunset
+@bgm romance
+決賽的前一夜，我睡不著。
+我爬上客棧的屋頂，發現六個人都已經坐在那裡了。
+@show dmb l
+@show mhj r
+dmb：……你們也睡不著啊。
+mhj：胖子我緊張到吃不下飯。
+osc：你晚餐吃了四碗。
+mhj：那是平常的一半！
+@hide all
+@show nrr l
+@show zzq r
+nrr：喂，我們來約定一件事吧。
+nrr：不管明天贏還是輸，以後不管大家去了哪裡……每年的今天，我們七個人都要回到史萊克，一起吃一頓飯。
+zzq：……好。
+@hide all
+@show ts c
+ts：我也答應。
+xw：我也是！
+?小舞看著身邊的六個人——
+- 「我們七個，一輩子都不分開！」 => c6y1 | @set team +2
+- 偷偷握住了哥的手 => c6y2 | @set bond +3 | @set team +1
+#c6y1
+我站起來，大聲地說。聲音大到整條街的狗都叫了起來。
+xw：我們七個，一輩子都不分開！
+大家愣了一下，然後一起笑了出來。
+dmb：好！史萊克七怪，一輩子！
+@goto c6y3
+#c6y2
+大家在說話的時候，我偷偷握住了哥的手。
+他沒有看我，可是他把我的手握得很緊、很緊。
+（我好怕。我好怕明天。）
+（可是只要這隻手還在，我就不怕。）
+@goto c6y3
+#c6y3
+@hide all
+@cg wuding2 屋頂的約定
+那一夜，我們七個人在屋頂上，一直坐到天亮。
+遠處，是武魂殿那座金色的城。可是我一點都不怕了。
+@cgoff
+@bg wuhun
+@bgm tension
+`);
+
+// ---------------- 番外：後日談 ----------------
+SCRIPT.ep1 = `
+@title 番外|花開之後
+@form ts casual
+@form xw adult
+@bg village
+@bgm daily
+@fx petal
+成親以後的第一個早上，我被一股奇怪的味道嗆醒了。
+@cg jiandan 海神煎蛋
+ts：……早。我在做早餐。
+廚房裡一片黑煙。鍋子裡的東西，已經看不出原本是什麼了。
+xw：哥……你是海神耶。你可以分開大海，可是你煎不熟一顆蛋？
+ts：……海裡沒有蛋。
+我笑到差點從床上滾下來。
+@cgoff
+@show ts c
+?小舞決定——
+- 「我來教你！」捲起袖子進廚房 => ep1a | @set bond +2
+- 「算了算了，我們去找胖子蹭飯！」 => ep1b | @set team +1
+#ep1a
+那天早上，廚房又冒出了兩次黑煙。
+可是第三次，他終於煎出了一顆完整的、圓圓的、金黃色的蛋。
+ts：……成功了。
+他看著那顆蛋的表情，比成神那天還要開心。
+@goto ep1c
+#ep1b
+@show mhj l
+mhj：小舞姐！唐三！你們新婚第一天就來蹭飯？
+xw：因為哥把廚房燒了。
+mhj：哈哈哈哈！海神燒了廚房！胖子要寫進史萊克校史！
+@goto ep1c
+#ep1c
+@hide all
+@face xw off
+@bg village
+後來，我在史萊克學院開了一門課。
+課程名稱叫做「柔技與舞」。報名的學生排到了學院門口。
+@show fld c
+fld：小舞啊，你的課學費要不要收高一點？這麼多人，學院可以賺——
+xw：院長！
+fld：……開玩笑的。
+@hide all
+我教那些孩子們跳舞。就像很多很多年以前，娘親在月光下教我一樣。
+?小舞教孩子們的第一課是——
+- 「跳舞，是為了讓自己開心。」 => ep1d | @set kin +1
+- 「跳舞，是為了保護重要的人。」 => ep1d | @set courage +1
+#ep1d
+有一個小女孩問我：老師，你為什麼要教我們跳舞？
+我想了很久，才回答她。
+xw：因為我的娘親說過——只要還能跳舞，就代表你還好好地活著。
+@hide all
+@bg starCore
+@bgm forest
+@amb amb_forest
+@fx firefly
+每個月圓的晚上，我都會回星斗大森林。
+@form dm small
+@form em small
+@show dm l
+@show em r
+二明：妹妹！你看！我又長大了一點！
+大明：……只長了一根頭髮那麼多。
+二明：那也是長大！
+那兩個曾經比山還高的哥哥，現在小小的，一個可以坐在我的肩膀上，一個可以纏在我的手腕上。
+大明：小舞，你過得好嗎？那個人……對你好嗎？
+xw：嗯。很好很好。
+二明：他敢對你不好，等我長回去，第一個揍他。
+大明：……那要再等五萬年。
+@hide all
+@bg village
+@bgm romance
+@amb off
+那一年，史萊克七怪的約定，我們一年都沒有缺席。
+@show dmb l
+@show zzq r
+戴老大和竹清，在那年的春天成親了。戴老大在婚禮上哭得比竹清還慘。
+@hide all
+@show nrr l
+@show osc r
+榮榮和奧斯卡……還在吵架。可是全學院都知道，他們每天都一起吃晚飯。
+@hide all
+@show mhj c
+胖子說，他要用鳳凰火開一間全大陸最大的烤肉店。招牌菜是「鳳凰烤雞配香腸」。
+……這次，只燒掉了兩隻。
+@hide all
+@bg starCore
+@bgm hope
+@amb amb_forest
+@fx firefly
+有一天晚上，我在森林裡，發現了一隻小小的、雪白的兔子。
+牠縮在一個樹洞裡，一直在發抖。牠的娘親，不知道去了哪裡。
+@show ts c
+ts：……小舞？
+我蹲下來，看著那雙紅紅的、害怕的眼睛。
+（我想起了很久很久以前，也有一隻小兔子，縮在樹洞裡發抖。）
+?小舞伸出了手——
+- 「別怕。以後，我就是你的家人。」 => ep1e | @set kin +2
+- 回頭看著哥：「我們……帶她回家好不好？」 => ep1e | @set bond +2
+#ep1e
+@cg ep_rabbit 新的家人
+那隻小兔子，猶豫了很久，最後一蹦一跳地，跳進了我的手心。
+暖暖的，軟軟的。
+哥在我身邊蹲下來，輕輕地摸了摸牠的頭。
+ts：叫什麼名字好呢？
+xw：……叫「小月」吧。因為，今天的月亮很圓。
+@cgoff
+@hide all
+@show xw c
+@face xw laugh
+（娘親。）
+（我跳舞給這個世界看了。我找到了值得相信的人。我有了很多很多的家人。）
+（現在，換我來當別人的娘親了。）
+@end after
+`.trim().split('\n');
+
+// ---------------- 番外：唐三篇 ----------------
+SCRIPT.ep2 = `
+@title 番外|十年
+@pov ts
+@bg cliff
+@bgm sad
+@amb amb_wind
+那一天，我抱著一件粉色的衣服，在懸崖邊跪了很久。
+衣服上還有她的味道。可是衣服裡面，什麼都沒有了。
+（小舞。）
+（你說，要我好好活下去。帶著你的那一份。）
+（可是沒有你，我要怎麼活？）
+@show th c
+th：……站起來。
+爸爸的聲音，在我身後響起。那個總是喝得醉醺醺的男人，此刻站得比山還直。
+th：她用命換回了你。你就打算這樣，讓她白白換了？
+@hide all
+?跪在懸崖邊的唐三——
+- 「爸……我好沒用。我連一個人都保護不了。」 => ep2a
+- 握緊拳頭，一言不發地站了起來 => ep2b | @set courage +1
+#ep2a
+th：……我也一樣。
+th：二十年前，我也沒能保護你的娘親。
+我愣住了。這是爸爸第一次，跟我說起娘親的事。
+th：所以我知道，跪在這裡是什麼感覺。
+th：我也知道，跪再久，她都不會回來。
+th：但是你和我不一樣。你還有機會。
+@goto ep2c
+#ep2b
+我站起來的時候，雙腿已經麻得沒有知覺了。
+可是我沒有倒下。
+@goto ep2c
+#ep2c
+@show th c
+th：她的魂，我留住了一縷。在這個香囊裡。
+他把一個小小的、粉色的香囊，放進我的手心。
+它很輕，可是我捧著它的時候，覺得比整座山還重。
+th：這個大陸上，只有神，才能讓逝者重生。
+th：成神。或者，一輩子跪在這裡。你自己選。
+@hide all
+@bg north
+@bgm tension
+@amb off
+（我選了。）
+（不管要走多遠，不管要花多久。）
+@bg shalu
+@fx red
+我去了一座叫做「殺戮之都」的城市。
+那裡沒有太陽，沒有月亮，只有血和黑暗。每一天，我都要和那些已經失去理智的人戰鬥。
+@fx shake
+第一個月，我身上沒有一塊完整的皮膚。
+第三個月，我學會了在睡夢中也能擋下攻擊。
+第六個月，我忘記了自己上一次笑，是什麼時候。
+（小舞，你一定會罵我笨蛋吧。）
+（我的確是個笨蛋。可是笨蛋，也有笨蛋的堅持。）
+@fx off
+@cg shalu 殺戮之都
+有一天夜裡，我實在撐不下去了。我靠在牆上，聽著遠處的慘叫聲，握著胸前的香囊。
+（如果就這樣死在這裡，是不是就可以去見你了？）
+@fx flash
+那一瞬間，香囊亮了一下。
+很微弱，很微弱的光。像一隻螢火蟲。
+（……你在罵我，對不對。）
+（好。我不死。我答應過你的。）
+@cgoff
+@bg sea
+@bgm hope
+@amb amb_sea
+後來，我去了海神島。
+守護者說，要繼承海神之位，必須通過九道試煉。九成九的人，在第三道就死了。
+?面對九道試煉，唐三想著——
+- （小舞，你等我。） => ep2d | @set bond +3
+- （小舞，你看著。這一次，換我保護你。） => ep2d | @set courage +2
+#ep2d
+第一考，我在深海裡待了七天七夜。
+@cg jiukao 海神九考
+第三考，我和一頭萬年海魂獸，戰到海水都變成了紅色。
+@cgoff
+第五考，我面對了自己的心魔。它長得跟我一模一樣，它一直問我：
+「她已經死了。就算成了神，她也不一定會醒來。你為什麼還不放棄？」
+?心魔的聲音，一遍一遍地在耳邊響——
+- 「因為她還在。她就在我的胸口。」 => ep2e | @set bond +1
+- 「……你說得對。我不要神位了。我只想回去，陪在她身邊。」 => ep2nogod
+#ep2nogod
+心魔笑了。然後，它消失了。
+試煉的大門，在我身後關上。永遠不會再為我打開。
+@hide all
+@bg starCore
+@bgm sad
+@amb amb_forest
+@fx firefly
+@form ts casual
+我回到了星斗大森林。
+大明和二明把她的身體，藏在一塊千年冰晶裡。她睡得很安靜，跟最後那天一模一樣。
+@cg end_nogod 放棄成神
+我在冰晶旁邊坐了下來。
+從那天起，我就沒有再離開過。
+我用藍銀草，在冰晶周圍開滿了藍色的小花。春天開，夏天開，冬天也開。
+我跟她說話。說胖子的烤肉店，說戴老大的婚禮，說榮榮終於答應了奧斯卡。
+她一次都沒有回答。
+（小舞。我不是神，救不了你。）
+（可是至少，你醒來的時候，第一眼看到的，一定是我。）
+@cgoff
+@end nogod
+#ep2e
+我回答它：因為她還在。她就在我的胸口。
+第七考……
+@bgm romance
+每年她的生日，不管我在哪裡，都會用藍銀草開一朵藍色的小花。
+@cg xiangnang 香囊
+ts：小舞，生日快樂。
+ts：今年你……算了，我算不清楚了。反正你永遠十六歲。
+ts：等我。就快了。
+（香囊沒有回答。可是我知道，她在聽。）
+@cgoff
+@bg sea
+@bgm hope
+@fx gold
+@form ts god
+第九考完成的那一天，天空裂開了一道金色的光。
+大海為我分開了一條路。
+我成了海神。
+（可是那一刻，我想的不是神位，不是力量。）
+（我只想著一件事：終於，可以去接你回家了。）
+@hide all
+@bg starCore
+@bgm romance
+@amb amb_forest
+@fx firefly
+我回到了星斗大森林。
+千年冰晶裡，她安安靜靜地睡著，跟十年前一模一樣。黑色的長辮，粉色的衣裳。
+我把手放在冰晶上。
+（小舞。）
+（我回來了。）
+（如果你累了，不想回來，也沒關係。我等過一次，我可以再等一次。）
+（可是如果你聽得見……）
+（拜託你，睜開眼睛。）
+@form xw adult
+@cg chongfeng 重逢
+@fx white
+然後——
+她睜開了眼睛。
+xw：……哥。
+xw：你哭起來……好醜喔。
+（十年。）
+（我等這句話，等了十年。）
+@cgoff
+@hide all
+@show xw c
+@face xw laugh
+我抱住了她。這一次，我發誓，再也不會放手。
+@pov off
+@end tsside
+`.trim().split('\n');
+
+Object.assign(ENDS, {
+  after: { n: '花開之後', kind: 'extra', d: '海神煎不熟一顆蛋，小舞教孩子們跳舞。<br>七怪的約定年年沒有缺席。<br>她在森林裡撿到一隻小兔子——這一次，換她當別人的家人。', hint: '番外：達成「十萬年的守候」後解鎖' },
+  song: { n: '沒唱完的歌', kind: 'sad', d: '她活了很久很久，久到可以化成人形。<br>可是她一次都沒有走出森林，也沒有跳舞給任何人看。<br>娘親那首歌的後半段，再也沒有人唱給她聽。', hint: '序章：在最深的黑夜之後，把自己藏了起來' },
+  bride: { n: '森林的新娘', kind: '', d: '星斗大森林的外圍，有一間藍銀草蓋的小木屋。<br>她沒有成為最強的魂師，他也沒有成神。<br>可是每天黃昏，斧頭落下的聲音，一下，又一下。', hint: '第四章：營火旁，認真回應那間「森林外的小房子」' },
+  elope: { n: '面具下的私奔', kind: '', d: '兔子面具和草葉面具，穿過了天斗城的城門。<br>史萊克七怪少了兩個人。<br>每年那一天，學院會收到一片藍色的草葉，和一根白色的兔毛。', hint: '第五章：戴著面具的夜晚，不想再回去了' },
+  nogod: { n: '放棄成神', kind: 'sad', d: '他放下了神位，回到了千年冰晶旁邊。<br>藍色的小花四季都開著。<br>他說：至少你醒來的時候，第一眼看到的一定是我。', hint: '番外二：在心魔面前，放下了一切' },
+  tsside: { n: '十年', kind: 'extra', d: '殺戮之都的黑夜，海神島的九道試煉，<br>每年一朵藍色的小花。<br>他說：我等這句話，等了十年。', hint: '番外：故事進行到第八章後解鎖' },
+});
+const EXTRA = [
+  { id: 'ep1', t: '番外一', sub: '花開之後', need: () => P.end.true, hint: '達成結局「十萬年的守候」後解鎖' },
+  { id: 'ep2', t: '番外二', sub: '十年（唐三篇）', need: () => P.chap.c8 || P.end.true || P.end.sad, hint: '故事進行到第八章後解鎖' },
+];
+
+'use strict';
+// ======================================================================
 //  舞・十萬年 —— 影視小說引擎
 // ======================================================================
 const $ = id => document.getElementById(id);
@@ -2295,13 +3076,13 @@ const CH = {
   gui: { n: '鬼斗羅', img: A + 'ch/N3.webp', col: '#8a8aa0' },
   dm: { n: '二明', img: 'assets/xiaowu/ch/dm.webp', col: '#c89a6a', beast: 1 },
   em: { n: '大明', img: 'assets/xiaowu/ch/em.webp', col: '#6ac8a8', beast: 1 },
-  mom: { n: '娘親', img: A + 'wh/rabbit.webp', col: '#ffd0e0', beast: 1 },
+  mom: { n: '娘親', img: 'assets/xiaowu/ch/mom.webp', col: '#ffd0e0' },
   th: { n: '唐昊', img: A + 'ch/M6.webp', col: '#9a7aff' },
   xiao: { n: '同學', img: A + 'ch/M3.webp', col: '#aaa' },
 };
 const XBG = { dorm: 'village', cliff: 'north', sea: 'sunset', wuhun: 'hall' }; // 新背景還沒到之前的替代
-const XHAS = {"sea": 1, "starCore": 1, "wuhun": 1, "hall": 1, "sunset": 1, "dorm": 1, "arena": 1, "city": 1, "village": 1, "cliff": 1, "nuoding": 1, "hunt": 1, "north": 1};
-const CHX = {"ds": 1, "th": 1, "ju": 1, "ts": 1, "dm": 1, "zzq": 1, "dmb": 1, "xiao": 1, "xw": 1, "nrr": 1, "osc": 1, "bbd": 1, "gui": 1, "mhj": 1, "em": 1, "fld": 1};
+const XHAS = {"sea": 1, "starCore": 1, "wuhun": 1, "starOut": 1, "hall": 1, "sunset": 1, "dorm": 1, "arena": 1, "city": 1, "shalu": 1, "village": 1, "cliff": 1, "nuoding": 1, "hunt": 1, "north": 1};
+const CHX = {"mom": 1, "ds": 1, "th": 1, "ju": 1, "ts": 1, "dm": 1, "zzq": 1, "dmb": 1, "xiao": 1, "xw": 1, "nrr": 1, "osc": 1, "bbd": 1, "gui": 1, "mhj": 1, "em": 1, "fld": 1};
 for (const k in CHX) if (CH[k] && !/assets\/xiaowu/.test(CH[k].img)) CH[k].img = 'assets/xiaowu/ch/' + k + '.webp';
 const BG = k => XHAS[k] ? 'assets/xiaowu/bg/' + k + '.webp' : k in XBG ? (XHAS[k] ? 'assets/xiaowu/bg/' + k + '.webp' : A + 'bg/' + XBG[k] + '.webp') : A + 'bg/' + k + '.webp';
 const VARS = ['bond', 'courage', 'kin', 'secret', 'team'];
@@ -2313,9 +3094,9 @@ let typing = null, auto = false, skip = false, busy = false, logArr = [];
 function loadP() { try { Object.assign(P, JSON.parse(localStorage.getItem('xw_meta') || '{}')); } catch (e) { } }
 function saveP() { try { localStorage.setItem('xw_meta', JSON.stringify(P)); } catch (e) { } }
 function newState(ch) { return { ch: ch || CHAP[0].id, i: 0, bg: null, cg: null, show: {}, v: { bond: 0, courage: 0, kin: 0, secret: 0, team: 0 }, f: {}, t: Date.now() }; }
-function saveSlot(n) { if (!S) return; S.t = Date.now(); try { localStorage.setItem('xw_save_' + n, JSON.stringify(S)); } catch (e) { } }
+function saveSlot(n) { if (!S || (n === 0 && !CHAP.some(c => c.id === S.ch))) return; S.t = Date.now(); try { localStorage.setItem('xw_save_' + n, JSON.stringify(S)); } catch (e) { } }
 function loadSlot(n) { try { const s = JSON.parse(localStorage.getItem('xw_save_' + n)); return s && s.ch ? s : null; } catch (e) { return null; } }
-const chapOf = id => CHAP.find(c => c.id === id);
+const chapOf = id => CHAP.find(c => c.id === id) || (typeof EXTRA !== 'undefined' && EXTRA.find(c => c.id === id)) || { t: '', sub: '' };
 
 
 // ---------------- 聲音（手機需先觸碰畫面才能出聲，觸碰後自動補播） ----------------
@@ -2456,7 +3237,7 @@ function next() {
   clearTimeout(autoT);
   if (finishType()) return;
   for (let guard = 0; guard < 400; guard++) {
-    const L = lines(); if (S.i >= L.length) { const idx = CHAP.findIndex(c => c.id === S.ch); if (idx + 1 < CHAP.length) { S.ch = CHAP[idx + 1].id; S.i = 0; continue; } return; }
+    const L = lines(); if (S.i >= L.length) { const idx = CHAP.findIndex(c => c.id === S.ch); if (idx >= 0 && idx + 1 < CHAP.length) { S.ch = CHAP[idx + 1].id; S.i = 0; continue; } return; }
     const raw = L[S.i]; const line = raw.trim();
     P.read[S.ch] = Math.max(P.read[S.ch] ?? -1, S.i);
     S.i++;
@@ -2467,7 +3248,7 @@ function next() {
     const m = line.match(/^([^\s：（]{1,4})：(.*)$/);
     const sk = m && (CH[m[1]] ? m[1] : Object.keys(CH).find(k => CH[k].n === m[1]));
     if (sk) { renderChars(sk); say(CH[sk].n, m[2], 'talk', sk); }
-    else if (line[0] === '（') { renderChars('xw'); say('小舞', line, 'inner', 'xw'); }
+    else if (line[0] === '（') { const pv = S.pov || 'xw'; renderChars(pv); say(CH[pv].n, line, 'inner', pv); }
     else { renderChars(null); say('', line, 'narr'); }
     if (P.seen % 15 === 0) saveSlot(0);
     P.seen++; if (P.seen % 10 === 0) saveP();
@@ -2489,6 +3270,7 @@ function cmd(line) {
     case 'se': se(rest[0]); break;
     case 'cg': showCG(rest[0], rest.slice(1).join(' ')); break;
     case 'cgoff': hideCG(); break;
+    case 'pov': S.pov = rest[0] && rest[0] !== 'off' ? rest[0] : null; break;
     case 'fx': fx(rest[0]); break;
     case 'set': doSet(arg); break;
     case 'goto': jump(rest[0]); break;
@@ -2534,11 +3316,11 @@ function choice(prompt) {
   });
 }
 function ending(k) {
-  const E = ENDS[k]; loopTrack('amb', 'off'); loopTrack('bgm', E.kind === 'sad' || E.kind === 'bad' ? 'sad' : 'hope'); P.end[k] = Date.now(); saveP(); localStorage.removeItem('xw_save_0');
+  const E = ENDS[k]; loopTrack('amb', 'off'); loopTrack('bgm', E.kind === 'sad' || E.kind === 'bad' ? 'sad' : E.kind === 'extra' ? 'romance' : 'hope'); const inMain = CHAP.some(c => c.id === S.ch); P.end[k] = Date.now(); saveP(); if (inMain) localStorage.removeItem('xw_save_0');
   hideCG(); S.show = {}; renderChars(); auto = false; skip = false; updBtns();
   $('box').classList.add('hide');
   const d = $('endc'); d.className = 'endc on ' + (E.kind || '');
-  d.innerHTML = `<div class="ek">${E.kind === 'true' ? '真結局' : E.kind === 'sad' ? '悲傷結局' : E.kind === 'bad' ? '壞結局' : '結局'}</div><h1>${E.n}</h1><p>${E.d}</p><div class="ecount">已收集結局 ${Object.keys(P.end).length} / ${Object.keys(ENDS).length}</div><button class="btn" id="eBack">回到標題</button>`;
+  d.innerHTML = `<div class="ek">${E.kind === 'true' ? '真結局' : E.kind === 'sad' ? '悲傷結局' : E.kind === 'bad' ? '壞結局' : E.kind === 'extra' ? '番外・完' : '結局'}</div><h1>${E.n}</h1><p>${E.d}</p><div class="ecount">已收集結局 ${Object.keys(P.end).length} / ${Object.keys(ENDS).length}</div><button class="btn" id="eBack">回到標題</button>`;
   $('eBack').onclick = () => { d.className = 'endc'; title(); };
 }
 
@@ -2573,7 +3355,7 @@ function title() {
   $('game').classList.add('hide'); const t = $('title'); t.classList.remove('hide'); loopTrack('amb', 'off'); loopTrack('bgm', 'title');
   const cont = loadSlot(0), ne = Object.keys(P.end).length;
   t.innerHTML = `<div class="tbg"></div><div class="tfx" id="tfx"></div><div class="tin"><div class="tsub">斗羅大陸・小舞篇</div><h1>舞・十萬年</h1><div class="tline">我是一隻兔子。<br>我用十萬年，等到了一個人。</div>
-  <div class="tbtn">${cont ? `<button class="btn" id="tC">繼續故事<small>${chapOf(cont.ch).t}</small></button>` : ''}<button class="btn ${cont ? 'ghost' : ''}" id="tN">新的故事</button><button class="btn ghost" id="tL">讀取存檔</button><button class="btn ghost" id="tCh">章節回顧</button><button class="btn ghost" id="tE">結局與回憶（${ne}/${Object.keys(ENDS).length}）</button></div></div>`;
+  <div class="tbtn">${cont ? `<button class="btn" id="tC">繼續故事<small>${chapOf(cont.ch).t}</small></button>` : ''}<button class="btn ${cont ? 'ghost' : ''}" id="tN">新的故事</button><button class="btn ghost" id="tL">讀取存檔</button><button class="btn ghost" id="tCh">章節回顧</button>${typeof EXTRA !== 'undefined' ? `<button class="btn ghost" id="tX">番外篇${EXTRA.some(x => x.need()) ? '' : '（未解鎖）'}</button>` : ''}<button class="btn ghost" id="tE">結局與回憶（${ne}/${Object.keys(ENDS).length}）</button></div></div>`;
   const tf = $('tfx'); for (let i = 0; i < 24; i++) { const p = document.createElement('i'); p.style.left = Math.random() * 100 + '%'; p.style.animationDelay = (-Math.random() * 10) + 's'; p.style.animationDuration = (7 + Math.random() * 6) + 's'; tf.appendChild(p); }
   if ($('tC')) $('tC').onclick = () => resume(cont);
   $('tN').onclick = () => { if (cont && !confirm('開始新的故事？自動存檔會被覆蓋（手動存檔不受影響）')) return; start(newState()); };
@@ -2582,6 +3364,11 @@ function title() {
     const o = modal(`<h2>章節回顧</h2><div class="slots">${CHAP.map((c, i) => `<button class="slot" data-c="${c.id}" ${P.chap[c.id] || i === 0 ? '' : 'disabled'}><b>${c.t}</b><small>${P.chap[c.id] || i === 0 ? c.sub : '？？？'}</small></button>`).join('')}</div><p class="note">從章節開頭重看時，心意數值會用「一般」的狀態開始。</p><button class="btn ghost" id="cX">關閉</button>`);
     $('cX').onclick = () => o.remove();
     o.querySelectorAll('[data-c]').forEach(b => b.onclick = () => { o.remove(); const s = newState(b.dataset.c); Object.assign(s.v, chapOf(b.dataset.c).base || {}); start(s); });
+  };
+  if ($('tX')) $('tX').onclick = () => {
+    const o = modal(`<h2>番外篇</h2><div class="slots">${EXTRA.map(x => `<button class="slot" data-x="${x.id}" ${x.need() ? '' : 'disabled'}><b>${x.t}・${x.need() ? x.sub : '？？？'}</b><small>${x.need() ? (P.chap[x.id] ? '已讀過' : '新的故事') : x.hint}</small></button>`).join('')}</div><p class="note">番外篇是正篇之外的故事，不影響存檔。</p><button class="btn ghost" id="xX">關閉</button>`);
+    $('xX').onclick = () => o.remove();
+    o.querySelectorAll('[data-x]').forEach(b => b.onclick = () => { o.remove(); start(newState(b.dataset.x)); });
   };
   $('tE').onclick = () => {
     const cgs = Object.entries(P.cg);
