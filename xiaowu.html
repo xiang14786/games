@@ -2296,7 +2296,7 @@ const CH = {
 };
 const XBG = { dorm: 'village', cliff: 'north', sea: 'sunset', wuhun: 'hall' }; // 新背景還沒到之前的替代
 const XHAS = {"sea": 1, "wuhun": 1, "dorm": 1, "cliff": 1};
-const CHX = {"ts": 1, "dm": 1, "xw": 1, "bbd": 1, "em": 1};
+const CHX = {"ds": 1, "th": 1, "ju": 1, "ts": 1, "dm": 1, "zzq": 1, "dmb": 1, "xw": 1, "nrr": 1, "osc": 1, "bbd": 1, "mhj": 1, "em": 1, "fld": 1};
 for (const k in CHX) if (CH[k] && !/assets\/xiaowu/.test(CH[k].img)) CH[k].img = 'assets/xiaowu/ch/' + k + '.webp';
 const BG = k => k in XBG ? (XHAS[k] ? 'assets/xiaowu/bg/' + k + '.webp' : A + 'bg/' + XBG[k] + '.webp') : A + 'bg/' + k + '.webp';
 const VARS = ['bond', 'courage', 'kin', 'secret', 'team'];
@@ -2352,7 +2352,7 @@ function renderChars(speaker) {
       el = document.createElement('div'); el.className = `ch p${pos} in` + (CH[k].beast ? ' beast' : ''); el.dataset.k = k;
       el.innerHTML = `<img src="${imgOf(k)}" alt="">`; box.appendChild(el); setTimeout(() => el.classList.remove('in'), 30);
     } else { const im = el.querySelector('img'), src = imgOf(k); if (im.getAttribute('src') !== src) { im.src = src; el.classList.remove('pop'); void el.offsetWidth; el.classList.add('pop'); } }
-    el.classList.toggle('wide', /_god|_adult/.test(imgOf(k)) || k === 'bbd');
+    el.classList.toggle('wide', /_god|_adult/.test(imgOf(k)) || k === 'bbd' || k === 'th');
     el.classList.toggle('tiny', imgOf(k).includes('_small'));
     el.classList.toggle('dim', !!speaker && speaker !== k);
     el.classList.toggle('talk', speaker === k);
