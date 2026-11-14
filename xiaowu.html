@@ -20,7 +20,7 @@ button{font-family:inherit;cursor:pointer}
 .bg::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(10,4,16,.15) 0%,rgba(10,4,16,0) 35%,rgba(10,4,16,.55) 75%,rgba(10,4,16,.9) 100%)}
 @keyframes drift{from{transform:scale(1.03) translate(-1%,0)}to{transform:scale(1.08) translate(1%,-1%)}}
 #chars{position:absolute;left:0;right:0;bottom:150px;top:12%;pointer-events:none}
-.ch{position:absolute;bottom:0;height:100%;display:flex;align-items:flex-end;justify-content:center;transition:transform .45s ease,opacity .45s ease,filter .35s;width:62%}
+.ch{position:absolute;bottom:0;height:100%;display:flex;align-items:flex-end;justify-content:center;transition:transform .45s ease,opacity .45s ease,filter .35s,left .45s ease,width .45s ease;width:62%}
 .ch img{max-height:100%;max-width:100%;object-fit:contain;filter:drop-shadow(0 8px 20px rgba(0,0,0,.55))}
 .ch.pc{left:19%}.ch.pl{left:-6%}.ch.pr{right:-6%}
 .ch.in{opacity:0;transform:translateY(20px)}.ch.gone{opacity:0}
@@ -53,8 +53,8 @@ button{font-family:inherit;cursor:pointer}
 @keyframes fade{0%{opacity:0}40%{opacity:1}100%{opacity:0}}
 .shake{animation:shake .45s}
 @keyframes shake{20%{transform:translate(-8px,3px)}40%{transform:translate(7px,-4px)}60%{transform:translate(-5px,2px)}80%{transform:translate(4px,-1px)}}
-.hfx{position:fixed;left:50%;top:38%;transform:translateX(-50%);z-index:20;color:#ff8ac0;font-size:15px;background:rgba(20,6,18,.75);border:1px solid #ff8ac088;padding:6px 14px;border-radius:20px;pointer-events:none;animation:hup 1.4s ease forwards;white-space:nowrap}
-@keyframes hup{0%{opacity:0;transform:translate(-50%,10px)}20%{opacity:1}80%{opacity:1}100%{opacity:0;transform:translate(-50%,-30px)}}
+.hfx{position:relative;color:#ff8ac0;font-size:15px;background:rgba(20,6,18,.75);border:1px solid #ff8ac088;padding:6px 14px;border-radius:20px;pointer-events:none;animation:hup 1.4s ease forwards;white-space:nowrap}
+@keyframes hup{0%{opacity:0;transform:translateY(10px)}15%{opacity:1;transform:none}80%{opacity:1}100%{opacity:0;transform:translateY(-14px)}}
 .box{position:absolute;left:10px;right:10px;bottom:calc(14px + env(safe-area-inset-bottom));min-height:132px;z-index:6;background:linear-gradient(180deg,rgba(28,10,26,.88),rgba(14,6,16,.94));border:1px solid rgba(255,160,200,.35);border-radius:18px;padding:22px 18px 16px;box-shadow:0 10px 30px rgba(0,0,0,.5);transition:opacity .3s}
 .box.hide{opacity:0;pointer-events:none}
 .box.inner{border-color:rgba(255,200,230,.55);background:linear-gradient(180deg,rgba(40,14,34,.9),rgba(20,6,20,.95))}
@@ -125,6 +125,8 @@ button{font-family:inherit;cursor:pointer}
 .ch.wide{width:88%}.ch.wide.pc{left:6%}.ch.wide.pl{left:-18%}.ch.wide.pr{right:-18%}
 .ch.beast.tiny img{max-height:30%}
 #tapStart{position:fixed;inset:0;z-index:100;background:radial-gradient(circle at 50% 40%,#3a1430,#06030a 75%);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;transition:opacity .9s}#tapStart.out{opacity:0;pointer-events:none}#tapStart b{font-family:'LXGW WenKai TC',serif;font-size:44px;letter-spacing:10px;color:#fff;text-shadow:0 0 20px #ff6aa8}#tapStart span{color:#ffd6ea;letter-spacing:4px;animation:blink 1.6s infinite}
+#hbox{position:fixed;left:50%;top:34%;transform:translateX(-50%);z-index:20;display:flex;flex-direction:column;align-items:center;gap:8px;pointer-events:none}
+#toasts{position:fixed;left:50%;top:70px;transform:translateX(-50%);z-index:40;display:flex;flex-direction:column;align-items:center;gap:6px;pointer-events:none}#toasts .toast{position:static;transform:none}
 </style></head>
 <body>
 <div id="game" class="hide"><div id="stage"><div class="bg" id="bgA"></div><div class="bg" id="bgB"></div><div id="chars"></div><div class="cg" id="cg"></div><div id="fx"></div></div>
@@ -2371,6 +2373,16 @@ function renderChars(speaker) {
     el.classList.toggle('dim', !!speaker && speaker !== k);
     el.classList.toggle('talk', speaker === k);
   }
+  // 依人數自動排版，避免重疊
+  const order = ['l', 'c', 'r'].filter(p => S.show[p]), n = order.length;
+  const SL = { 1: [[50, 62]], 2: [[27, 54], [73, 54]], 3: [[18, 38], [50, 38], [82, 38]] }[n] || [];
+  order.forEach((p, i) => {
+    const el = box.querySelector(`.ch.p${p}:not(.gone)`); if (!el) return;
+    let [cx, w] = SL[i]; const bst = el.classList.contains('beast') && !el.classList.contains('tiny');
+    if (bst && n === 3) { w = 64; cx = i === 0 ? 22 : i === 2 ? 78 : cx; } else if (el.classList.contains('wide') || bst) w = Math.min(w * (n === 1 ? 1.45 : 1.3), 92);
+    el.style.left = (cx - w / 2) + '%'; el.style.width = w + '%'; el.style.right = 'auto';
+    el.style.zIndex = bst ? 1 : el.classList.contains('talk') ? 4 : 3 - Math.abs(i - (n - 1) / 2);
+  });
 }
 function showCG(k, title) {
   S.cg = { k, title }; P.cg[k] = title; saveP();
@@ -2390,7 +2402,7 @@ function fx(k) {
   L.innerHTML = ''; L.className = 'fx-' + k;
   for (let i = 0; i < (FXS[k] || 20); i++) { const p = document.createElement('i'); p.style.left = Math.random() * 100 + '%'; p.style.animationDelay = (-Math.random() * 10).toFixed(2) + 's'; p.style.animationDuration = (6 + Math.random() * 7).toFixed(2) + 's'; p.style.setProperty('--s', (0.5 + Math.random()).toFixed(2)); p.style.setProperty('--x', ((Math.random() - 0.5) * 120).toFixed(0) + 'px'); L.appendChild(p); }
 }
-function heart(t) { se('se_heart'); const d = document.createElement('div'); d.className = 'hfx'; d.innerHTML = t || '♥'; document.body.appendChild(d); setTimeout(() => d.remove(), 1400); }
+function heart(t) { se('se_heart'); let box = $('hbox'); if (!box) { box = document.createElement('div'); box.id = 'hbox'; document.body.appendChild(box); } const d = document.createElement('div'); d.className = 'hfx'; d.innerHTML = t || '♥'; box.appendChild(d); setTimeout(() => d.remove(), 1700); }
 
 // ---------------- 文字 ----------------
 function say(name, text, kind, speaker) {
