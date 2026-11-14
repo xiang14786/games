@@ -1,0 +1,3801 @@
+<!DOCTYPE html>
+<html lang="zh-Hant"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#100808"><meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="遊戲盒">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<title>逐玉</title>
+<style>@font-face{font-family:'Huninn';font-display:swap;src:url('assets/zhuyu/huninn.woff2') format('woff2')}@font-face{font-family:'LXGW WenKai TC';font-weight:700;font-display:swap;src:url('assets/zhuyu/wk-bold.woff2') format('woff2')}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;background:#0b0710;color:#f6eef4;font-family:'Huninn',-apple-system,'PingFang TC','Noto Sans TC',sans-serif;overflow:hidden;user-select:none;-webkit-user-select:none}
+button{font-family:inherit;cursor:pointer}
+.hide{display:none!important}
+#game{position:fixed;inset:0;max-width:560px;margin:0 auto}
+#stage{position:absolute;inset:0;overflow:hidden;background:#000}
+.bg{position:absolute;inset:-2%;background-size:cover;background-position:center;opacity:0;transition:opacity 1.1s ease;animation:drift 30s ease-in-out infinite alternate}
+.bg.on{opacity:1}
+.bg::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(10,4,16,.15) 0%,rgba(10,4,16,0) 35%,rgba(10,4,16,.55) 75%,rgba(10,4,16,.9) 100%)}
+@keyframes drift{from{transform:scale(1.03) translate(-1%,0)}to{transform:scale(1.08) translate(1%,-1%)}}
+#chars{position:absolute;left:0;right:0;bottom:150px;top:12%;pointer-events:none}
+.ch{position:absolute;bottom:0;height:100%;display:flex;align-items:flex-end;justify-content:center;transition:transform .45s ease,opacity .45s ease,filter .35s,left .45s ease,width .45s ease;width:62%}
+.ch img{max-height:100%;max-width:100%;object-fit:contain;filter:drop-shadow(0 8px 20px rgba(0,0,0,.55))}
+.ch.pc{left:19%}.ch.pl{left:-6%}.ch.pr{right:-6%}
+.ch.in{opacity:0;transform:translateY(20px)}.ch.gone{opacity:0}
+.ch.dim{filter:brightness(.55) saturate(.7)}
+.ch.talk{transform:translateY(-6px)}
+.ch.beast{width:92%;bottom:6%}.ch.beast.pc{left:4%}.ch.beast.pl{left:-6%;width:62%}.ch.beast.pr{right:-6%;left:auto;width:62%}
+.ch.beast img{max-height:62%;filter:drop-shadow(0 0 24px rgba(255,220,180,.35))}
+.cg{position:absolute;inset:0;opacity:0;transition:opacity 1.2s;pointer-events:none;z-index:3}
+.cg.on{opacity:1}
+.cg .cgfb{position:absolute;inset:-5%;background-size:cover;background-position:center;filter:blur(6px) brightness(.6) saturate(1.3)}
+.cg img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;object-position:center 30%;opacity:0;transition:opacity 1.2s}
+.cg.hasimg img{opacity:1}
+.cgt{position:absolute;left:0;right:0;top:20%;text-align:center;font-family:'LXGW WenKai TC',serif;font-size:30px;letter-spacing:6px;color:#fff;text-shadow:0 0 18px #ff8ac0,0 0 40px #ff5aa0}
+.cg.hasimg .cgfb{filter:blur(18px) brightness(.45) saturate(1.2)}
+.cg.hasimg .cgt{top:auto;bottom:190px;font-size:20px;letter-spacing:4px;opacity:.9}
+#fx{position:absolute;inset:0;pointer-events:none;z-index:4;overflow:hidden}
+#fx i{position:absolute;top:-6%;display:block;animation:fall linear infinite}
+@keyframes fall{to{transform:translate(var(--x),112vh) rotate(360deg)}}
+.fx-snow i{width:6px;height:6px;border-radius:50%;background:#fff;opacity:.8;transform:scale(var(--s))}
+.fx-petal i{width:12px;height:9px;border-radius:12px 0;background:linear-gradient(135deg,#ffd6e6,#ff8ab8);opacity:.85}
+.fx-stars i,.fx-firefly i,.fx-gold i{width:4px;height:4px;border-radius:50%;background:#fff6c0;box-shadow:0 0 8px 2px #ffe080;animation-name:floatup}
+.fx-firefly i{background:#c8ff9a;box-shadow:0 0 10px 3px #9aff6a}
+.fx-gold i{background:#ffd257;box-shadow:0 0 10px 3px #ffb02a}
+@keyframes floatup{from{transform:translate(0,105vh) scale(var(--s));opacity:0}20%{opacity:1}to{transform:translate(var(--x),-10vh) scale(var(--s));opacity:0}}
+.fx-rain i{width:1.5px;height:26px;background:linear-gradient(transparent,#9ac8ff);opacity:.6;animation-duration:.9s!important}
+.fx-ice i{width:8px;height:8px;background:#c8f0ff;clip-path:polygon(50% 0,60% 40%,100% 50%,60% 60%,50% 100%,40% 60%,0 50%,40% 40%);opacity:.9}
+.flash{position:fixed;inset:0;z-index:30;pointer-events:none;animation:flash .6s ease-out forwards}
+.flash.flash{background:#fff}.flash.white{background:#fff;animation:fade 1.6s ease forwards}.flash.black{background:#000;animation:fade 1.6s ease forwards}.flash.red{background:#a0001e;animation:fade 1.6s ease forwards}
+@keyframes flash{from{opacity:.9}to{opacity:0}}
+@keyframes fade{0%{opacity:0}40%{opacity:1}100%{opacity:0}}
+.shake{animation:shake .45s}
+@keyframes shake{20%{transform:translate(-8px,3px)}40%{transform:translate(7px,-4px)}60%{transform:translate(-5px,2px)}80%{transform:translate(4px,-1px)}}
+.hfx{position:relative;color:#ff8ac0;font-size:15px;background:rgba(20,6,18,.75);border:1px solid #ff8ac088;padding:6px 14px;border-radius:20px;pointer-events:none;animation:hup 1.4s ease forwards;white-space:nowrap}
+@keyframes hup{0%{opacity:0;transform:translateY(10px)}15%{opacity:1;transform:none}80%{opacity:1}100%{opacity:0;transform:translateY(-14px)}}
+.box{position:absolute;left:10px;right:10px;bottom:calc(14px + env(safe-area-inset-bottom));min-height:132px;z-index:6;background:linear-gradient(180deg,rgba(28,10,26,.88),rgba(14,6,16,.94));border:1px solid rgba(255,160,200,.35);border-radius:18px;padding:22px 18px 16px;box-shadow:0 10px 30px rgba(0,0,0,.5);transition:opacity .3s}
+.box.hide{opacity:0;pointer-events:none}
+.box.inner{border-color:rgba(255,200,230,.55);background:linear-gradient(180deg,rgba(40,14,34,.9),rgba(20,6,20,.95))}
+.box.inner #tx{color:#ffd6ea;font-style:italic}
+.box.narr #tx{color:#e8dde6}
+#nm{position:absolute;top:-15px;left:16px;background:var(--c);color:#1a0612;font-weight:700;font-size:15px;padding:4px 16px;border-radius:12px;font-family:'LXGW WenKai TC',serif;letter-spacing:2px;box-shadow:0 4px 12px rgba(0,0,0,.4)}
+#tx{font-size:17.5px;line-height:1.75;letter-spacing:.5px;min-height:62px}
+#tx .ghost{opacity:0}
+.box.done::after{content:'▼';position:absolute;right:16px;bottom:8px;font-size:11px;color:#ff9ec8;animation:blink 1s infinite}
+@keyframes blink{50%{opacity:.2}}
+#nobox{}
+#game.nobox .box,#game.nobox .tools{opacity:0;pointer-events:none}
+.tools{position:absolute;top:calc(44px + env(safe-area-inset-top));right:10px;z-index:8;display:flex;gap:6px}
+.tools button{background:rgba(20,8,20,.6);border:1px solid rgba(255,160,200,.3);color:#ffd6ea;border-radius:12px;padding:6px 10px;font-size:13px;backdrop-filter:blur(4px)}
+.tools button.on{background:#ff8ac0;color:#200818}
+#choices{position:absolute;inset:0;z-index:9;display:none;flex-direction:column;justify-content:center;gap:12px;padding:0 28px 120px;background:rgba(8,2,10,.45)}
+#choices.on{display:flex}
+#choices button{background:linear-gradient(180deg,rgba(60,20,50,.94),rgba(34,10,30,.96));border:1px solid #ff9ec8aa;color:#fff;font-size:16.5px;padding:15px 16px;border-radius:16px;line-height:1.5;box-shadow:0 6px 18px rgba(0,0,0,.45);animation:cin .35s both}
+#choices button:nth-child(2){animation-delay:.08s}#choices button:nth-child(3){animation-delay:.16s}
+#choices button:active{transform:scale(.97);background:#ff8ac0;color:#200818}
+@keyframes cin{from{opacity:0;transform:translateY(12px)}}
+.card{position:fixed;inset:0;z-index:25;background:#06030a;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;opacity:0;pointer-events:none;transition:opacity .8s}
+.card.on{opacity:1;pointer-events:auto}
+.card b{font-family:'LXGW WenKai TC',serif;font-size:20px;letter-spacing:8px;color:#ff9ec8}
+.card span{font-family:'LXGW WenKai TC',serif;font-size:36px;letter-spacing:10px;color:#fff;text-shadow:0 0 22px #ff5aa0}
+.toast{position:fixed;left:50%;top:70px;transform:translateX(-50%);z-index:40;background:rgba(30,10,26,.95);border:1px solid #ff9ec8;padding:8px 16px;border-radius:14px;transition:opacity .4s}.toast.out{opacity:0}
+.ov{position:fixed;inset:0;z-index:50;background:rgba(5,2,8,.78);display:flex;align-items:center;justify-content:center;padding:18px}
+.panel{width:100%;max-width:440px;max-height:86vh;overflow:auto;background:linear-gradient(180deg,#24101f,#140812);border:1px solid #ff9ec866;border-radius:20px;padding:18px}
+.panel h2{margin:0 0 12px;font-family:'LXGW WenKai TC',serif;color:#ff9ec8;letter-spacing:3px;font-size:21px}
+.btn{display:block;width:100%;background:linear-gradient(180deg,#ff9ec8,#e86aa0);color:#200818;border:0;border-radius:14px;padding:13px;font-size:16px;font-weight:700;margin-top:8px}
+.btn small{display:block;font-weight:400;font-size:12px;opacity:.8}
+.btn.ghost{background:rgba(255,255,255,.06);color:#ffd6ea;border:1px solid rgba(255,160,200,.3);font-weight:400}
+.mgrid{display:grid;grid-template-columns:1fr 1fr;gap:0 8px}
+.slots{display:flex;flex-direction:column;gap:8px}
+.slot{text-align:left;background:rgba(255,255,255,.05);border:1px solid rgba(255,160,200,.3);color:#fff;border-radius:14px;padding:11px 14px}
+.slot:disabled{opacity:.4}.slot b{display:block;font-size:15px}.slot small{color:#e8c8da;font-size:12.5px}
+.log{max-height:62vh;overflow:auto;font-size:14.5px;line-height:1.7}
+.log p{margin:0 0 8px}.log b{color:#ff9ec8;margin-right:6px}.log p.inner{color:#ffd6ea;font-style:italic}.log p.pick{color:#ffd257}
+.note{font-size:12.5px;color:#c8a8ba;margin:10px 2px 0}
+.ends{display:flex;flex-direction:column;gap:8px}
+.endi{background:rgba(255,255,255,.04);border:1px dashed rgba(255,160,200,.25);border-radius:12px;padding:10px 12px}
+.endi b{display:block;font-family:'LXGW WenKai TC',serif;font-size:16px}.endi small{font-size:12.5px;color:#c8a8ba}
+.endi.got{border-style:solid;border-color:#ff9ec8}.endi.got.true{border-color:#ffd257;background:rgba(255,210,87,.08)}.endi.got.sad{border-color:#8ab0ff}
+.cgs{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.cgb{height:110px;border-radius:12px;border:1px solid #ff9ec866;background-size:cover;background-position:center;background-color:#2a1024;color:#fff;display:flex;align-items:flex-end;padding:6px;font-size:12.5px;text-shadow:0 1px 4px #000}
+.cgview{width:100%;aspect-ratio:9/16;max-height:70vh;background-size:contain;background-repeat:no-repeat;background-position:center;background-color:#000;border-radius:12px}
+.endc{position:fixed;inset:0;z-index:30;display:none;flex-direction:column;align-items:center;justify-content:center;padding:30px;text-align:center;background:radial-gradient(circle at 50% 35%,#3a1430,#0a0410 70%)}
+.endc.on{display:flex;animation:fadein 1.6s}
+.endc.true{background:radial-gradient(circle at 50% 35%,#5a3a14,#120a04 70%)}.endc.sad{background:radial-gradient(circle at 50% 35%,#142a4a,#04080f 70%)}.endc.bad{background:radial-gradient(circle at 50% 35%,#3a0a10,#080204 70%)}
+@keyframes fadein{from{opacity:0}}
+.endc .ek{letter-spacing:8px;color:#ff9ec8;font-size:14px}.endc.true .ek{color:#ffd257}.endc.sad .ek{color:#8ab0ff}
+.endc h1{font-family:'LXGW WenKai TC',serif;font-size:32px;letter-spacing:6px;margin:10px 0 16px;text-shadow:0 0 24px rgba(255,140,190,.6)}
+.endc p{font-size:16px;line-height:1.9;max-width:380px;color:#f0e0ea}
+.endc .ecount{font-size:13px;color:#c8a8ba;margin:14px 0 6px}.endc .btn{max-width:260px}
+#title{position:fixed;inset:0;z-index:20;overflow:hidden}
+.tbg{position:absolute;inset:-3%;background:url(assets/zhuyu/bg/snow.webp) center/cover;filter:brightness(.55) saturate(1.2);animation:drift 26s ease-in-out infinite alternate}
+.tbg::after{content:'';position:absolute;inset:0;background:radial-gradient(circle at 50% 30%,transparent,rgba(10,2,14,.85) 75%)}
+.tfx{position:absolute;inset:0;pointer-events:none}
+.tfx i{position:absolute;top:-5%;width:12px;height:9px;border-radius:12px 0;background:linear-gradient(135deg,#ffe0ec,#ff8ab8);opacity:.8;animation:fall linear infinite;--x:60px}
+.tin{position:relative;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;max-width:420px;margin:0 auto;text-align:center}
+.tsub{letter-spacing:6px;color:#ffb8d6;font-size:14px}
+#title h1{font-family:'LXGW WenKai TC',serif;font-size:52px;letter-spacing:10px;margin:6px 0 10px;color:#fff;text-shadow:0 0 20px #ff6aa8,0 0 50px #ff3a8a}
+.tline{font-family:'LXGW WenKai TC',serif;color:#ffe0ee;line-height:1.9;font-size:16px;margin-bottom:26px}
+.tbtn{width:100%}
+
+.ch.pop img{animation:pop .35s ease}
+@keyframes pop{40%{transform:translateY(-8px) scale(1.02)}}
+.ch.wide{width:88%}.ch.wide.pc{left:6%}.ch.wide.pl{left:-18%}.ch.wide.pr{right:-18%}
+.ch.beast.tiny img{max-height:30%}
+#tapStart{position:fixed;inset:0;z-index:100;background:radial-gradient(circle at 50% 40%,#3a1430,#06030a 75%);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;transition:opacity .9s}#tapStart.out{opacity:0;pointer-events:none}#tapStart b{font-family:'LXGW WenKai TC',serif;font-size:44px;letter-spacing:10px;color:#fff;text-shadow:0 0 20px #ff6aa8}#tapStart span{color:#ffd6ea;letter-spacing:4px;animation:blink 1.6s infinite}
+#hbox{position:fixed;left:50%;top:34%;transform:translateX(-50%);z-index:20;display:flex;flex-direction:column;align-items:center;gap:8px;pointer-events:none}
+#toasts{position:fixed;left:50%;top:70px;transform:translateX(-50%);z-index:40;display:flex;flex-direction:column;align-items:center;gap:6px;pointer-events:none}#toasts .toast{position:static;transform:none}
+
+.endc.extra{background:radial-gradient(circle at 50% 35%,#4a1a3a,#0c040a 70%)}.endc.extra .ek{color:#ffb0d8}.endi.got.extra{border-color:#ffb0d8;background:rgba(255,176,216,.08)}
+.ch.kid img{max-height:68%}
+</style></head>
+<body>
+<div id="game" class="hide"><div id="stage"><div class="bg" id="bgA"></div><div class="bg" id="bgB"></div><div id="chars"></div><div class="cg" id="cg"></div><div id="fx"></div></div>
+<div class="tools"><button id="bLog">紀錄</button><button id="bAuto">自動</button><button id="bSkip">快進</button><button id="bHide">隱藏</button><button id="bMenu">選單</button></div>
+<div class="box" id="box"><div id="nm"></div><div id="tx"></div></div><div id="choices"></div></div>
+<div id="title"></div><div id="card" class="card"></div><div id="endc" class="endc"></div><div id="toasts"></div>
+<script>'use strict';
+// ======================================================================
+//  逐玉 —— 劇本（依電視劇情節改寫，文字為原創）  序章～第三章
+// ======================================================================
+const CHAP = [
+  { id: 'c0', t: '序章', sub: '雪夜', base: {} },
+  { id: 'c1', t: '第一章', sub: '招婿', base: { qing: 3, yong: 1, zhi: 1 } },
+  { id: 'c2', t: '第二章', sub: '銀簪', base: { qing: 10, yong: 4, lin: 2, zhi: 2 } },
+  { id: 'c3', t: '第三章', sub: '劫獄', base: { qing: 19, yong: 7, lin: 2, zhi: 3 } },
+  { id: 'c4', t: '第四章', sub: '除夕', base: { qing: 23, yong: 11, lin: 2, xin: 1, zhi: 6 } },
+  { id: 'c5', t: '第五章', sub: '離書', base: { qing: 34, yong: 14, lin: 4, xin: 4, zhi: 8 } },
+  { id: 'c6', t: '第六章', sub: '墜崖', base: { qing: 38, yong: 18, lin: 7, xin: 5, zhi: 11 } },
+  { id: 'c7', t: '第七章', sub: '孤山', base: { qing: 41, yong: 24, lin: 14, xin: 5, zhi: 11 } },
+  { id: 'c8', t: '第八章', sub: '定情', base: { qing: 50, yong: 28, lin: 18, xin: 6, zhi: 14 } },
+  { id: 'c9', t: '第九章', sub: '殺豬小分隊', base: { qing: 59, yong: 34, lin: 19, xin: 8, zhi: 19 } },
+  { id: 'c10', t: '第十章', sub: '簪花將軍', base: { qing: 60, yong: 38, lin: 21, xin: 10, zhi: 21 } },
+  { id: 'c11', t: '第十一章', sub: '登聞鼓', base: { qing: 65, yong: 39, lin: 22, xin: 12, zhi: 23 } },
+  { id: 'c12', t: '終章', sub: '永興', base: { qing: 70, yong: 41, lin: 24, xin: 15, zhi: 23 } },
+];
+const SCRIPT = {};
+
+// ---------------- 序章：雪夜 ----------------
+SCRIPT.c0 = `
+@title 序章|雪夜
+@form cy winter
+@name xz ？？
+@bg snow
+@bgm sad
+@amb amb_wind
+@fx snow
+臨安鎮的冬天，冷得連豬都不肯出圈。
+我叫樊長玉，十八歲。是個殺豬的。
+爹娘走了還不到三個月。家裡剩下一間肉舖、一口大鍋、一把殺豬刀，還有一個六歲的妹妹。
+（還有一屁股的債。）
+那天傍晚，我從鄰村收完豬錢回來，雪下得連路都看不清。
+@show cy c
+（再走快一點。長寧還在家裡等我，她今天還沒喝藥。）
+@hide all
+走到半山腰的時候，我差點被一樣東西絆倒。
+是一個人。
+他趴在雪地裡，半個身子都被雪埋住了。身上的白衣服被血染成了深紅色，背上插著一截斷箭。
+?雪地裡躺著一個快死的人——
+- 二話不說，先把他翻過來看還有沒有氣 => c0a | @set qing +1 | @set yong +1
+- 先撿根樹枝戳戳看，萬一是山賊裝死呢 => c0b | @set zhi +1
+#c0a
+我把他翻過來。他的臉凍得發青，嘴唇一點血色都沒有。
+可是那張臉……
+（好看得不像話。像畫裡走出來的。）
+（呸，樊長玉，人都要死了你在想什麼。）
+我把手指伸到他鼻子底下。還有一絲很弱很弱的氣。
+@goto c0c
+#c0b
+我撿了一根樹枝，戳了戳他的肩膀。
+他一動也不動。我又戳了一下他的臉。
+這次他皺了皺眉，嘴裡吐出一句很輕很輕的話。
+xz：……再戳……殺了你……
+（還有力氣罵人，那就是還活著。）
+@goto c0c
+#c0c
+@bgm daily
+@amb off
+@cg xuedi 雪夜
+我把他扛了起來。
+別看我這樣，我從小就力氣大。兩百斤的豬我都扛得動，一個大男人算什麼。
+（就是他身上的血，一路滴在雪地上，滴得我心裡發慌。）
+@cgoff
+@hide all
+@bg home
+@fx off
+@show zd c
+zd：哎喲我的天老爺！長玉，你從哪撿回來一個血人？
+（他一直昏迷著，一點動靜都沒有。）
+cy：趙大娘，幫我燒熱水！再去請大夫！
+zd：請大夫？你哪來的錢請大夫？你家連下個月的米錢都——
+cy：我有辦法。
+@hide all
+我從娘的妝匣底下，拿出了一支銀簪。
+那是娘唯一留下來的東西。簪頭刻著一朵小小的梅花，娘以前每天都戴著它。
+?握著娘的銀簪——
+- 咬著牙，拿去當鋪當了 => c0d | @set qing +2
+- 先跟大夫賒帳，簪子實在捨不得 => c0e | @set lin +1
+#c0d
+（娘，對不起。可是你一定也會這樣做的。）
+（你說過，見死不救的人，晚上是會睡不著的。）
+當鋪的掌櫃給了我三兩銀子。剛好夠請大夫，再抓三帖藥。
+@goto c0f
+#c0e
+大夫看了看我，又看了看我家空空的灶台，嘆了口氣。
+大夫：……算了，先救人。錢的事，你殺豬再還。
+可是第二天，藥錢還是不夠。我最後，還是把銀簪送進了當鋪。
+@set qing +1
+@goto c0f
+#c0f
+@bg home
+@bgm romance
+@fx snow
+他昏了三天三夜。
+第四天早上，我端著藥進門的時候，他已經醒了。
+@show xz c
+他靠在床頭，一雙眼睛又黑又冷，像冬天結了冰的井。
+xz：……這是哪裡。
+cy：臨安鎮，樊家。是我把你從雪地裡扛回來的。
+xz：你……扛？
+cy：嗯，扛。你很重欸。
+他看了我很久，像是在判斷我是不是在說謊。
+cy：你叫什麼名字？家住哪裡？我好通知你家裡的人。
+他沉默了一下。
+xz：……言正。言語的言，正直的正。
+@name xz 言正
+xz：家裡……已經沒有人了。
+?看著這個叫言正的人——
+- 「那你就先住下來吧。等傷好了再說。」 => c0g | @set qing +2
+- 「真的假的？你身上那支箭，可不是一般山賊會用的。」 => c0h | @set zhi +2 | @set xin -1
+#c0g
+xz：……你不怕我是壞人？
+cy：壞人會傷成這樣嗎？
+cy：而且，你要是敢做壞事，我就把你跟豬一起宰了。
+他愣了一下。然後，嘴角好像動了一動。
+（是在笑嗎？還是傷口痛？）
+@goto c0i
+#c0h
+他的眼神，一下子變得很鋒利。
+xz：……你懂箭？
+cy：我爹以前是獵戶，後來才改殺豬的。我小時候什麼箭都摸過。
+xz：那你應該也懂，有些事，知道得越少越好。
+（……這個人，好兇。）
+cy：好啦好啦，我不問。你先養傷。
+@goto c0i
+#c0i
+@hide all
+@show cn c
+門邊探出一個小腦袋。是長寧，她躲在門框後面，偷偷地看。
+cn：阿姐……這個哥哥，是神仙嗎？他好白喔。
+cy：不是神仙，是阿姐撿回來的病人。
+cn：那他會死掉嗎？
+cy：不會。阿姐不准他死。
+@hide all
+@show xz c
+（後來我才知道，那天我撿回來的，根本不是什麼窮書生。）
+（是一個本來應該已經死掉的人。一個全天下都以為已經死在戰場上的人。）
+（可是那時候，我只知道一件事——）
+（我們家，多了一張要吃飯的嘴。）
+`.trim().split('\n');
+
+// ---------------- 第一章：招婿 ----------------
+SCRIPT.c1 = `
+@title 第一章|招婿
+@form cy off
+@bg market
+@bgm daily
+為了還藥錢，我把爹的肉舖重新開了張。
+@show cy c
+cy：新鮮的豬肉喔！今天買一斤，送一碗滷下水！
+（滷下水是娘的手藝。我只學會了七成，可是在臨安鎮，已經夠用了。）
+那天的肉，不到中午就賣完了。
+@hide all
+@show sy c
+可是收攤的時候，來了一個我最不想看到的人。
+sy：長玉。
+宋硯。我爹娘生前，替我訂下的未婚夫。
+三個月前，他考中了舉人。然後第二天，他娘就派人來退了婚。
+sy：我娘說……你家現在這個樣子，配不上宋家。
+sy：不過，我可以納你為妾。看在我們從小一起長大的份上。
+?宋硯居然說要納我為妾——
+- 「你家還欠我爹十兩銀子，先還錢再說話！」 => c1a | @set yong +2 | @set lin +1
+- 一言不發，拿起殺豬刀往砧板上一剁 => c1b | @set yong +1
+#c1a
+cy：當年你家窮得揭不開鍋，是我爹拿了十兩銀子給你去趕考。白紙黑字，借據在我這裡。
+cy：今天不還，我就去你家門口一筆一筆地念，念給全鎮的人聽。
+街坊們都圍了過來。宋硯的臉，一陣紅一陣白。
+sy：你、你一個姑娘家，怎麼這麼粗魯！
+cy：殺豬的不粗魯，難道要繡花嗎？
+那天晚上，宋家派人送來了十兩銀子。一個銅板都沒少。
+@goto c1c
+#c1b
+「咚」的一聲，砧板裂了一道縫。
+宋硯往後退了好幾步，差點跌進路邊的水溝。
+cy：宋舉人，慢走。不送。
+@goto c1c
+#c1c
+@hide all
+@bg home
+@bgm tension
+可是好日子沒過兩天，麻煩又來了。
+@show fd c
+大伯帶著一群人，闖進了我家的院子。
+fd：長玉，你爹死了，這間房子按規矩，該歸我們樊家的長房。
+cy：放屁！這是我爹娘一磚一瓦蓋起來的！
+fd：你一個沒出嫁的丫頭，帶著一個病秧子，能守得住什麼？識相的，把地契交出來。
+他身後那幾個人，一看就是賭坊的打手。
+（大伯欠了賭債。他是想拿我們家的房子去抵。）
+@hide all
+@show cn c
+cn：阿姐……咳、咳咳……
+長寧被嚇得發了病，縮在牆角，咳得喘不過氣。
+@hide all
+?大伯帶著打手，要搶房子——
+- 抄起門閂，衝上去打 => c1d | @set yong +2
+- 先抱起長寧，把她送到趙大娘家 => c1e | @set lin +1 | @set qing +1
+#c1d
+我抄起門閂就衝了出去。
+打手們沒想到一個姑娘家會先動手，第一個被我一棍子打在膝蓋上，當場就跪了。
+可是他們人太多了。我正要被包圍的時候——
+@goto c1f
+#c1e
+我先把長寧抱起來，翻過矮牆送到了趙大娘家。
+等我回來的時候，打手們已經把院子圍住了。
+@goto c1f
+#c1f
+@fx shake
+一顆石子從屋裡飛了出來，正好打在帶頭那個打手的手腕上。
+他手裡的刀，「噹」地掉在地上。
+我回過頭。言正扶著門框站在那裡，臉色白得像紙。
+@show xz c
+xz：……樊家的事，輪不到外人插手。
+@hide all
+大伯他們被嚇跑了。可是我知道，他們一定還會再來。
+@show xz c
+@bgm romance
+那天晚上，我坐在院子裡發呆。言正走了出來，在我旁邊坐下。
+xz：他們還會來。
+cy：我知道。
+xz：按照律法，沒出嫁的女兒，守不住家產。除非……
+cy：除非什麼？
+xz：除非家裡有男丁。或者，招一個上門女婿。
+（招婿。）
+（可是誰會願意入贅給一個殺豬的？還要養一個病懨懨的妹妹。）
+我轉過頭，看著他。
+他也看著我。
+?一個大膽的念頭冒了出來——
+- 「言正，你……要不要娶我？不對，要不要嫁給我？」 => c1g | @set qing +3 | @set yong +1
+- 「你認識什麼願意入贅的人嗎？」（裝傻） => c1h | @set qing +1
+#c1g
+他愣住了。愣了很久很久。
+cy：只是假的！假成親！等房子保住了，你傷也好了，我們就和離。你要走去哪裡都可以。
+cy：而且……我會養你的。我殺豬養你。
+xz：……
+xz：好。
+（他答應了？）
+（他居然答應了！）
+@goto c1i
+#c1h
+xz：……臨安鎮裡，有誰會願意？
+cy：……沒有。
+xz：那就是我了。
+cy：欸？
+xz：我欠你一條命。入贅，就當是還你的。
+（這個人，說這種話的時候，臉都不會紅的嗎？）
+（……可是我的臉，好燙。）
+@goto c1i
+#c1i
+@hide all
+@bg snow
+@bgm sad
+@fx snow
+沒過幾天，鎮上傳來了一個消息。
+朝廷的武安侯，在北境戰死了。
+@show cy c
+（武安侯謝征。那個守住北境、讓我們這些老百姓能安安穩穩過年的人。）
+（聽說他才二十出頭。）
+那天夜裡，我在院子裡擺了一碗酒，對著北邊磕了三個頭。
+@hide all
+@show xz c
+言正站在我身後，看了很久。
+xz：……你認識他？
+cy：不認識。可是如果沒有他，北厥的人早就打過來了。我們這種小鎮，第一個被燒。
+cy：他保護了我們。我總得謝謝他吧。
+言正沒有說話。他的手握得很緊，緊到指節都白了。
+（那時候我以為，他是想起了自己的家人。）
+（很久以後我才知道，那天晚上，他看著一個殺豬的姑娘，在給「他自己」磕頭。）
+@hide all
+@bg home
+@bgm daily
+@fx off
+@show xz c
+婚期定在七天後。這七天裡，言正做了一件讓我大吃一驚的事。
+他找來了大越朝的律法書，一條一條地教我念。
+xz：大伯要告你，你得先知道律法怎麼說。這一條，「戶絕財產，在室女得承之」……
+cy：……我一個字都看不懂。
+xz：我念一遍，你跟著念一遍。
+cy：「戶、戶絕……」
+xz：是「戶絕」，不是「戶覺」。
+?被他逼著念書——
+- 乖乖地一個字一個字跟著念 => c1j | @set zhi +2
+- 念到一半偷偷睡著了 => c1k | @set qing +1
+#c1j
+念到第三天，我居然真的能把那幾條律法背下來了。
+xz：……你學得很快。
+cy：那當然！殺豬也要記豬身上哪裡下刀，記性不好可不行。
+@goto c1l
+#c1k
+醒來的時候，我身上多了一件衣服。是他的。
+他還坐在燈下，替我把那幾條律法，抄成了大大的字。
+xz：醒了？那就繼續。
+@goto c1l
+#c1l
+@hide all
+@bg market
+@bgm romance
+@fx petal
+成親那天，宋硯又來了。
+@show sy l
+@show xz r
+sy：長玉，你寧可嫁給這種來路不明的病秧子，也不肯跟我？
+sy：他一個入贅的，連跪都要跪在你家的門檻外。這種男人，有什麼用？
+?宋硯當眾羞辱言正——
+- 走過去，踮起腳，當著所有人的面親了言正一下 => c1m | @set qing +4 | @set yong +1
+- 「他有沒有用，關你什麼事！」 => c1n | @set qing +2
+#c1m
+@hide all
+@cg qinwen 這是我的人
+@fx heart
+四周一下子安靜得連一根針掉在地上都聽得見。
+言正整個人僵住了。我感覺得到，他的呼吸停了一下。
+cy：宋硯，看清楚了。這是我的人。
+（……我在幹嘛。我到底在幹嘛。）
+（可是話都說出口了，親都親了，只能撐下去了。）
+後來趙大娘跟我說，那天言正的耳朵，紅到成親儀式結束都沒退。
+@cgoff
+@goto c1o
+#c1n
+cy：他會讀書，會寫字，還會打人。比你強多了！
+sy：你——！
+言正在我身後，輕輕笑了一聲。
+@goto c1o
+#c1o
+@hide all
+@bg home
+@show zd c
+zd：好了好了！新郎官，按照規矩，入贅的要跪著拜堂——
+cy：不用跪。
+zd：啊？
+cy：我樊長玉的夫君，不跪任何人。我們平著拜。
+@hide all
+@show xz c
+言正看著我。那雙總是冷冰冰的眼睛，第一次，好像有什麼東西融化了。
+（後來，他跟我說過一句話。他說，從小到大，從來沒有人，讓他站著拜過堂。）
+@fx petal
+一拜天地。二拜爹娘的牌位。夫妻對拜。
+我和一個認識不到一個月的人，成親了。
+`.trim().split('\n');
+
+// ---------------- 第二章：銀簪 ----------------
+SCRIPT.c2 = `
+@title 第二章|銀簪
+@bg home
+@bgm romance
+@fx off
+成親以後，我們分房睡。他睡東廂，我和長寧睡西廂。
+可是他的傷還沒好，每天晚上都要換藥。
+@show xz c
+cy：把衣服脫了。
+xz：……
+cy：換藥啊！你想到哪裡去了！
+他慢慢地解開衣服。背上那道傷口，從肩膀一直劃到腰，結的痂一碰就裂。
+（這是刀傷。很深很深的刀傷。）
+（什麼樣的書生，會被人砍成這樣？）
+?替他擦藥的時候——
+- 手放得很輕很輕，一邊吹氣一邊擦 => c2a | @set qing +3
+- 「會痛就喊出來，不丟臉。」 => c2b | @set qing +2 | @set xin +1
+#c2a
+我的手指碰到他背上的時候，他抖了一下。
+cy：痛？
+xz：……不痛。
+cy：騙人。你耳朵都紅了。
+xz：……是天氣冷。
+@goto c2c
+#c2b
+xz：……我不痛。
+cy：怎麼可能不痛？傷成這樣。
+xz：痛習慣了，就不會喊了。
+（痛習慣了。）
+（他到底，經歷過多少次這種痛？）
+@goto c2c
+#c2c
+@hide all
+@bgm tension
+那天晚上，窗外有人在偷聽。
+是大伯母。她從牆頭探出半個頭，正在偷看我們的房間。
+（他們一定是懷疑我們是假成親！要是被抓到，房子就保不住了！）
+@show xz c
+言正也發現了。他看了我一眼，朝我比了一個手勢。
+?為了騙過偷聽的大伯母——
+- 跟他演一齣恩愛夫妻的戲，大聲撒嬌 => c2d | @set qing +3
+- 故意把燈吹熄，然後在黑暗裡亂叫 => c2e | @set qing +2 | @set yong +1
+#c2d
+cy：夫君～你的傷還痛不痛嘛～人家幫你揉揉～
+xz：……娘子。
+（他的聲音，低低的，好像在忍笑。）
+xz：夜深了，早點歇息吧。
+@goto c2f
+#c2e
+我「呼」的一聲把燈吹熄，然後開始搖床。床板吱吱嘎嘎地響。
+xz：……你在做什麼。
+cy：（小聲）演戲啊！你也出點聲音！
+xz：……
+黑暗裡，我聽見他很輕很輕地，笑出了聲。
+那是我第一次聽見他笑。
+@goto c2f
+#c2f
+@hide all
+牆頭上的人影，終於縮了回去。
+那天晚上，我們兩個背對背，在同一張床上，躺到了天亮。
+誰都沒有睡著。
+@bg market
+@bgm daily
+過了幾天，我終於攢夠了錢，去當鋪贖娘的銀簪。
+@show cy c
+掌櫃：哎呀，樊姑娘，那支簪子……前幾天已經被人買走了。
+cy：……被誰？
+掌櫃：不知道。一個穿得很普通的人，付了雙倍的錢。
+@face cy cry
+（娘留下來的唯一一樣東西，就這樣沒了。）
+@hide all
+@show sy l
+回家的路上，宋硯的娘攔住了我。
+宋母：喲，這不是殺豬的樊家丫頭嗎？聽說你招了個病秧子入贅？
+宋母：也是，配得上你的，也就只有這種貨色了。
+@hide all
+?被宋母當街羞辱，心情又差到極點——
+- 忍住。今天實在沒力氣吵了 => c2g | @set lin +1
+- 「再說一句，我就把你兒子的借據貼滿整條街！」 => c2h | @set yong +1
+#c2g
+我低著頭，想從她身邊走過去。
+可是她還不放過我，伸手推了我一把。
+@goto c2i
+#c2h
+宋母：你敢！
+她伸手要推我。
+@goto c2i
+#c2i
+@show xz c
+一隻手，從旁邊伸過來，穩穩地抓住了她的手腕。
+xz：宋夫人。
+xz：我家娘子，脾氣好，不跟你計較。
+xz：我脾氣不好。
+宋母被他那雙眼睛看得，嚇得連退了三步，一句話都說不出來，灰溜溜地走了。
+@hide all
+@show xz c
+@bgm romance
+回到家，他從懷裡拿出一樣東西，放在我手心。
+是娘的銀簪。簪頭的梅花，被擦得亮晶晶的。
+cy：……是你？是你買走的？你哪來的錢？
+xz：幫書院抄書。抄了半個月。
+?看著手心裡的銀簪——
+- 眼淚一下子掉了下來，撲進他懷裡 => c2j | @set qing +5
+- 「笨蛋……你傷都還沒好，抄什麼書！」 => c2k | @set qing +4
+#c2j
+@face cy cry
+我哭得像個小孩。
+他僵了一下，然後很笨拙地，拍了拍我的背。一下，兩下。
+xz：……別哭了。
+cy：我偏要哭！
+xz：……那就哭吧。我在這裡。
+@goto c2l
+#c2k
+@face cy cry
+我一邊罵他，一邊掉眼淚。
+xz：你不是說，見死不救的人，晚上會睡不著。
+xz：看著你難過，我也睡不著。
+@goto c2l
+#c2l
+@face cy off
+@cg yinzan 銀簪
+他幫我把銀簪插在了辮子上。
+（娘，你看。這個人，好像是個好人。）
+@cgoff
+@hide all
+@bg home
+@bgm daily
+從那以後，我殺豬，他算帳。
+他的字寫得很好看。我讓他幫肉舖寫了一塊招牌，結果第二天，來買肉的人多了一倍——一半的人是來看字的。
+@show xz c
+xz：你家的刀，是誰打的？
+有一天，他突然拿起我爹留下來的那把殺豬刀，看了很久。
+cy：我爹自己打的。怎麼了？
+xz：……沒什麼。這把刀的重量和刀刃，不像是殺豬用的。
+xz：你的刀法，也不像。
+cy：我爹教的啊。他說，殺豬要快、要準、要一刀斃命，豬才不會痛。
+xz：……一刀斃命。
+（他看著那把刀的樣子，好像在看很遙遠的什麼東西。）
+@hide all
+@bg market
+@bgm tension
+可是麻煩，總是一個接一個。
+鎮上的王記滷味，看我家生意好，三天兩頭派人來砸攤子。
+@show cy c
+@face cy firm
+這一次，他們把我娘的滷鍋給砸了。
+?那是娘留下來的滷鍋——
+- 提著殺豬刀，直接殺去王記 => c2m | @set yong +2
+- 先報官。不能讓人抓到把柄 => c2n | @set zhi +2
+#c2m
+我提著刀，一路殺到王記門口。
+王記的人嚇得全躲進了後院。我一刀砍斷了他們的招牌。
+cy：再敢動我家攤子，下次砍的就不是招牌了！
+（後來言正說，那天他其實一直跟在我後面。手裡握著一把石子。）
+@goto c2o
+#c2n
+我去縣衙告了狀。縣老爺收了王記的銀子，把我的狀紙扔了出來。
+（……好。官府不管，我自己管。）
+@set yong +1
+@goto c2o
+#c2o
+@hide all
+@bg home
+@bgm sad
+@fx black
+那天晚上，出事了。
+大伯母披頭散髮地衝進了縣衙，身後抬著一具屍體。
+是大伯。
+大伯母：樊長玉殺了我男人！她為了搶房子，殺了自己的親大伯！
+@fx shake
+（我沒有。）
+（我沒有殺他。我連他什麼時候死的都不知道。）
+可是沒有人聽我說。
+衙役們衝進了我家，把我五花大綁地帶走了。
+@show cn c
+cn：阿姐！阿姐！
+@hide all
+@show xz c
+最後一眼，我看見言正抱著長寧，站在院子裡。
+他看著我，嘴唇動了動。
+我讀懂了。他說的是——
+xz：等我。
+`.trim().split('\n');
+
+// ---------------- 第三章：劫獄 ----------------
+SCRIPT.c3 = `
+@title 第三章|劫獄
+@bg jail
+@bgm tension
+@fx off
+縣衙的大牢，又冷又臭。
+我在裡面待了三天。三天裡，沒有人來看我。
+@show cy c
+（言正呢？長寧呢？）
+（他說要我等他。他去哪裡了？）
+第四天晚上，獄卒喝醉了，嘴裡嘟嘟囔囔地說著話。
+獄卒：……聽說樊家那個贅婿，帶著小丫頭跑了……
+獄卒：……也有人說，是被一群黑衣人追殺，死在山裡了……
+@face cy surp
+（死……了？）
+@hide all
+?聽到言正和長寧可能出事——
+- 等不了了。今晚就逃出去 => c3a | @set yong +3
+- 冷靜。先想辦法套出更多消息 => c3b | @set zhi +2 | @set yong +1
+#c3a
+我等那個獄卒睡著，伸手從欄杆縫裡，勾到了他腰上的鑰匙。
+（爹，你教我的那些，我從來沒想過會用在這裡。）
+@goto c3c
+#c3b
+cy：大哥，那些黑衣人，往哪個方向去了？
+獄卒：……北、北邊的山……你問這個幹嘛……
+他還沒說完就打起了呼。我從欄杆縫裡伸出手，勾走了他腰上的鑰匙。
+@goto c3c
+#c3c
+@bg snow
+@bgm battle
+@fx snow
+我逃出了縣衙，往北邊的山裡跑。
+雪很深，很深。我跑了不知道多久，終於聽見了刀劍的聲音。
+@fx shake
+是言正。
+他背靠著一棵大樹，手裡拿著一把搶來的刀，渾身是血。
+四周圍著七八個黑衣人。他們的刀，一刀比一刀狠。
+（他會武功。他明明會武功。）
+（可是他的傷口裂開了。他快撐不住了。）
+?言正被七八個黑衣人包圍——
+- 撿起地上的刀，衝進去 => c3d | @set yong +3 | @set qing +2
+- 先繞到後面，偷襲落單的人 => c3e | @set zhi +2 | @set yong +2
+#c3d
+我撿起地上一把掉落的刀，從背後衝了過去。
+黑衣人沒想到會有人來，第一個回頭的時候，我的刀已經到了。
+@goto c3f
+#c3e
+我繞到最外圍那個黑衣人身後。
+他完全沒有發現我。
+@goto c3f
+#c3f
+@fx red
+那是我第一次殺人。
+刀砍下去的感覺，跟殺豬不一樣。完全不一樣。
+（爹說，要快、要準、要一刀斃命。）
+（……原來爹教我的，從來就不是殺豬的刀法。）
+@fx shake
+@cg beikao 背靠背
+後來的事，我記不太清楚了。我只記得，我和言正背靠著背，一刀一刀地砍。
+等我回過神來的時候，雪地上，只剩下我們兩個還站著。
+@cgoff
+@hide all
+@show xz c
+@bgm sad
+xz：……你怎麼來了。
+cy：你說要我等你。可是你沒來。
+cy：所以，我來找你了。
+他的刀掉在地上。整個人往前一倒，倒在了我的肩膀上。
+xz：……傻子。
+@hide all
+@bg home
+@bgm romance
+@fx snow
+我們躲進了山裡一間廢棄的獵屋。
+長寧被他藏在獵屋的地窖裡，抱著一隻小兔子玩偶，睡得很熟。
+@show xz c
+我替他重新包紮傷口的時候，手一直在抖。
+xz：你在發抖。
+cy：……我殺人了。
+xz：你救了我。
+cy：可是我殺人了！他們也是人，也有爹娘……
+他突然握住了我的手。他的手很冷，可是握得很緊。
+xz：第一次都會這樣。我第一次的時候，十三歲。
+cy：……十三歲？
+xz：吐了一整夜。之後半個月，閉上眼睛就是血。
+（十三歲。他十三歲的時候，就已經在殺人了。）
+?聽他說起過去——
+- 「那時候，有人陪在你身邊嗎？」 => c3g | @set qing +4 | @set xin +1
+- 「你到底是什麼人？」 => c3h | @set zhi +1 | @set xin -1
+#c3g
+他沉默了很久。
+xz：……沒有。我娘很早就走了。我爹……也走了。
+xz：剩下的人，只會跟我說：哭有什麼用，站起來。
+cy：那我陪你。
+cy：以後你做惡夢，就把我叫醒。我陪你坐到天亮。
+他看著我，眼睛裡有什麼東西，閃了一下。
+xz：……好。
+@goto c3i
+#c3h
+xz：……一個不能說的人。
+xz：長玉，如果你想走，我不會攔你。
+cy：走去哪？房子還沒保住，你還欠我三兩銀子的藥錢。
+xz：……
+cy：我不問了。等你想說的時候，再告訴我。
+他看著我，過了很久，才點了點頭。
+@goto c3i
+#c3i
+@hide all
+@bg market
+@bgm tension
+@fx off
+可是事情還沒有結束。
+縣令一口咬定，言正是山賊的同夥，那些黑衣人是來跟他「分贓」的。
+衙役們把獵屋團團圍住的時候，來了一個人。
+@show gs c
+gs：慢著。
+那是一個穿著青色長衫的年輕書生，手裡搖著一把扇子，笑咪咪的。
+gs：在下公孫鄞，鹿鳴書院的山長。這位言正公子，是我書院的學生。
+gs：縣令大人要抓我的學生，可有證據？
+縣令一看到那份蓋著書院大印的文書，臉都綠了。
+@hide all
+@show xz l
+@show gs r
+言正看著公孫鄞，眼神很複雜。
+xz：……你怎麼來了。
+gs：我不來，你就要死在這種小地方了。
+xz：……照顧她。
+他說完這句話，就昏了過去。
+@hide all
+@bg home
+@bgm daily
+@show gs c
+公孫鄞替言正把了脈，嘆了口氣。
+gs：樊姑娘，你這位夫君……不太會照顧自己。
+cy：你們認識？
+gs：認識。很久很久以前，就認識了。
+gs：不過他是什麼人，我不能說。你要問，就自己問他。
+?公孫鄞的話裡有話——
+- 「他是好人嗎？我只想知道這個。」 => c3j | @set xin +2
+- 「他會不會有一天，突然就走了？」 => c3k | @set qing +2
+#c3j
+公孫鄞愣了一下，然後笑了。
+gs：……他是我見過，最好的人。
+gs：只是，好人通常活得比較辛苦。
+@goto c3l
+#c3k
+公孫鄞看著我，扇子停了下來。
+gs：……樊姑娘。他身上背著很重很重的東西。
+gs：有一天，他可能必須去把那些東西放下。到那時候……
+gs：你要讓他走。
+@goto c3l
+#c3l
+@hide all
+@show xz c
+言正醒來的時候，已經是第二天傍晚。
+大伯的案子，也有了結果。真正的兇手是賭坊的人，大伯是欠錢不還，被他們殺的。
+我被放了出來，房子也保住了。
+cy：言正。這裡已經不安全了。
+cy：我想……把房子賣了，帶長寧去別的地方。
+xz：去哪裡？
+cy：不知道。哪裡都好。
+他看著我，很久很久。
+xz：……我跟你一起去。
+（那一刻我還不知道，這句話，他後來花了多大的代價，才守住。）
+`.trim().split('\n');
+
+'use strict';
+// ======================================================================
+//  逐玉 —— 第四～六章
+// ======================================================================
+
+// ---------------- 第四章：除夕 ----------------
+SCRIPT.c4 = `
+@title 第四章|除夕
+@bg home
+@bgm sad
+@fx off
+大伯的喪禮，是我辦的。
+@show cy c
+（他想搶我的房子。可是他也是爹的哥哥。）
+（爹說過，樊家的人，再怎麼吵，死了都要有人送。）
+喪禮上，大伯母帶著幾個族裡的長輩，又想來鬧。
+大伯母：她一個殺人犯，憑什麼主持喪禮！
+?喪禮上被當眾指著鼻子罵——
+- 「真兇已經抓到了。誰再胡說，我就去縣衙告誰誣告。」 => c4a | @set yong +1 | @set zhi +1
+- 不吵。默默地把喪禮辦完，讓大家看 => c4b | @set lin +2
+#c4a
+我把縣衙的判詞，一張一張地發給在場的每個人。
+（這是言正教我的。他說，對付不講理的人，要用白紙黑字。）
+沒有人再說話了。
+@goto c4c
+#c4b
+我什麼都沒說，只是一件一件地，把該做的事做完。
+燒紙、守夜、出殯。連族裡最挑剔的三叔公，最後都點了頭。
+三叔公：……老二家的閨女，比老大家的兒子有出息。
+@goto c4c
+#c4c
+@hide all
+@bg inn
+@bgm daily
+喪禮之後，我認識了一個很特別的人。
+@show yq c
+yq：你就是樊記滷肉的樊姑娘？
+她叫俞淺淺，是鎮上最大的酒樓「溢香樓」的東家。一個女人，帶著一個五歲的兒子，把酒樓開得比男人還大。
+yq：你家的滷下水，我嚐過了。我想跟你合作。你出滷肉，我出地方，賺的錢對半分。
+cy：真的？
+yq：女人做生意不容易。我們不幫彼此，誰幫？
+@hide all
+從那天起，樊記滷肉，進了溢香樓的菜單。
+@bg home
+@bgm romance
+@show zd c
+可是趙大娘最近，總是用一種很奇怪的眼神看我們。
+zd：長玉啊，你們成親都多久了？怎麼還分房睡？
+cy：……他、他傷還沒好！
+zd：傷沒好，就更要有人照顧啊！今晚開始，你們給我睡同一間！不然被你大伯母那些人發現了，房子還要不要？
+@hide all
+那天晚上，我和言正，第一次真的睡在同一張床上。
+中間隔著一條被子，像一道城牆。
+@show xz c
+cy：……你睡了嗎？
+xz：……沒有。
+cy：言正，你說，我是不是很奇怪？
+xz：為什麼這樣問。
+cy：鎮上的人都說，女孩子不該殺豬，不該打架，不該大聲說話。
+cy：我娘以前也這樣說。可是她說完，又會偷偷塞一塊肉乾給我，說：「我家長玉，力氣大是好事，以後沒人欺負得了你。」
+?說著說著，想起了娘——
+- 「我好想她。」 => c4d | @set qing +3
+- 「所以我要變得更強。強到誰都欺負不了我們家。」 => c4e | @set yong +2 | @set qing +1
+#c4d
+黑暗裡，我聽見他翻了個身。
+xz：……我也很想我娘。
+cy：你娘是什麼樣的人？
+xz：……很溫柔。很笨。為了一個不值得的人，等了一輩子。
+（這是他第一次說起自己家裡的事。）
+cy：那你一定很像她。
+xz：……哪裡像？
+cy：溫柔。還有笨。
+他沒有回答。可是那條隔在中間的被子，好像被人悄悄地，往旁邊推了一點點。
+@goto c4f
+#c4e
+xz：你已經很強了。
+cy：還不夠。那天在雪地裡，要是我再強一點，你就不會受那麼重的傷。
+xz：……長玉。
+xz：你不必為了任何人變強。
+xz：可是如果你想，我教你。
+@goto c4f
+#c4f
+@hide all
+@bgm tension
+@fx black
+那天半夜，窗紙被人捅破了。
+一根吹管伸了進來，一股甜甜的煙，飄進了屋子裡。
+@fx shake
+等我發覺不對的時候，房門已經被踹開了。四個蒙面人衝進來，刀光一閃——
+@show lh c
+叮！
+一把劍，從窗外飛了進來，擋住了那一刀。
+一個穿著月白長袍的年輕公子，從窗外翻了進來。
+lh：樊姑娘，退後。
+@hide all
+那一夜，蒙面人全被他打跑了。
+@show lh c
+lh：在下李懷安。路過貴地，聽見打鬥聲，冒昧了。
+（路過？半夜三更，路過我家窗戶？）
+lh：……樊姑娘。你父親，是不是叫樊二牛？
+cy：你怎麼知道？
+lh：只是……聽一位長輩提起過。
+（他的眼神，好像在我臉上，找什麼東西。）
+@hide all
+@show xz c
+奇怪的是，那天晚上言正好像中了迷煙，一直昏昏沉沉的。
+第二天鎮上就傳開了：樊家的贅婿，被刺客重傷，只剩半口氣。
+（可是他每天晚上，都會偷偷起來，在院子裡練劍。）
+（他在騙所有人。也包括我。）
+?發現他在裝重傷——
+- 什麼都不說，幫他一起演 => c4g | @set xin +2 | @set qing +1
+- 直接拆穿：「你到底在等什麼人上門？」 => c4h | @set zhi +2
+#c4g
+從那天起，我每天都端著藥進他房間，在門口大聲地哭：
+cy：夫君啊～你可不能死啊～
+他在床上，用被子蒙著臉，肩膀一直在抖。
+（他在笑。他絕對在笑。）
+@goto c4i
+#c4h
+xz：……你怎麼知道的。
+cy：你半夜練劍的時候，踩死了我種的兩棵蔥。
+xz：……
+xz：那些人，要的是一封信。一封我藏起來的信。
+xz：他們以為我快死了，就會再來。我在等他們上門。
+cy：那我陪你等。
+@goto c4i
+#c4i
+@hide all
+@bg shrine
+@bgm romance
+@fx snow
+年關將近，我帶著長寧去給爹娘上墳。
+言正也跟來了。他在爹娘的墳前，規規矩矩地，磕了三個頭。
+@show xz c
+xz：岳父，岳母。我是言正。
+xz：……長玉，我會照顧好的。
+（他明明知道，我們是假成親。）
+（可是他磕頭的時候，好認真，好認真。）
+@show cn r
+cn：阿爹阿娘！這是姐夫！他會寫字，還會給我講故事！
+cn：阿姐說，我們現在是一家人了！
+@hide all
+@bg inn
+@bgm tension
+@fx off
+可是過年前，淺淺出事了。
+她被鎮上的郭屠戶，用迷藥擄走了。
+@show yq c
+我和言正找到她的時候，她被關在城外一間破廟的地窖裡，衣服被撕破了一半。
+@hide all
+@show xz c
+@face xz angry
+我從來沒有看過言正那個樣子。
+他把郭屠戶吊在破廟的樑上，一刀，一刀……
+（那不是我認識的言正。那是一個……很可怕的人。）
+?看著失控的言正——
+- 衝上去，從後面抱住他：「夠了！」 => c4j | @set qing +4 | @set xin +1
+- 握住他拿刀的手：「讓官府來處置。你不要變成跟他一樣的人。」 => c4k | @set qing +3 | @set zhi +1
+#c4j
+他的身體，在我懷裡僵住了。
+cy：夠了，言正。淺淺沒事了。我也沒事。
+cy：我們回家。
+很久很久，他手裡的刀，才「噹」地一聲掉在地上。
+xz：……我以為，被抓走的是你。
+@goto c4l
+#c4k
+他看著我。那雙眼睛裡，殺氣一點一點地退了下去。
+xz：……你不怕我？
+cy：怕。可是我更怕你回不來。
+@goto c4l
+#c4l
+@face xz off
+@hide all
+@show yq c
+後來淺淺告訴我，她有一個大麻煩。
+鎮上新來了一個富商，叫齊旻。他看上了她，用盡各種手段逼她就範。
+yq：長玉，我知道這個請求很過分……
+yq：可以把你的夫君，借我一陣子嗎？
+cy：……啊？
+yq：只要他假扮我的丈夫，齊旻就沒有理由再糾纏我。
+?淺淺要借我的夫君——
+- 「借！不過要按時還。」 => c4m | @set lin +2
+- 「我得先問問他願不願意。」 => c4n | @set xin +2
+#c4m
+yq：……你真是我見過最大方的妻子。
+cy：反正是假的嘛。
+（……可是說完這句話，我心裡怎麼酸酸的。）
+@goto c4o
+#c4n
+xz：……你希望我去嗎？
+cy：淺淺需要幫忙。
+xz：我問的是，你希不希望我去。
+cy：……我、我不希望！可是我更不希望淺淺出事！
+他看著我，眼睛裡好像有一點點的笑。
+xz：好。我去。早去早回。
+@goto c4o
+#c4o
+@hide all
+@show qm c
+我第一次見到齊旻，是在溢香樓的雅座上。
+他戴著半張銀色的面具，聽說是小時候被火燒傷的。說話很輕很慢，笑起來很好看。
+可是不知道為什麼，我一看到他，背上的寒毛全都豎了起來。
+（像是看到了一條，盤在草叢裡的蛇。）
+@hide all
+@bg lantern
+@bgm romance
+@fx snow
+@form cy winter
+除夕那天，鎮上下了好大的雪。
+言正寫了一整條街的春聯。
+@show xz c
+康婆子：言公子，你也給老婆子寫一副吧？老婆子一個人過年，冷清。
+xz：好。婆婆想要寫什麼？
+康婆子：……就寫，「兒孫平安」吧。我兒子去北境當兵，七年沒回來了。
+言正握著筆，停了很久，很久。
+然後他寫了。一筆一劃，寫得比其他任何一副都認真。
+@hide all
+年夜飯，就我們三個人。不，還有趙大娘一家。
+長寧吃到一半就睡著了。趙大娘他們也回去了。
+桌上只剩下我和言正，還有半壺酒。
+@show xz c
+?除夕夜，兩個人對坐著——
+- 給他倒酒：「今天不管什麼，都要喝到醉！」 => c4p | @set qing +3
+- 從懷裡拿出一個紅封，塞給他 => c4q | @set qing +5
+#c4p
+那天晚上，我喝醉了。
+醉得迷迷糊糊的時候，我感覺有一隻冰冷的手，輕輕撥開了我臉上的頭髮。
+他的臉，靠得好近好近。近到我感覺得到他的呼吸。
+（他要……親我嗎？）
+可是過了很久，他只是把我的頭髮，輕輕地塞到了耳朵後面。
+xz：……長玉。再等等。等我把所有事情都做完。
+（後來我想，那天晚上，我其實沒有那麼醉。）
+@set qing +2
+@goto c4r
+#c4q
+xz：……這是什麼？
+@cg hongfeng 十個銅板
+cy：壓歲錢啊！我們家的規矩，每個人都要有。長寧有，你也有。
+cy：雖然只有十個銅板啦……
+他拿著那個小小的紅封，看了很久很久。
+xz：……我娘走了以後，就再也沒有人給過我這個了。
+xz：我以為，我已經不需要了。
+cy：誰說的？每個人都需要。
+他把紅封，小心翼翼地，收進了貼身的衣服裡。
+（很多年以後，我才知道，那十個銅板，他一個都沒有花。一直帶在身上。）
+@cgoff
+@goto c4r
+#c4r
+@hide all
+@fx petal
+上元節，臨安鎮掛滿了燈。
+@show sy c
+宋硯又來了。這一次，他當著全鎮人的面，說我成親之前，就已經跟他私定終身。
+（他在毀我的名聲。為了逼我給他當妾。）
+?宋硯當眾造謠——
+- 「好啊，那你說說，我身上哪裡有一顆痣？」 => c4s | @set zhi +2 | @set yong +1
+- 把他借錢不還、讀書作弊的事，一件一件抖出來 => c4t | @set yong +2
+#c4s
+sy：……在、在你的左肩上！
+cy：錯了。我身上一顆痣都沒有。全鎮給我接生的穩婆都可以作證。
+四周一陣哄笑。宋硯的臉漲得像豬肝。
+@goto c4u
+#c4t
+cy：去年你在書院考試作弊，被先生抓到，是你娘拿了兩隻雞去求情才沒事的。要不要我把先生請來？
+宋硯張著嘴，一個字都說不出來。
+@goto c4u
+#c4u
+@hide all
+那天晚上，宋硯回家的路上，不知道被什麼人套了麻袋，打得鼻青臉腫。
+@show xz c
+cy：……是你吧？
+xz：什麼？
+cy：宋硯。
+xz：不知道你在說什麼。
+（他說這句話的時候，在偷偷地揉自己的拳頭。）
+@hide all
+@bgm sad
+可是那天夜裡，一隻灰白色的大鳥，落在了我家的屋頂上。
+牠的腳上，綁著一個小小的竹筒。
+言正看完竹筒裡的信，臉色變得很難看。
+@show xz c
+xz：……長玉。
+xz：三天後，我要走了。
+`.trim().split('\n');
+
+// ---------------- 第五章：離書 ----------------
+SCRIPT.c5 = `
+@title 第五章|離書
+@form cy winter
+@bg inn
+@bgm sad
+「三天後，我要走了。」
+說完這句話之後，他就開始躲我。
+@show cy c
+我去肉舖，他就去書院。我回家，他就去溢香樓幫淺淺看帳。
+（我們連好好說一句話的機會，都沒有。）
+@hide all
+那天下了大雪，我們被困在溢香樓，只能在同一間房裡過夜。
+@show xz c
+他坐在窗邊，看著外面的雪。一句話都不說。
+?憋了三天，終於開口——
+- 「你要去哪裡？會回來嗎？」 => c5a | @set qing +2
+- 「走就走。我樊長玉，不稀罕。」（說完就後悔了） => c5b | @set yong +1
+#c5a
+xz：……北邊。
+xz：會不會回來，我不知道。
+cy：那你為什麼要走？
+xz：因為有些事，只有我能做。有些人，在等我回去。
+cy：……那我呢？
+他沒有回答。
+@goto c5c
+#c5b
+他轉過頭來看著我。
+xz：……你真的這麼想？
+cy：……
+xz：那就好。
+（不好。一點都不好。）
+@goto c5c
+#c5c
+@hide all
+@bg home
+@bgm tension
+回家以後，我做了一件事。
+我把大伯家搶走的祖父的舊房契，從大伯母手裡要了回來。
+可是在那張房契的背面，我看見了幾行字。
+@show cy c
+（「樊二牛，養子。十六年前入籍。原籍：不詳。」）
+@face cy surp
+（爹……是祖父的養子？)
+（十六年前。爹帶著娘，從不知道什麼地方，來到了臨安鎮。改名換姓。）
+（那爹原本……是誰？）
+我想起了那把不像殺豬刀的殺豬刀。想起了爹教我的、一刀斃命的刀法。
+想起了爹娘死的那一天。官府說，是山賊。
+（可是山賊，為什麼只殺了他們兩個，什麼東西都沒有拿走？）
+@hide all
+?發現爹的身世有秘密——
+- 去問言正。他好像知道什麼 => c5d | @set xin +2
+- 自己先查。不想再把他扯進來 => c5e | @set zhi +2
+#c5d
+@show xz c
+xz：……你爹的刀法，我見過。
+xz：在北境的軍營裡。那是軍中的刀法。
+cy：軍中？我爹是當兵的？
+xz：不只是當兵的。
+他好像還想說什麼，可是最後，他只說了一句：
+xz：長玉，這件事，等我回來，我陪你查。
+@goto c5f
+#c5e
+我翻遍了爹留下來的所有東西。
+最後，我在爹的刀鞘夾層裡，找到了一塊小小的鐵牌。
+上面刻著一個字：「魏」。
+@goto c5f
+#c5f
+@hide all
+@bg market
+@bgm battle
+可是我沒有時間查下去了。
+臨安鎮，出大事了。
+溢香樓被人誣陷，說在菜裡下毒，官府封了店，把淺淺抓進了大牢。
+接著，縣衙貼出告示：今年要加倍徵糧。交不出來的，全家充軍。
+@show xz c
+xz：……這是逼民造反。
+cy：什麼？
+xz：有人想讓臨安鎮的百姓造反，好找藉口屠城，再把罪名推給北境的守軍。
+xz：背後的人，是縣衙的郭師爺。他背後，還有人。
+@fx shake
+那天下午，鎮上的百姓真的衝進了縣衙。
+縣衙裡，有一個年輕的將軍，正等著他們。
+@hide all
+@show sq c
+他叫隨元青。長信王的兒子。他笑著坐在縣衙的大堂上，身後站滿了弓箭手。
+sq：來得好。造反的刁民，一個都不留。
+?縣衙裡全是弓箭手，百姓們要被屠殺了——
+- 從後牆翻進去，直接把刀架在隨元青的脖子上 => c5g | @set yong +3 | @set lin +2
+- 先去找王捕頭，讓他帶衙役裡應外合 => c5h | @set zhi +2 | @set lin +2
+#c5g
+沒有人想到，一個殺豬的姑娘，會從房頂上跳下來。
+我的刀，貼著隨元青的脖子。他的笑容，僵住了。
+cy：讓你的人，把弓放下。
+sq：……有意思。你是誰？
+cy：臨安鎮，殺豬的。
+@goto c5i
+#c5h
+王捕頭是個老實人。他帶著幾個信得過的衙役，從後門放走了一半的百姓。
+我趁亂摸到隨元青身後，把刀抵在了他的背上。
+cy：讓你的人把弓放下。不然我讓你跟我家的豬一個下場。
+@goto c5i
+#c5i
+@hide all
+@bg wall
+@bgm battle
+就在這時候，城樓上出現了一個人。
+他戴著一張黑色的鐵面具，穿著黑色的盔甲，身後的披風被風吹得獵獵作響。
+@cg chenglou 城樓上的人
+xz2：開倉，放糧。
+xz2：凡臨安鎮百姓，每戶領米三斗。郭師爺勾結叛賊，逼民造反，就地正法。
+（那個聲音……）
+（不，不可能。言正明明是個病懨懨的書生。）
+城樓下的百姓，一下子安靜了。然後，有人開始哭，有人開始跪。
+@cgoff
+@fx shake
+隨元青趁我分神，掙脫了我的刀。他往城外逃，一支箭從城樓上射了下來——
+正中他的肩膀。他整個人，從橋上摔進了冰冷的江裡。
+@hide all
+@bg snow
+@bgm romance
+@fx snow
+後來，李懷安帶著援軍來了。叛軍被打退，臨安鎮保住了。
+我在渡口的雪地裡，找到了言正。
+@show xz c
+他穿著平常那件書生的白袍，站在雪裡，像什麼事都沒有發生過。
+cy：……剛剛城樓上那個人，是你嗎？
+xz：……什麼人？
+（他在說謊。）
+（可是他的眼睛，一直在看著我手上的血。好像那是比什麼都重要的事。）
+@hide all
+@bg home
+@bgm sad
+那天晚上，我寫了一封信。
+一封和離書。
+@show cy c
+（我們本來就是假成親。房子保住了，他的傷也好了。）
+（他要走了。我不能用一張婚書，綁住一個要去做大事的人。）
+（……我也不想，等一個不知道會不會回來的人。）
+@hide all
+@show xz c
+我把和離書放在他面前。
+他看著那張紙，看了很久很久。
+xz：……這是什麼意思。
+cy：意思是，你自由了。
+?他看著和離書，臉色越來越白——
+- 「我們本來就說好的。你去做你的事吧。」 => c5j | @set yong +1
+- 「……如果你說一句『留下來』，我就把它撕了。」 => c5k | @set qing +3
+#c5j
+@goto c5l
+#c5k
+他張了張嘴。
+可是那句話，他沒有說出口。
+@goto c5l
+#c5l
+@bgm tension
+@fx snow
+他突然站了起來。一把把我拉了過去。
+@cg qiangwen 雪中
+然後，他吻了我。
+很用力，很兇。像是要把什麼東西，硬生生地刻進我的骨頭裡。
+xz：……等我。
+xz：不准和離。等我回來。
+@cgoff
+?被他強吻之後，他只說了「等我」——
+- 推開他：「你什麼都不告訴我，憑什麼要我等！」 => c5m | @set yong +2
+- 「如果你留下來，什麼都不用等。」 => c5n [qing>=38 && xin>=5] | @set qing +2
+#c5m
+@face cy cry
+cy：你是誰？你要去哪？你身上那些傷是怎麼來的？你什麼都不說！
+cy：我在你眼裡算什麼？一個殺豬的，隨便親一下，就會乖乖在家等你的傻子嗎？
+他的手，慢慢地鬆開了。
+xz：……長玉。
+cy：你走吧。
+@hide all
+那天晚上，他沒有再說一句話。
+@goto c5o
+#c5n
+他整個人僵住了。
+cy：言正。不管你是誰，不管你要去做什麼……
+cy：我們可以帶著長寧，去一個沒人認識我們的地方。我殺豬，你教書。我們好好過日子。
+cy：留下來。好不好？
+?他看著我，眼睛裡有什麼東西在掙扎——
+- 「……你不用現在回答。我等你到天亮。」 => c5stay
+- 「算了。你走吧。我不該說這種話。」 => c5m2
+#c5m2
+xz：……長玉。
+cy：你走吧。我不攔你。
+@hide all
+@goto c5o
+#c5stay
+@hide all
+@bgm romance
+那一夜，我坐在院子裡，等到了天亮。
+天快亮的時候，那隻灰白色的大鳥又飛來了。
+言正站在屋簷下，看著牠。看了很久很久。
+@show xz c
+然後，他把一封寫好的信，綁在了牠的腳上。
+xz：……告訴他們，武安侯謝征，已經死了。
+（武安侯……謝征？）
+cy：你……你是……
+xz：曾經是。
+xz：從今天起，我只是臨安鎮樊家的贅婿，言正。
+@cg end_stay 臨安鎮的肉舖
+後來，我們帶著長寧，搬到了江南的一個小鎮。
+我開了一間肉舖，他在隔壁的書院教書。
+每天傍晚，他會來肉舖接我回家。順便幫我算帳——他算得比我快十倍。
+（他再也沒有提起過北邊的事。可是每年冬天下第一場雪的時候，他都會一個人，往北邊站很久。）
+（我知道，他放下了很多東西。為了我。）
+（所以我每天都要讓他吃飽，讓他笑。這樣，他就不會後悔了。）
+@cgoff
+@end stay
+#c5o
+@hide all
+@bg market
+@bgm battle
+@fx off
+@form cy off
+第二天，朝廷的征兵令下來了。
+臨安鎮的每一戶人家，都要出一個男丁，去北境打仗。
+我在征兵的名單上，看到了兩個字：
+「言正」。
+@show cy c
+（不……他是去做他的大事，不是去當兵送死的！）
+我衝到城門口的時候，征兵的隊伍已經出城了。
+守城的士兵攔住了我。
+cy：讓我出去！我夫君在裡面！言正！言正——！
+（他沒有回頭。）
+（也許，他聽見了。也許，沒有。）
+@hide all
+@bg inn
+@show yq c
+淺淺被放出來了，可是溢香樓也開不下去了。
+yq：長玉，我要帶寶兒去南邊避一避。你跟我們一起走吧。這裡，已經不安全了。
+?淺淺邀我一起往南走——
+- 「我不能走。長寧在這裡，爹娘的墳也在這裡。」 => c5p | @set lin +2
+- 「……我想留下來等他。」 => c5q | @set qing +2
+#c5p
+yq：……你這個人，真的很固執。
+cy：殺豬的，都固執。
+@goto c5r
+#c5q
+yq：……你說那封和離書？
+cy：他沒有簽。
+cy：他沒簽，我們就還是夫妻。夫妻，就要等。
+@goto c5r
+#c5r
+yq：保重。等天下太平了，我們再一起開店。
+cy：嗯。說好了。
+（那時候的我，還不知道。）
+（天下太平，原來是那麼遙遠的事。）
+`.trim().split('\n');
+
+// ---------------- 第六章：墜崖 ----------------
+SCRIPT.c6 = `
+@title 第六章|墜崖
+@form cy off
+@bg market
+@bgm tension
+@fx off
+淺淺走了以後的第七天，隨元青回來了。
+他沒有死在江裡。他被一個叫十三娘的女人救了起來。
+然後，他回來報仇了。
+@fx red
+@fx shake
+那一天，臨安鎮變成了地獄。
+王捕頭死了。他擋在縣衙的門口，被砍了十七刀，到死都沒有倒下。
+崔縣令一家，沒有一個活口。
+宋硯的娘，倒在宋家的門檻上。手裡還抓著一包，準備寄給在京城的兒子的冬衣。
+@show cy c
+@face cy cry
+（宋母。那個每天罵我、推我、說我配不上她兒子的人。）
+（她死的時候，眼睛還睜著。）
+@hide all
+?隨元青的人在街上見人就殺——
+- 帶著長寧和趙大娘，從後山逃 => c6a | @set lin +2
+- 拿起殺豬刀，去找隨元青 => c6b | @set yong +3
+#c6a
+我背著長寧，扶著趙大娘，從後山的小路逃。
+可是走到半路，長寧突然掙脫了我的手。
+cn：阿姐！康婆婆還在家裡！她腿不好，走不動！
+她往回跑了。我追上去的時候——
+@goto c6c
+#c6b
+我讓趙大娘帶著長寧先走，自己提著刀，迎著逃難的人群，往街上走。
+（他是衝著我來的。那天在縣衙，是我把刀架在他脖子上的。）
+（只要我出現，他就不會再殺別人。）
+@goto c6c
+#c6c
+@show sq c
+sq：找到你了。殺豬的。
+隨元青騎在馬上，肩膀還纏著繃帶。他的馬旁邊，拴著一根繩子。
+繩子的另一頭，綁著長寧。
+cn：阿姐……阿姐救我……
+sq：你那天讓我在全鎮人面前丟臉。今天，我要你在全鎮人面前，跪下來求我。
+?長寧被他綁著——
+- 跪下來 => c6d | @set qing +1 | @set lin +1
+- 不跪。刀握得更緊 => c6e | @set yong +2
+#c6d
+我跪了下來。膝蓋跪在雪地上，跪在王捕頭流的血裡。
+sq：哈哈哈哈！殺豬的，你也有今天！
+他笑得太得意了。得意到，沒有發現我的手，已經摸到了腳邊的一塊碎石。
+@goto c6f
+#c6e
+sq：不跪？那我就——
+他抬起手，要下令。可是就在那一瞬間，我動了。
+@goto c6f
+#c6f
+@fx shake
+我撲了上去，一刀砍斷了綁著長寧的繩子，然後把她往趙大娘的方向一推。
+cy：跑！長寧，跑！不要回頭！
+可是我自己，被隨元青的人包圍了。
+@hide all
+@bg cliff
+@bgm battle
+@fx snow
+我一路砍，一路退。退到最後，身後已經是懸崖了。
+@show sq c
+sq：沒路了。
+cy：……誰說沒路？
+?身後是萬丈懸崖，前面是隨元青——
+- 抓住他的馬韁，拖著他一起跳 => c6g | @set yong +3
+- 縱身一躍。寧可摔死，也不要落在他手裡 => c6h | @set yong +2 | @set qing +1
+#c6g
+我撲上去抓住了他的馬韁。馬受了驚，往後一仰——
+可是他比我想像的快。他一刀砍斷了韁繩。
+我抓著半截韁繩，往後摔了下去。
+@goto c6i
+#c6h
+（長寧，對不起。阿姐可能，回不去了。）
+（言正……你說要我等你。可是我，可能等不到了。）
+我轉過身，往下跳。
+@goto c6i
+#c6i
+@hide all
+@fx white
+@bgm sad
+@cg zhuiya 墜崖
+風在耳邊呼呼地響。
+雪花，在我眼前，一片一片地飛上去。
+然後，什麼都沒有了。
+@cgoff
+@fx off
+@bg mount
+@fx snow
+@if yong<19 c6dead
+我醒來的時候，在一個山洞裡。
+身上很燙，很燙。好像有一把火，在骨頭裡燒。
+迷迷糊糊之中，我感覺有人，在替我擦身體。
+他的手很冷，很輕。一遍一遍地，用銅錢刮著我的背。
+（刮痧……我娘以前，也會這樣幫我刮。）
+xz2：……長玉。
+xz2：醒過來。我還有好多話，沒有跟你說。
+（是誰？那個聲音……好熟悉……）
+@show xz2 c
+我努力睜開眼睛。看見了一張黑色的鐵面具。
+（是那天，城樓上的那個人。）
+然後，我又昏了過去。
+@hide all
+@bgm daily
+@fx off
+再醒來的時候，山洞裡只剩下我一個人。
+身上蓋著一件黑色的披風。旁邊放著乾糧、水，還有一包退燒的藥。
+（那個戴面具的人……走了。）
+@show lh c
+是李懷安找到了我。
+lh：樊姑娘！你還活著……太好了。
+lh：隨元青的人在找你。我送你回臨安鎮。
+?「那個戴面具的人，你看見了嗎？」——
+- 追問李懷安 => c6j | @set zhi +1
+- 不問了。先回家找長寧 => c6k | @set lin +1
+#c6j
+lh：……面具？沒有。我來的時候，只有你一個人。
+（他在說謊嗎？還是，那個人真的不想被任何人看見？）
+@goto c6l
+#c6k
+@goto c6l
+#c6l
+@hide all
+@bg market
+@bgm sad
+臨安鎮，已經不是臨安鎮了。
+燒黑的房子，倒塌的牆。街上，到處都是沒有人收的屍體。
+我家的肉舖，燒得只剩下一根柱子。
+@show zd c
+zd：長玉！長玉你還活著！
+趙大娘撲上來抱住我，哭得說不出話。
+cy：長寧呢？長寧在哪裡？
+zd：……被隨元青的人，抓走了。
+@face cy cry
+@hide all
+我在爹娘的牌位前，跪了一整夜。
+@show cy c
+（爹，娘。長寧被抓走了。言正……也不見了。）
+（臨安鎮沒了。家沒了。什麼都沒有了。）
+?跪在爹娘的牌位前——
+- 「我要去找長寧。不管她在哪裡，天涯海角，我都要把她找回來。」 => c6m | @set yong +2 | @set qing +1
+- 「……我要留下來。這裡還有活著的人，他們需要有人帶頭。」 => c6n [lin>=11] | @set lin +3
+#c6n
+（趙大娘，趙大叔，康婆婆，還有那些躲在地窖裡活下來的孩子。）
+（他們沒有家了。可是他們還活著。）
+?真的要留下來，放下長寧和言正嗎？
+- 「……長寧，對不起。阿姐先把大家安頓好，再去找你。」 => c6stay
+- 「不。我要先去找長寧。大家，等我回來。」 => c6m | @set lin +1
+#c6stay
+@hide all
+@bgm hope
+@fx petal
+我留了下來。
+我帶著鎮上活下來的人，把燒倒的房子一間一間地蓋回去。我殺豬，趙大娘煮飯，康婆婆教孩子們認字。
+第二年春天，臨安鎮，又冒出了第一縷炊煙。
+@cg end_rebuild 林安鎮的灶火
+第三年的冬天，一隻灰白色的大鳥，落在了我的屋頂上。
+牠的腳上綁著一個竹筒。竹筒裡，是長寧寫的信。歪歪扭扭的字。
+「阿姐，我很好。有一個戴面具的大哥哥救了我，他說，等天下太平了，就送我回家。」
+（戴面具的大哥哥。）
+我抱著那封信，在雪地裡，哭了好久好久。
+（言正。是你吧。）
+（你在很遠很遠的地方，守著我們。那我就在這裡，守著你的家。）
+@cgoff
+@end rebuild
+#c6m
+@hide all
+@bg snow
+@bgm hope
+我把爹娘的牌位，用布包好，背在了背上。
+把爹的殺豬刀，插在了腰間。
+然後，我一個人，往北走。
+@bg market
+@bgm daily
+一路上，我看見了很多很多逃難的人。
+有被丟在路邊的孩子。有餓得走不動的老人。
+?路邊有幾個餓得發抖的孩子——
+- 把身上的乾糧全分給他們 => c6o | @set lin +2
+- 殺了一頭野豬，煮了一大鍋肉湯，讓整條路上的難民都喝 => c6p | @set lin +3 | @set yong +1
+#c6o
+我把身上的乾糧，全分給了他們。
+那天晚上，我一個人餓著肚子，在破廟裡睡著了。
+@goto c6q
+#c6p
+那一鍋肉湯，香了整條官道。
+@goto c6q
+#c6q
+後來，我走到哪裡，就殺豬煮湯到哪裡。
+不知道從什麼時候開始，難民之間傳出了一個外號。
+「殺豬西施」。
+@show cy c
+（……誰取的這種名字啊！）
+@hide all
+@show lh c
+在崇州城外，李懷安又追上了我。
+lh：樊姑娘，北邊在打仗，一個姑娘家太危險了。跟我回京城吧，我可以保護你。
+?李懷安要帶我回京城——
+- 「謝謝你。可是我要去找我妹妹，還有我夫君。」 => c6r | @set qing +2
+- 「你保護我？那誰保護那些難民？」 => c6s | @set lin +1 | @set yong +1
+#c6r
+lh：……你的夫君。那個言正？
+lh：樊姑娘，他可能已經……
+cy：他沒死。
+cy：我知道他沒死。
+@goto c6t
+#c6s
+lh：……
+lh：樊姑娘，你真的……跟你父親很像。
+cy：你認識我爹？
+lh：……不。只是聽說過。
+@goto c6t
+#c6t
+@hide all
+我婉拒了他，一個人，往霸下的方向走。
+聽說，隨元青的大軍，就駐紮在那裡。
+（長寧，阿姐來了。）
+@pov xz
+@bg camp
+@bgm sad
+@show xz2 c
+同一時間，在千里之外的北境軍營裡。
+有一個人，收到了一封信。
+是一封和離書。上面簽著「樊長玉」三個字，字寫得歪歪扭扭的，有一個字還寫錯了。
+（她說，你自由了。）
+（可是她不知道，我這一生，從來沒有自由過。只有在臨安鎮的那幾個月，是自由的。）
+他把那封和離書，折得整整齊齊的，和那個裝著十個銅板的紅封，放在了一起。
+然後，他戴上了面具。
+xz2：傳令。水淹霸下。
+@hide all
+@pov off
+@next c7
+#c6dead
+@bgm sad
+@fx snow
+（好冷。）
+（言正……我好像，等不到你了。）
+@cg end_fall 雪落無聲
+那年冬天，北境的雪，下得特別大。
+一個戴著鐵面具的人，在懸崖下面，找了七天七夜。
+第八天，他在一棵老松樹下，找到了一支梅花銀簪。
+（他後來成了天下最可怕的將軍。打贏了每一場仗，殺光了每一個仇人。）
+（可是他再也沒有笑過。）
+@cgoff
+@end fall
+`.trim().split('\n');
+
+'use strict';
+// ======================================================================
+//  逐玉 —— 第七～九章
+// ======================================================================
+
+// ---------------- 第七章：孤山 ----------------
+SCRIPT.c7 = `
+@title 第七章|孤山
+@bg quarry
+@bgm tension
+@fx off
+我在霸下附近，被隨元青的人當成流民，抓去了採石場。
+採石場在一座大水壩的下面。每天，幾百個被抓來的百姓，要把一塊塊比人還大的石頭，搬到水壩上。
+@show cy c
+（長寧就在霸下山莊裡。離我不到十里。）
+（可是我出不去。）
+那天，一塊巨石從坡上滾了下來。下面，站著一個白頭髮的老人。
+?巨石朝著一個老人滾過去——
+- 衝過去，用肩膀把石頭頂住 => c7a | @set yong +2 | @set lin +1
+- 一把把老人拉開 => c7b | @set lin +2
+#c7a
+@fx shake
+「咚」的一聲，我用肩膀，硬生生地頂住了那塊石頭。
+四周所有的人，全都看呆了。
+老人：……好力氣。好一個天生神力。
+@goto c7c
+#c7b
+我撲過去，把老人拉到了旁邊。石頭擦著我們的衣角滾了過去，在地上砸出一個大坑。
+@goto c7c
+#c7c
+@show tt c
+那個老人，拍了拍身上的灰，上下打量著我。
+tt：丫頭，你叫什麼名字？
+cy：樊長玉。臨安鎮，殺豬的。
+tt：殺豬的？哈哈哈！老夫陶某，以前……是教書的。
+（後來我才知道，他是當朝的太傅。三朝元老，連皇帝都要叫他一聲老師。）
+（他是被隨元青抓來，逼著畫水壩圖紙的。）
+@hide all
+在採石場裡，我還遇到了好多臨安鎮的鄉親。
+趙大叔，鐵匠老劉，賣豆腐的張嫂……他們都是逃難的時候，被抓來的。
+張嫂：長玉！真的是長玉！你還活著！
+（我不是一個人。）
+@hide all
+@show tt c
+@bgm sad
+有一天夜裡，陶太傅把我叫到他的草棚裡。
+他攤開了一張圖紙。是水壩的圖。
+tt：丫頭，你看這座水壩。它不是用來擋水的。
+tt：是用來放水的。
+cy：……放水？
+tt：隨元青打算，等北境的軍隊攻過來，就挖開水壩。淹死所有的人。北境的兵，霸下的百姓，還有我們。
+@face cy surp
+tt：老夫要你，在那之前離開這裡。
+?陶太傅要我一個人逃——
+- 「我不走。你們都在這裡，我一個人走算什麼？」 => c7d | @set lin +2 | @set yong +1
+- 「好。可是我會回來。帶人回來救你們。」 => c7e | @set zhi +2
+#c7d
+tt：……傻丫頭。你留下來，就是多死一個人。
+tt：你出去，才能讓外面的人知道。
+@goto c7f
+#c7e
+tt：好丫頭。有腦子。
+@goto c7f
+#c7f
+tt：老夫這輩子，收過一百多個學生。都是王公貴族家的孩子，沒有一個像樣的。
+tt：丫頭，你願不願意，當老夫的最後一個學生？
+cy：我……我連字都不太認得。
+tt：字可以學。可是心，教不來。
+（我給他磕了三個頭。在一間漏風的草棚裡，對著一個白頭髮的老人。）
+@hide all
+@bg cliff
+@bgm battle
+@fx off
+陶太傅想辦法，把我混進了送石頭出去的車隊。
+可是出了採石場不到一里，我就發現了不對勁。
+有一隊騎兵，正往北邊飛奔。那是隨元青的斥候。
+（他們是要去報信的。去告訴隨元青，北境的軍隊到了哪裡。）
+?斥候正要去報信——
+- 跳下車，追上去攔住他們 => c7g | @set yong +3
+- 不管了，趕快逃出去才是正事 => c7h | @set zhi +1
+#c7g
+@fx shake
+我從車上跳了下來。三個斥候，我一個人。
+（爹，你教我的刀法，今天要再用一次了。）
+等我回過神來，三個斥候都倒在了地上。我拿走了他們身上的軍報。
+@set lin +1
+@goto c7i
+#c7h
+我咬著牙，往南邊跑。
+可是跑了沒多遠，我還是停了下來。
+（如果那些斥候報信成功了，水壩一開……陶太傅和鄉親們……）
+我轉過身，往回追。最後，在山口截住了他們。
+@set yong +1
+@goto c7i
+#c7i
+@hide all
+@bgm tension
+可是，太遲了。
+@fx flash
+那天晚上，我在山頭上，看見了一件不可思議的事。
+水壩，被打開了。
+@fx shake
+可是被淹的，不是北境的軍隊。是隨元青自己的數萬大軍。
+@show cy c
+（是陶太傅。他改了圖紙。他讓水，往隨元青的營地流。）
+（他用自己畫的水壩，淹了隨元青。）
+洪水退了以後，北境的軍隊，打了一場大勝仗。
+帶兵的人，是一個戴著鐵面具的將軍。
+@hide all
+@bg mount
+@bgm battle
+可是勝仗之後，壞消息傳來了。
+那個鐵面將軍的軍隊，只剩下八百人。他們被叛軍的大將石越，圍困在一座孤山上。
+山上沒有糧食。
+@show cy c
+我站在遠遠的山頭上，看著那座孤山。
+山頂上，有一面黑色的旗子，被風吹得獵獵作響。
+（那個人，在那面旗子下面。）
+（不知道為什麼，我一想到他會餓死在那裡，心裡就好痛好痛。）
+@hide all
+@show zs c
+那天，我在難民營裡，遇到了趙大叔。
+zs：長玉！你知道嗎？聽說那位將軍，是北境的武安侯！他沒死！
+cy：武安侯……謝征？他不是死了嗎？
+zs：假的！他是假死，騙那些叛賊的！
+@hide all
+@bgm romance
+那天傍晚，一隻灰白色的大鳥，落在了我的肩膀上。
+（是那隻鳥！以前常常落在我家屋頂上的那隻！）
+牠的腳上，綁著一封信。信上的字，我認得。是言正的字。
+「長寧平安，在我這裡。勿念。——言」
+@face cy cry
+（長寧……長寧沒事！）
+（可是……為什麼長寧會在他那裡？他又在哪裡？）
+@face cy off
+@hide all
+@bgm battle
+?聽說孤山上的將士快餓死了——
+- 「我去送糧！」帶著鄉親們組一支運糧隊 => c7j | @set yong +2 | @set lin +2
+- 先去打聽清楚，哪條路能避開石越的包圍 => c7k | @set zhi +2 | @set lin +1
+#c7j
+cy：我殺過的豬，比你們吃過的都多。扛幾袋米上山，算什麼！
+鄉親們你看我，我看你。然後，一個一個地舉起了手。
+@goto c7l
+#c7k
+我在山下轉了三天，終於找到了一條獵人走的小路。很險，可是石越的人不知道。
+@goto c7l
+#c7l
+@hide all
+@bg camp
+@bgm sad
+@fx snow
+我們揹著米，走了一天一夜，終於上了孤山。
+山上的軍營，慘得讓人不敢看。到處都是傷兵，有的人，傷口已經爛得發臭了。
+@show qs c
+軍營裡有一個年輕的女軍醫，忙得連飯都沒時間吃。
+qs：你來得正好！會包紮嗎？
+cy：會！殺豬的，什麼傷口都見過！
+qs：……殺豬的？
+（她叫阿姝。後來我才知道，她是當朝的長公主。偷偷跑到軍營裡來的。）
+@hide all
+那天晚上，我在傷兵營裡，忙到了半夜。
+有一個將軍，經過了營帳外面。我聽見那些傷兵，都在小聲地喊：侯爺，侯爺。
+（侯爺……武安侯。）
+（他就在外面。可是我在忙著替一個斷了手的小兵止血，沒有抬頭。）
+（後來我想，那天晚上，我們之間，只隔著一層帳篷。）
+@hide all
+@bg camp
+@bgm tension
+@fx off
+第二天，有人拉著我的衣袖。
+@show cn c
+cn：阿姐！
+是長寧。她瘦了，可是臉色比以前好多了。
+cy：長寧！長寧！
+cn：阿姐，我帶你去看一個人！他受傷了！
+@hide all
+她拉著我，跑進了一個很小很小的帳篷。
+裡面躺著一個人。身上纏滿了繃帶，臉白得像紙。
+@show xz c
+（是言正。）
+（是我的言正。）
+?看見躺在床上的言正——
+- 「言正！」衝過去抱住他 => c7m | @set qing +4
+- 站在帳篷口，突然不敢走過去 => c7n | @set qing +2
+#c7m
+@face cy cry
+cy：言正！言正你這個騙子！
+我撲過去的時候，帳篷外面，好幾個將領剛好走進來。
+他們全都愣住了。
+將領：……言正？
+@goto c7o
+#c7n
+（他說要我等他。可是我寫了和離書給他。）
+（他還要我嗎？）
+xz：……長玉。
+他先開口了。聲音啞得不成樣子。
+我身後的帳篷簾子被掀開，幾個將領走了進來。
+@goto c7o
+#c7o
+@hide all
+@show xz c
+@cg xiangren 孤山
+他看到我，第一句話不是「你怎麼來了」。
+xz：……那封和離書，我沒有簽。
+xz：咳、咳咳——
+他咳得整個人都在發抖。一口血，咳在了白色的繃帶上。
+@fx red
+@cgoff
+cy：言正！
+qs：讓開！他的傷口裂了！
+@hide all
+?他一邊咳血，一邊死死地抓著我的手——
+- 「我不和離了！我不和離！你不准死！」 => c7p | @set qing +5 | @set xin +1
+- 「……那封信，你不簽，我們就還是夫妻。」 => c7q | @set qing +4
+- 等他睡著以後，悄悄地離開 => c7r [qing<42]
+#c7p
+@show xz c
+他的手，慢慢地鬆開了一點點。
+xz：……說好了。
+cy：說好了！
+xz：……那我不死。
+他說完，就閉上了眼睛。嘴角，掛著一點點的笑。
+@goto c7s
+#c7q
+@show xz c
+xz：……你說的。
+cy：我說的。
+xz：……那你不准再跑了。
+cy：不跑了。我就在這裡。哪裡都不去。
+@goto c7s
+#c7r
+@hide all
+@bgm sad
+他睡著以後，我把手，從他手裡，一點一點地抽了出來。
+（帳篷外面，那些將領叫他「侯爺」。）
+（他是武安侯。我是殺豬的。）
+（他身邊，應該站著像阿姝那樣的人。不是我。）
+?真的要走嗎？
+- 「……再見了，言正。」 => c7apart
+- 走到門口，還是停了下來 => c7p
+#c7apart
+我帶著長寧，下了孤山。
+那封和離書，我又寫了一次。這一次，我請阿姝，替我交給他。
+@cg end_apart 和離
+後來，我在霽州開了一間肉舖。生意很好。
+聽說，武安侯打贏了每一場仗。聽說，他拒絕了皇上賜的每一門婚事。
+聽說，他的貼身衣服裡，一直放著一個紅封。裡面裝著十個銅板。
+（我沒有再見過他。）
+（可是每年除夕，我都會多包一個紅封。放在桌上，放到天亮。）
+@cgoff
+@end apart
+#c7s
+@hide all
+那天在帳篷外面，所有的將領都聽見了。
+他們的侯爺，有一個妻子。是一個殺豬的。
+`.trim().split('\n');
+
+// ---------------- 第八章：定情 ----------------
+SCRIPT.c8 = `
+@title 第八章|定情
+@form cy off
+@bg camp
+@bgm daily
+從那天起，「言正」搬進了一個單獨的帳篷。
+軍營裡的人，都說他是侯爺身邊的謀士。所以有一個單獨的帳篷。
+（他們都在幫他瞞著我。）
+（可是我那時候，一心只想著他的傷，根本沒有空去想別的。）
+@show cy c
+cy：我去山下買了一隻雞！燉湯給你補身體！
+xz：……軍營裡，禁止私自下山。
+cy：我是運糧隊的，不算軍營裡的人。
+@show xz r
+@hide cy
+@show cy l
+xz：……長玉。
+cy：快喝！不喝完不准睡！
+?他喝湯的時候，一直看著我——
+- 「看什麼看？我臉上有東西？」 => c8a | @set qing +3
+- 坐到他旁邊，把頭靠在他肩上 => c8b | @set qing +4
+#c8a
+xz：有。
+cy：哪裡？
+他伸出手，用拇指，輕輕擦掉了我臉頰上的一點炭灰。
+xz：……現在沒有了。
+（我的臉，一下子燒了起來。比灶裡的火還燙。）
+@goto c8c
+#c8b
+他放下碗。整個人都沒有動。
+過了很久，他的頭，也輕輕地，靠在了我的頭上。
+xz：……長玉。等這場仗打完了，我有很多事，要告訴你。
+cy：嗯。我等你。
+@goto c8c
+#c8c
+@hide all
+@show gs l
+@show qs r
+那幾天，我發現軍營裡，還有另外一對奇怪的人。
+公孫先生和阿姝。公孫先生是侯爺的軍師，阿姝是軍醫。他們兩個，每天都在吵架。
+qs：公孫鄞！你又偷吃我煎的藥！
+gs：我是在幫你試藥。你上次煎的那帖，把一個傷兵苦到哭著喊娘。
+qs：……我的味覺，已經壞了，嚐不出來。
+gs：……什麼？
+（阿姝為了試新藥，自己吃了太多，舌頭嚐不出味道了。）
+那天晚上，我看見公孫先生一個人，坐在藥爐旁邊，一帖一帖地，替她把藥嚐過一遍。
+@hide all
+@bg mount
+@bgm tension
+石越的大軍，把孤山圍得水洩不通。
+他每天都在山下烤羊。羊肉的香味，一陣一陣地飄上山。
+石越：山上的兄弟們！下來吧！下來就有肉吃！
+山上那些已經餓了好幾天的士兵，眼睛都紅了。
+?石越在用烤羊動搖軍心——
+- 「他有羊，我們有豬！」帶人去山裡獵野豬 => c8d | @set lin +2 | @set yong +1
+- 「他有羊，那就讓他拿鹽來換。」 => c8e | @set zhi +3
+#c8d
+那天，我帶著運糧隊的鄉親，在後山獵到了三頭野豬。
+整座孤山，都飄滿了滷肉的香味。比山下的烤羊，香十倍。
+@goto c8f
+#c8e
+我讓人在山腳下喊話：你們的鹽快沒了吧？我們這裡有醃好的鹹肉，一斤肉，換一袋鹽。
+（石越的軍營缺鹽，是我在運糧的時候打聽到的。）
+石越果然上當了。他用了整整三十袋鹽，換了我們三十斤鹹肉。
+……鹹肉裡，我加了瀉藥。
+@set lin +1
+@goto c8f
+#c8f
+@hide all
+@bg camp
+@bgm battle
+決戰的日子，越來越近了。
+石越的手下，有一個力大無窮的悍將，叫石虎。他放話說，要和武安侯，一對一。
+@show gs c
+gs：侯爺的傷，還沒好。這一仗，打不得。
+gs：可是如果侯爺不出戰，軍心就散了。
+@hide all
+那天晚上，我做了一件很大膽的事。
+?我知道，「言正」一定會去替侯爺出戰——
+- 在他的湯裡，下了迷藥。我替他去 => c8g | @set yong +3 | @set qing +2
+- 去找公孫先生：「讓我去。我力氣大，石虎打不過我。」 => c8h | @set yong +2 | @set xin +1
+#c8g
+@show xz c
+xz：……這湯，怎麼有點苦……
+cy：良藥苦口嘛。
+他喝完不到一刻鐘，就倒在了床上。
+（對不起，言正。可是你的傷，再打一場仗，會死的。）
+@goto c8i
+#c8h
+@show gs c
+gs：……樊姑娘，你知道石虎是誰嗎？他一拳，可以打死一頭牛。
+cy：我一刀，可以殺死一頭豬。
+gs：……
+gs：好。我給你找一套盔甲。
+@goto c8i
+#c8i
+@hide all
+@bg battle
+@form cy armor
+@bgm battle
+@fx shake
+第二天，我穿著不合身的盔甲，戴著頭盔，騎著馬下了山。
+石虎看著我，大笑了起來。
+石虎：武安侯就這點個子？哈哈哈哈！
+?石虎的大刀，劈了過來——
+- 正面硬接！ => c8j | @set yong +2
+- 側身閃開，砍他的馬腿 => c8k | @set zhi +2
+#c8j
+@fx shake
+「噹」的一聲，我的虎口被震得裂開了。
+可是我沒有退。一步都沒有退。
+@goto c8l
+#c8k
+他的刀劈空了，馬一聲長嘶，往前一栽——
+@goto c8l
+#c8l
+@if yong<26 c8dead
+（爹，你教我的刀法。要快，要準，要一刀斃命。）
+@fx red
+我的刀，從他的盔甲縫裡，刺了進去。
+石虎龐大的身體，從馬上，慢慢地倒了下去。
+兩邊的軍隊，一下子安靜了。然後，孤山上，爆發出了震天的歡呼聲。
+@hide all
+@bgm tension
+@fx off
+可是就在這時候，孤山上，又衝下來了一個人。
+@cg jiexiao 侯爺
+他穿著黑色的盔甲，暗紅色的披風。沒有戴面具。
+所有的士兵，都對著他跪了下來。
+「侯爺！」
+（侯爺。）
+（是……言正。）
+那個我撿回家的病書生。那個替我贖回銀簪的贅婿。那個在除夕夜，收下十個銅板的人。
+他是武安侯。謝征。
+@name xz 謝征
+@name xz3 謝征
+@cgoff
+@show xz3 c
+@face cy surp
+?終於知道了他的真實身分——
+- 轉身就跑 => c8m | @set yong +1
+- 站在原地，死死地盯著他 => c8n | @set xin -1
+#c8m
+我調轉馬頭，往山裡跑。
+可是他的馬比我快。他追上來，一把把我從馬上撈了過去，按在了他的馬背上。
+cy：放我下來！騙子！你這個大騙子！
+@goto c8o
+#c8n
+他騎著馬，走到我面前。
+xz3：長玉。
+cy：……你是誰？
+xz3：……
+cy：我問你，你是誰！
+@goto c8o
+#c8o
+@hide all
+@bg cliff
+@bgm sad
+@show xz3 c
+他帶著我，到了一個沒有人的山澗旁。
+xz3：……我叫謝征。字九衡。武安侯。
+xz3：瑾州謝家，最後一個人。
+xz3：我騙了你，是因為……我不知道自己能不能活著回來。
+xz3：如果我死了，你就只是一個死了丈夫的寡婦。可是如果你知道我是誰，那些想殺我的人……也會殺你。
+xz3：我給你留了一條後路。我以為，這樣是在保護你。
+?他說，他隱瞞，是為了保護我——
+- 「我不需要你這樣保護我！」 => c8p | @set yong +1 | @set xin +1
+- 「……那你現在，為什麼要說？」 => c8q | @set qing +2
+#c8p
+@face cy cry
+cy：你知不知道，我以為你死了的時候，我有多難過！
+cy：你知不知道，我在孤山上看見你的時候，我在想什麼！
+cy：我在想，如果你死了，我就去把那個害你的人，一刀一刀地剁了！
+cy：我不要什麼後路！我要的是你！
+他愣住了。愣了很久很久。
+@goto c8r
+#c8q
+xz3：……因為你替我上了戰場。
+xz3：因為我醒過來的時候，看到床邊放著你的那把殺豬刀，你把它留給了我。
+xz3：我才知道。你從來就不需要後路。
+@goto c8r
+#c8r
+@hide all
+那天晚上，我一個人回了營。誰都不想見。
+@bg camp
+@bgm daily
+@show tt c
+陶太傅坐在營火邊，烤著兩條魚。
+tt：丫頭，過來吃魚。
+tt：生氣的時候，最該吃東西。吃飽了，才有力氣繼續生氣。
+cy：……老師。
+tt：老夫打算收你當義女。以後，你就是陶家的女兒，太傅的女兒。
+tt：這樣，你站在謝家小子身邊，就沒有人敢說你配不上了。
+?陶太傅要收我當義女——
+- 「我不要。我是殺豬的，配不配得上，我自己說了算。」 => c8s | @set yong +2
+- 「……謝謝老師。」 => c8t | @set zhi +1 | @set qing +1
+#c8s
+tt：……哈哈哈哈！好！好丫頭！
+tt：老夫不是要給你一個身分。老夫是想要一個女兒。
+tt：老夫這輩子，沒有孩子。到老了，才遇見一個想當爹的人。你就當……陪一個老頭子，過幾年當爹的癮吧。
+（我最後，還是答應了。不是為了身分。是因為，他說他想當爹。）
+@goto c8u
+#c8t
+tt：謝什麼。老夫是撿到寶了。
+@goto c8u
+#c8u
+@hide all
+@form cy off
+@bg snow
+@bgm sad
+可是我還是決定，要離開軍營。
+臨安鎮的鄉親們，還有很多人下落不明。我要去找他們。
+我留了一封信，天還沒亮就走了。
+可是走到山口的時候，他追上來了。
+@show xz3 c
+xz3：……又要走？
+cy：我要去找鄉親們。不是逃。
+他沉默了很久。
+xz3：好。我不攔你。
+xz3：可是，帶著這個。
+@cg shuangdao 雙刀
+他把一對短刀，放在了我的手裡。刀柄上，刻著兩個小字：「長玉」。
+xz3：我讓人照你的手，打的。比殺豬刀輕，比殺豬刀快。
+xz3：長玉。你想去哪裡，就去哪裡。
+xz3：我只求你一件事——活著回來。
+@cgoff
+?握著那對刻著我名字的刀——
+- 「你也是。你也要活著。」 => c8v | @set qing +4 | @set xin +2
+- 踮起腳，親了他一下 => c8w | @set qing +5 | @set xin +1
+#c8v
+xz3：……嗯。說好了。
+cy：說好了。這次，不准騙我。
+@goto c8x
+#c8w
+這一次，換他愣住了。
+cy：這是定金。等我回來，再給你剩下的。
+xz3：……好。我等。
+@goto c8x
+#c8x
+@hide all
+（言正。不，謝征。）
+（不管你叫什麼名字。你都是我撿回家的那個人。）
+@next c9
+#c8dead
+@fx red
+@bgm sad
+他的刀，比我快了一步。
+（爹……對不起。我還是……學得不夠好。）
+@hide all
+@cg end_shihu 代夫出征
+後來，孤山上的人說，那一天，武安侯醒來以後，一個人下了山。
+石越的大軍，在那一天，全軍覆沒。
+他把一個穿著不合身盔甲的姑娘，抱回了山上。
+（他把她葬在了臨安鎮。爹娘的墳旁邊。）
+（墓碑上，刻的不是「樊長玉」。是「謝門樊氏」。）
+@cgoff
+@end shihu
+`.trim().split('\n');
+
+// ---------------- 第九章：殺豬小分隊 ----------------
+SCRIPT.c9 = `
+@title 第九章|殺豬小分隊
+@form cy red
+@bg market
+@bgm daily
+@fx off
+離開孤山之後，我在一個小村子裡，遇到了一個熟人。
+@show yq c
+yq：長玉！
+cy：淺淺！你怎麼在這裡？寶兒呢？
+淺淺瘦了好多好多。她抱住我，全身都在發抖。
+yq：……齊旻把我關起來了。我逃出來的。
+yq：長玉，他不是什麼富商。他是……
+yq：他說，他是十七年前，東宮那場大火裡，唯一活下來的人。他臉上的面具，就是那場火燒的。
+yq：他說，這個天下，本來是他的。
+@hide all
+?淺淺說，齊旻想奪天下——
+- 「別怕，有我在。誰都別想再碰你。」 => c9a | @set lin +2
+- 「寶兒呢？寶兒在哪裡？」 => c9b | @set zhi +1
+#c9a
+yq：……長玉，你怎麼還是這樣。自己都顧不好，還要顧別人。
+cy：殺豬的，就是要顧著一整個鎮子的人吃肉啊。
+@goto c9c
+#c9b
+yq：寶兒……被我的婢女蘭姨，帶著逃走了。我不知道他們在哪裡。
+yq：齊旻說，寶兒是他的兒子。他一定會找到他。
+@goto c9c
+#c9c
+@hide all
+@bg camp
+@bgm romance
+在北境軍營裡，我見到了一位老將軍。
+@show hj c
+hj：你就是樊長玉？
+他叫賀敬元。北境的老將，頭髮已經白了一半，可是腰桿挺得像一桿槍。
+hj：……你的眼睛，長得真像你爹。
+cy：你認識我爹？
+hj：認識。很久很久以前……他是我最好的兄弟。
+他沒有再說下去。可是他送給我一套盔甲，一套剛好合我身的盔甲。
+hj：丫頭。你爹的刀法，有七式。你只學會了四式。
+hj：剩下的三式，老夫教你。
+@hide all
+?跟著賀將軍學刀——
+- 每天天沒亮就起來練，練到手都握不住刀 => c9d | @set yong +3
+- 一邊學，一邊問爹以前的事 => c9e | @set zhi +2 | @set qing +1
+#c9d
+@show hj c
+hj：……好。比你爹當年還拚。
+@goto c9f
+#c9e
+@show hj c
+hj：你爹啊……他是個很固執的人。認定的事，十頭牛都拉不回來。
+hj：他說，等天下太平了，要去一個沒有人認識他的地方，開一間肉舖。
+hj：……他做到了。
+@goto c9f
+#c9f
+@hide all
+@show tt c
+陶太傅也常常來看我。
+tt：丫頭，你上了戰場，殺了很多人。你怎麼想？
+cy：……他們是叛軍。不殺他們，他們就會殺更多的百姓。
+tt：那叛軍的兵，是哪裡來的？
+cy：……
+tt：也是百姓。被抓來的、被騙來的、被逼著拿起刀的百姓。
+tt：丫頭，打仗沒有好人。只有不得不打的人。
+tt：你要記住——你手裡的刀，是為了讓更少的人死，不是為了讓更多的人死。
+@hide all
+@bgm battle
+那年秋天，我做了一件，後來被人寫進戲文裡的事。
+我把臨安鎮的鄉親們，還有一路上救下來的難民，組成了一支隊伍。
+有殺豬的，有打鐵的，有賣豆腐的，還有幾個會射箭的獵戶。
+@show cy c
+@form cy armor
+@cg xiaofendui 殺豬小分隊
+cy：從今天起，我們就是——殺豬小分隊！
+張嫂：……長玉，這名字也太難聽了吧。
+cy：好記就好！
+@cgoff
+@hide all
+@bg battle
+@fx shake
+我們和李懷安的殘兵會合，從崇州的背後，突襲了長信王的大營。
+@show lh l
+@show cy r
+lh：樊姑娘，你負責左翼——
+cy：我負責砍長信王。
+lh：……什麼？
+@hide all
+@show xz3 c
+那一仗，謝征從正面打，我從背後打。
+在混亂的戰場上，我們隔著上千個人，遠遠地看到了彼此。
+他朝我點了點頭。我也朝他點了點頭。
+（不用說話。我知道他要做什麼，他也知道。）
+@hide all
+?終於，在戰場的中央，遇到了長信王——
+- 用賀將軍教的那三式刀法，正面單挑 => c9g | @set yong +3
+- 讓殺豬小分隊的獵戶們先放箭，再趁亂衝進去 => c9h | @set zhi +2 | @set lin +1
+#c9g
+@fx red
+第五式，斷水。第六式，裂雲。
+第七式——
+那是賀將軍說，爹當年只用過一次的一式。
+@goto c9i
+#c9h
+獵戶們的箭，像雨一樣落了下去。長信王的親衛，一個一個地倒下。
+我從箭雨的縫隙裡，衝了過去。
+@goto c9i
+#c9i
+@fx shake
+長信王倒下了。
+可是在他倒下之前，他的刀，也砍進了我的肩膀。
+@fx white
+我最後記得的，是謝征的聲音。他在喊我的名字。
+喊得，好像整個世界都要碎了。
+@hide all
+@bg camp
+@bgm sad
+@fx off
+我醒來的時候，已經是三天以後了。
+盧城之圍，解了。可是賀將軍……戰死了。
+他擋在盧城的城門口，擋了三天三夜。最後，站著死的。
+@show lh c
+李懷安來看我。他的手裡，拿著一封很舊很舊的信。
+lh：……這是賀將軍臨死前，託我交給你的。
+lh：是你爹的信。十七年前寫的。
+@hide all
+@show cy c
+我打開那封信。上面的字，跟爹記帳的字，一模一樣。
+（「敬元兄：瑾州之事，非我所願。然軍令如山，我不得不為。此生罪孽，萬死難贖。若有來世，再與兄共飲。——魏祁林」）
+@face cy surp
+（魏祁林。）
+（瑾州之事。）
+我聽過這個名字。北境的每一個人，都聽過這個名字。
+十七年前，瑾州被北厥屠城。守城的謝家軍，全軍覆沒。
+因為有一個叫魏祁林的將軍，在最關鍵的時候，撤走了援軍。
+（死在瑾州的謝家軍，主帥叫謝臨山。）
+（是謝征的爹。）
+@face cy cry
+（我爹，是害死謝征的爹的人。）
+@hide all
+@bg shrine
+@bgm sad
+@fx snow
+幾天後，軍營裡辦了一場祭典。祭奠賀將軍，也祭奠十七年前死在瑾州的謝家軍。
+有幾個士兵，紮了一個紙人。紙人的身上，寫著「魏祁林」三個字。
+士兵：燒了這個叛徒！讓他在地下給謝家軍賠罪！
+?他們要燒我爹的紙人——
+- 衝上去，擋在紙人前面 => c9j | @set yong +2 | @set xin +1
+- 握緊拳頭，站在原地，一句話都說不出來 => c9k | @set zhi +1
+#c9j
+cy：不准燒！
+所有的人，都看著我。
+士兵：樊將軍，你……你為什麼護著這個叛徒？
+cy：……因為他是我爹。
+四周，一下子炸開了鍋。
+「叛徒的女兒！」「難怪她的刀法那麼像！」「她混進軍營，是想做什麼！」
+@goto c9l
+#c9k
+紙人被點著了。火光裡，爹的名字，一點一點地燒成了灰。
+我站在那裡，指甲掐進了掌心，掐出了血。
+有一個士兵發現了我的臉色，大聲地說：
+士兵：……她是魏祁林的女兒！我聽李大人說的！
+@goto c9l
+#c9l
+@show xz3 c
+人群突然安靜了下來。
+謝征從人群裡走了出來。他走到我身邊，牽起了我的手。
+然後，他拿起三炷香，走到了那堆燒成灰的紙人前面。
+xz3：魏祁林是不是叛徒，我會查清楚。
+xz3：在查清楚之前，她是我的妻子。誰對她不敬，就是對我不敬。
+他把那三炷香，插在了紙人的灰燼前。
+@hide all
+?他牽著我的手，可是我的手在發抖——
+- 「……你為什麼不恨我？我爹，害死了你爹。」 => c9m | @set xin +2
+- 把手抽了回來 => c9n | @set qing -3
+#c9m
+@show xz3 c
+xz3：你爹做了什麼，跟你有什麼關係？
+xz3：而且……長玉。瑾州的事，沒有那麼簡單。
+xz3：我查了十七年。越查，越覺得，魏祁林只是一顆被人擺上棋盤的棋子。
+xz3：真正下棋的人，還在京城裡。
+@goto c9o
+#c9n
+@show xz3 c
+他看著自己空空的手心。
+xz3：……長玉。
+cy：讓我……想一想。
+（我不知道該怎麼面對他。）
+（每次看見他，我就會想起，他的爹是怎麼死的。）
+@goto c9o
+#c9o
+@hide all
+從那天以後，我開始躲著謝征。
+@bg camp
+@bgm daily
+朝廷下了旨，讓李懷安當北境的司馬。管兵，也管我。
+@show lh c
+lh：樊將軍，你現在是朝廷的將軍了。要看公文，要寫軍報。你得識字。
+cy：……我認識的字，不到三百個。
+lh：那我給你找夫子。
+@hide all
+（後來，李懷安給我找了七個夫子。七個，全被我氣走了。）
+（最後，是李懷安自己來教我。他教了我三天，第四天，他吐血了。）
+@show lh c
+lh：……樊將軍。「軍」字的那一橫，不是用來砍的。
+cy：可是我寫字的時候，手會不自覺地用力嘛。
+lh：……你把桌子劈成兩半了。
+`.trim().split('\n');
+
+'use strict';
+// ======================================================================
+//  逐玉 —— 第十章～終章、結局
+// ======================================================================
+
+// ---------------- 第十章：簪花將軍 ----------------
+SCRIPT.c10 = `
+@title 第十章|簪花將軍
+@form cy red
+@bg camp
+@bgm daily
+@fx off
+有一天，李懷安在全軍面前，宣佈了一件事。
+@show lh c
+lh：從今天起，樊長玉，是我李懷安的義妹。
+lh：誰再敢叫她叛徒的女兒，就是跟李家作對。
+（李家，是京城最有權勢的世家之一。）
+（他用他的家族，替我擋住了所有的閒話。）
+@hide all
+?李懷安說要當我的義兄——
+- 「謝謝你，大哥。」 => c10a | @set lin +1
+- 「李懷安，你是不是……喜歡我？」 => c10b | @set zhi +1
+#c10a
+@show lh c
+lh：……大哥。
+他笑了。可是那個笑，看起來有一點點苦。
+lh：好。大哥。
+@goto c10c
+#c10b
+@show lh c
+他愣了一下。然後，他笑了。
+lh：……喜歡。從第一次在你家窗外，看見你提著刀擋在長寧前面的時候，就喜歡了。
+lh：可是你的眼睛裡，只有一個人。
+lh：所以，我只能當你的大哥。這樣，至少可以一輩子站在你身邊。
+@if qing<56 c10lh
+@goto c10c
+#c10lh
+?李懷安的眼神，溫柔得讓人心疼——
+- 「……懷安。如果我說，我想試試看呢？」 => c10lh2
+- 「謝謝你，大哥。」 => c10c
+#c10lh2
+@hide all
+@bgm romance
+@show lh c
+他看著我，好像不敢相信自己聽到了什麼。
+lh：……長玉。你不用勉強。
+cy：我沒有勉強。
+cy：謝征是我撿回家的人。可是這段日子，一直陪在我身邊、教我寫字、替我擋住所有閒話的人……是你。
+cy：我爹和他爹之間的事，像一根刺。我每次看到他，那根刺就會痛。
+cy：可是看到你，不會。
+@cg end_lh 義兄
+後來，我和謝征，正式和離了。
+他簽字的時候，手很穩。只說了一句話：「他對你好，就好。」
+李懷安辭了官，帶著我回了江南。他開了一間書院，我在書院旁邊，開了一間肉舖。
+他每天早上，都會在肉舖門口，替我寫一塊新的招牌。今天賣什麼，多少錢一斤。
+（他的字，沒有謝征的好看。可是很溫暖。）
+（有時候，我還是會想起，那個在雪地裡，被我撿回家的人。）
+（可是想起來的時候，心裡已經不會痛了。）
+@cgoff
+@end lhend
+#c10c
+@hide all
+@bg palace
+@bgm tension
+那段時間，京城裡發生了很多事。
+皇上想把長公主阿姝，賜婚給謝征。
+@show qs c
+qs：我不嫁。
+qs：謝征是長玉的人。我要嫁，也要嫁一個……會替我嚐藥的笨蛋。
+@hide all
+@show xz3 c
+來宣旨的太監，在謝征的軍帳裡，拿著聖旨，趾高氣揚。
+太監：侯爺，接旨吧。娶長公主，可是天大的恩典。
+謝征一句話都沒說。他拔出劍，一劍削下了那個太監的耳朵。
+xz3：回去告訴皇上。謝征，已有妻室。
+xz3：還有——這樣的皇上，不配當皇上。
+@hide all
+@bg camp
+@bgm romance
+@show xz3 c
+那天晚上，他來找我。
+xz3：長玉。
+xz3：瑾州的事，我會查清楚。不管查出來的真相是什麼，我都會告訴你。
+xz3：如果你爹真的是叛徒，那是他的罪，不是你的。
+xz3：如果你爹不是……那我欠你們家，一個公道。
+?他說，要替我爹查清真相——
+- 「……謝征。我們一起查。」 => c10d | @set xin +3 | @set qing +2
+- 「我還需要一點時間。」 => c10e | @set qing +1
+#c10d
+xz3：……好。一起。
+（他笑了。那是從孤山以後，我第一次看見他笑。）
+@goto c10f
+#c10e
+xz3：好。我等你。
+xz3：反正，我很會等。
+@goto c10f
+#c10f
+@hide all
+@bg camp
+@bgm tension
+後來，十三娘來找我了。
+她是隨元青身邊的那個女人。她抱著一個木盒子，跪在我的帳篷外面。
+十三娘：樊將軍。隨元青……死了。是齊旻殺的。
+十三娘：他死之前，讓我把這個交給你。
+木盒子裡，是一枚虎符。還有……隨元青的頭。
+十三娘：他說，他這輩子沒做過一件好事。這是最後一件。
+@hide all
+@bg camp
+@bgm romance
+@fx petal
+那一年的冬天，朝廷正式認可了我和李懷安，共同執掌霽州的兵權。
+慶功宴上，我喝醉了。
+@show xz3 c
+迷迷糊糊之中，我看見一個人，站在營火旁邊。
+cy：……言正？
+cy：言正，你回來了啊……你去哪裡了？我等你好久……
+他走了過來，蹲在我面前。
+xz3：……我在這裡。
+?醉得迷迷糊糊的時候——
+- 抱住他：「不准再走了。」 => c10g | @set qing +5
+- 「言正……我爹，對不起你爹……」 => c10h | @set qing +3 | @set xin +2
+#c10g
+他抱住了我。
+抱得很緊，很緊。然後，他吻了我。
+這一次，不兇，也不急。很輕很輕，像雪落在肩膀上。
+xz3：不走了。
+@goto c10i
+#c10h
+xz3：……傻子。
+他把我抱進了懷裡。
+xz3：那不是你的錯。從來都不是。
+然後，他吻了我。很輕很輕。
+@goto c10i
+#c10i
+@hide all
+@bg palace
+@bgm tension
+@fx off
+開春以後，一道聖旨，送到了北境。
+是當朝的丞相，魏嚴下的旨。
+魏嚴，是謝征的舅舅。從小把他養大的人。
+也是全天下的人都知道，謝征最恨的人。
+（聖旨上說：封樊長玉為「簪花將軍」，即刻入京覲見。）
+@show gs c
+gs：……這是陷阱。魏嚴想用你，來牽制侯爺。
+gs：而且，京城的那些人……會用盡一切方法，羞辱一個殺豬出身的女將軍。
+?明知道是陷阱，還要入京嗎？
+- 「去。我倒要看看，京城的人能拿我怎麼樣。」 => c10j | @set yong +2
+- 「去。可是我要先學會京城的規矩。」 => c10k | @set zhi +2
+#c10j
+@goto c10l
+#c10k
+（後來，陶太傅花了一個月，教我京城的禮儀。）
+（我學會了怎麼行禮，怎麼說話，怎麼在宴會上，不把筷子插在飯上。）
+@goto c10l
+#c10l
+@hide all
+@bg palace
+@bgm battle
+@form cy gold
+入京的那一天，我穿了一身金色的盔甲。
+那是陶太傅讓人替我打的。他說，簪花將軍，就要有簪花將軍的樣子。
+我的辮子上，插著娘的那支梅花銀簪。
+@show cy c
+金殿上，站滿了文武百官。他們看著我，有的在笑，有的在交頭接耳。
+官員：……殺豬的，也配當將軍？
+官員：聽說她連字都不識幾個……
+?金殿上，百官竊竊私語——
+- 「我是不識字。可是我識得，誰在戰場上流過血，誰沒有。」 => c10m | @set yong +2
+- 規規矩矩地行禮，一句話都不多說 => c10n | @set zhi +2
+#c10m
+整個金殿，一下子安靜了。
+那些笑我的人，臉一個個地漲紅了。他們之中，沒有一個人，上過戰場。
+@goto c10o
+#c10n
+我行禮，謝恩，退下。每一個動作，都是陶太傅教的，一點錯都挑不出來。
+那些等著看我出醜的人，一個一個地，閉上了嘴。
+@goto c10o
+#c10o
+@hide all
+@bg street
+@bgm daily
+下朝的時候，丞相府的李陘，坐著八人抬的大轎，故意擋在我的路中間。
+李陘：樊將軍，京城的路窄。殺豬的，就走旁邊吧。
+我走過去，一隻手握住了他的轎棍。
+「喀嚓」一聲，轎棍斷成了兩截。
+@fx shake
+轎子往旁邊一歪，李陘狼狽地從轎子裡滾了出來。
+cy：李大人，京城的轎子，太不結實了。
+（後來，「簪花將軍徒手斷轎棍」這件事，在京城傳了整整一個月。）
+@hide all
+@bg mansion
+@bgm romance
+@form cy court
+@show qs c
+阿姝替我在京城，找了一座將軍府。
+qs：長玉！快過來，我幫你打扮！明天的宮宴，你要美死那些人！
+cy：……一定要穿這麼多層嗎？我覺得我打不動架了。
+qs：宮宴是去吃飯的，不是去打架的！
+@hide all
+@show sy c
+第二天，禮部來了一個官員，替我送朝服。
+是宋硯。
+他看到「簪花將軍」是我的時候，整個人腿一軟，跪在了地上。
+sy：長、長玉……不，樊將軍……
+?宋硯跪在我面前，嚇得發抖——
+- 「起來吧。你娘的事……我很遺憾。」 => c10p | @set lin +2
+- 「宋大人，那十兩銀子，你還記得吧？」 => c10q | @set yong +1
+#c10p
+sy：……
+宋硯抬起頭看著我，眼眶一下子紅了。
+sy：……我娘臨死前，手裡抓著一包冬衣。是給我的。
+sy：長玉，對不起。我以前，對你……
+cy：都過去了。好好當你的官吧。
+@goto c10r
+#c10q
+宋硯的臉，一下子白得像紙。
+cy：開玩笑的。好好當你的官，別再讓你娘在地下為你操心了。
+@goto c10r
+#c10r
+@hide all
+@bg lantern
+@bgm romance
+@fx stars
+那天晚上，有人敲了將軍府的後門。
+@show xz3 c
+是謝征。他沒有聖旨，一個人，騎了三天三夜的馬，從北境趕回了京城。
+cy：你瘋了？沒有聖旨私自回京，是要殺頭的！
+xz3：我聽說，有人要在宮宴上為難你。
+xz3：而且……我想你了。
+他帶著我，爬上了京城最高的那座鐘樓。
+那天晚上，京城放了一整夜的煙火。
+@cg yanhuo 京城的煙火
+xz3：長玉。等這一切都結束了，你想去哪裡？
+cy：……回臨安鎮。把肉舖重新開起來。
+xz3：那我呢？
+cy：你？你幫我算帳。
+xz3：……好。
+（煙火一朵一朵地在天上開。他的手，一直牽著我的手。）
+@cgoff
+@hide all
+@bg palace
+@bgm tension
+@fx off
+可是第二天，又出事了。
+皇上齊昇，在御花園裡看見了我。他說，他要納我為妃。
+@show xz3 c
+謝征站在金殿上，一個字一個字地說：
+xz3：她是臣的妻子。
+xz3：皇上若要納她，就先砍了臣的頭。
+@hide all
+（整個金殿，沒有一個人敢說話。）
+（連皇上都不敢。）
+@if qing<60 && xin<9 c10gen
+`.trim().split('\n');
+
+// 第十章分支：為了保護他而離開（簪花將軍・孤身）
+SCRIPT.c10.push(...`
+@goto c10end
+#c10gen
+@bgm sad
+那天晚上，我一個人坐在將軍府的院子裡，坐到了天亮。
+@show cy c
+（他為了我，削了太監的耳朵，頂撞了皇上。）
+（他為了我，私自回京，冒著殺頭的罪。）
+（我爹害死了他爹。現在，我又要害死他了嗎？）
+?天快亮的時候，我做了一個決定——
+- 寫一封信給他，然後請旨回北境，一個人守邊 => c10gen2
+- 不。我要相信他，也相信我自己 => c10end | @set xin +2
+#c10gen2
+@hide all
+@cg end_general 簪花將軍
+我回到了北境。一個人，守著瑾州的城牆。
+他寫了很多很多信給我。每一封，我都看了。每一封，我都沒有回。
+（不是不想回。是怕一回，就會忍不住回到他身邊。）
+（然後，所有想傷害我的人，都會去傷害他。）
+後來，北境的人都叫我「簪花將軍」。說我打了一輩子的仗，一場都沒輸過。
+可是每年除夕，我都會多包一個紅封。放在城牆上，對著京城的方向。
+（言正。你看。我現在，也很會等了。）
+@cgoff
+@end general
+#c10end
+`.trim().split('\n'));
+
+// ---------------- 第十一章：登聞鼓 ----------------
+SCRIPT.c11 = `
+@title 第十一章|登聞鼓
+@form cy court
+@bg mansion
+@bgm romance
+@fx petal
+謝征奉旨，正式回京了。
+回京的那天，京城的百姓擠滿了整條朱雀大街。
+我站在將軍府的閣樓上。他騎著馬，從樓下經過。
+?看著他從樓下經過——
+- 解下頭上的髮帶，丟了下去 => c11a | @set qing +4
+- 大聲喊：「謝征！」 => c11b | @set qing +3 | @set yong +1
+#c11a
+紅色的髮帶，在風裡飄啊飄。
+滿街的姑娘，都伸出手去搶。
+可是它最後，落在了謝征的手裡。他抬起頭，看著閣樓上的我。
+（後來阿姝說，那條髮帶，他繫在手腕上，繫了一輩子。）
+@goto c11c
+#c11b
+滿街的人，全都回過頭來看我。
+他勒住了馬，抬起頭，對著閣樓上的我，笑了。
+那是全京城的人，第一次看見武安侯笑。
+@goto c11c
+#c11c
+@hide all
+@bg wei
+@bgm tension
+@fx off
+可是那天晚上，他被魏嚴叫回了丞相府。
+@show wy c
+wy：謝征。你要娶一個叛徒的女兒？
+wy：魏祁林害死了你爹。你要讓你爹在地下，看著你娶仇人的女兒？
+wy：跟她斷了。這是我最後一次跟你說。
+@hide all
+@show xz3 c
+xz3：……舅舅。
+xz3：你養了我十七年。我很感激。
+xz3：可是長玉，是我這輩子，唯一想要的人。
+@hide all
+@show wy c
+wy：……來人。家法。
+@fx red
+@fx shake
+（一百零八鞭。）
+（他跪在丞相府的院子裡，一聲都沒有吭。）
+@hide all
+@bg shrine
+@bgm sad
+@fx snow
+我在丞相府的門外，等到了半夜。
+他出來的時候，背上的衣服，全都被血浸透了。
+@show xz3 c
+cy：謝征！
+他看到我，笑了一下。然後拉著我的手，一步一步地，走到了謝家的祠堂。
+他爹娘的牌位前。
+xz3：爹，娘。
+xz3：這是長玉。我的妻子。
+xz3：她會殺豬，會打仗，力氣比我還大。她把我從雪地裡扛回家，替我贖回了命。
+xz3：……還給了我十個銅板的壓歲錢。
+@face cy cry
+@cg lingqian 靈前
+他拉著我，一起跪了下去。
+?跪在他爹娘的牌位前——
+- 「謝伯伯，謝伯母。我爹欠你們的，我會還。」 => c11d | @set xin +2
+- 「謝伯伯，謝伯母。我會照顧好他。用一輩子。」 => c11e | @set qing +4
+#c11d
+xz3：……長玉，你不欠任何人。
+cy：我知道。可是我想讓他們知道，樊家的人，是有骨氣的。
+@cgoff
+@goto c11f
+#c11e
+他轉過頭看著我。眼睛紅紅的。
+xz3：……好。那我也照顧你。用一輩子。
+@cgoff
+@goto c11f
+#c11f
+@hide all
+@bg palace
+@bgm tension
+@fx off
+那段日子，京城很不平靜。
+齊旻，把淺淺和寶兒抓走了。
+@show yq c
+後來我才知道，淺淺在被關的時候，做了一件很勇敢的事。
+齊旻替她準備了皇后的衣服。他說，等他當上皇帝，她就是皇后。
+淺淺說，她家鄉的規矩，男人求親，要單膝跪下。
+齊旻……跪下了。
+那天晚上，淺淺趁他睡著，偷走了他藏起來的虎符。
+yq：紫蘇，把這個送去將軍府。給長玉。
+yq：我……留下來，拖住他。
+@hide all
+@bg feast
+@bgm tension
+宮宴那天，滿朝的文武百官，都到了。
+@show xz3 c
+魏嚴的人，一直在找機會刁難我。
+官員：樊將軍出身屠戶，不知道會不會用筷子？
+官員：聽說樊將軍的父親，是瑾州的叛徒……
+啪。
+謝征把一把龍泉劍，拍在了桌上。
+xz3：再說一個字。
+整個宴會，一下子安靜了。
+@hide all
+?宮宴上，我發現了一件奇怪的事——皇上和李陘一直在偷偷交換眼神
+- 跟著李陘離席，看看他要去哪裡 => c11g [zhi>=18] | @set zhi +2
+- 偷偷拉住謝征：「小心，他們在打什麼主意。」 => c11h | @set xin +2
+- 太累了，宴會又無聊。不管了 => c11trap [zhi<20]
+#c11g
+我假裝去更衣，跟在了李陘後面。
+他走進了一間偏殿，跟一個太監說話。
+李陘：……迷香已經放在清源宮了。等侯爺一進去，就放火。
+李陘：然後說，侯爺穢亂後宮。到時候，他就是有一百張嘴，也說不清了。
+@goto c11i
+#c11h
+@show xz3 c
+他看了我一眼，點了點頭。
+xz3：……我知道。我會小心。
+xz3：你幫我拖住魏嚴。我要去清源宮找一個人。冷宮裡，有一個人知道十七年前的事。
+@hide all
+@goto c11i
+#c11i
+@hide all
+@bgm battle
+@fx flash
+清源宮，起火了。
+謝征被人用迷香算計，困在了火場裡。
+（後來他告訴我，他中了迷香，眼前一片模糊。他用刀割破了自己的手，用痛來保持清醒。）
+@fx red
+太監李祥帶著一群人衝進火場，大喊著：侯爺穢亂後宮！
+謝征從火場裡走了出來，手上全是血。
+他一劍，斬了李祥。
+@show wy c
+魏嚴，當著滿朝文武的面，打了皇上一巴掌。
+wy：這就是你想要的？用這種下三濫的手段，害我魏家的人？
+@hide all
+@bg mansion
+@bgm romance
+回府的馬車上，謝征的迷香，發作了。
+@show xz3 c
+他的臉燙得嚇人。呼吸越來越重。
+xz3：……長玉……離我遠一點……
+cy：我才不要。
+（那天晚上的事，我就不說了。）
+（反正，第二天，阿姝看著我脖子上的痕跡，笑了整整一個上午。）
+@hide all
+@bg street
+@bgm tension
+可是，敵人並沒有停手。
+齊旻把淺淺偷出來的虎符，「借」淺淺的手，送到了我面前。
+然後，全京城的人都知道了：簪花將軍樊長玉，是叛徒魏祁林的女兒。手上還有一枚，十七年前瑾州失蹤的虎符。
+@fx shake
+@form cy red
+我走在街上的時候，有人朝我丟爛菜葉。有人朝我吐口水。
+「叛徒的女兒！」「殺了她！」
+?百姓們朝我丟石頭——
+- 一步都不退，一直走 => c11j | @set yong +2
+- 回頭看著那些人：「你們罵我，是因為你們不知道真相。」 => c11k | @set lin +2
+#c11j
+一顆石子打在了我的額頭上。血流了下來，流進了眼睛裡。
+我沒有擦。一直走。
+@goto c11l
+#c11k
+沒有人聽。可是有一個小孩，被他娘拉走的時候，一直回頭看著我。
+@goto c11l
+#c11l
+我走到了皇宮門口。
+那裡有一面鼓。一面很大很大，上面積滿了灰塵的鼓。
+登聞鼓。
+（陶太傅說，這面鼓，只要有人敲響了，皇上就必須上朝聽審。不管告的是誰。）
+（已經三十年，沒有人敲過了。）
+@show cy c
+@face cy firm
+我拿起了鼓槌。
+@cg denwengu 登聞鼓
+@fx shake
+咚。
+cy：臨安鎮，樊長玉！
+@fx shake
+咚。
+cy：為父魏祁林，告御狀！
+@fx shake
+咚。
+cy：十七年前，瑾州之案，另有真兇！
+@cgoff
+@hide all
+@show qs c
+宮門開了。阿姝站在那裡。
+qs：皇兄不肯上朝。
+qs：……可是我會讓他上的。
+（後來我才知道，那天，阿姝拿著一根棍子，衝進了皇上的寢宮。）
+@hide all
+@show xz3 c
+@bgm sad
+那天晚上，謝征在他娘留下來的遺物裡，找到了一樣東西。
+一個裝桂花糕的舊木盒。盒子的夾層裡，藏著一封信。
+xz3：……長玉。
+xz3：我娘……知道真相。她把真相，藏了十七年。
+@next c12
+#c11trap
+@bgm sad
+那天晚上，清源宮起了大火。
+謝征被人發現在火場裡，身邊，躺著一個衣衫不整的妃子。
+@show xz3 c
+他說，他中了迷香。可是沒有人信。
+皇上下旨：武安侯謝征，穢亂後宮，削爵，流放三千里。
+@hide all
+@cg end_trap 宮宴
+流放的那天，下著雨。
+我跟在押送的隊伍後面，一直走，一直走。
+cy：謝征！我陪你去！
+xz3：……傻子。回去。
+cy：我不回去！你說過，要我活著回來找你。現在換我說——你去哪裡，我就去哪裡！
+（後來，我們在嶺南的一個小漁村住了下來。）
+（他再也不是侯爺了。我也不是將軍了。）
+（瑾州的真相，永遠埋在了京城的灰燼裡。那是他一輩子的遺憾。）
+（……那一晚，如果我多留意一點就好了。）
+@cgoff
+@end trap
+`.trim().split('\n');
+
+// ---------------- 終章：永興 ----------------
+SCRIPT.c12 = `
+@title 終章|永興
+@form cy gold
+@bg palace
+@bgm tension
+@fx off
+三天後，皇上終於上朝了。
+金殿上，站滿了人。魏嚴，李陘，滿朝的文武。還有我，和謝征。
+@show xz3 c
+xz3：這是十七年前，淑妃戚容音的親筆信。
+xz3：是我娘臨死前，藏在桂花糕的盒子裡，留給我的。
+@hide all
+@show tt c
+陶太傅站了出來。他仔細地看了那枚虎符，和那封信。
+tt：……虎符是真的。
+tt：這封信的筆跡……是偽造的。是有人偽造了淑妃的字，騙魏丞相離開前線。
+滿朝文武，一片嘩然。
+@hide all
+@bgm battle
+@fx shake
+可是就在這時候，宮門外，傳來了喊殺聲。
+齊旻，帶兵打進來了。
+@show qm c
+他穿著龍袍，戴著那半張銀色的面具。身邊，被綁著淺淺。
+qm：十七年了。這個天下，終於要還給我了。
+@hide all
+@fx red
+皇上齊昇，嚇得把玉璽交了出去。
+齊旻把魏嚴的夫人和兒子魏宣，押在了城牆上。
+qm：魏嚴。你的妻兒，換你的命。
+@show wy c
+魏嚴看著城牆上的妻兒，一句話都沒有說。
+（他沒有救他們。）
+@hide all
+@show xz3 c
+謝征拿起了弓。
+兩支箭，一前一後地射了出去。綁著魏夫人和魏宣的繩子，同時斷了。
+?城牆上一片混亂，淺淺被齊旻抓著——
+- 衝上城牆，去救淺淺 => c12a | @set yong +2 | @set lin +2
+- 守在謝征身邊，替他擋開冷箭 => c12b | @set qing +3
+#c12a
+@hide all
+@bg wall
+我一路砍上了城牆。
+齊旻抓著淺淺，站在城牆的邊緣。有一支箭，從城下射了上來——
+他轉身，擋在了淺淺前面。
+@fx red
+箭射進了他的胸口。他往後一倒，從城牆上，摔了下去。
+他的手，緊緊地抓著淺淺的手。
+cy：齊旻！放手！你會把她一起拖下去的！
+@show yq c
+yq：……他不會放手的。
+yq：他這輩子，從來都不懂什麼叫放手。
+我撲過去，一把抓住了淺淺的另一隻手。
+最後，齊旻的手，終於鬆開了。
+@goto c12c
+#c12b
+我站在謝征身邊。一支冷箭從人群裡射了過來——
+可是有一個人，比我更快。
+魏宣。那個從小就欺負謝征的表哥。他撲了過來，替謝征擋下了那一箭。
+@goto c12c
+#c12c
+@hide all
+@bg palace
+@bgm sad
+@fx off
+那一天，宮變平息了。
+齊旻摔斷了腿，被關進了天牢。李陘聽見齊旻勾結北厥的事被揭發，當場氣絕身亡。
+魏嚴，被押了起來。
+@show wy c
+魏夫人跪在謝征面前，求他給魏嚴留一個全屍。
+然後，她說出了一個秘密。
+魏夫人：……十七年前，那封偽造的信，是先帝的人寫的。
+魏夫人：先帝想除掉太子。所以，他利用了魏嚴，利用了長信王，利用了你爹，也利用了魏祁林。
+魏夫人：瑾州的十萬將士，都只是先帝棋盤上的棋子。
+@hide all
+@show cy c
+@face cy cry
+（爹，不是叛徒。）
+（爹只是被派去，拿著一枚虎符，去求長信王出兵。可是長信王，早就被先帝收買了。）
+（爹到死，都背著一個不屬於他的罪名。改名換姓，躲到臨安鎮，殺了一輩子的豬。）
+@hide all
+@show xz3 c
+謝征走過來，把我抱進了懷裡。
+xz3：長玉。你爹，是英雄。
+xz3：我會讓全天下的人，都知道。
+@hide all
+@bg jail
+@bgm sad
+後來，淺淺去天牢裡，看了齊旻最後一次。
+她端著一碗酒。
+@show yq c
+yq：……這是我親手釀的。你最喜歡的那種。
+（齊旻知道那碗酒裡有什麼。可是他笑了。）
+（那是我第一次，看見他真正地笑。不是在算計什麼，只是笑。）
+@hide all
+@bg palace
+@bgm hope
+@fx petal
+那一年，大越朝改了年號，叫「永興」。
+寶兒登基，當了皇帝。淺淺垂簾聽政。
+我爹魏祁林，被追封為忠勇將軍。他的名字，終於可以光明正大地，刻在瑾州的英雄碑上了。
+我被封為「護國夫人」。謝征，成了攝政王。
+@show lh c
+李懷安自請去邊關，替他的家族贖罪。
+lh：長玉。不，護國夫人。
+cy：叫我長玉就好。大哥。
+lh：……好。長玉。保重。
+@hide all
+@show gs l
+@show qs r
+公孫先生和阿姝，終於成親了。
+他們說好了，等寶兒長大了，就一起去江南隱居。阿姝要開一間醫館，公孫先生替她嚐藥。
+@hide all
+@show wy c
+魏嚴，在永興五年的春天，喝下了一杯毒酒。
+臨死之前，謝征去看過他。
+謝征問他，十七年前，他為什麼不說出真相。
+他只是笑了笑，說了一句：
+wy：你說是，那便是吧。
+（後來我們才知道。他這一輩子，扛下了所有的罵名。只為了保護兩個人。）
+（一個是他愛了一輩子、卻不能娶的女人。一個是他妹妹留下來的孩子。）
+@hide all
+@bg border
+@bgm romance
+@fx snow
+@form cy armor
+永興五年的冬天，北厥又來犯邊了。
+我和謝征，一起回到了瑾州。
+@show xz3 l
+@show cy r
+瑾州的城牆上，風很大，雪很大。
+xz3：冷嗎？
+cy：不冷。殺豬的，皮厚。
+他笑了。然後，把他的披風，披在了我的肩膀上。
+@hide all
+@if qing>=72 && xin>=14 c12true
+@show cy c
+（這一路上，我們失去了很多人。賀將軍，王捕頭，宋母，臨安鎮的鄉親們……）
+（可是我們活下來了。帶著他們的那一份，一起活下來了。）
+@cg end_together 並肩
+城牆下，北厥的大軍，像烏雲一樣壓了過來。
+我拔出了他送我的那對刀。他拔出了他的劍。
+我們並肩，站在瑾州的城牆上。
+十七年前，他的爹和我的爹，也曾經在這裡，守過同一座城。
+（爹，謝伯伯。你們看。）
+（這一次，瑾州，會守住的。）
+@cgoff
+@end together
+#c12true
+@show xz3 c
+@bgm hope
+他從懷裡，拿出了一樣東西。
+是那個紅封。褪了色，邊角都磨破了。裡面，還是那十個銅板。
+xz3：長玉。這個，我帶了五年。
+xz3：每次打仗之前，我都會摸摸它。我就會想，我還欠一個人，一輩子的帳要算。
+xz3：所以，我不能死。
+@face cy cry
+cy：……笨蛋。
+cy：那今年除夕，我再給你包一個。
+xz3：好。
+xz3：還有明年，後年。每一年。
+@hide all
+@cg end_true 逐玉
+城牆下，北厥的大軍像烏雲一樣壓了過來。
+我拔出了刻著我名字的那對刀。他拔出了他的劍。
+我們並肩，站在瑾州的城牆上。
+十七年前，他的爹和我的爹，也曾經在這裡，守過同一座城。
+那一仗，我們贏了。
+（後來，那場仗打完以後，我們回了一趟臨安鎮。）
+（樊記肉舖，重新開張了。招牌，是他寫的。帳，也是他算的。）
+（長寧說，攝政王在肉舖門口吆喝賣肉的樣子，是她這輩子看過最好笑的事。）
+（娘。你說，見死不救的人，晚上會睡不著。）
+（那年雪夜，我撿回了一個人。後來，我用了一輩子，才知道——）
+（我撿回來的，是我的整個天下。）
+@cgoff
+@end true
+`.trim().split('\n');
+
+// ---------------- 結局 ----------------
+const ENDS = {
+  true: { n: '逐玉', kind: 'true', d: '從雪地裡的一個血人，到瑾州城牆上的並肩。<br>褪了色的紅封裡，十個銅板，他帶了一輩子。<br>她撿回來的，是她的整個天下。', hint: '一路對他真心、相信他，也相信自己' },
+  together: { n: '並肩', kind: 'true', d: '十七年前，兩個父親守過同一座城。<br>十七年後，他們的孩子站在同一面城牆上。<br>這一次，瑾州守住了。', hint: '走完他們的故事' },
+  stay: { n: '臨安鎮的肉舖', kind: 'true', d: '武安侯謝征，死在了北境。<br>江南的小鎮上，多了一個會算帳的教書先生，和一間生意很好的肉舖。<br>每年第一場雪，他都會往北邊站很久。', hint: '第五章：在他離開之前，說出那句「留下來」' },
+  rebuild: { n: '林安鎮的灶火', kind: '', d: '她沒有去北方。她留在燒成灰的小鎮，把房子一間一間蓋回去。<br>三年後，一封歪歪扭扭的信，告訴她：有一個戴面具的人，替她守著妹妹。', hint: '第六章：選擇留下來，守著還活著的人' },
+  apart: { n: '和離', kind: 'sad', d: '她覺得自己配不上侯爺，於是又寫了一次和離書。<br>他打贏了每一場仗，拒絕了每一門婚事。<br>每年除夕，她都多包一個紅封，放到天亮。', hint: '第七章：在孤山上，悄悄地離開' },
+  lhend: { n: '義兄', kind: '', d: '他說，只能當她的大哥，這樣至少可以一輩子站在她身邊。<br>後來，江南的書院旁邊，開了一間肉舖。<br>他每天早上，替她寫一塊新的招牌。', hint: '第十章：心裡的那根刺太深的時候，有一個人一直在身邊' },
+  general: { n: '簪花將軍', kind: 'sad', d: '為了不讓他因為自己受傷，她一個人回到了北境。<br>她打了一輩子的仗，一場都沒有輸過。<br>城牆上的紅封，對著京城的方向。', hint: '第十章：不夠相信彼此的時候' },
+  trap: { n: '流放', kind: 'bad', d: '宮宴上，她沒有察覺那場陰謀。<br>他被誣陷，流放三千里。她跟著他，去了天涯海角。<br>瑾州的真相，永遠埋在了灰燼裡。', hint: '第十一章：在宮宴上，太粗心了' },
+  fall: { n: '雪落無聲', kind: 'bad', d: '懸崖下的雪，下得太大了。<br>他找了七天七夜，只找到一支梅花銀簪。<br>後來，他打贏了每一場仗，可是再也沒有笑過。', hint: '第六章：還不夠堅強的時候，從懸崖上墜落' },
+  shihu: { n: '代夫出征', kind: 'bad', d: '她替他上了戰場，卻沒能回來。<br>墓碑上刻的不是「樊長玉」。<br>是「謝門樊氏」。', hint: '第八章：替他出戰，可是勇氣還不夠' },
+};
+
+'use strict';
+// ======================================================================
+//  逐玉 —— 番外：謝征篇、後日談、另一個世界
+// ======================================================================
+
+// ---------------- 番外一：謝征篇 ----------------
+SCRIPT.ep1 = `
+@title 番外一|九衡
+@pov xz
+@name xz 謝征
+@bg snow
+@bgm sad
+@amb amb_wind
+@fx snow
+我叫謝征，字九衡。
+十三歲第一次上戰場。十九歲封武安侯。二十二歲，死在北境的雪地裡。
+……本來是這樣的。
+（伏擊我的人，用的是軍中的箭。那些箭，是從自己人的背後射過來的。）
+（我身邊的親衛，一個一個地倒下。最後一個人把我推下了山坡，替我擋住了追兵。）
+我在雪地裡，爬了不知道多久。
+後來，就爬不動了。
+（也好。）
+（爹，娘。我好累。我想來找你們了。）
+@fx off
+然後，有一根樹枝，戳了戳我的臉。
+cy：……喂。死了沒？
+@show cy c
+我睜開眼睛。看見了一張被凍得紅通通的臉，和一條粗粗的麻花辮。
+她蹲在我旁邊，手裡拿著一根樹枝，皺著眉頭看我。
+（……我想殺了她。）
+（可是我連手指都動不了。）
+cy：還有氣！好，那就不能讓你死。
+然後，她把我扛了起來。
+（扛。）
+（我堂堂武安侯，被一個姑娘，像扛豬一樣，扛下了山。）
+?被她扛在肩上的時候——
+- （……屈辱。） => ep1a
+- （……她的背，好暖。） => ep1a
+#ep1a
+@hide all
+@bg home
+@bgm romance
+@fx off
+後來我才知道，她為了救我，當掉了她娘唯一的遺物。一支梅花銀簪。
+（一個陌生人。她連我的名字都不知道。）
+（我活了二十二年，身邊的每一個人，都想從我身上得到什麼。爵位，兵權，或者我的命。）
+（她是第一個，什麼都不要的人。）
+@show cy c
+cy：言正！吃飯了！今天有滷下水！
+（她說話的聲音，大得整條街都聽得見。）
+（可是我發現，我開始期待聽見這個聲音了。）
+@hide all
+@bg market
+@bgm daily
+她說要招婿的時候，我答應了。
+公孫鄞後來問我：你瘋了？堂堂武安侯，入贅給一個殺豬的？
+我說：我欠她一條命。
+（這是實話。可是不是全部的實話。）
+（全部的實話是——那天晚上，她坐在院子裡發呆，月光照在她的臉上。）
+（我想，如果能這樣一直看著她，好像也不錯。）
+@bg home
+@bgm romance
+@show cy c
+成親那天，她說，她的夫君，不跪任何人。
+（我這一生，跪過皇帝，跪過舅舅，跪過爹娘的靈位。）
+（從來沒有人跟我說過：你不用跪。）
+@hide all
+@bg lantern
+@bgm romance
+@fx snow
+除夕夜，她塞給我一個紅封。
+十個銅板。她說，她家的規矩，每個人都要有。
+?握著那個紅封——
+- （娘走的那年，也是除夕。） => ep1b
+- （……我不能讓她知道，我差點哭了。） => ep1b
+#ep1b
+（娘走的那年，我七歲。那天也是除夕。她把我叫到床邊，給了我一個紅封，和一盒桂花糕。）
+（她說：九衡，要好好長大。）
+（第二天早上，她就沒有醒過來了。）
+（從那以後，再也沒有人給過我紅封。）
+我把那十個銅板，收進了貼身的衣服裡。
+那天晚上，她喝醉了。我差一點就吻了她。
+（可是我不能。）
+（我是一個應該已經死掉的人。我身上背著十七年的血債，和一萬個想殺我的人。）
+（我不能，把她也拖進來。）
+@hide all
+@bg camp
+@bgm sad
+@fx snow
+離開臨安鎮的時候，她給了我一封和離書。
+我沒有簽。
+回到北境以後，那封和離書，又寄到了我的手上。這一次，她簽了名。字寫得歪歪扭扭的，有一個字還寫錯了。
+@show gs c
+gs：……侯爺，你在笑什麼？
+xz：她把「離」字，寫成了「籬」。
+gs：……所以？
+xz：所以，這封和離書，不算數。
+gs：……侯爺，你瘋了。
+（我是瘋了。從那個雪夜開始，就瘋了。）
+@hide all
+@bgm battle
+那天，海東青帶回了一個消息。
+臨安鎮，被隨元青屠了。
+@fx red
+@fx shake
+（我帶著三百親衛，一夜之間，殺光了清風寨所有的人。）
+（然後在深山裡，找了她三天三夜。）
+@bg mount
+@bgm sad
+@fx snow
+我在一個山洞裡，找到了她。
+她渾身都是傷，燒得像一塊炭。
+@show cy c
+我替她刮痧，替她擦身體，一遍一遍地叫她的名字。
+xz：長玉。醒過來。
+xz：你說要我活著。那你呢？你怎麼可以先死？
+xz：……我還沒有告訴你，我叫什麼名字。
+?她迷迷糊糊地，睜開了眼睛——
+- 讓她看見我 => ep1c
+- 立刻戴上面具 => ep1d
+#ep1c
+（可是她看見的，是我戴著面具的臉。）
+（我一直戴著。因為我怕，她醒過來看見我，會問我為什麼騙她。）
+@goto ep1e
+#ep1d
+（我戴上了面具。）
+（我怕，她醒過來看見我，會問我為什麼騙她。）
+@goto ep1e
+#ep1e
+@hide all
+她又昏了過去。
+我把披風蓋在她身上，留下了乾糧和藥，然後通知了李懷安。
+（我不能留下來。隨元青抓走了長寧。我要去把她妹妹救回來。）
+（這是我唯一，能為她做的事。）
+@bg camp
+@bgm romance
+@fx off
+我把長寧救回來的那天，那孩子抱著我哭了很久。
+@show cn c
+cn：姐夫……阿姐呢？阿姐是不是死了？
+xz：沒有。你阿姐，是全天下最厲害的人。她不會死。
+cn：……那你為什麼哭？
+xz：……風太大了。
+@hide all
+@bg mount
+@bgm battle
+後來，我被困在了孤山上。八百個人，沒有糧食。
+（我想，這次大概真的要死了。）
+（然後，她揹著米，爬上了山。）
+@show cy c
+（她不知道我在這裡。她是來救那些素不相識的士兵的。）
+（她從來都是這樣。看見有人要死，就衝過去。不管那個人是誰。）
+她認出我的那天，我咳了一口血。
+不是因為傷口。是因為她說，她不要和離。
+（公孫鄞後來笑了我一整年。他說，武安侯在戰場上被砍了十幾刀都沒吭一聲，結果被一句話嚇到吐血。）
+@hide all
+@bg wei
+@bgm sad
+@fx snow
+後來，我回了京城。
+舅舅說，要我跟她斷了。不然，就用家法。
+@cg bianxing 一百零八鞭
+（一百零八鞭。我跪在院子裡，數著。）
+（第一鞭，是雪地裡那根戳我臉的樹枝。）
+（第十鞭，是她說「我殺豬養你」的那個晚上。）
+（第五十鞭，是除夕夜的十個銅板。）
+（第一百鞭，是她在孤山上說，不准你死。）
+（第一百零八鞭……是她在丞相府門外，等了我一整夜。）
+@cgoff
+@show cy c
+我走出丞相府的時候，她撲了過來。
+cy：謝征！你這個笨蛋！
+（嗯。我是笨蛋。）
+（娘，我終於知道，你為什麼願意等一輩子了。）
+（因為有些人，值得。）
+@hide all
+@bg border
+@bgm hope
+@fx petal
+xz：長玉。
+cy：嗯？
+xz：那年雪夜，你為什麼要救我？
+cy：……你長得好看啊。
+xz：……
+cy：開玩笑的啦！
+cy：因為我娘說，見死不救的人，晚上會睡不著。
+@show cy c
+@face cy laugh
+她笑起來的時候，眼睛會彎成兩道月牙。
+（這就是我的天下。）
+@pov off
+@end xzside
+`.trim().split('\n');
+
+// ---------------- 番外二：後日談 ----------------
+SCRIPT.ep2 = `
+@title 番外二|樊記肉舖
+@bg market
+@bgm daily
+@fx petal
+天下太平以後，我們回了一趟臨安鎮。
+臨安鎮已經重新蓋起來了。比以前還熱鬧。
+@show zd c
+zd：長玉！真的是長玉！哎喲，現在要叫護國夫人了吧？
+cy：趙大娘！叫長玉就好！
+zd：那攝政王呢？攝政王要叫什麼？
+@hide all
+@show xz3 c
+xz3：……叫我言正就好。
+趙大娘愣了一下，然後一巴掌拍在他的背上。
+zd：好小子！我就知道你不是普通人！當初幫你們圓房，我可是頭號功臣！
+xz3：……是。多謝大娘。
+@hide all
+?樊記肉舖重新開張的那天——
+- 讓攝政王站在門口吆喝 => ep2a
+- 讓攝政王坐在櫃台後面算帳 => ep2b
+#ep2a
+@show xz3 c
+xz3：……新、新鮮的豬肉。
+cy：大聲一點！
+xz3：新鮮的豬肉！買一斤，送……送滷下水。
+@cg roupu 樊記肉舖
+那一天，臨安鎮所有的姑娘，都來買肉了。
+肉，不到半個時辰，就賣光了。
+@cgoff
+@goto ep2c
+#ep2b
+@show xz3 c
+他坐在櫃台後面，算盤打得飛快。
+xz3：長玉。你這半年的帳，少算了三兩七錢。
+cy：……那是我請鄰居吃的。
+xz3：……記在我的帳上。
+@goto ep2c
+#ep2c
+@hide all
+@bg home
+@bgm romance
+@show cn c
+長寧長大了。十二歲了。她現在每天跟著陶太傅念書，說以後要當女先生。
+cn：阿姐，姐夫，我有一件事要問你們。
+cn：你們當初，到底是不是假成親啊？
+?長寧問我們，當初是不是假成親——
+- 「是假的。」 => ep2d
+- 「是真的。」 => ep2e
+#ep2d
+@show xz3 r
+xz3：……是嗎？
+cy：本來就是嘛！說好了房子保住就和離的！
+xz3：那妳為什麼要在拜堂的時候，當著全鎮的人親我？
+cy：……那是為了氣宋硯！
+cn：……阿姐，你臉好紅喔。
+@goto ep2f
+#ep2e
+@show xz3 r
+xz3：……真的。
+cy：欸？
+xz3：從她說「我樊長玉的夫君，不跪任何人」的那一刻起，就是真的。
+cn：哇——！姐夫好肉麻！
+@goto ep2f
+#ep2f
+@hide all
+@bg inn
+@bgm daily
+後來，京城寄來了好多信。
+淺淺說，寶兒很乖，可是批奏摺的時候會打瞌睡。她每天都要拿戒尺站在旁邊。
+阿姝說，公孫先生終於學會了煎藥。可是她發現自己的味覺恢復了，所以每次都嫌藥太苦。
+李懷安從邊關寄來了一包風乾的羊肉。信上只寫了一句話：「替我嚐嚐，比不比得上你的滷肉。」
+@show xz3 c
+xz3：……他的字，比以前好看了。
+cy：你在吃醋？
+xz3：沒有。
+cy：你耳朵紅了。
+xz3：……天氣冷。
+@hide all
+@bg shrine
+@bgm sad
+@fx snow
+那年冬天，我們去了爹娘的墳前。
+墓碑換了新的。上面刻的，不是「樊二牛」。是「忠勇將軍魏祁林」。
+@show xz3 c
+謝征在墳前，跪了下來。
+xz3：岳父。
+xz3：十七年前，你拿著虎符，去求長信王出兵救我爹。
+xz3：你沒有求到。可是你盡力了。
+xz3：……謝謝你。把長玉，帶到了這個世界上。
+@hide all
+@bg home
+@bgm hope
+@fx snow
+那天晚上，下了好大的雪。
+跟那年冬天一樣大。
+@show xz3 l
+@show cy r
+cy：謝征。
+xz3：嗯？
+cy：如果那天，我沒有在雪地裡撿到你，你會怎麼樣？
+xz3：會死。
+cy：……那如果，我撿到的是別人呢？
+他想了一下。很認真地想了一下。
+xz3：那我會從地底下爬出來，讓你重新撿一次。
+@hide all
+@show cy c
+@face cy laugh
+我笑得從椅子上摔了下去。
+他伸手來扶我，結果自己也滑了一跤。我們兩個，一起摔進了雪堆裡。
+（娘。你看。）
+（我撿回來的這個人，是個大笨蛋。）
+（可是，是我的笨蛋。）
+@end after
+`.trim().split('\n');
+
+// ---------------- 番外三：另一個世界 ----------------
+SCRIPT.ep3 = `
+@title 番外三|另一個世界
+@name xz 謝征
+@bg home
+@bgm romance
+@fx petal
+如果，十七年前，什麼事都沒有發生。
+如果，瑾州沒有被屠城。沒有人被冤枉，沒有人被犧牲。
+@show xzk c
+那一年春天，一個七歲的小男孩，跟著他娘，去拜訪一位將軍的家。
+那位將軍的夫人，肚子圓圓的，就快要生了。
+xzk：……裡面有人？
+樊母：有啊。是一個小寶寶。
+xzk：……是妹妹。
+樊母：你怎麼知道？
+xzk：我就是知道。
+兩個大人看著他認真的樣子，都笑了。
+謝母：九衡，那你以後，要不要把這個妹妹娶回家？
+@show xzk c
+@cg zhifu 好
+小男孩想了很久，很久。
+然後，他非常認真地，點了點頭。
+xzk：好。
+@cgoff
+@hide all
+@bg snow
+@bgm romance
+@fx snow
+十八年後的冬天。
+臨安鎮……不，在這個世界裡，她住在京城。她的爹，是威風凜凜的魏將軍。
+@show cy c
+她還是一樣，力氣很大，嗓門很大，一點都不像大家閨秀。
+那天，她在雪地裡，看見了一個人。
+一個穿著白衣服的年輕公子，站在她家門口。手裡，拿著一支梅花銀簪。
+@show xz l
+xz：……長玉。
+cy：你誰啊？
+xz：我是來娶你的。
+cy：哈？
+xz：十八年前，我答應過的。
+（在這個世界裡，他沒有受過傷，沒有被追殺，沒有背著血海深仇。）
+（他只是，一個守了十八年約定的笨蛋。）
+?在另一個世界裡，他拿著銀簪站在門口——
+- 「……那你先打贏我再說！」 => ep3a
+- 「……好啊。不過，我要先教你殺豬。」 => ep3b
+#ep3a
+那天，京城的人都看到了一個奇景。
+魏將軍家的大小姐，在雪地裡追著一個白衣公子打。
+公子一邊躲，一邊笑。笑得像個孩子。
+@goto ep3c
+#ep3b
+xz：……殺豬？
+cy：我家的規矩！嫁給我的人，要會殺豬！
+xz：……好。我學。
+@goto ep3c
+#ep3c
+@hide all
+@show cy c
+@face cy laugh
+（不管在哪一個世界。）
+（我們總會在一個下雪的日子，找到彼此。）
+@end other
+`.trim().split('\n');
+
+Object.assign(ENDS, {
+  xzside: { n: '九衡', kind: 'extra', d: '一百零八鞭，他一鞭一鞭地數。<br>每一鞭，都是一段和她有關的回憶。<br>他終於知道，娘為什麼願意等一輩子。', hint: '番外一：走過第八章之後解鎖' },
+  after: { n: '樊記肉舖', kind: 'extra', d: '攝政王站在肉舖門口吆喝賣肉。<br>墓碑上的名字，終於換回了「魏祁林」。<br>他說：如果你撿到的是別人，我就從地底下爬出來，讓你重新撿一次。', hint: '番外二：達成結局「逐玉」或「並肩」後解鎖' },
+  other: { n: '另一個世界', kind: 'extra', d: '如果十七年前什麼都沒有發生。<br>一個七歲的男孩，對著一個還沒出生的妹妹，說了一聲「好」。<br>然後，他守了十八年。', hint: '番外三：達成結局「逐玉」後解鎖' },
+});
+const EXTRA = [
+  { id: 'ep1', t: '番外一', sub: '九衡（謝征篇）', need: () => P.chap.c9 || P.end.true || P.end.together, hint: '故事進行到第九章後解鎖' },
+  { id: 'ep2', t: '番外二', sub: '樊記肉舖', need: () => P.end.true || P.end.together, hint: '達成結局「逐玉」或「並肩」後解鎖' },
+  { id: 'ep3', t: '番外三', sub: '另一個世界', need: () => P.end.true, hint: '達成結局「逐玉」後解鎖' },
+];
+
+'use strict';
+// ======================================================================
+//  逐玉 —— 影視小說引擎
+// ======================================================================
+const $ = id => document.getElementById(id);
+const ZA = 'assets/zhuyu/', CGD = ZA + 'cg/';
+const CH = {
+  cy: { n: '樊長玉', img: ZA + 'ch/cy.webp', col: '#ff9aa8' },
+  xz: { n: '言正', img: ZA + 'ch/xz.webp', col: '#9ab8e8' },
+  xz2: { n: '鐵面將軍', img: ZA + 'ch/xz_mask.webp', col: '#8a9ab8' },
+  xz3: { n: '謝征', img: ZA + 'ch/xz_armor.webp', col: '#9ab8e8' },
+  xzk: { n: '小九衡', img: ZA + 'ch/xzk.webp', col: '#9ab8e8' },
+  cn: { n: '長寧', img: ZA + 'ch/cn.webp', col: '#ffc8d8' },
+  zd: { n: '趙大娘', img: ZA + 'ch/zd.webp', col: '#d8b080' },
+  zs: { n: '趙大叔', img: ZA + 'ch/zs.webp', col: '#b89870' },
+  fd: { n: '大伯', img: ZA + 'ch/fd.webp', col: '#a08870' },
+  sy: { n: '宋硯', img: ZA + 'ch/sy.webp', col: '#a8b8a0' },
+  gs: { n: '公孫鄞', img: ZA + 'ch/gs.webp', col: '#80c8b0' },
+  qs: { n: '阿姝', img: ZA + 'ch/qs.webp', col: '#ffb0d0' },
+  lh: { n: '李懷安', img: ZA + 'ch/lh.webp', col: '#c8d8ff' },
+  yq: { n: '俞淺淺', img: ZA + 'ch/yq.webp', col: '#ffc890' },
+  qm: { n: '齊旻', img: ZA + 'ch/qm.webp', col: '#c0a0e0' },
+  sq: { n: '隨元青', img: ZA + 'ch/sq.webp', col: '#e07070' },
+  tt: { n: '陶太傅', img: ZA + 'ch/tt.webp', col: '#d0d0b0' },
+  hj: { n: '賀敬元', img: ZA + 'ch/hj.webp', col: '#c0a080' },
+  wy: { n: '魏嚴', img: ZA + 'ch/wy.webp', col: '#a07070' },
+};
+const CHN0 = Object.fromEntries(Object.entries(CH).map(([k, v]) => [k, v.n]));
+const XBG = {};
+const XHAS = {"palace": 1, "market": 1, "shrine": 1, "street": 1, "mansion": 1, "camp": 1, "feast": 1, "wei": 1, "snow": 1, "quarry": 1, "border": 1, "battle": 1, "jail": 1, "lantern": 1, "cliff": 1, "wall": 1, "mount": 1, "home": 1, "inn": 1};
+const CHX = {"gs": 1, "yq": 1, "cn": 1, "xz": 1, "zs": 1, "hj": 1, "zd": 1, "sy": 1, "cy": 1, "fd": 1, "qs": 1, "qm": 1, "sq": 1, "xzk": 1, "wy": 1, "lh": 1, "tt": 1};
+const BG = k => ZA + 'bg/' + k + '.webp';
+const VARS = ['qing', 'yong', 'lin', 'xin', 'zhi'];
+
+let S = null;            // 本次劇情狀態
+let P = { end: {}, cg: {}, chap: {}, read: {}, speed: 1, seen: 0 };
+let typing = null, auto = false, skip = false, busy = false, logArr = [];
+
+function loadP() { try { Object.assign(P, JSON.parse(localStorage.getItem('zy_meta') || '{}')); } catch (e) { } }
+function saveP() { try { localStorage.setItem('zy_meta', JSON.stringify(P)); } catch (e) { } }
+function newState(ch) { return { ch: ch || CHAP[0].id, i: 0, bg: null, cg: null, show: {}, v: { qing: 0, yong: 0, lin: 0, xin: 0, zhi: 0 }, names: {}, f: {}, t: Date.now() }; }
+function saveSlot(n) { if (!S || (n === 0 && !CHAP.some(c => c.id === S.ch))) return; S.t = Date.now(); try { localStorage.setItem('zy_save_' + n, JSON.stringify(S)); } catch (e) { } }
+function loadSlot(n) { try { const s = JSON.parse(localStorage.getItem('zy_save_' + n)); return s && s.ch ? s : null; } catch (e) { return null; } }
+const chapOf = id => CHAP.find(c => c.id === id) || (typeof EXTRA !== 'undefined' && EXTRA.find(c => c.id === id)) || { t: '', sub: '' };
+
+
+// ---------------- 聲音（手機需先觸碰畫面才能出聲，觸碰後自動補播） ----------------
+const AU = 'assets/xiaowu/audio/';
+const CHN = { bgm: { el: new Audio(), k: null, tok: 0 }, amb: { el: new Audio(), k: null, tok: 0 } };
+// 每個聲道只用一個播放器：手機一旦解鎖就一直能播，換曲時先淡出再換歌
+for (const c of Object.values(CHN)) { c.el.loop = true; c.el.preload = 'auto'; c.el.setAttribute('playsinline', ''); }
+const vol = t => (P.snd ?? 1) * (t === 'bgm' ? 0.6 : t === 'amb' ? 0.3 : 0.5);
+function fadeTo(a, v, ms, done) { const my = a._ft = (a._ft || 0) + 1; const s = a.volume, t0 = performance.now(); const step = () => { if (a._ft !== my) return; const p = Math.min(1, (performance.now() - t0) / ms); try { a.volume = Math.max(0, Math.min(1, s + (v - s) * p)); } catch (e) { } if (p < 1) requestAnimationFrame(step); else done && done(); }; step(); }
+function tryPlay(kind) {
+  const c = CHN[kind]; if (!c.k || !(P.snd ?? 1) || c.busy) return; const el = c.el;
+  if (el.paused) el.play().then(() => fadeTo(el, vol(kind), 1200)).catch(() => { });
+}
+function loopTrack(kind, k) {
+  if (S && kind === 'bgm') S.bgm = k; if (S && kind === 'amb') S.amb = k;
+  if (!k || k === 'off') k = null;
+  const c = CHN[kind]; if (c.k === k) return tryPlay(kind);
+  c.k = k; const tok = ++c.tok, el = c.el;
+  let did = false; const go = () => { if (did || c.tok !== tok) return; did = true; c.busy = false; if (!k) { el.pause(); return; } el.src = AU + k + '.mp3'; try { el.volume = 0; } catch (e) { } tryPlay(kind); };
+  if (!el.paused && el.src) { c.busy = true; fadeTo(el, 0, 600, go); setTimeout(go, 900); } else go();
+}
+const SEV = { se_heart: 0.35, se_choice: 0.6, se_flash: 0.6, se_hit: 0.7 };
+function se(k) { if (!(P.snd ?? 1) || skip || !(k in SEV)) return; const a = new Audio(AU + k + '.mp3'); a.volume = vol('se') * SEV[k]; a.play().catch(() => { }); }
+function sndRefresh() { for (const kind of ['bgm', 'amb']) { const el = CHN[kind].el; if (!(P.snd ?? 1)) el.pause(); else { try { el.volume = vol(kind); } catch (e) { } tryPlay(kind); } } }
+document.addEventListener('pointerdown', () => { tryPlay('bgm'); tryPlay('amb'); }, true);
+document.addEventListener('touchend', () => { tryPlay('bgm'); tryPlay('amb'); }, true);
+
+// ---------------- 畫面 ----------------
+function toast(t) { const d = document.createElement('div'); d.className = 'toast'; d.innerHTML = t; $('toasts').appendChild(d); setTimeout(() => d.classList.add('out'), 1800); setTimeout(() => d.remove(), 2300); }
+function setBg(k, fast) {
+  if (!k) return; S.bg = k;
+  const a = $('bgA'), b = $('bgB'), cur = a.classList.contains('on') ? a : b, nx = cur === a ? b : a;
+  nx.style.backgroundImage = `url(${BG(k)})`; nx.classList.toggle('night', /^(night|sunset)/.test(k));
+  if (fast) { nx.style.transition = 'none'; cur.style.transition = 'none'; }
+  nx.classList.add('on'); cur.classList.remove('on');
+  if (fast) requestAnimationFrame(() => { nx.style.transition = ''; cur.style.transition = ''; });
+}
+const FACES = { cy: ['laugh', 'cry', 'angry', 'shy', 'surp', 'armor', 'gold', 'red', 'court', 'winter'], xz: ['smile', 'cold', 'angry'] };
+const FALIAS = { firm: 'angry' };
+const imgOf = k => { let fm = S.form && S.form[k], fc = S.face && S.face[k]; fc = FALIAS[fc] || fc;
+  if (fm && fc && k === 'cy') return `${ZA}ch/cy_${fm}.webp`; // 戎裝時不換表情
+  const f = fc || fm; return f && FACES[k] && FACES[k].includes(f) ? `${ZA}ch/${k}_${f}.webp` : CH[k].img; };
+function applyNames() { for (const k in CH) CH[k].n = (S && S.names && S.names[k]) || CHN0[k]; }
+function renderChars(speaker) {
+  const box = $('chars');
+  for (const pos of ['l', 'c', 'r']) {
+    const k = S.show[pos]; let el = box.querySelector(`.ch.p${pos}`);
+    if (!k) { if (el) { el.classList.add('gone'); setTimeout(() => el.remove(), 350); } continue; }
+    if (!el || el.dataset.k !== k) {
+      if (el) el.remove();
+      el = document.createElement('div'); el.className = `ch p${pos} in` + (CH[k].beast ? ' beast' : ''); el.dataset.k = k;
+      el.innerHTML = `<img src="${imgOf(k)}" alt="">`; box.appendChild(el); setTimeout(() => el.classList.remove('in'), 30);
+    } else { const im = el.querySelector('img'), src = imgOf(k); if (im.getAttribute('src') !== src) { im.src = src; el.classList.remove('pop'); void el.offsetWidth; el.classList.add('pop'); } }
+    el.classList.toggle('wide', /_armor|_gold|_court|xz2|wy|hj|yq|sq/.test(imgOf(k) + k)); el.classList.toggle('kid', k === 'cn' || k === 'xzk');
+    el.classList.toggle('tiny', imgOf(k).includes('_small'));
+    el.classList.toggle('dim', !!speaker && speaker !== k);
+    el.classList.toggle('talk', speaker === k);
+  }
+  // 依人數自動排版，避免重疊
+  const order = ['l', 'c', 'r'].filter(p => S.show[p]), n = order.length;
+  const SL = { 1: [[50, 62]], 2: [[27, 54], [73, 54]], 3: [[18, 38], [50, 38], [82, 38]] }[n] || [];
+  order.forEach((p, i) => {
+    const el = box.querySelector(`.ch.p${p}:not(.gone)`); if (!el) return;
+    let [cx, w] = SL[i]; const bst = el.classList.contains('beast') && !el.classList.contains('tiny');
+    if (bst && n === 3) { w = 64; cx = i === 0 ? 22 : i === 2 ? 78 : cx; } else if (el.classList.contains('wide') || bst) w = Math.min(w * (n === 1 ? 1.45 : 1.3), 92);
+    el.style.left = (cx - w / 2) + '%'; el.style.width = w + '%'; el.style.right = 'auto';
+    el.style.zIndex = bst ? 1 : el.classList.contains('talk') ? 4 : 3 - Math.abs(i - (n - 1) / 2);
+  });
+}
+function showCG(k, title) {
+  S.cg = { k, title }; P.cg[k] = title; saveP();
+  const c = $('cg'); c.className = 'cg on'; c.innerHTML = `<div class="cgfb" style="background-image:url(${BG(S.bg || 'title')})"></div><img alt=""><div class="cgt">${title || ''}</div>`;
+  const im = c.querySelector('img'); im.onload = () => { c.classList.add('hasimg'); c.querySelector('.cgfb').style.backgroundImage = `url(${CGD + k}.webp)`; }; im.src = CGD + k + '.webp';
+}
+function hideCG() { S.cg = null; $('cg').className = 'cg'; }
+const FXS = { snow: 26, petal: 22, stars: 40, rain: 50, firefly: 22, ice: 26, gold: 30 };
+function fx(k) {
+  const L = $('fx');
+  if (k === 'off' || (FXS[k] && k !== 'rain')) { if (CHN.amb.k === 'amb_rain') loopTrack('amb', 'off'); }
+  if (k === 'off') { L.innerHTML = ''; L.className = ''; return; }
+  if (k === 'flash' || k === 'white') se('se_flash'); if (k === 'shake') se('se_hit'); if (k === 'rain') loopTrack('amb', 'amb_rain');
+  if (k === 'flash' || k === 'white' || k === 'black' || k === 'red') { const d = document.createElement('div'); d.className = 'flash ' + k; document.body.appendChild(d); setTimeout(() => d.remove(), k === 'flash' ? 600 : 1600); return; }
+  if (k === 'shake') { $('stage').classList.remove('shake'); void $('stage').offsetWidth; $('stage').classList.add('shake'); return; }
+  if (k === 'heart') { heart(); return; }
+  L.innerHTML = ''; L.className = 'fx-' + k;
+  for (let i = 0; i < (FXS[k] || 20); i++) { const p = document.createElement('i'); p.style.left = Math.random() * 100 + '%'; p.style.animationDelay = (-Math.random() * 10).toFixed(2) + 's'; p.style.animationDuration = (6 + Math.random() * 7).toFixed(2) + 's'; p.style.setProperty('--s', (0.5 + Math.random()).toFixed(2)); p.style.setProperty('--x', ((Math.random() - 0.5) * 120).toFixed(0) + 'px'); L.appendChild(p); }
+}
+function heart(t) { se('se_heart'); let box = $('hbox'); if (!box) { box = document.createElement('div'); box.id = 'hbox'; document.body.appendChild(box); } const d = document.createElement('div'); d.className = 'hfx'; d.innerHTML = t || '♥'; box.appendChild(d); setTimeout(() => d.remove(), 1700); }
+
+// ---------------- 文字 ----------------
+function say(name, text, kind, speaker) {
+  const box = $('box'); box.className = 'box ' + (kind || '');
+  const nm = $('nm');
+  if (name) { nm.textContent = name; nm.style.setProperty('--c', speaker && CH[speaker] ? CH[speaker].col : '#ffc0d8'); nm.classList.remove('hide'); } else nm.classList.add('hide');
+  logArr.push({ n: name, t: text, k: kind }); if (logArr.length > 300) logArr.shift();
+  const el = $('tx'); const full = text;
+  if (typing) clearInterval(typing);
+  const readKey = S.ch + ':' + S.i, wasRead = (P.read[S.ch] || -1) >= S.i;
+  if (skip && !wasRead && !P.skipAll) { skip = false; updBtns(); }
+  if (skip || P.speed >= 3) { el.innerHTML = full; typing = null; return afterType(); }
+  let n = 0; el.innerHTML = '';
+  const chars = [...full]; const step = P.speed === 2 ? 2 : 1;
+  typing = setInterval(() => { n += step; el.innerHTML = chars.slice(0, n).join('') + `<span class="ghost">${chars.slice(n).join('')}</span>`; if (n >= chars.length) { clearInterval(typing); typing = null; afterType(); } }, 32);
+}
+let autoT = null;
+function afterType() {
+  $('box').classList.add('done');
+  clearTimeout(autoT);
+  if (skip) autoT = setTimeout(next, 60);
+  else if (auto) autoT = setTimeout(next, 1100 + $('tx').textContent.length * 55);
+}
+function finishType() { if (!typing) return false; clearInterval(typing); typing = null; const el = $('tx'); el.innerHTML = el.textContent; afterType(); return true; }
+
+// ---------------- 劇本執行 ----------------
+function lines() { return SCRIPT[S.ch]; }
+function findLabel(lb) {
+  let ch = S.ch, l = lb; if (lb.includes(':')) [ch, l] = lb.split(':');
+  const i = SCRIPT[ch].findIndex(x => x.trim() === '#' + l); if (i < 0) throw new Error('找不到標籤 ' + lb);
+  return [ch, i];
+}
+function jump(lb) { const [ch, i] = findLabel(lb); S.ch = ch; S.i = i; }
+function evalCond(c) {
+  const f = new Function('v', 'f', 'return (' + c.replace(/\b(qing|yong|lin|xin|zhi)\b/g, 'v.$1').replace(/\$(\w+)/g, 'f.$1') + ');');
+  return !!f(S.v, S.f);
+}
+function doSet(expr) {
+  // @set bond +5 / @set $flag 1
+  const [k, v] = expr.trim().split(/\s+/);
+  if (k[0] === '$') { S.f[k.slice(1)] = v === undefined ? 1 : +v; return; }
+  if (!VARS.includes(k)) return;
+  const old = S.v[k];
+  if (v[0] === '+' || v[0] === '-') S.v[k] += +v; else S.v[k] = +v;
+  const HT = { qing: '♥ 情意更深了', yong: '⚔ 勇氣', lin: '🏮 鄉鄰的情分', xin: '✦ 信任', zhi: '◆ 機敏' };
+  if (HT[k] && S.v[k] > old && !skip) heart(HT[k]);
+}
+function next() {
+  if (busy) return;
+  clearTimeout(autoT);
+  if (finishType()) return;
+  for (let guard = 0; guard < 400; guard++) {
+    const L = lines(); if (S.i >= L.length) { const idx = CHAP.findIndex(c => c.id === S.ch); if (idx >= 0 && idx + 1 < CHAP.length) { S.ch = CHAP[idx + 1].id; S.i = 0; continue; } return; }
+    const raw = L[S.i]; const line = raw.trim();
+    P.read[S.ch] = Math.max(P.read[S.ch] ?? -1, S.i);
+    S.i++;
+    if (!line || line[0] === '#' || line.startsWith('//')) continue;
+    if (line[0] === '@') { const r = cmd(line); if (r === 'stop') return; continue; }
+    if (line[0] === '?') { choice(line.slice(1).trim()); return; }
+    // 對白
+    const m = line.match(/^([^\s：（]{1,4})：(.*)$/);
+    const sk = m && (CH[m[1]] ? m[1] : Object.keys(CH).find(k => CH[k].n === m[1]));
+    if (sk) { renderChars(sk); say(CH[sk].n, m[2], 'talk', sk); }
+    else if (m && !/[，。！？]|^我|說$|道$/.test(m[1])) { renderChars(null); say(m[1], m[2], 'talk'); }
+    else if (line[0] === '（') { const pv = S.pov || 'cy'; renderChars(pv); say(CH[pv].n, line, 'inner', pv); }
+    else { renderChars(null); say('', line, 'narr'); }
+    if (P.seen % 15 === 0) saveSlot(0);
+    P.seen++; if (P.seen % 10 === 0) saveP();
+    return;
+  }
+}
+function cmd(line) {
+  const [c, ...rest] = line.slice(1).split(/\s+/); const arg = rest.join(' ');
+  switch (c) {
+    case 'bg': setBg(rest[0]); break;
+    case 'show': for (const p in S.show) if (S.show[p] === rest[0]) delete S.show[p]; S.show[rest[1] || 'c'] = rest[0]; renderChars(); break;
+    case 'hide': if (rest[0] === 'all') { S.show = {}; S.face = {}; } else for (const p in S.show) if (S.show[p] === rest[0]) delete S.show[p]; renderChars(); break;
+    case 'face': { S.face = S.face || {}; const k = rest[0]; if (rest[1] && rest[1] !== 'off') S.face[k] = rest[1]; else delete S.face[k];
+      if (!Object.values(S.show).includes(k)) { if (rest[2]) S.show[rest[2]] = k; else if (!S.show.c) S.show.c = k; else if (!S.show.l && !S.show.r) { S.show.r = S.show.c; delete S.show.c; S.show.l = k; } else S.show[S.show.l ? 'r' : 'l'] = k; }
+      renderChars(); break; }
+    case 'form': S.form = S.form || {}; if (rest[1] && rest[1] !== 'off') S.form[rest[0]] = rest[1]; else delete S.form[rest[0]]; renderChars(); break;
+    case 'bgm': loopTrack('bgm', rest[0]); break;
+    case 'amb': loopTrack('amb', rest[0]); break;
+    case 'se': se(rest[0]); break;
+    case 'cg': showCG(rest[0], rest.slice(1).join(' ')); break;
+    case 'cgoff': hideCG(); break;
+    case 'name': S.names = S.names || {}; S.names[rest[0]] = rest[1]; applyNames(); break;
+    case 'pov': S.pov = rest[0] && rest[0] !== 'off' ? rest[0] : null; break;
+    case 'fx': fx(rest[0]); break;
+    case 'set': doSet(arg); break;
+    case 'goto': jump(rest[0]); break;
+    case 'next': S.ch = rest[0]; S.i = 0; break;
+    case 'if': { const lb = rest.pop(); if (evalCond(rest.join(' '))) jump(lb); break; }
+    case 'title': titleCard(arg); return 'stop';
+    case 'end': ending(rest[0]); return 'stop';
+    case 'wait': busy = true; setTimeout(() => { busy = false; next(); }, +rest[0] || 800); return 'stop';
+  }
+}
+function titleCard(arg) {
+  const [a, b] = arg.split('|'); P.chap[S.ch] = 1; saveP(); saveSlot(0);
+  hideCG(); fx('off'); S.show = {}; renderChars();
+  const d = $('card'); d.innerHTML = `<b>${a}</b><span>${b || ''}</span>`; d.className = 'card on'; busy = true;
+  $('box').classList.add('hide');
+  setTimeout(() => { d.className = 'card'; busy = false; $('box').classList.remove('hide'); next(); }, skip ? 300 : 2600);
+}
+function choice(prompt) {
+  const L = lines(), opts = [];
+  while (S.i < L.length && L[S.i].trim().startsWith('- ')) { opts.push(L[S.i].trim().slice(2)); S.i++; }
+  if (skip) { skip = false; updBtns(); }
+  clearTimeout(autoT);
+  saveSlot(0);
+  const box = $('choices');
+  if (prompt) say('', prompt, 'narr');
+  box.innerHTML = opts.map((o, k) => {
+    const [txt, rest = ''] = o.split('=>');
+    const cond = (rest.match(/\[(.*?)\]/) || [])[1];
+    if (cond && !evalCond(cond)) return '';
+    return `<button data-o="${k}">${txt.trim()}</button>`;
+  }).join('');
+  box.classList.add('on');
+  box.querySelectorAll('[data-o]').forEach(b => b.onclick = (e) => {
+    e.stopPropagation(); se('se_choice');
+    const [txt, rest = ''] = opts[+b.dataset.o].split('=>');
+    box.classList.remove('on'); box.innerHTML = '';
+    logArr.push({ n: '▶', t: txt.trim(), k: 'pick' });
+    const parts = rest.replace(/\[.*?\]/, '').split('|').map(x => x.trim()).filter(Boolean);
+    let lb = null;
+    for (const p of parts) { if (p.startsWith('@set')) doSet(p.slice(4)); else lb = p; }
+    if (lb) jump(lb);
+    next();
+  });
+}
+function ending(k) {
+  const E = ENDS[k]; loopTrack('amb', 'off'); loopTrack('bgm', E.kind === 'sad' || E.kind === 'bad' ? 'sad' : E.kind === 'extra' ? 'romance' : 'hope'); const inMain = CHAP.some(c => c.id === S.ch); P.end[k] = Date.now(); saveP(); if (inMain) localStorage.removeItem('zy_save_0');
+  hideCG(); S.show = {}; renderChars(); auto = false; skip = false; updBtns();
+  $('box').classList.add('hide');
+  const d = $('endc'); d.className = 'endc on ' + (E.kind || '');
+  d.innerHTML = `<div class="ek">${E.kind === 'true' ? '真結局' : E.kind === 'sad' ? '悲傷結局' : E.kind === 'bad' ? '壞結局' : E.kind === 'extra' ? '番外・完' : '結局'}</div><h1>${E.n}</h1><p>${E.d}</p><div class="ecount">已收集結局 ${Object.keys(P.end).length} / ${Object.keys(ENDS).length}</div><button class="btn" id="eBack">回到標題</button>`;
+  $('eBack').onclick = () => { d.className = 'endc'; title(); };
+}
+
+// ---------------- 選單 ----------------
+function updBtns() { $('bAuto').classList.toggle('on', auto); $('bSkip').classList.toggle('on', skip); }
+function modal(h) { const o = document.createElement('div'); o.className = 'ov'; o.innerHTML = `<div class="panel">${h}</div>`; o.onclick = e => { if (e.target === o) o.remove(); }; document.body.appendChild(o); return o; }
+const fmtT = t => { const d = new Date(t); return `${d.getMonth() + 1}/${d.getDate()} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`; };
+function slotsUI(mode) {
+  const o = modal(`<h2>${mode === 'save' ? '存檔' : '讀檔'}</h2><div class="slots">${[0, 1, 2, 3].map(n => { const s = loadSlot(n); if (n === 0 && mode === 'save') return ''; return `<button class="slot" data-s="${n}" ${!s && mode === 'load' ? 'disabled' : ''}><b>${n === 0 ? '自動存檔' : '存檔 ' + n}</b><small>${s ? `${chapOf(s.ch).t}・${fmtT(s.t)}` : '空'}</small></button>`; }).join('')}</div><button class="btn ghost" id="sX">關閉</button>`);
+  $('sX').onclick = () => o.remove();
+  o.querySelectorAll('[data-s]').forEach(b => b.onclick = () => { const n = +b.dataset.s; if (mode === 'save') { saveSlot(n); toast('已存檔'); o.remove(); } else { const s = loadSlot(n); if (s) { o.remove(); resume(s); } } });
+}
+function logUI() {
+  const o = modal(`<h2>對話紀錄</h2><div class="log">${logArr.slice(-120).map(l => `<p class="${l.k || ''}">${l.n ? `<b>${l.n}</b>` : ''}${l.t}</p>`).join('')}</div><button class="btn ghost" id="lX">關閉</button>`);
+  $('lX').onclick = () => o.remove(); const lg = o.querySelector('.log'); lg.scrollTop = lg.scrollHeight;
+}
+function menuUI() {
+  const o = modal(`<h2>選單</h2><div class="mgrid"><button class="btn" data-m="save">存檔</button><button class="btn" data-m="load">讀檔</button><button class="btn" data-m="log">對話紀錄</button><button class="btn" data-m="speed">文字速度：${['', '一般', '快', '瞬間'][P.speed]}</button><button class="btn" data-m="skipall">快進：${P.skipAll ? '全部' : '只跳已讀'}</button><button class="btn" data-m="snd">聲音：${['關', '小聲', '中等', '大聲'][Math.round((P.snd ?? 1) * 3)] || '大聲'}</button><button class="btn ghost" data-m="title">回到標題</button></div><button class="btn ghost" id="mX">繼續故事</button>`);
+  $('mX').onclick = () => o.remove();
+  o.querySelectorAll('[data-m]').forEach(b => b.onclick = () => {
+    const m = b.dataset.m; if (m === 'save' || m === 'load') { o.remove(); slotsUI(m); } else if (m === 'log') { o.remove(); logUI(); }
+    else if (m === 'speed') { P.speed = P.speed % 3 + 1; saveP(); o.remove(); menuUI(); }
+    else if (m === 'snd') { const lv = [0, 1 / 3, 2 / 3, 1], i = lv.findIndex(x => Math.abs(x - (P.snd ?? 1)) < .01); P.snd = lv[(i + 1) % 4]; saveP(); sndRefresh(); o.remove(); menuUI(); }
+    else if (m === 'skipall') { P.skipAll = !P.skipAll; saveP(); o.remove(); menuUI(); }
+    else if (m === 'title') { saveSlot(0); o.remove(); title(); }
+  });
+}
+
+// ---------------- 標題 ----------------
+function title() {
+  auto = skip = false; updBtns(); clearTimeout(autoT); if (typing) clearInterval(typing);
+  $('game').classList.add('hide'); const t = $('title'); t.classList.remove('hide'); loopTrack('amb', 'off'); loopTrack('bgm', 'title');
+  const cont = loadSlot(0), ne = Object.keys(P.end).length;
+  t.innerHTML = `<div class="tbg"></div><div class="tfx" id="tfx"></div><div class="tin"><div class="tsub">樊長玉篇</div><h1>逐玉</h1><div class="tline">那年雪夜，我撿回了一個人。<br>後來才知道，那是我的整個天下。</div>
+  <div class="tbtn">${cont ? `<button class="btn" id="tC">繼續故事<small>${chapOf(cont.ch).t}</small></button>` : ''}<button class="btn ${cont ? 'ghost' : ''}" id="tN">新的故事</button><button class="btn ghost" id="tL">讀取存檔</button><button class="btn ghost" id="tCh">章節回顧</button>${typeof EXTRA !== 'undefined' ? `<button class="btn ghost" id="tX">番外篇${EXTRA.some(x => x.need()) ? '' : '（未解鎖）'}</button>` : ''}<button class="btn ghost" id="tE">結局與回憶（${ne}/${Object.keys(ENDS).length}）</button></div></div>`;
+  const tf = $('tfx'); for (let i = 0; i < 24; i++) { const p = document.createElement('i'); p.style.left = Math.random() * 100 + '%'; p.style.animationDelay = (-Math.random() * 10) + 's'; p.style.animationDuration = (7 + Math.random() * 6) + 's'; tf.appendChild(p); }
+  if ($('tC')) $('tC').onclick = () => resume(cont);
+  $('tN').onclick = () => { if (cont && !confirm('開始新的故事？自動存檔會被覆蓋（手動存檔不受影響）')) return; start(newState()); };
+  $('tL').onclick = () => slotsUI('load');
+  $('tCh').onclick = () => {
+    const o = modal(`<h2>章節回顧</h2><div class="slots">${CHAP.map((c, i) => `<button class="slot" data-c="${c.id}" ${P.chap[c.id] || i === 0 ? '' : 'disabled'}><b>${c.t}</b><small>${P.chap[c.id] || i === 0 ? c.sub : '？？？'}</small></button>`).join('')}</div><p class="note">從章節開頭重看時，心意數值會用「一般」的狀態開始。</p><button class="btn ghost" id="cX">關閉</button>`);
+    $('cX').onclick = () => o.remove();
+    o.querySelectorAll('[data-c]').forEach(b => b.onclick = () => { o.remove(); const s = newState(b.dataset.c); Object.assign(s.v, chapOf(b.dataset.c).base || {}); start(s); });
+  };
+  if ($('tX')) $('tX').onclick = () => {
+    const o = modal(`<h2>番外篇</h2><div class="slots">${EXTRA.map(x => `<button class="slot" data-x="${x.id}" ${x.need() ? '' : 'disabled'}><b>${x.t}・${x.need() ? x.sub : '？？？'}</b><small>${x.need() ? (P.chap[x.id] ? '已讀過' : '新的故事') : x.hint}</small></button>`).join('')}</div><p class="note">番外篇是正篇之外的故事，不影響存檔。</p><button class="btn ghost" id="xX">關閉</button>`);
+    $('xX').onclick = () => o.remove();
+    o.querySelectorAll('[data-x]').forEach(b => b.onclick = () => { o.remove(); start(newState(b.dataset.x)); });
+  };
+  $('tE').onclick = () => {
+    const cgs = Object.entries(P.cg);
+    const o = modal(`<h2>結局</h2><div class="ends">${Object.entries(ENDS).map(([k, E]) => `<div class="endi ${P.end[k] ? 'got ' + (E.kind || '') : ''}"><b>${P.end[k] ? E.n : '？？？'}</b><small>${P.end[k] ? E.d.replace(/<br>/g, ' ').slice(0, 46) + '…' : E.hint}</small></div>`).join('')}</div><h2 style="margin-top:14px">回憶畫面</h2><div class="cgs">${cgs.length ? cgs.map(([k, t]) => `<button class="cgb" data-cg="${k}" style="background-image:url(${CGD + k}.webp)"><span>${t}</span></button>`).join('') : '<p class="note">劇情中的重要畫面會收集在這裡。</p>'}</div><button class="btn ghost" id="eX">關閉</button>`);
+    $('eX').onclick = () => o.remove();
+    o.querySelectorAll('[data-cg]').forEach(b => b.onclick = () => { const v = modal(`<div class="cgview" style="background-image:url(${CGD + b.dataset.cg}.webp)"></div><p>${P.cg[b.dataset.cg]}</p>`); v.onclick = () => v.remove(); });
+  };
+}
+function start(s) {
+  S = s; applyNames(); logArr = []; $('title').classList.add('hide'); $('game').classList.remove('hide');
+  $('chars').innerHTML = ''; hideCG(); fx('off'); $('choices').classList.remove('on');
+  $('bgA').classList.remove('on'); $('bgB').classList.remove('on');
+  if (S.bg) setBg(S.bg, true);
+  next();
+}
+function resume(s) {
+  // 回到存檔那一行（往回找上一句可顯示的台詞重新播放）
+  S = s; applyNames(); logArr = []; $('title').classList.add('hide'); $('game').classList.remove('hide');
+  $('chars').innerHTML = ''; fx('off'); $('choices').classList.remove('on'); $('bgA').classList.remove('on'); $('bgB').classList.remove('on');
+  if (S.bg) setBg(S.bg, true);
+  if (S.cg) showCG(S.cg.k, S.cg.title); else hideCG();
+  loopTrack('bgm', S.bgm || 'off'); loopTrack('amb', S.amb || 'off');
+  renderChars();
+  // 往回退到最近一句台詞或選項
+  const L = lines(); let i = Math.max(0, S.i - 1);
+  while (i > 0) { const t = L[i].trim(); if (t && t[0] !== '@' && t[0] !== '#' && !t.startsWith('- ') && !t.startsWith('//')) break; i--; }
+  if (L[i] && L[i].trim().startsWith('- ')) { while (i > 0 && !L[i].trim().startsWith('?')) i--; }
+  S.i = i; next();
+}
+
+// ---------------- 綁定 ----------------
+window.addEventListener('load', () => {
+  loadP();
+  const tap = document.createElement('div'); tap.id = 'tapStart'; tap.innerHTML = '<b>逐玉</b><span>輕觸畫面開始</span>'; document.body.appendChild(tap);
+  tap.onclick = () => { tap.classList.add('out'); setTimeout(() => tap.remove(), 900); tryPlay('bgm'); };
+  $('stage').onclick = () => { if ($('choices').classList.contains('on')) return; if (skip) { skip = false; updBtns(); return; } next(); };
+  $('box').onclick = $('stage').onclick;
+  $('bMenu').onclick = e => { e.stopPropagation(); menuUI(); };
+  $('bLog').onclick = e => { e.stopPropagation(); logUI(); };
+  $('bAuto').onclick = e => { e.stopPropagation(); auto = !auto; skip = false; updBtns(); if (auto && !typing && !$('choices').classList.contains('on')) next(); };
+  $('bSkip').onclick = e => { e.stopPropagation(); skip = !skip; auto = false; updBtns(); if (skip && !$('choices').classList.contains('on')) next(); };
+  $('bHide').onclick = e => { e.stopPropagation(); $('game').classList.add('nobox'); setTimeout(() => { const f = () => { $('game').classList.remove('nobox'); document.removeEventListener('click', f, true); }; document.addEventListener('click', f, true); }, 50); };
+  title();
+});
+
+</script>
+<a href="./" id="gbHome" style="position:fixed;top:calc(4px + env(safe-area-inset-top));left:50%;transform:translateX(-50%);z-index:9999;background:rgba(0,0,0,.45);color:#fff;text-decoration:none;font:600 13px -apple-system,sans-serif;padding:4px 12px;border-radius:12px;opacity:.6">⌂ 遊戲盒</a>
+<script>if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});document.addEventListener('error',function(e){var t=e.target;if(!t||t.tagName!=='IMG'||!t.src||t.src.indexOf('data:')===0)return;var n=(t._rt||0)+1;if(n>4)return;t._rt=n;setTimeout(function(){t.src=t.src.split('?')[0]+'?r='+n+'_'+Date.now()},600*n)},true);</script>
+</body></html>
