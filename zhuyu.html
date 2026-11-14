@@ -3549,6 +3549,10 @@ const SEV = { se_heart: 0.35, se_choice: 0.6, se_flash: 0.6, se_hit: 0.7 };
 function se(k) { if (!(P.snd ?? 1) || skip || !(k in SEV)) return; const a = new Audio(AU + k + '.mp3'); a.volume = vol('se') * SEV[k]; a.play().catch(() => { }); }
 function sndRefresh() { for (const kind of ['bgm', 'amb']) { const el = CHN[kind].el; if (!(P.snd ?? 1)) el.pause(); else { try { el.volume = vol(kind); } catch (e) { } tryPlay(kind); } } }
 document.addEventListener('pointerdown', () => { tryPlay('bgm'); tryPlay('amb'); }, true);
+// 保險：每兩秒檢查一次，該有音樂卻停了就重新播；載入失敗就重新載入
+setInterval(() => { if (document.hidden) return; for (const kind of ['bgm', 'amb']) { const c = CHN[kind]; if (c.k && !c.busy && c.el.paused && (P.snd ?? 1)) tryPlay(kind); } }, 2000);
+for (const kind of ['bgm', 'amb']) { const c = CHN[kind]; c.el.addEventListener('error', () => { if (!c.k) return; setTimeout(() => { if (!c.k) return; c.el.src = AU + c.k + '.mp3'; tryPlay(kind); }, 800); }); c.el.addEventListener('ended', () => { c.el.currentTime = 0; tryPlay(kind); }); }
+document.addEventListener('visibilitychange', () => { if (!document.hidden) { tryPlay('bgm'); tryPlay('amb'); } });
 document.addEventListener('touchend', () => { tryPlay('bgm'); tryPlay('amb'); }, true);
 
 // ---------------- 畫面 ----------------
