@@ -124,6 +124,7 @@ button{font-family:inherit;cursor:pointer}
 @keyframes pop{40%{transform:translateY(-8px) scale(1.02)}}
 .ch.wide{width:88%}.ch.wide.pc{left:6%}.ch.wide.pl{left:-18%}.ch.wide.pr{right:-18%}
 .ch.beast.tiny img{max-height:30%}
+#tapStart{position:fixed;inset:0;z-index:100;background:radial-gradient(circle at 50% 40%,#3a1430,#06030a 75%);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;transition:opacity .9s}#tapStart.out{opacity:0;pointer-events:none}#tapStart b{font-family:'LXGW WenKai TC',serif;font-size:44px;letter-spacing:10px;color:#fff;text-shadow:0 0 20px #ff6aa8}#tapStart span{color:#ffd6ea;letter-spacing:4px;animation:blink 1.6s infinite}
 </style></head>
 <body>
 <div id="game" class="hide"><div id="stage"><div class="bg" id="bgA"></div><div class="bg" id="bgB"></div><div id="chars"></div><div class="cg" id="cg"></div><div id="fx"></div></div>
@@ -2315,22 +2316,30 @@ function loadSlot(n) { try { const s = JSON.parse(localStorage.getItem('xw_save_
 const chapOf = id => CHAP.find(c => c.id === id);
 
 
-// ---------------- 聲音（檔案缺少時自動略過） ----------------
+// ---------------- 聲音（手機需先觸碰畫面才能出聲，觸碰後自動補播） ----------------
 const AU = 'assets/xiaowu/audio/';
-const AUD = { bgm: null, bgmK: null, amb: null, ambK: null };
-const vol = t => (P.snd ?? 1) * (t === 'bgm' ? 0.55 : t === 'amb' ? 0.35 : 0.7);
-function fadeTo(a, v, ms, done) { if (!a) return done && done(); const s = a.volume, t0 = performance.now(); const step = () => { const p = Math.min(1, (performance.now() - t0) / ms); try { a.volume = Math.max(0, Math.min(1, s + (v - s) * p)); } catch (e) { } if (p < 1) requestAnimationFrame(step); else done && done(); }; step(); }
-function loopTrack(kind, k) {
-  const key = kind === 'bgm' ? 'bgmK' : 'ambK';
-  if (S && kind === 'bgm') S.bgm = k; if (S && kind === 'amb') S.amb = k;
-  if (AUD[key] === k) return; AUD[key] = k;
-  const old = AUD[kind]; if (old) fadeTo(old, 0, 1200, () => old.pause());
-  AUD[kind] = null; if (!k || k === 'off') return;
-  const a = new Audio(AU + k + '.mp3'); a.loop = true; a.volume = 0; AUD[kind] = a;
-  a.play().then(() => fadeTo(a, vol(kind), 1500)).catch(() => { });
+const CHN = { bgm: { els: [new Audio(), new Audio()], cur: 0, k: null }, amb: { els: [new Audio(), new Audio()], cur: 0, k: null } };
+for (const c of Object.values(CHN)) for (const el of c.els) { el.loop = true; el.preload = 'auto'; el.setAttribute('playsinline', ''); }
+const vol = t => (P.snd ?? 1) * (t === 'bgm' ? 0.6 : t === 'amb' ? 0.3 : 0.5);
+function fadeTo(a, v, ms, done) { const s = a.volume, t0 = performance.now(); const step = () => { const p = Math.min(1, (performance.now() - t0) / ms); try { a.volume = Math.max(0, Math.min(1, s + (v - s) * p)); } catch (e) { } if (p < 1) requestAnimationFrame(step); else done && done(); }; step(); }
+function tryPlay(kind) {
+  const c = CHN[kind]; if (!c.k || !(P.snd ?? 1)) return; const el = c.els[c.cur];
+  if (el.paused) el.play().then(() => fadeTo(el, vol(kind), 1200)).catch(() => { });
 }
-function se(k) { if (!(P.snd ?? 1) || skip) return; const a = new Audio(AU + k + '.mp3'); a.volume = vol('se'); a.play().catch(() => { }); }
-function sndRefresh() { if (AUD.bgm) AUD.bgm.volume = vol('bgm'); if (AUD.amb) AUD.amb.volume = vol('amb'); }
+function loopTrack(kind, k) {
+  if (S && kind === 'bgm') S.bgm = k; if (S && kind === 'amb') S.amb = k;
+  if (!k || k === 'off') k = null;
+  const c = CHN[kind]; if (c.k === k) return tryPlay(kind);
+  const old = c.els[c.cur]; if (!old.paused) fadeTo(old, 0, 1000, () => old.pause()); else old.pause();
+  c.k = k; if (!k) return;
+  c.cur = 1 - c.cur; const el = c.els[c.cur]; el.src = AU + k + '.mp3'; try { el.volume = 0; } catch (e) { }
+  tryPlay(kind);
+}
+const SEV = { se_heart: 0.35, se_choice: 0.6, se_flash: 0.6, se_hit: 0.7 };
+function se(k) { if (!(P.snd ?? 1) || skip || !(k in SEV)) return; const a = new Audio(AU + k + '.mp3'); a.volume = vol('se') * SEV[k]; a.play().catch(() => { }); }
+function sndRefresh() { for (const kind of ['bgm', 'amb']) { const el = CHN[kind].els[CHN[kind].cur]; if (!(P.snd ?? 1)) el.pause(); else { try { el.volume = vol(kind); } catch (e) { } tryPlay(kind); } } }
+document.addEventListener('pointerdown', () => { tryPlay('bgm'); tryPlay('amb'); }, true);
+document.addEventListener('touchend', () => { tryPlay('bgm'); tryPlay('amb'); }, true);
 
 // ---------------- 畫面 ----------------
 function toast(t) { const d = document.createElement('div'); d.className = 'toast'; d.innerHTML = t; $('toasts').appendChild(d); setTimeout(() => d.classList.add('out'), 1800); setTimeout(() => d.remove(), 2300); }
@@ -2372,7 +2381,7 @@ function hideCG() { S.cg = null; $('cg').className = 'cg'; }
 const FXS = { snow: 26, petal: 22, stars: 40, rain: 50, firefly: 22, ice: 26, gold: 30 };
 function fx(k) {
   const L = $('fx');
-  if (k === 'off' || (FXS[k] && k !== 'rain')) { if (AUD.ambK === 'amb_rain') loopTrack('amb', 'off'); }
+  if (k === 'off' || (FXS[k] && k !== 'rain')) { if (CHN.amb.k === 'amb_rain') loopTrack('amb', 'off'); }
   if (k === 'off') { L.innerHTML = ''; L.className = ''; return; }
   if (k === 'flash' || k === 'white') se('se_flash'); if (k === 'shake') se('se_hit'); if (k === 'rain') loopTrack('amb', 'amb_rain');
   if (k === 'flash' || k === 'white' || k === 'black' || k === 'red') { const d = document.createElement('div'); d.className = 'flash ' + k; document.body.appendChild(d); setTimeout(() => d.remove(), k === 'flash' ? 600 : 1600); return; }
@@ -2594,7 +2603,9 @@ function resume(s) {
 // ---------------- 綁定 ----------------
 window.addEventListener('load', () => {
   loadP();
-  $('stage').onclick = () => { if ($('choices').classList.contains('on')) return; if (!typing) se('se_click'); if (skip) { skip = false; updBtns(); return; } next(); };
+  const tap = document.createElement('div'); tap.id = 'tapStart'; tap.innerHTML = '<b>舞・十萬年</b><span>輕觸畫面開始</span>'; document.body.appendChild(tap);
+  tap.onclick = () => { tap.classList.add('out'); setTimeout(() => tap.remove(), 900); tryPlay('bgm'); };
+  $('stage').onclick = () => { if ($('choices').classList.contains('on')) return; if (skip) { skip = false; updBtns(); return; } next(); };
   $('box').onclick = $('stage').onclick;
   $('bMenu').onclick = e => { e.stopPropagation(); menuUI(); };
   $('bLog').onclick = e => { e.stopPropagation(); logUI(); };
