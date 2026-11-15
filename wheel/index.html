@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="zh-Hant"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="輪盤抽獎"><link rel="manifest" href="manifest.json"><link rel="apple-touch-icon" href="icon-180.png"><link rel="icon" href="icon-192.png"><meta name="theme-color" content="#120a1e">
+<title>輪盤抽獎</title>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none}
+body{margin:0;background:radial-gradient(circle at 50% 0,#3a1858,#120a1e 70%);color:#fff;font-family:-apple-system,"PingFang TC","Noto Sans TC",sans-serif;min-height:100vh;overflow-x:hidden}
+.wrap{max-width:480px;margin:0 auto;padding:14px 14px 40px}
+.home{position:fixed;top:10px;left:10px;z-index:5;background:rgba(255,255,255,.1);color:#fff;border-radius:20px;padding:6px 12px;font-size:13px;text-decoration:none}
+h1{text-align:center;margin:30px 0 4px;font-size:30px;letter-spacing:2px;background:linear-gradient(90deg,#ffd23f,#ff7eb3,#7ec8ff);-webkit-background-clip:text;color:transparent}
+.sub{text-align:center;color:#c9b8e8;font-size:14px;margin-bottom:14px}
+.tabs{display:flex;gap:8px;justify-content:center;margin-bottom:12px}
+.tabs button{flex:1;padding:10px;border-radius:12px;border:0;background:rgba(255,255,255,.08);color:#fff;font-size:15px;font-weight:700}
+.tabs button.on{background:#ffd23f;color:#2a1240}
+.stage{position:relative;width:100%;aspect-ratio:1;max-width:400px;margin:0 auto}
+canvas{width:100%;height:100%;display:block}
+.ptr{position:absolute;left:50%;top:-6px;transform:translateX(-50%);width:0;height:0;border-left:16px solid transparent;border-right:16px solid transparent;border-top:34px solid #ffd23f;filter:drop-shadow(0 3px 4px #0008);z-index:2}
+.hub{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:22%;aspect-ratio:1;border-radius:50%;background:radial-gradient(#fff6c8,#ffb800);border:4px solid #fff;display:flex;align-items:center;justify-content:center;font-weight:900;color:#5a2a00;font-size:16px;box-shadow:0 4px 14px #0008}
+.big{display:block;width:100%;margin:16px 0 8px;padding:16px;border-radius:16px;border:0;font-size:22px;font-weight:900;color:#2a1240;background:linear-gradient(90deg,#ffd23f,#ffb84d);box-shadow:0 6px 0 #b07800}
+.big:active{transform:translateY(3px);box-shadow:0 3px 0 #b07800}
+.big:disabled{opacity:.5}
+.card{background:rgba(255,255,255,.07);border-radius:16px;padding:12px;margin-top:12px}
+.card h3{margin:0 0 8px;font-size:16px}
+textarea{width:100%;min-height:130px;border-radius:12px;border:1px solid #ffffff30;background:#0006;color:#fff;font-size:17px;padding:10px;resize:vertical;user-select:text;-webkit-user-select:text}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:8px;font-size:15px}
+.row button,.sm{padding:8px 12px;border-radius:10px;border:0;background:rgba(255,255,255,.12);color:#fff;font-size:14px}
+.muted{color:#b9a8d8;font-size:13px}
+.hist{font-size:15px;line-height:1.9}
+.hist b{color:#ffd23f}
+/* 跑馬燈抽名字 */
+.slot{height:130px;border-radius:20px;background:#0007;border:3px solid #ffd23f;display:flex;align-items:center;justify-content:center;font-size:46px;font-weight:900;overflow:hidden;text-align:center;padding:0 10px}
+/* 結果 */
+.win{position:fixed;inset:0;background:#000b;display:none;align-items:center;justify-content:center;z-index:20;flex-direction:column;text-align:center;padding:20px}
+.win.on{display:flex}
+.win .t{font-size:22px;color:#ffd23f;font-weight:800}
+.win .n{font-size:56px;font-weight:900;margin:10px 0 18px;animation:pop .5s ease}
+@keyframes pop{0%{transform:scale(.2)}70%{transform:scale(1.2)}100%{transform:scale(1)}}
+#conf{position:fixed;inset:0;pointer-events:none;z-index:21}
+/* 秘密面板 */
+.sec{position:fixed;inset:0;background:#000d;display:none;z-index:30;padding:20px;overflow:auto}
+.sec.on{display:block}
+.sec .box{max-width:440px;margin:30px auto;background:#1b1b22;border-radius:16px;padding:16px}
+.sec h2{margin:0 0 6px;font-size:20px}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0}
+.chips button{padding:9px 12px;border-radius:20px;border:1px solid #ffffff30;background:#2a2a35;color:#fff;font-size:15px}
+.chips button.on{background:#2ecc71;border-color:#2ecc71;color:#06260f;font-weight:800}
+.chips button.no{background:#e74c3c;border-color:#e74c3c;font-weight:800}
+.dot{position:fixed;right:6px;bottom:6px;width:8px;height:8px;border-radius:50%;background:#2ecc71;opacity:0;z-index:4;transition:opacity .3s}
+.dot.on{opacity:.35}
+</style></head><body>
+<div class="wrap">
+  <h1 id="ttl">🎡 輪盤抽獎</h1>
+  <div class="sub" id="subT">公平・公正・公開　隨機抽出幸運兒</div>
+  <div class="tabs"><button id="tW" class="on">🎡 轉盤</button><button id="tS">🎰 跑馬燈</button></div>
+  <div id="vW"><div class="stage"><div class="ptr"></div><canvas id="cv" width="800" height="800"></canvas><div class="hub" id="hub">GO</div></div></div>
+  <div id="vS" style="display:none"><div class="slot" id="slot">？</div></div>
+  <button class="big" id="go">開始抽獎！</button>
+  <div class="row" style="justify-content:center"><label><input type="checkbox" id="rm"> 抽中的人移出名單</label></div>
+  <div class="card"><h3>📝 參加名單（一行一個）</h3><textarea id="names"></textarea>
+    <div class="row"><button id="save">更新名單</button><button id="shuf">打亂順序</button><span class="muted" id="cnt"></span></div></div>
+  <div class="card"><h3>🏆 抽獎紀錄</h3><div class="hist" id="hist"><span class="muted">還沒有抽過</span></div><div class="row"><button id="clr">清除紀錄</button></div></div>
+</div>
+<div class="win" id="win"><div class="t" id="winT">🎉 恭喜 🎉</div><div class="n" id="winN"></div><button class="sm" id="winOk" style="font-size:18px;padding:12px 28px">好耶！</button></div>
+<canvas id="conf"></canvas>
+<div class="dot" id="dot"></div>
+<div class="sec" id="sec"><div class="box">
+  <h2>🤫 秘密控制台</h2>
+  <div class="muted" style="margin-bottom:10px">只有你看得到。設定好按「關閉」，畫面右下角會有一個很淡的小綠點代表內定中。</div>
+  <h3 style="font-size:15px;margin:10px 0 0">👑 內定中獎（下一次一定抽到）</h3>
+  <div class="muted">可以點好幾個人，會照順序一次抽一個。</div>
+  <div class="chips" id="cWin"></div>
+  <div class="muted" id="qTxt"></div>
+  <h3 style="font-size:15px;margin:14px 0 0">🚫 永遠抽不到</h3>
+  <div class="chips" id="cNo"></div>
+  <h3 style="font-size:15px;margin:14px 0 0">🎭 惡搞效果</h3>
+  <div class="row"><label><input type="checkbox" id="near"> 轉盤先停在別人那格，最後一刻再滑到內定的人</label></div>
+  <div class="row"><label><input type="checkbox" id="always"> 內定的人每次都中（不會用完）</label></div>
+  <div class="row" style="margin-top:14px"><button id="secClr">取消全部內定</button><button id="secOk" style="background:#2ecc71;color:#06260f;font-weight:800">關閉</button></div>
+  <div class="muted" style="margin-top:12px">打開方式：連點標題「輪盤抽獎」3 下，或長按「開始抽獎」按鈕 1 秒。</div>
+</div></div>
+<script>
+const $ = id => document.getElementById(id);
+const LS = 'luckyDraw';
+let S = { names:['小明','阿華','大雄','胖虎','靜香','小夫'], hist:[], rm:false, q:[], no:[], near:true, always:false };
+try { Object.assign(S, JSON.parse(localStorage.getItem(LS) || '{}')); } catch (e) {}
+const save = () => { try { localStorage.setItem(LS, JSON.stringify(S)); } catch (e) {} };
+const COLS = ['#ff6b6b','#ffd23f','#5fd68a','#5aa9ff','#c792ea','#ff9f43','#ff7eb3','#48dbfb','#a3cb38','#f8a5c2'];
+let mode = 'W', rot = 0, spinning = false;
+const cv = $('cv'), cx = cv.getContext('2d');
+function pool() { return S.names.filter(n => n); }
+function draw() {
+  const L = pool(), n = L.length, R = 390, c = 400; cx.clearRect(0, 0, 800, 800);
+  cx.save(); cx.translate(c, c); cx.rotate(rot);
+  if (!n) { cx.restore(); return; }
+  const a = Math.PI * 2 / n;
+  for (let i = 0; i < n; i++) {
+    cx.beginPath(); cx.moveTo(0, 0); cx.arc(0, 0, R, i * a - Math.PI / 2, (i + 1) * a - Math.PI / 2); cx.closePath();
+    cx.fillStyle = COLS[i % COLS.length]; cx.fill(); cx.strokeStyle = '#fff'; cx.lineWidth = 4; cx.stroke();
+    cx.save(); cx.rotate(i * a + a / 2 - Math.PI / 2); cx.fillStyle = '#2a1240'; cx.textAlign = 'right'; cx.textBaseline = 'middle';
+    const fs = Math.max(22, Math.min(52, 520 / n)); cx.font = `900 ${fs}px -apple-system,"PingFang TC",sans-serif`;
+    cx.fillText(L[i].slice(0, 8), R - 26, 0); cx.restore();
+  }
+  cx.restore();
+  cx.beginPath(); cx.arc(c, c, R, 0, Math.PI * 2); cx.strokeStyle = '#ffd23f'; cx.lineWidth = 12; cx.stroke();
+}
+// 決定誰中獎（秘密邏輯）
+function decide() {
+  const L = pool(); if (!L.length) return null;
+  let target = null;
+  while (S.q.length && !L.includes(S.q[0])) S.q.shift();
+  if (S.q.length) { target = S.q[0]; if (!S.always) S.q.shift(); }
+  if (!target) { const ok = L.filter(n => !S.no.includes(n)); target = (ok.length ? ok : L)[Math.floor(Math.random() * (ok.length ? ok : L).length)]; }
+  save(); dotUpd(); return target;
+}
+const ease = t => 1 - Math.pow(1 - t, 4);
+function spinWheel() {
+  const L = pool(); if (spinning || L.length < 2) return;
+  const target = decide(), idx = L.indexOf(target), n = L.length, a = Math.PI * 2 / n;
+  spinning = true; $('go').disabled = true;
+  const jitter = (Math.random() - 0.5) * a * 0.6;
+  const want = -(idx * a + a / 2) + jitter;   // 指針在正上方
+  const base = rot - (rot % (Math.PI * 2));
+  let end = base + Math.PI * 2 * (6 + Math.floor(Math.random() * 3)) + ((want % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2);
+  const rigged = S.near && (S.q.length || S.always || target) && L.length > 2 && wasRigged;
+  const start = rot, dur = 5200 + Math.random() * 800, t0 = performance.now();
+  // 惡搞：先停在隔壁那格，停住一下再慢慢滑過去
+  const fake = rigged ? end - a * (0.9 + Math.random() * 0.4) : end;
+  function step(now) {
+    const t = Math.min(1, (now - t0) / dur);
+    rot = start + (fake - start) * ease(t); draw();
+    if (t < 1) return requestAnimationFrame(step);
+    if (!rigged) return done(target);
+    setTimeout(() => { const s2 = rot, t1 = performance.now(); (function s3(now2) { const u = Math.min(1, (now2 - t1) / 1300); rot = s2 + (end - s2) * (u < 0.5 ? 2 * u * u : 1 - Math.pow(-2 * u + 2, 2) / 2); draw(); if (u < 1) requestAnimationFrame(s3); else done(target); })(t1); }, 700);
+  }
+  requestAnimationFrame(step);
+}
+let wasRigged = false;
+function spinSlot() {
+  const L = pool(); if (spinning || L.length < 2) return;
+  const target = decide(); spinning = true; $('go').disabled = true;
+  let i = Math.floor(Math.random() * L.length), delay = 40, steps = 0, total = 30 + Math.floor(Math.random() * 10);
+  const fakeStop = S.near && wasRigged;
+  (function tick() {
+    steps++; i = (i + 1) % L.length; $('slot').textContent = L[i];
+    if (steps < total) { delay *= 1.09; return setTimeout(tick, delay); }
+    // 讓最後落在目標上
+    let k = 0; (function land() { i = (i + 1) % L.length; $('slot').textContent = L[i]; k++;
+      if (L[i] !== target || (fakeStop && k < 2)) return setTimeout(land, delay *= 1.06);
+      if (fakeStop) { $('slot').textContent = L[(i - 1 + L.length) % L.length]; setTimeout(() => { $('slot').textContent = target; done(target); }, 900); }
+      else done(target); })();
+  })();
+}
+function go() { wasRigged = !!(S.q.length || (S.always && S.q.length)); if (mode === 'W') spinWheel(); else spinSlot(); }
+function done(w) {
+  spinning = false; $('go').disabled = false;
+  S.hist.unshift({ n: w, t: Date.now() }); if (S.hist.length > 50) S.hist.length = 50;
+  if (S.rm) S.names = S.names.filter(x => x !== w);
+  save(); $('winN').textContent = w; $('win').classList.add('on'); confetti(); renderList(); draw();
+}
+function renderList() {
+  $('names').value = S.names.join('\n'); $('cnt').textContent = `${pool().length} 人`; $('rm').checked = S.rm;
+  $('hist').innerHTML = S.hist.length ? S.hist.map((h, i) => `${S.hist.length - i}. <b>${h.n}</b>　<span class="muted">${new Date(h.t).toLocaleTimeString('zh-TW', { hour:'2-digit', minute:'2-digit' })}</span>`).join('<br>') : '<span class="muted">還沒有抽過</span>';
+}
+// 彩帶
+function confetti() {
+  const c = $('conf'), x = c.getContext('2d'); c.width = innerWidth; c.height = innerHeight;
+  const ps = Array.from({ length: 160 }, () => ({ x: Math.random() * c.width, y: -20 - Math.random() * c.height * 0.5, vx: (Math.random() - 0.5) * 3, vy: 2 + Math.random() * 4, s: 6 + Math.random() * 8, r: Math.random() * 6, col: COLS[Math.floor(Math.random() * COLS.length)] }));
+  const t0 = performance.now();
+  (function f(now) { x.clearRect(0, 0, c.width, c.height); for (const p of ps) { p.x += p.vx; p.y += p.vy; p.r += 0.1; x.save(); x.translate(p.x, p.y); x.rotate(p.r); x.fillStyle = p.col; x.fillRect(-p.s / 2, -p.s / 4, p.s, p.s / 2); x.restore(); } if (now - t0 < 3500) requestAnimationFrame(f); else x.clearRect(0, 0, c.width, c.height); })(t0);
+}
+// 秘密控制台
+function dotUpd() { $('dot').classList.toggle('on', S.q.length > 0 || S.no.length > 0); }
+function renderSec() {
+  const L = pool();
+  $('cWin').innerHTML = L.map(n => { const k = S.q.indexOf(n); return `<button data-w="${n}" class="${k >= 0 ? 'on' : ''}">${k >= 0 ? (k + 1) + '. ' : ''}${n}</button>`; }).join('');
+  $('cNo').innerHTML = L.map(n => `<button data-n="${n}" class="${S.no.includes(n) ? 'no' : ''}">${n}</button>`).join('');
+  $('qTxt').textContent = S.q.length ? `接下來會依序抽中：${S.q.join(' → ')}${S.always ? '（每次都是第一位）' : ''}` : '目前沒有內定，完全隨機。';
+  $('near').checked = S.near; $('always').checked = S.always;
+  document.querySelectorAll('[data-w]').forEach(b => b.onclick = () => { const n = b.dataset.w, k = S.q.indexOf(n); if (k >= 0) S.q.splice(k, 1); else { S.q.push(n); S.no = S.no.filter(x => x !== n); } save(); renderSec(); });
+  document.querySelectorAll('[data-n]').forEach(b => b.onclick = () => { const n = b.dataset.n; if (S.no.includes(n)) S.no = S.no.filter(x => x !== n); else { S.no.push(n); S.q = S.q.filter(x => x !== n); } save(); renderSec(); });
+}
+function openSec() { if (spinning) return; renderSec(); $('sec').classList.add('on'); if (navigator.vibrate) navigator.vibrate(30); }
+$('near').onchange = e => { S.near = e.target.checked; save(); };
+$('always').onchange = e => { S.always = e.target.checked; save(); renderSec(); };
+$('secClr').onclick = () => { S.q = []; S.no = []; save(); renderSec(); dotUpd(); };
+$('secOk').onclick = () => { $('sec').classList.remove('on'); dotUpd(); };
+let taps = 0, tapT = 0;
+$('ttl').onclick = () => { const now = Date.now(); taps = now - tapT < 600 ? taps + 1 : 1; tapT = now; if (taps >= 3) { taps = 0; openSec(); } };
+// 長按開始按鈕
+let lp = null, lpFired = false;
+$('go').addEventListener('touchstart', () => { lpFired = false; lp = setTimeout(() => { lpFired = true; openSec(); }, 1000); }, { passive: true });
+$('go').addEventListener('touchend', () => clearTimeout(lp));
+$('go').addEventListener('mousedown', () => { lpFired = false; lp = setTimeout(() => { lpFired = true; openSec(); }, 1000); });
+$('go').addEventListener('mouseup', () => clearTimeout(lp));
+$('go').onclick = () => { if (lpFired) { lpFired = false; return; } go(); };
+$('hub').onclick = () => go();
+// 其他按鈕
+$('save').onclick = () => { S.names = [...new Set($('names').value.split(/\n|,|，|、/).map(x => x.trim()).filter(Boolean))]; S.q = S.q.filter(n => S.names.includes(n)); S.no = S.no.filter(n => S.names.includes(n)); save(); renderList(); draw(); };
+$('names').onblur = () => $('save').onclick();
+$('shuf').onclick = () => { S.names.sort(() => Math.random() - 0.5); save(); renderList(); draw(); };
+$('clr').onclick = () => { S.hist = []; save(); renderList(); };
+$('rm').onchange = e => { S.rm = e.target.checked; save(); };
+$('winOk').onclick = () => $('win').classList.remove('on');
+$('tW').onclick = () => { mode = 'W'; $('tW').classList.add('on'); $('tS').classList.remove('on'); $('vW').style.display = ''; $('vS').style.display = 'none'; };
+$('tS').onclick = () => { mode = 'S'; $('tS').classList.add('on'); $('tW').classList.remove('on'); $('vS').style.display = ''; $('vW').style.display = 'none'; };
+renderList(); draw(); dotUpd();
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
+</script></body></html>
