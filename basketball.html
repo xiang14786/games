@@ -1446,11 +1446,15 @@ const MG = (() => {
     { k: 'brain', n: '球場大腦', ic: '📼', v: () => C.iq, b: { pass: [1, 1, 2, 3], shoot: [0, 1, 1, 2] } },
     { k: 'star', n: '巨星氣場', ic: '🌟', v: () => cl(40 + (C.fame || 0) * 1.5, 0, 99), b: { shoot: [0, 1, 1, 2], three: [0, 1, 1, 2], drive: [1, 1, 2, 2] } },
   ] : [
-    { k: 'heat', n: '火球特快', ic: '🔥', v: () => ME().a.velo, b: { velo: [1, 2, 3, 5] } },
-    { k: 'paint', n: '精準制球', ic: '🎯', v: () => ME().a.ctrl, b: { ctrl: [1, 2, 3, 5] } },
-    { k: 'magic', n: '魔球', ic: '🌀', v: () => stuffOf(ME()), b: { stuff: [1, 2, 3, 5] } },
-    { k: 'iron', n: '鐵臂', ic: '💪', v: () => ME().a.sta, b: { sta: [1, 2, 4, 6] } },
-    { k: 'cool', n: '冰山心臟', ic: '🧊', v: () => C.iq || 50, b: { ctrl: [1, 1, 2, 3], stuff: [0, 1, 1, 2] } },
+    { m: 'P', k: 'heat', n: '火球特快', ic: '🔥', v: () => ME().a.velo || 0, b: { velo: [1, 2, 3, 5] } },
+    { m: 'B', k: 'hit', n: '安打製造機', ic: '🏏', v: () => typeof BAT === 'function' && BAT() ? BAT().a.con : 0, b: { con: [1, 2, 3, 5] } },
+    { m: 'B', k: 'slug', n: '重砲', ic: '💣', v: () => typeof BAT === 'function' && BAT() ? BAT().a.pow : 0, b: { pow: [1, 2, 3, 5] } },
+    { m: 'B', k: 'hawk', n: '鷹眼', ic: '👀', v: () => typeof BAT === 'function' && BAT() ? BAT().a.eye : 0, b: { eye: [1, 2, 3, 5] } },
+    { m: 'B', k: 'wheel', n: '飛毛腿', ic: '👟', v: () => typeof BAT === 'function' && BAT() ? BAT().a.spd : 0, b: { spd: [1, 2, 3, 5], fld: [0, 1, 1, 2] } },
+    { m: 'P', k: 'paint', n: '精準制球', ic: '🎯', v: () => ME().a.ctrl || 0, b: { ctrl: [1, 2, 3, 5] } },
+    { m: 'P', k: 'magic', n: '魔球', ic: '🌀', v: () => ME().pi ? stuffOf(ME()) : 0, b: { stuff: [1, 2, 3, 5] } },
+    { m: 'P', k: 'iron', n: '鐵臂', ic: '💪', v: () => ME().a.sta || 0, b: { sta: [1, 2, 4, 6] } },
+    { m: 'P', k: 'cool', n: '冰山心臟', ic: '🧊', v: () => C.iq || 50, b: { ctrl: [1, 1, 2, 3], stuff: [0, 1, 1, 2] } },
     { k: 'star', n: '巨星氣場', ic: '🌟', v: () => cl(40 + (C.fame || 0) * 1.5, 0, 99), b: { velo: [0, 1, 1, 2], ctrl: [1, 1, 2, 2] } },
   ];
   const tierOf = b => { const v = b.v(); let t = -1; THR.forEach((x, i) => { if (v >= x) t = i; }); return t; };
@@ -1473,10 +1477,12 @@ const MG = (() => {
     shoes: { n: '球鞋', ic: '👟', items: [['訓練球鞋', { ath: 1 }], ['氣墊籃球鞋', { ath: 2, drive: 1 }], ['碳板戰靴', { ath: 3, drive: 2, def: 1 }], ['飛人簽名鞋', { ath: 4, drive: 3, def: 2, reb: 2 }]] },
     sleeve: { n: '護具', ic: '🧤', items: [['棉質護腕', { shoot: 1 }], ['射手袖套', { shoot: 2, three: 1 }], ['冠軍頭帶', { shoot: 2, three: 2, pass: 1 }], ['傳奇射手袖', { shoot: 3, three: 4, pass: 2 }]] },
   } : {
-    glove: { n: '手套', ic: '🧤', items: [['練習手套', { ctrl: 1 }], ['牛皮手套', { ctrl: 2, stuff: 1 }], ['職人訂製手套', { ctrl: 3, stuff: 2 }], ['傳奇金手套', { ctrl: 4, stuff: 3, velo: 1 }]] },
-    spikes: { n: '釘鞋', ic: '👟', items: [['入門釘鞋', { sta: 1 }], ['輕量釘鞋', { sta: 2, velo: 1 }], ['碳纖維釘鞋', { sta: 3, velo: 2 }], ['火箭釘鞋', { sta: 4, velo: 3, ctrl: 1 }]] },
+    glove: { n: '手套', ic: '🧤', items: [['練習手套', { ctrl: 1, fld: 1 }], ['牛皮手套', { ctrl: 2, stuff: 1, fld: 2 }], ['職人訂製手套', { ctrl: 3, stuff: 2, fld: 3 }], ['傳奇金手套', { ctrl: 4, stuff: 3, velo: 1, fld: 4 }]] },
+    bat: { n: '球棒', ic: '🏏', items: [['練習球棒', { con: 1 }], ['楓木球棒', { con: 2, pow: 1 }], ['職人訂製球棒', { con: 3, pow: 2 }], ['傳奇金球棒', { con: 4, pow: 3, eye: 1 }]] },
+    spikes: { n: '釘鞋', ic: '👟', items: [['入門釘鞋', { sta: 1, spd: 1 }], ['輕量釘鞋', { sta: 2, velo: 1, spd: 2 }], ['碳纖維釘鞋', { sta: 3, velo: 2, spd: 3 }], ['火箭釘鞋', { sta: 4, velo: 3, ctrl: 1, spd: 4 }]] },
   };
-  const AN = isHoop ? ATTR : { velo: '球速', ctrl: '控球', stuff: '變化球', sta: '體力' };
+  const AN = isHoop ? ATTR : { velo: '球速', ctrl: '控球', stuff: '變化球', sta: '體力', con: '打擊', pow: '力量', eye: '選球', spd: '速度', fld: '守備' };
+  const tgtOf = k => (!isHoop && typeof BAT === 'function' && ['con','pow','eye','spd','fld'].includes(k)) ? BAT() : ME();
   const bTxt = b => Object.entries(b).filter(([, v]) => v).map(([k, v]) => `${AN[k] || k}+${v}`).join(' ');
   const gearPrice = r => Math.max(1, Math.round(RAR[r][2] * mu()));
 
@@ -1493,13 +1499,13 @@ const MG = (() => {
     if (C._bx) return; const b = boosts(), me = ME(), done = {};
     for (const k in b) {
       if (k === 'stuff' && me.pi) { done.stuff = b[k]; for (const p in me.pi) if (p !== '直球') me.pi[p] += b[k]; }
-      else if (k in me.a) { me.a[k] += b[k]; done[k] = b[k]; }
+      else { const o = tgtOf(k); if (o && k in o.a) { o.a[k] += b[k]; done[k] = b[k]; } }
     }
     C._bx = done; inGame = true;
   }
   function revertB() {
     if (!C || !C._bx) return; const me = ME();
-    for (const k in C._bx) { if (k === 'stuff' && me.pi) { for (const p in me.pi) if (p !== '直球') me.pi[p] -= C._bx[k]; } else if (k in me.a) me.a[k] -= C._bx[k]; }
+    for (const k in C._bx) { if (k === 'stuff' && me.pi) { for (const p in me.pi) if (p !== '直球') me.pi[p] -= C._bx[k]; } else { const o = tgtOf(k); if (o && k in o.a) o.a[k] -= C._bx[k]; } }
     delete C._bx; inGame = false;
   }
   const _ens = ensureCareer;
@@ -1571,7 +1577,8 @@ const MG = (() => {
   const _rm = renderMe;
   renderMe = function () {
     _rm(); const S = sx(), el = $$('tMe'); checkBadges(); const eq = equipped(), n = slots();
-    const bh = BDG.map(b => { const t = tierOf(b), v = Math.round(b.v()), nx = THR.find(x => x > v), on = eq.includes(b.k);
+    const okB = b => isHoop || !b.m || !C.pos || (b.m === 'B' ? C.pos !== 'P' : C.pos !== 'B');
+    const bh = BDG.filter(okB).map(b => { const t = tierOf(b), v = Math.round(b.v()), nx = THR.find(x => x > v), on = eq.includes(b.k);
       const eff = t >= 0 ? bTxt(Object.fromEntries(Object.entries(b.b).map(([k, a]) => [k, a[t]]))) : '';
       return `<button class="bdg ${t < 0 ? 'lock' : ''} ${on ? 'on' : ''}" data-bd="${b.k}" style="--c:${t >= 0 ? TIER[t][1] : '#555'}"><span class="bi">${b.ic}</span><span class="bt"><b>${b.n}${t >= 0 ? `・${TIER[t][0]}` : ''}</b><small>${t >= 0 ? eff : '未解鎖'}${nx ? `　下一階 ${nx}（現在 ${v}）` : ''}</small></span>${on ? '<i>裝備中</i>' : ''}</button>`; }).join('');
     const gh = Object.entries(GEAR).map(([s, G]) => { const cur = S.gear[s];
