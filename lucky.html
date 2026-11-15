@@ -2,7 +2,7 @@
 <html lang="zh-Hant"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes"><meta name="theme-color" content="#120a1e">
-<title>幸運大抽獎</title>
+<title>輪盤抽獎</title>
 <style>
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none}
 body{margin:0;background:radial-gradient(circle at 50% 0,#3a1858,#120a1e 70%);color:#fff;font-family:-apple-system,"PingFang TC","Noto Sans TC",sans-serif;min-height:100vh;overflow-x:hidden}
@@ -51,7 +51,7 @@ textarea{width:100%;min-height:130px;border-radius:12px;border:1px solid #ffffff
 </style></head><body>
 <a class="home" href="index.html">⌂ 遊戲盒</a>
 <div class="wrap">
-  <h1 id="ttl">🎁 幸運大抽獎</h1>
+  <h1 id="ttl">🎡 輪盤抽獎</h1>
   <div class="sub" id="subT">公平・公正・公開　隨機抽出幸運兒</div>
   <div class="tabs"><button id="tW" class="on">🎡 轉盤</button><button id="tS">🎰 跑馬燈</button></div>
   <div id="vW"><div class="stage"><div class="ptr"></div><canvas id="cv" width="800" height="800"></canvas><div class="hub" id="hub">GO</div></div></div>
@@ -78,7 +78,7 @@ textarea{width:100%;min-height:130px;border-radius:12px;border:1px solid #ffffff
   <div class="row"><label><input type="checkbox" id="near"> 轉盤先停在別人那格，最後一刻再滑到內定的人</label></div>
   <div class="row"><label><input type="checkbox" id="always"> 內定的人每次都中（不會用完）</label></div>
   <div class="row" style="margin-top:14px"><button id="secClr">取消全部內定</button><button id="secOk" style="background:#2ecc71;color:#06260f;font-weight:800">關閉</button></div>
-  <div class="muted" style="margin-top:12px">打開方式：連點標題 3 下，或長按「開始抽獎」按鈕 1 秒。</div>
+  <div class="muted" style="margin-top:12px">打開方式：連點標題「輪盤抽獎」3 下，或長按「開始抽獎」按鈕 1 秒。</div>
 </div></div>
 <script>
 const $ = id => document.getElementById(id);
