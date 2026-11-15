@@ -147,14 +147,16 @@
     <div class="row"><input id="iName" maxlength="6"><button class="ghost" id="bRnd" style="white-space:nowrap">隨機</button></div>
     <label class="lb">背號（0–99）</label>
     <input id="iNum" type="number" inputmode="numeric" min="0" max="99">
-    <label class="lb">守備位置</label>
+    <label class="lb">當投手還是打者？</label>
     <div class="pick-grid" id="posPick"></div>
     <div id="pitchSec"><label class="lb">選兩種實戰變化球（直球必備）</label>
     <div class="pick-grid" id="pPick"></div>
     <label class="lb">再選一種「開發中」球種（練到 40 就能實戰）</label>
     <div class="pick-grid" id="dPick"></div></div>
     <div id="batSec"><label class="lb">打擊類型</label>
-    <div class="pick-grid" id="bPick"></div></div>
+    <div class="pick-grid" id="bPick"></div>
+    <div id="fSec"><label class="lb">守備位置</label>
+    <div class="pick-grid" id="fPick"></div></div></div>
     <button class="ghost" id="bLook" style="width:100%;margin-top:10px">換個外型</button>
     <button id="bStart" style="width:100%;margin-top:12px">入學</button>
   </div>
@@ -246,6 +248,11 @@ const HS_TEAMS = [ ['青嶺高中','#2e86de','嶺'], ['海星高中','#10ac84','
 const PITCHES = { '直球':{ cat:'fast', d:'球速最快，靠球威壓制' }, '滑球':{ cat:'brk', d:'橫向大幅滑開' }, '曲球':{ cat:'brk', d:'大弧度下墜' }, '指叉球':{ cat:'brk', d:'到本壘急墜，三振利器' }, '變速球':{ cat:'brk', d:'出手像直球，球速慢一截' }, '卡特球':{ cat:'fast', d:'快速小幅切入' }, '伸卡球':{ cat:'fast', d:'下沉帶尾勁，製造滾地' } };
 const OFFSPEED = Object.keys(PITCHES).filter(p => p !== '直球');
 const BTYPES = { '巧打':{ k:'con', d:'安打製造機，打擊率高', pos:'二壘' }, '長打':{ k:'pow', d:'全壘打砲，打點多', pos:'一壘' }, '選球':{ k:'eye', d:'很少三振，上壘率高', pos:'游擊' }, '速度':{ k:'spd', d:'跑得快，三壘安打多、守備範圍大', pos:'中外' } };
+const FPOSN = { '捕手':{ w:0.06, d:'配球、阻殺，跟投手默契加成' }, '一壘':{ w:0.09, d:'球多但簡單' }, '二壘':{ w:0.14, d:'雙殺守備核心' }, '游擊':{ w:0.16, d:'內野最忙、最難' }, '三壘':{ w:0.11, d:'強襲球多，反應要快' }, '左外':{ w:0.09, d:'' }, '中外':{ w:0.12, d:'外野範圍最大' }, '右外':{ w:0.09, d:'要有強肩' } };
+const FWHERE = { '捕手':'本壘前', '一壘':'一壘', '二壘':'二壘', '游擊':'游擊', '三壘':'三壘', '左外':'左外野', '中外':'中外野', '右外':'右外野' };
+let fp = null;
+const grpOf = x => x === '捕手' ? 'C' : /外/.test(x) ? 'OF' : 'IF';
+const myField = G => C.pos === 'B' && BAT() && FPOSN[BAT().pos] && G[defT(G).n].lu.includes('ME');
 const BATK = ['con','pow','eye','spd','fld'], PITK = ['velo','ctrl','sta'];
 const AN_ALL = { velo:'球速', ctrl:'控球', sta:'體力', con:'打擊', pow:'力量', eye:'選球', spd:'速度', fld:'守備' };
 const POSL = { P:'投手', B:'打者', TW:'二刀流' };
@@ -256,7 +263,7 @@ const selfOf = k => (C.pos === 'TW' && BATK.includes(k)) ? C.players.MEB : C.pla
 const isSelf = id => id === 'ME' || id === 'MEB';
 const MEMORIES = {
   HS_CHAMP:{ n:'高中冠軍', t:'大賽心臟', d:'關鍵打席成功率 +8%' }, DRAFT1:{ n:'狀元', t:'天生球威', d:'起始球速 +6' }, UNDRAFTED:{ n:'落選', t:'不屈', d:'受傷機率 -35%、潛力 +3' },
-  K15:{ n:'15 次三振', t:'魔球', d:'變化球成長 +25%' }, HR3:{ n:'單場三轟', t:'怪力', d:'力量成長 +25%' }, H4:{ n:'猛打賞', t:'安打機器', d:'打擊成長 +25%' }, BATK:{ n:'打擊王', t:'天才打者', d:'選球成長 +25%' }, MVPM:{ n:'年度 MVP', t:'球星光環', d:'起始教練信任 +25、潛力 +4' }, TWM:{ n:'二刀流', t:'全能', d:'所有能力成長 +10%' }, SHUTOUT:{ n:'完封', t:'鐵臂', d:'體力成長 +25%' }, ACE:{ n:'最佳投手', t:'王牌氣場', d:'起始教練信任 +25、潛力 +4' },
+  K15:{ n:'15 次三振', t:'魔球', d:'變化球成長 +25%' }, HR3:{ n:'單場三轟', t:'怪力', d:'力量成長 +25%' }, H4:{ n:'猛打賞', t:'安打機器', d:'打擊成長 +25%' }, BATK:{ n:'打擊王', t:'天才打者', d:'選球成長 +25%' }, MVPM:{ n:'年度 MVP', t:'球星光環', d:'起始教練信任 +25、潛力 +4' }, TWM:{ n:'二刀流', t:'全能', d:'所有能力成長 +10%' }, GG:{ n:'金手套', t:'鐵壁', d:'守備成長 +25%' }, SHUTOUT:{ n:'完封', t:'鐵臂', d:'體力成長 +25%' }, ACE:{ n:'最佳投手', t:'王牌氣場', d:'起始教練信任 +25、潛力 +4' },
   CHAMP:{ n:'總冠軍', t:'冠軍血統', d:'捕手默契成長加倍' }, CLUTCH:{ n:'關鍵時刻', t:'冷血', d:'關鍵打席成功率 +12%' }, LONG:{ n:'十年老將', t:'不老', d:'衰退延後兩年' }, SV30:{ n:'守護神', t:'剛速', d:'球速成長 +25%' },
 };
 const ACH = [
@@ -268,10 +275,11 @@ const ACH = [
   ['ten','🎖️','十年老將',''], ['jersey','👕','退休背號',''], ['hof','🏛️','名人堂',''],
   ['hit1','🏏','首安','擊出第一支安打'], ['hr1','💥','首轟','第一支全壘打'], ['h4','🔥','猛打賞','單場 4 支安打'], ['hr3','🌋','單場三轟','單場 3 支全壘打'], ['bclutch','🎯','關鍵一擊','關鍵打席擊出安打'],
   ['lineup','🟢','先發打線','進入一軍先發打線'], ['batk','👑','打擊王',''], ['hrk','💣','全壘打王',''], ['rbik','📈','打點王',''], ['h300','💯','生涯 300 安',''], ['hr100','🚀','生涯 100 轟',''],
+  ['gp','✨','守備美技','比賽中用美技救下一支安打'], ['gg','🥇','金手套','全聯盟年度最佳守備'],
   ['tw','⚡','二刀流','同一季拿下 6 勝、打出 8 支全壘打'], ['rivalw','⚔️','擊敗宿敵','某一季個人獎項贏過同世代的天才宿敵'],
 ];
 const ACH_P = new Set(['win1','k10','k15','cg','so','nh','clutch','rot','ace','era','kking','svking','w100','k1000']);
-const ACH_B = new Set(['hit1','hr1','h4','hr3','bclutch','lineup','batk','hrk','rbik','h300','hr100']);
+const ACH_B = new Set(['gp','gg','hit1','hr1','h4','hr3','bclutch','lineup','batk','hrk','rbik','h300','hr100']);
 const achOn = a => !C ? true : a[0] === 'tw' ? C.pos === 'TW' : C.pos === 'P' ? !ACH_B.has(a[0]) : C.pos === 'B' ? !ACH_P.has(a[0]) : true;
 const EGGS = [
   { n:34, need:null, who:'Nolan Ryan', t:'特快車', pot:96, b:{ velo:15 } },
@@ -323,7 +331,7 @@ let PID = 1;
 const ME = () => C.players.ME;
 const P = id => C.players[id];
 function pl() { return { g:0, gs:0, outs:0, h:0, r:0, bb:0, k:0, hr:0, w:0, l:0, sv:0, pc:0 }; }
-function bl() { return { g:0, ab:0, h:0, d:0, t:0, hr:0, rbi:0, r:0, bb:0, k:0 }; }
+function bl() { return { g:0, ab:0, h:0, d:0, t:0, hr:0, rbi:0, r:0, bb:0, k:0, ch:0, gp:0, e:0 }; }
 function stuffOf(p) { if (!p.me) return p.a.stuff; const v = Object.entries(p.pi).filter(([k]) => k !== '直球').map(([, v]) => v).sort((a, b) => b - a); return ((v[0] || 30) * 0.6 + (v[1] || 30) * 0.4); }
 function ovrOf(p) { if (p.type === 'B') { const a = p.a; return Math.round(a.con * 0.3 + a.pow * 0.25 + a.eye * 0.2 + a.spd * 0.1 + a.fld * 0.15); } const a = p.a; return Math.round(a.velo * 0.3 + a.ctrl * 0.3 + stuffOf(p) * 0.3 + a.sta * 0.1); }
 const ovr = () => { if (!C) return 0; if (C.pos !== 'TW') return ovrOf(ME()); const a = ovrOf(ME()), b = ovrOf(C.players.MEB); return Math.round(Math.max(a, b) * 0.65 + Math.min(a, b) * 0.35); };
@@ -351,7 +359,7 @@ function makeRivals() {
   C.stars = C.stars || [];
   const base = clamp(ovr() - 2, 60, 80), others = C.teams.filter(t => t.n !== C.team);
   const mk = (isBat, t) => { const p = isBat ? mkB(base, C.age, t.n) : mkP(base, C.age, t.n, true); p.pot = ri(95, 99); p.star = true; for (const k in p.a) p.a[k] = clamp(base + rnd(-4, 6), 40, 90); if (!isBat) p.a.sta = clamp(base + rnd(4, 10), 50, 92); if (isBat) p.pos = pick(['游擊','中外','三壘']); C.players[p.id] = p; (isBat ? t.bats : t.pits).push(p.id); C.stars.push(p.id); return p; };
-  const a = mk(true, pick(others)), b = mk(false, pick(others));
+  const a = mk(true, pick(others)), b = mk(false, pick(others)); mk(C.pos === 'P', pick(others));
   C.note2 = `<b class="bad">⚡ 同世代的天才：</b>${a.team}的強打者 <b>${a.name}</b>、${b.team}的王牌投手 <b>${b.name}</b>。他們跟你同年，也想拿 MVP。`;
 }
 function newStar() {
@@ -376,7 +384,7 @@ function lineup(t) { const lv = p => ovrOf(p) + (p.me ? (C.phase === 'HS' ? 40 :
 // ===================== 建立 =====================
 let picks = [], dev = null, look = { skin:2, hair:0, hc:0 }, num = 18, posSel = 'P', bt = null;
 function renderCreate() {
-  $('iName').value = randName(); num = ri(1, 99); $('iNum').value = num; picks = []; dev = null; bt = null; look = { skin: ri(0,4), hair: ri(0,3), hc: ri(0,4) };
+  $('iName').value = randName(); num = ri(1, 99); $('iNum').value = num; picks = []; dev = null; bt = null; fp = null; look = { skin: ri(0,4), hair: ri(0,3), hc: ri(0,4) };
   const last = LEG.lives[0];
   $('legacy').innerHTML = LEG.lives.length ? `<div class="card" style="font-size:14px;line-height:1.7">第 <b class="gold">${LEG.lives.length + 1}</b> 世<br>${LEG.talents.length ? '天賦：' + LEG.talents.map(k => `<b class="gold">${MEMORIES[k].t}</b>（${MEMORIES[k].d}）`).join('、') + '<br>' : ''}${LEG.inherit ? `傳承：${LEG.inherit.label} +${LEG.inherit.v}<br>` : ''}<span class="muted">前世：${last.name}・${last.summary}</span></div>` : '';
   drawCreate();
@@ -386,13 +394,15 @@ function drawCreate() {
   $('pPick').innerHTML = ''; $('dPick').innerHTML = ''; $('posPick').innerHTML = ''; $('bPick').innerHTML = '';
   for (const [k, n, d] of [['P','⚾ 投手','投球、配球、拚最佳投手'],['B','🏏 打者','打擊、跑壘、拚打擊王'],['TW','⚡ 二刀流','投打都要練，最難也最強']]) { const b = document.createElement('button'); b.className = 'opt' + (posSel === k ? ' sel' : ''); b.innerHTML = `${n}<small>${d}</small>`; b.onclick = () => { posSel = k; drawCreate(); }; $('posPick').appendChild(b); }
   $('pitchSec').classList.toggle('hide', posSel === 'B'); $('batSec').classList.toggle('hide', posSel === 'P');
-  for (const [k, v] of Object.entries(BTYPES)) { const b = document.createElement('button'); b.className = 'opt' + (bt === k ? ' sel' : ''); b.innerHTML = `${k}型<small>${v.d}</small>`; b.onclick = () => { bt = k; drawCreate(); }; $('bPick').appendChild(b); }
+  for (const [k, v] of Object.entries(BTYPES)) { const b = document.createElement('button'); b.className = 'opt' + (bt === k ? ' sel' : ''); b.innerHTML = `${k}型<small>${v.d}</small>`; b.onclick = () => { bt = k; if (!fp) fp = v.pos; drawCreate(); }; $('bPick').appendChild(b); }
+  $('fSec').classList.toggle('hide', posSel !== 'B'); $('fPick').innerHTML = '';
+  for (const [k, v] of Object.entries(FPOSN)) { const b = document.createElement('button'); b.className = 'opt' + (fp === k ? ' sel' : ''); b.innerHTML = `${k}<small>${v.d || '　'}</small>`; b.onclick = () => { fp = k; drawCreate(); }; $('fPick').appendChild(b); }
   for (const p of OFFSPEED) {
     const b = document.createElement('button'); b.className = 'opt' + (picks.includes(p) ? ' sel' : ''); b.innerHTML = `${p}<small>${PITCHES[p].d}</small>`;
     b.onclick = () => { if (picks.includes(p)) picks = picks.filter(x => x !== p); else if (picks.length < 2) { picks.push(p); if (dev === p) dev = null; } drawCreate(); }; $('pPick').appendChild(b);
     const d = document.createElement('button'); d.className = 'opt' + (dev === p ? ' sel' : ''); d.innerHTML = `${p}<small>${PITCHES[p].d}</small>`; d.disabled = picks.includes(p); d.onclick = () => { dev = p; drawCreate(); }; $('dPick').appendChild(d);
   }
-  $('bStart').disabled = (posSel !== 'B' && (picks.length !== 2 || !dev)) || (posSel !== 'P' && !bt);
+  $('bStart').disabled = (posSel !== 'B' && (picks.length !== 2 || !dev)) || (posSel !== 'P' && !bt) || (posSel === 'B' && !fp);
 }
 $('bRnd').onclick = () => $('iName').value = randName();
 $('bLook').onclick = () => { look = { skin: ri(0,4), hair: ri(0,3), hc: ri(0,4) }; drawCreate(); };
@@ -404,7 +414,7 @@ $('bStart').onclick = () => {
   const a = { velo: ri(36, 43) + (has('DRAFT1') ? 6 : 0) + (inh && inh.k === 'velo' ? inh.v : 0), ctrl: ri(36, 43) + (inh && inh.k === 'ctrl' ? inh.v : 0), sta: ri(36, 43) + (inh && inh.k === 'sta' ? inh.v : 0) };
   const pi = { '直球': 0 }; for (const p of picks) pi[p] = ri(34, 42) + (inh && inh.k === 'pitch' ? inh.v : 0);
   const pot0 = ri(74, 88) + (has('UNDRAFTED') ? 3 : 0) + (has('ACE') || has('MVPM') ? 4 : 0);
-  const mkMeB = id => { const ba = {}; for (const k of BATK) ba[k] = ri(36, 43) + (inh && inh.k === k ? inh.v : 0); if (bt) ba[BTYPES[bt].k] += 6; if (has('DRAFT1')) ba[BTYPES[bt].k] += 6; return { id, type:'B', me:true, name: C.name, age:16, a: ba, pos: BTYPES[bt].pos, pot: pot0, team: C.team, st: bl(), car: bl() }; };
+  const mkMeB = id => { const ba = {}; for (const k of BATK) ba[k] = ri(36, 43) + (inh && inh.k === k ? inh.v : 0); if (bt) ba[BTYPES[bt].k] += 6; if (has('DRAFT1')) ba[BTYPES[bt].k] += 6; return { id, type:'B', me:true, name: C.name, age:16, a: ba, pos: posSel === 'TW' ? '指定' : fp, pot: pot0, team: C.team, st: bl(), car: bl() }; };
   if (posSel === 'B') { C.players.ME = mkMeB('ME'); C.dev = null; C.role = '先發打者'; }
   else C.players.ME = { id:'ME', type:'P', me:true, name: C.name, age:16, a, pi, pot: pot0, team: C.team, st: pl(), car: pl() };
   if (posSel === 'TW') C.players.MEB = mkMeB('MEB');
@@ -469,6 +479,7 @@ function paProbs(G, pid, bid, mod = {}) {
   if (selfB) { let r = { k, bb, h, hr }; const dodge = Math.max(0, bo - 78) * 0.0028; r.bb = clamp(r.bb + dodge, 0.02, 0.26); r.h = Math.max(0.1, r.h - dodge * 0.5);
     const ap = mod.ap; if (ap === 'swing') r = { k: r.k + 0.05, bb: r.bb, h: r.h, hr: clamp(r.hr + 0.06, 0.02, 0.45) }; else if (ap === 'contact') r = { k: Math.max(0.04, r.k - 0.05), bb: r.bb, h: r.h + 0.03, hr: Math.max(0.02, r.hr - 0.03) }; else if (ap === 'eye') r = { k: Math.max(0.04, r.k - 0.02), bb: r.bb + 0.05, h: Math.max(0.08, r.h - 0.02), hr: r.hr };
     return r; }
+  if (G && G.dshift && myField(G)) { if (G.dshift === 'in') return { k, bb, h: h + 0.02, hr }; if (G.dshift === 'back') return { k, bb, h: h + 0.012, hr: Math.max(0.02, hr - 0.005) }; }
   if (pid === 'ME' && G.tac === 'power') return { k: clamp(k + 0.05, 0.05, 0.55), bb, h: h + 0.01, hr: hr + 0.03 };
   if (pid === 'ME' && G.tac === 'nibble') return { k: k + 0.01, bb: bb + 0.035, h: Math.max(0.08, h - 0.035), hr: Math.max(0.02, hr - 0.02) };
   if (pid === 'ME' && G.tac === 'ground') return { k: Math.max(0.05, k - 0.04), bb: Math.max(0.02, bb - 0.015), h: h + 0.01, hr: Math.max(0.02, hr - 0.045) };
@@ -494,21 +505,29 @@ function plateAppearance(G, force) {
   let type;
   if (force && force.result) type = force.result;
   else if (r < pr.k) type = 'K'; else if (r < pr.k + pr.bb) type = 'BB';
-  else if (r < pr.k + pr.bb + pr.h) { const r2 = Math.random(); type = r2 < pr.hr ? 'HR' : r2 < pr.hr + 0.2 ? '2B' : r2 < pr.hr + 0.2 + 0.02 * (P(bid).a.spd / 60) ? '3B' : '1B'; }
+  else if (r < pr.k + pr.bb + pr.h) { const r2 = Math.random(), xb = G.dshift === 'back' && myField(G) ? 0.08 : 0.2; type = r2 < pr.hr ? 'HR' : r2 < pr.hr + xb ? '2B' : r2 < pr.hr + 0.2 + 0.02 * (P(bid).a.spd / 60) ? '3B' : '1B'; }
   else type = 'OUT';
+  let fieldNote = '', isErr = false;
+  if (myField(G) && ['1B','2B','OUT'].includes(type) && !(force && force.result) && Math.random() < FPOSN[BAT().pos].w * 0.9) {
+    const me = BAT(), f = me.a.fld, mb = G.bbox.ME; mb.ch++; G.fieldN = (G.fieldN || 0) + 1;
+    if (type !== 'OUT' && Math.random() < clamp((f - 55) * 0.004 + (G.dshift === 'back' && type === '2B' ? 0.08 : 0), 0, 0.22)) { type = 'OUT'; mb.gp++; G.gpN = (G.gpN || 0) + 1; fieldNote = pick(['✨ 你飛撲接殺！', '✨ 你一個魚躍把球攔下來，傳殺出局！', '✨ 你在牆邊跳起來把球沒收！']); }
+    else if (type === 'OUT' && Math.random() < clamp(0.075 - (f - 40) * 0.0014, 0.006, 0.09)) { isErr = true; mb.e++; fieldNote = pick(['😱 球從你的手套彈了出去，失誤！', '😱 你傳球偏了，失誤！']); }
+  }
   const pc = type === 'K' ? ri(4, 7) : type === 'BB' ? ri(5, 7) : ri(1, 5); ds.pc += pc; pb.pc += pc;
   const bn = P(bid).name, pn = pid === 'ME' ? C.name : P(pid).name, mine = pid === 'ME' || !!P(bid).me;
   let runs = [], txt = '', outs = 0, oType = '';
   G.lastPA = { pid, bid, type };
   if (type === 'K') { outs = 1; bb.ab++; bb.k++; pb.k++; txt = `${bn}${pick(['揮棒落空','站著不動'])}，三振！`; }
   else if (type === 'BB') { bb.bb++; pb.bb++; runs = adv(G, 'BB', bid); txt = `${bn}選到四壞保送`; }
+  else if (isErr) { bb.ab++; runs = adv(G, '1B', bid); txt = `${bn}打向${FWHERE[BAT().pos]}，${fieldNote}打者上壘`; }
   else if (type === 'OUT') {
     bb.ab++; outs = 1; oType = pick(['GB','GB','FB','FB','LD','PU']);
     const where = { GB: pick(['游擊','二壘','三壘','一壘']) + '滾地球', FB: pick(['左外野','中外野','右外野']) + '飛球', LD: pick(['游擊','二壘','中外野']) + '平飛球被接殺', PU: '內野高飛球' }[oType];
     txt = `${bn}打成${where}出局`;
+    if (fieldNote) txt = `${bn}的球往${FWHERE[BAT().pos]}飛去——${fieldNote}`;
     if (oType === 'GB' && G.bases[0] && G.outs < 2 && Math.random() < 0.35) { outs = 2; G.bases[0] = null; txt = `${bn}打成雙殺打！`; }
-    else if (oType === 'FB' && G.bases[2] && G.outs < 2 && Math.random() < 0.6) { runs.push(G.bases[2]); G.bases[2] = null; txt += '，三壘跑者回本壘（高飛犧牲打）'; }
-    else if (oType === 'GB' && G.outs < 2) { if (G.bases[1] && !G.bases[2]) { G.bases[2] = G.bases[1]; G.bases[1] = null; } }
+    else if (oType === 'FB' && G.bases[2] && G.outs < 2 && Math.random() < (G.dshift === 'in' && myField(G) ? 0.3 : 0.6)) { runs.push(G.bases[2]); G.bases[2] = null; txt += '，三壘跑者回本壘（高飛犧牲打）'; }
+    else if (oType === 'GB' && G.outs < 2 && !(G.dshift === 'in' && myField(G))) { if (G.bases[1] && !G.bases[2]) { G.bases[2] = G.bases[1]; G.bases[1] = null; } }
   } else {
     bb.ab++; bb.h++; pb.h++; if (type === '2B') bb.d++; if (type === '3B') bb.t++; if (type === 'HR') { bb.hr++; pb.hr++; }
     runs = adv(G, type, bid);
@@ -521,7 +540,7 @@ function plateAppearance(G, force) {
   os.bi++;
   checkLead(G, O, D);
   const big = type === 'HR' || runs.length >= 2;
-  ev(G, (mine ? (type === 'K' ? '🔥 ' : '') : '') + txt, mine ? 'me' : big ? 'big' : '', O);
+  ev(G, (mine ? (type === 'K' ? '🔥 ' : '') : '') + txt, mine || fieldNote ? 'me' : big ? 'big' : '', O);
   if (mine && type === 'K' && G.outs >= 3) {} // nothing
   return { type, runs: runs.length };
 }
@@ -602,6 +621,17 @@ function clutchOptions(G) {
     const pOut = 1 - pr.bb - pr.h;
     return { p: t.p, lv: t.lv, zone: match ? weakZ : pick(['內角','外角','低角度']), pr, pOut, match };
   }) };
+}
+const DSH = [['norm','⏺ 正常守備','照平常的站位'], ['in','⬆️ 前進守備','三壘跑者比較難回來得分，但安打變多'], ['back','⬇️ 後退守備','不容易被打長打，但小飛球會落地']];
+function fieldUI(G) {
+  return new Promise(res => {
+    const lead = G.s[defT(G).n] - G.s[offT(G).n], runners = G.bases.map((x, i) => x ? ['一','二','三'][i] : null).filter(Boolean);
+    $('gClutch').innerHTML = `<div class="tac"><div style="font-size:18px;font-weight:900">🧤 守備站位　${G.inn} 局${G.top ? '上' : '下'}・${G.outs} 出局・${runners.length ? runners.join('、') + '壘有人' : '壘上無人'}</div>
+      <div class="muted" style="margin:4px 0 8px">${lead > 0 ? `領先 ${lead} 分` : lead < 0 ? `落後 ${-lead} 分` : '平手'}・你守${BAT().pos}（守備 ${Math.round(BAT().a.fld)}）</div><div class="col" id="fBtns"></div></div>`;
+    for (const [k, n, d] of DSH) { const b = document.createElement('button'); b.className = 'choice'; b.innerHTML = `${n}<small>${d}</small>`; b.onclick = () => { G.dshift = k === 'norm' ? null : k; $('gClutch').innerHTML = ''; if (k !== 'norm') G.feed.push({ txt: `🧤 你們改成${n.slice(3)}`, cls: 'q' }); renderLive(G); res(); }; $('fBtns').appendChild(b); }
+    const b = document.createElement('button'); b.className = 'ghost'; b.innerHTML = '交給教練，不再詢問'; b.onclick = () => { G.fAuto = true; $('gClutch').innerHTML = ''; res(); }; $('fBtns').appendChild(b);
+    $('gClutch').scrollIntoView && $('gClutch').scrollIntoView({ block:'end', behavior:'smooth' });
+  });
 }
 // 打者：自己的打席
 const isMyAB = G => { const os = G[offT(G).n]; return !!BID() && os.lu[os.bi % 9] === BID(); };
@@ -684,8 +714,8 @@ const trainList = () => (TRAIN = C.pos === 'B' ? TRAIN_B : C.pos === 'TW' ? TRAI
 const ops = s => s.ab + s.bb ? (s.h + s.bb) / (s.ab + s.bb) + (s.ab ? (s.h + s.d + s.t * 2 + s.hr * 3) / s.ab : 0) : 0;
 function batScore(s, tn) { if (!s.ab) return -99; const t = team(tn), wp = t && t.w + t.l ? t.w / (t.w + t.l) : 0.5; return s.h * 0.35 + s.hr * 1.3 + s.rbi * 0.3 + s.bb * 0.2 + s.d * 0.3 + avg(s) * 40 + wp * 6 - s.k * 0.05; }
 function batRace() { const rows = []; for (const id in C.players) { const p = C.players[id]; if (p.type !== 'B' || !p.team || p.st.ab < 12) continue; rows.push({ id, v: batScore(p.st, p.team) }); } return rows.sort((a, b) => b.v - a.v); }
-function mvpRace() { const m = {}; for (const r of aceRace()) m[r.id] = r.v; for (const r of batRace()) { if (r.id === 'MEB') { const a = m.ME === undefined ? -99 : m.ME; m.ME = Math.max(a, r.v) + Math.max(0, Math.min(a, r.v)) * 0.3; } else m[r.id] = r.v; } return Object.entries(m).map(([id, v]) => ({ id, v })).sort((a, b) => b.v - a.v); }
-const batRow = L => `<table><tr><th>出賽</th><th>打數</th><th>安打</th><th>全壘打</th><th>打點</th><th>四壞</th><th>打擊率</th><th>OPS</th></tr><tr class="me"><td>${L.g}</td><td>${L.ab}</td><td>${L.h}</td><td>${L.hr}</td><td>${L.rbi}</td><td>${L.bb}</td><td>${f3(avg(L))}</td><td>${f3(ops(L))}</td></tr></table>`;
+function mvpRace() { const m = {}; for (const r of aceRace()) m[r.id] = r.v; for (const r0 of batRace()) { const r = { id: r0.id, v: r0.v * 0.9 }; if (r.id === 'MEB') { const a = m.ME === undefined ? -99 : m.ME; m.ME = Math.max(a, r.v) + Math.max(0, Math.min(a, r.v)) * 0.3; } else m[r.id] = r.v; } return Object.entries(m).map(([id, v]) => ({ id, v })).sort((a, b) => b.v - a.v); }
+const batRow = L => `<table><tr><th>出賽</th><th>打數</th><th>安打</th><th>全壘打</th><th>打點</th><th>四壞</th><th>打擊率</th><th>OPS</th></tr><tr class="me"><td>${L.g}</td><td>${L.ab}</td><td>${L.h}</td><td>${L.hr}</td><td>${L.rbi}</td><td>${L.bb}</td><td>${f3(avg(L))}</td><td>${f3(ops(L))}</td></tr></table>` + (C.pos === 'B' && FPOSN[BAT().pos] ? `<div class="chips" style="margin-top:6px"><span class="chip">🧤 ${BAT().pos}</span><span class="chip">守備機會 ${L.ch || 0}</span><span class="chip">✨ 美技 ${L.gp || 0}</span><span class="chip ${L.e ? 'bad' : ''}">失誤 ${L.e || 0}</span></div>` : '');
 function renderWeek() {
   const L = ME().st; trainList();
   let h = storyCard() + (C.note2 ? `<div class="card" style="font-size:14px;line-height:1.6">${C.note2}</div>` : '') + (C.pos === 'B' ? `<div class="card"><h3>📊 本季成績</h3>${batRow(L)}</div>` : `<div class="card"><h3>📊 本季成績</h3>${C.pos === 'TW' ? batRow(BAT().st) + '<div style="height:6px"></div>' : ''}<table><tr><th>登板</th><th>勝</th><th>敗</th><th>救援</th><th>局數</th><th>三振</th><th>防禦率</th><th>WHIP</th></tr>
@@ -721,7 +751,7 @@ function renderMe() {
   if (C.pos !== 'P') { const b = BAT(); if (C.pos === 'TW') bars += '<div class="muted" style="font-size:13px;margin:8px 0 2px">🏏 打擊</div>'; for (const [k, col] of [['con','#ffb84d'],['pow','#ff6b6b'],['eye','#5aa9ff'],['spd','#5fd68a'],['fld','#c792ea']]) bars += row(AN_ALL[k], b.a[k], col); }
   $('tMe').innerHTML = `<div class="card"><h3>📈 能力</h3><div class="row" style="justify-content:center;gap:16px;margin-bottom:8px">${badge(ovr(), '總評')}${badge(Math.round(me.pot), '潛力 ' + potGrade(me.pot))}</div>${bars}
     <div class="muted" style="font-size:12px;margin-top:4px">白線是潛力上限，越接近越難練${C.dev ? '；* 開發中球種，練到 40 可以實戰' : ''}</div>
-    <div class="chips"><span class="chip">💍 ${C.rings}</span>${C.pos !== 'B' ? `<span class="chip">🏆 最佳投手 ${C.aces}</span>` : ''}<span class="chip">👑 MVP ${C.mvps}</span>${C.pos !== 'P' ? `<span class="chip">🏏 打擊獎項 ${C.batAw || 0}</span>` : ''}<span class="chip">🌟 明星賽 ${C.allstars}</span>${C.phase === 'PRO' ? `<span class="chip">💰 存款 ${C.money} 萬</span>` : ''}</div></div>
+    <div class="chips"><span class="chip">💍 ${C.rings}</span>${C.pos !== 'B' ? `<span class="chip">🏆 最佳投手 ${C.aces}</span>` : ''}<span class="chip">👑 MVP ${C.mvps}</span>${C.pos !== 'P' ? `<span class="chip">🏏 打擊／守備獎項 ${C.batAw || 0}</span>${C.pos === 'B' && BAT().car ? `<span class="chip">🧤 生涯美技 ${BAT().car.gp || 0}・失誤 ${BAT().car.e || 0}</span>` : ''}` : ''}<span class="chip">🌟 明星賽 ${C.allstars}</span>${C.phase === 'PRO' ? `<span class="chip">💰 存款 ${C.money} 萬</span>` : ''}</div></div>
     ${C.pos !== 'P' ? `<div class="card"><h3>📜 打擊生涯</h3><div class="scroll-x"><table><tr><th class="l">年度</th><th>隊</th><th>出賽</th><th>安打</th><th>全壘打</th><th>打點</th><th>打擊率</th><th>OPS</th></tr>
     ${C.seasons.map(x => x.b ? `<tr><td class="l">${x.label}</td><td class="muted">${x.team.slice(0, 2)}</td><td>${x.b.g}</td><td>${x.b.h}</td><td>${x.b.hr}</td><td>${x.b.rbi}</td><td>${f3(avg(x.b))}</td><td>${f3(ops(x.b))}</td></tr>` : '').join('')}
     <tr class="me"><td class="l">生涯</td><td></td><td>${BAT().car.g}</td><td>${BAT().car.h}</td><td>${BAT().car.hr}</td><td>${BAT().car.rbi}</td><td>${f3(avg(BAT().car))}</td><td>${f3(ops(BAT().car))}</td></tr></table></div>${C.pos === 'B' ? `<div class="muted" style="margin-top:6px;font-size:13px">${C.awards.length ? '獎項：' + C.awards.join('、') : ''}</div>` : ''}</div>` : ''}
@@ -777,7 +807,7 @@ function dimF(v, pot) { let f = v < 50 ? 1.1 : v < 60 ? 0.85 : v < 70 ? 0.6 : v 
 function grow(k, base, pitch) {
   const me = pitch ? ME() : selfOf(k); let mult = ageF() * (0.85 + C.morale / 333);
   if (pitch && has('K15')) mult *= 1.25; if (k === 'sta' && has('SHUTOUT')) mult *= 1.25; if (k === 'velo' && has('SV30')) mult *= 1.25;
-  if (k === 'pow' && has('HR3')) mult *= 1.25; if (k === 'con' && has('H4')) mult *= 1.25; if (k === 'eye' && has('BATK')) mult *= 1.25; if (has('TWM')) mult *= 1.1;
+  if (k === 'pow' && has('HR3')) mult *= 1.25; if (k === 'con' && has('H4')) mult *= 1.25; if (k === 'eye' && has('BATK')) mult *= 1.25; if (k === 'fld' && has('GG')) mult *= 1.25; if (has('TWM')) mult *= 1.1;
   if (!pitch && !(k in me.a)) return 0;
   const cur = pitch ? me.pi[pitch] : me.a[k], g = base * mult * dimF(cur, me.pot);
   if (pitch) me.pi[pitch] = Math.min(99, cur + g); else me.a[k] = Math.min(99, cur + g);
@@ -874,6 +904,8 @@ async function watchLoop(G) {
     changePitcher(G, defT(G));
     const myPitching = G[defT(G).n].pit === 'ME';
     if (myPitching && G.speed && !G.tacAuto && G.tacHalf !== half && G.outs === 0) { G.tacHalf = half; renderLive(G); fieldSetPA(G); await tacticUI(G); }
+    if (G.fHalf !== half) G.dshift = null;
+    if (myField(G) && G.speed && !G.fAuto && G.fHalf !== half && (G.bases[1] || G.bases[2] || G.inn >= G.innings - 1)) { G.fHalf = half; renderLive(G); fieldSetPA(G); await fieldUI(G); }
     if (isClutch(G)) { G.clutchN++; renderLive(G); fieldSetPA(G); await clutchUI(G); }
     else if (isMyAB(G) && G.speed && (!G.batAuto || isBatClutch(G))) { renderLive(G); fieldSetPA(G); await batUI(G); }
     else if (isMyAB(G)) { fieldSetPA(G); autoBat(G); fieldResult(G); }
@@ -959,6 +991,8 @@ function endGame(G) {
     if (bm.h >= 4) { unlock('h4'); pushMem('H4'); C.highlights.push(`${tag}對${opp.n}單場 ${bm.h} 安`); }
     if (bm.hr >= 3) { unlock('hr3'); pushMem('HR3'); C.highlights.push(`${tag}對${opp.n}單場 ${bm.hr} 轟`); }
     if (G.batClutch) { unlock('bclutch'); pushMem('CLUTCH'); }
+    if (bm.gp) { unlock('gp'); C.trust = Math.min(100, C.trust + 2 * bm.gp); grow('fld', 0.4); }
+    if (bm.e) { C.trust = Math.max(0, C.trust - 2 * bm.e); C.morale = Math.max(0, C.morale - 2); }
     if (!m && C.fatigue > 85 && Math.random() < (C.fatigue - 80) * 0.01 * injMult()) C.injury = ri(1, 3);
     const BK = BAT().car; if (BK.h >= 300) unlock('h300'); if (BK.hr >= 100) unlock('hr100');
   }
@@ -974,7 +1008,7 @@ function endGame(G) {
     `<div class="big-score"><div>${logo(a, 56)}<div class="muted" style="font-size:13px">${a.n}</div></div><div class="s">${G.s[a.n]} : ${G.s[h.n]}</div><div>${logo(h, 56)}<div class="muted" style="font-size:13px">${h.n}</div></div></div>
     <div class="result-tag ${won ? 'good' : 'bad'}">${won ? '🎉 贏球！' : '輸球'}${G.walkoff ? '（再見）' : ''}</div>
     <div class="pog">${isSelf(pog) ? bbAvatar(pt.c, C.num, C.look.skin) : logo(pt, 52)}<div><div class="gold" style="font-size:13px;font-weight:800">⭐ 本場最佳球員</div><b style="font-size:18px">${isSelf(pog) ? C.name : pp.name}</b><div class="muted" style="font-size:13px">${pb ? `${ip(pb.outs)} 局 ${pb.k} 三振 失 ${pb.r} 分` : `${bb.ab} 打數 ${bb.h} 安打 ${bb.hr} 全壘打 ${bb.rbi} 打點`}　${pt.n}</div></div></div>
-    ${bm && bm.ab + bm.bb ? `<div class="card" style="font-size:14px">🏏 你今天：${bm.ab} 打數 ${bm.h} 安打${bm.hr ? ` <b class="gold">${bm.hr} 轟</b>` : ''} ${bm.rbi} 打點${bm.bb ? ` ${bm.bb} 保送` : ''}</div>` : ''}${m || (bm && bm.ab + bm.bb) ? '' : `<div class="card muted" style="font-size:14px">${C.injury ? '你傷停中。' : C.pos === 'B' ? '你今天沒有上場。' : '你今天沒有登板。'}</div>`}${C.injury && m ? `<div class="card bad">賽後手臂不對勁，傷停 ${C.injury} 週（疲勞太高）。</div>` : ''}` +
+    ${bm && bm.ab + bm.bb ? `<div class="card" style="font-size:14px">🏏 你今天：${bm.ab} 打數 ${bm.h} 安打${bm.hr ? ` <b class="gold">${bm.hr} 轟</b>` : ''} ${bm.rbi} 打點${bm.bb ? ` ${bm.bb} 保送` : ''}${bm.gp ? `<br>🧤 <b class="gold">守備美技 ${bm.gp} 次</b>` : ''}${bm.e ? `<br><span class="bad">🧤 失誤 ${bm.e} 次</span>` : ''}</div>` : ''}${m || (bm && bm.ab + bm.bb) ? '' : `<div class="card muted" style="font-size:14px">${C.injury ? '你傷停中。' : C.pos === 'B' ? '你今天沒有上場。' : '你今天沒有登板。'}</div>`}${C.injury && m ? `<div class="card bad">賽後手臂不對勁，傷停 ${C.injury} 週（疲勞太高）。</div>` : ''}` +
     boxTables(G, a) + boxTables(G, h) + `<button id="bNextG" style="width:100%">繼續</button>`;
   $('scene').classList.remove('hide'); $('scene').scrollTop = 0;
   $('bNextG').onclick = () => { if (G.fd) G.fd.run = false; $('scene').classList.add('hide'); $('game').classList.add('hide'); GM = null; G.opt.onEnd(won, m || pl()); };
@@ -1020,6 +1054,11 @@ function endSeason() {
       const ba = bLeaders('avg', ma), bh = bLeaders('hr', 0), br = bLeaders('rbi', 0);
       const win = (arr, id, key, nm, fmt, mem) => { if (arr[0] && arr[0].id === me && arr[0].v > 0) { unlock(id); C.batAw = (C.batAw || 0) + 1; C.awards.push(`職${C.proYear} ${nm}`); lines.push(`🏏 <b class="gold">${nm}</b>（${fmt(arr[0].v)}）`); C.fame = (C.fame || 0) + 5; if (mem) pushMem(mem); if (arr.slice(1, 4).some(x => P(x.id).star)) beatStar = true; } else if (arr[0]) lines.push(`${nm}：${P(arr[0].id).name}${P(arr[0].id).star ? '⚡' : ''}（${fmt(arr[0].v)}）`); };
       win(ba, 'batk', 'avg', '打擊王', v => f3(v), 'BATK'); win(bh, 'hrk', 'hr', '全壘打王', v => v + ' 轟'); win(br, 'rbik', 'rbi', '打點王', v => v + ' 分');
+      if (C.pos === 'B' && FPOSN[BAT().pos] && BS) {
+        const mine = BAT().a.fld * 0.95 + BS.gp * 0.25 - BS.e * 2, rivals = C.teams.flatMap(t => t.bats).map(P).filter(p => p && !p.me && p.pos && grpOf(p.pos) === grpOf(BAT().pos)).map(p => ({ p, v: p.a.fld + rnd(-2, 8) })).sort((a, b) => b.v - a.v);
+        if (!rivals.length || mine > rivals[0].v) { unlock('gg'); pushMem('GG'); C.batAw = (C.batAw || 0) + 1; C.awards.push(`職${C.proYear} 金手套`); lines.push(`🥇 <b class="gold">金手套獎</b>（${BAT().pos}，美技 ${BS.gp}、失誤 ${BS.e}）`); C.fame = (C.fame || 0) + 3; }
+        else lines.push(`金手套：${rivals[0].p.name}（${rivals[0].p.pos}）`);
+      }
       if (C.proYear === 1 && BS && BS.ab >= 60 && avg(BS) >= 0.28 && !C.ach.roy) { unlock('roy'); C.awards.push('新人王'); lines.push('🌱 新人王！'); }
       if (C.pos === 'TW' && L.w >= 6 && BS && BS.hr >= 8) { unlock('tw'); pushMem('TWM'); C.highlights.push(`職業第 ${C.proYear} 年投出 ${L.w} 勝、打出 ${BS.hr} 轟`); lines.push('⚡ <b class="gold">二刀流球季！</b>'); }
     }
@@ -1531,6 +1570,7 @@ const MG = (() => {
     if (look.img == null) look.img = rnd(0, 5);
     _dc();
     const el = $$('cAvatar'); if (!el) return;
+    document.querySelectorAll('.looks').forEach(x => x.closest('.card').remove());
     el.insertAdjacentHTML('afterend', `<div class="card"><div class="muted" style="font-size:13px;margin-bottom:6px">選擇造型</div><div class="looks">${[0, 1, 2, 3, 4, 5].map(i => `<button class="lk ${look.img === i ? 'on' : ''}" data-lk="${i}">${fig(i, '#5aa9ff')}</button>`).join('')}</div></div>`);
     document.querySelectorAll('[data-lk]').forEach(b => b.onclick = () => { look.img = +b.dataset.lk; document.querySelectorAll('.looks').forEach(x => x.closest('.card').remove()); drawCreate(); });
   };

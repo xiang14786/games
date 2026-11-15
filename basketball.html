@@ -1415,6 +1415,7 @@ const MG = (() => {
     if (look.img == null) look.img = rnd(0, 5);
     _dc();
     const el = $$('cAvatar'); if (!el) return;
+    document.querySelectorAll('.looks').forEach(x => x.closest('.card').remove());
     el.insertAdjacentHTML('afterend', `<div class="card"><div class="muted" style="font-size:13px;margin-bottom:6px">選擇造型</div><div class="looks">${[0, 1, 2, 3, 4, 5].map(i => `<button class="lk ${look.img === i ? 'on' : ''}" data-lk="${i}">${fig(i, '#5aa9ff')}</button>`).join('')}</div></div>`);
     document.querySelectorAll('[data-lk]').forEach(b => b.onclick = () => { look.img = +b.dataset.lk; document.querySelectorAll('.looks').forEach(x => x.closest('.card').remove()); drawCreate(); });
   };
