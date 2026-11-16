@@ -2131,11 +2131,41 @@ function createStep2(again) {
     <h2 class="ct">${ic('temple-gate')} 武魂覺醒</h2><div class="dim small" style="text-align:center">武魂殿分殿的長老將六枚魂石擺成六角，你站在中間……</div>
     <div class="awk" id="awk"><div class="hexa">${[0, 1, 2, 3, 4, 5].map(i => `<i style="--a:${i * 60}deg"></i>`).join('')}</div><img class="awfig" src="${bodyURI(CR.look)}" alt=""></div>
     <div id="awr"></div>
-    <button class="btn gold big" id="aGo">${ic('sparkles')} 覺醒武魂</button></div>`;
+    <button class="btn gold big" id="aGo">${ic('sparkles')} 覺醒武魂</button><button class="btn ghost" id="aCheat" style="margin-top:6px">✨ 金手指：自選武魂</button></div>`;
   $('aGo').onclick = () => {
     $('aGo').disabled = true; $('awk').classList.add('go');
     const r = rollSoul(); CR.roll = r;
-    setTimeout(() => {
+    setTimeout(() => showRoll(r), 1700);
+  };
+  $('aCheat').onclick = cheatSoul;
+  if (again) $('aGo').click();
+}
+// 金手指：自己挑武魂（可雙生）與先天魂力
+function cheatSoul() {
+  let m1 = CR.roll ? CR.roll.soul : SOULS[0].id, m2 = CR.roll ? CR.roll.soul2 : null, inn = CR.roll ? CR.roll.innate : 10, which = 1;
+  const ov = document.createElement('div'); ov.className = 'cheatov';
+  ov.style.cssText = 'position:fixed;inset:0;z-index:80;background:#000d;overflow:auto;padding:16px';
+  document.body.appendChild(ov);
+  const draw = () => {
+    const grp = [7, 6, 5, 4, 3, 2, 1].map(q => { const L = SOULS.filter(x => x.q === q); if (!L.length) return ''; return `<div class="dim small" style="margin:10px 0 4px">${QN[q]}</div><div style="display:flex;flex-wrap:wrap;gap:6px">${L.map(x => { const on = x.id === m1 ? 1 : x.id === m2 ? 2 : 0; return `<button data-s="${x.id}" style="padding:7px 10px;border-radius:10px;border:2px solid ${on ? x.col : '#ffffff22'};background:${on ? '#ffffff18' : '#ffffff08'};color:${x.col};font-size:15px">${on === 1 ? '①' : on === 2 ? '②' : ''}${x.n}</button>`; }).join('')}</div>`; }).join('');
+    ov.innerHTML = `<div style="max-width:480px;margin:0 auto;background:#1a140a;border:1px solid #c9a24a;border-radius:16px;padding:14px;color:#fff">
+      <h3 style="margin:0 0 6px;color:#ffd27a">✨ 金手指・自選武魂</h3>
+      <div style="display:flex;gap:8px;margin:8px 0"><button class="btn ${which === 1 ? 'gold' : 'ghost'}" id="w1" style="flex:1">① 第一武魂：${SOUL[m1].n}</button><button class="btn ${which === 2 ? 'gold' : 'ghost'}" id="w2" style="flex:1">② 第二武魂：${m2 ? SOUL[m2].n : '無'}</button></div>
+      <div class="dim small">先點上面選要設定哪一個，再點下面的武魂。${which === 2 ? '再點一次同一個可以取消第二武魂。' : ''}</div>
+      ${grp}
+      <div style="margin-top:14px">先天魂力：<b id="innV" style="color:#ffd27a">${inn} 級</b><input type="range" id="inn" min="1" max="10" value="${inn}" style="width:100%"></div>
+      <button class="btn gold big" id="cOk" style="margin-top:12px">確定</button><button class="btn ghost" id="cNo" style="margin-top:6px">取消</button></div>`;
+    ov.querySelector('#w1').onclick = () => { which = 1; draw(); };
+    ov.querySelector('#w2').onclick = () => { which = 2; draw(); };
+    ov.querySelectorAll('[data-s]').forEach(b => b.onclick = () => { const id = b.dataset.s; if (which === 1) { m1 = id; if (m2 === id) m2 = null; } else { m2 = m2 === id || id === m1 ? null : id; } draw(); });
+    ov.querySelector('#inn').oninput = e => { inn = +e.target.value; ov.querySelector('#innV').textContent = inn + ' 級'; };
+    ov.querySelector('#cNo').onclick = () => ov.remove();
+    ov.querySelector('#cOk').onclick = () => { ov.remove(); const r = { soul: m1, soul2: m2, innate: inn }; CR.roll = r; $('aGo').disabled = true; $('awk').classList.add('go'); const old = $('awk').querySelectorAll('.spirit2'); old.forEach(x => x.remove()); $('awk').classList.remove('done'); setTimeout(() => showRoll(r), 900); };
+  };
+  draw();
+}
+function showRoll(r) {
+    {
       const s = SOUL[r.soul], s2 = r.soul2 && SOUL[r.soul2];
       $('awk').classList.remove('go'); $('awk').classList.add('done'); $('awk').style.setProperty('--c', s.col);
       $('awk').insertAdjacentHTML('beforeend', `<div class="spirit2 ${whSrc(s.id) ? 'img' : ''}" style="color:${s.col}">${soulArt(s.id)}</div>${s2 ? `<div class="spirit2 b ${whSrc(s2.id) ? 'img' : ''}" style="color:${s2.col}">${soulArt(s2.id)}</div>` : ''}`);
@@ -2143,12 +2173,11 @@ function createStep2(again) {
         <div class="innate"><span>先天魂力</span>${[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(i => `<i class="${i <= r.innate ? 'on' : ''}" style="animation-delay:${i * 0.08}s"></i>`).join('')}<b>${r.innate} 級</b></div>
         <div class="dim small">${r.innate >= 10 ? '先天滿魂力！長老激動得說不出話。' : r.innate >= 7 ? '長老露出驚喜的表情：「天才！」' : r.innate >= 4 ? '長老點了點頭：「不錯，好好修煉。」' : '長老嘆了口氣……但廢武魂也有逆襲的可能。'}</div></div>
         <button class="btn gold big" id="aOk">${ic('check-mark')} 就是它了</button><button class="btn ghost" id="aRe" ${CR.rerolls <= 0 ? 'disabled' : ''}>${ic('rolling-dices')} 重新覺醒（剩 ${CR.rerolls} 次）</button>`;
-      $('aGo').style.display = 'none';
+      $('aGo').style.display = 'none'; if ($('aCheat')) $('aCheat').style.display = 'none';
       $('aOk').onclick = startLife;
       $('aRe').onclick = () => { CR.rerolls--; createStep2(1); };
-    }, 1700);
-  };
-  if (again) $('aGo').click();
+      $('aRe').insertAdjacentHTML('afterend', `<button class="btn ghost" id="aCheat2" style="margin-top:6px">✨ 金手指：自選武魂</button>`); $('aCheat2').onclick = cheatSoul;
+    }
 }
 function startLife() {
   const o = CR.origin, r = CR.roll; const b = () => RI(8, 14);
