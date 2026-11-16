@@ -217,6 +217,9 @@ const ACTS = {
   tan: { n: '打探消息', ic: 'eye-target', d: '情報↑（花 20 兩）', mood: -2, cost: 20 },
   hua: { n: '御花園散步', ic: 'flower-emblem', d: '心境↑ 可能有奇遇', mood: 6 },
   xi: { n: '靜養歇息', ic: 'night-sleep', d: '心境大幅回復', mood: 14 },
+  liu6: { n: '協理六宮', ic: 'jewel-crown', d: '威望↑ 聖信↑ 母族勢力↑（妃位以上）', mood: -3, need: 5 },
+  zu: { n: '召見母族', ic: 'crossed-swords', d: '母族勢力↑↑ 心計↑（花 120 兩，皇后）', st: { mou: 0.6 }, mood: -2, cost: 120, need: 8 },
+  jiao: { n: '親自教導皇子', ic: 'scroll-quill', d: '所有孩子學識、武藝↑', mood: -2, kid: 1 },
 };
 
 // 宮中人物（初始）
@@ -362,6 +365,9 @@ function monthTick() {
     if (a === 'xiu') { const m = Math.round((15 + S.st.yi * 0.9) * R(0.8, 1.2)); S.money += m; res.money = (res.money || 0) + m; }
     if (a === 'an') { N('hou').aff = clamp(N('hou').aff + R(0.5, 2), -100, 100); N('dowager').aff = clamp(N('dowager').aff + R(0.5, 2), -100, 100); S.pres += 0.7; }
     if (a === 'tan') { S.intel += R(2, 4) * (N('fu').loy > 60 ? 1.4 : 1); if (chance(0.05)) S.sus += 2; }
+    if (a === 'liu6') { S.pres += 1.2; S.trust = Math.min(150, S.trust + 0.6); S.pow += 0.8; }
+    if (a === 'zu') { S.pow += R(2.2, 3.4); }
+    if (a === 'jiao') { for (const k of (typeof kidsAlive === 'function' ? kidsAlive() : S.kids)) { k.edu = (k.edu || 0) + R(1.2, 2.2); k.wu = (k.wu || 0) + R(0.6, 1.4); } }
     if (a === 'shi' && chance(0.07)) learnCard(res);
     if (a === 'qin' && chance(0.04)) { const c = pick(['shi', 'wu', 'jing']); if (!S.deck.includes(c)) { S.deck.push(c); res.card = c; } }
     if (a === 'hua' && chance(0.22) && !S.evq.length) S.evq.push({ k: 'rand', id: pick(['meetEmp', 'meetQi', 'meetQi', 'garden']) });
@@ -1263,6 +1269,11 @@ function vHome(bd) {
     ${nx ? `<div class="nx">${ic('upgrade')} 晉封<b>${nx.n}</b>需要：聖寵 ${nx.fav}、威望 ${nx.pre}</div>` : ''}</div>
   <h3>${ic('lotus')} 才德</h3><div class="card"><div class="stg">${st}</div>
     <div class="kv"><div><span>${ic('eye-target')}情報</span><b>${Math.round(S.intel)}</b></div><div><span>${ic('crossed-swords')}母族勢力</span><b>${Math.round(S.pow)}</b></div><div><span>${ic('scroll-unfurled')}錦囊</span><b>${S.deck.length} 張</b></div><div><span>${ic('scales')}對質</span><b>${S.wins} 勝 ${S.losses} 敗</b></div></div></div>
+  ${S.rank >= 8 && !S.cold ? (() => { const hm = S.heir === 'mine', ok = (v, n) => v >= n ? '<span class="jade">✓</span>' : `<span class="red">${Math.round(v)}／${n}</span>`; const left = Math.max(0, (S.flags.ill ? 0 : 1)); return `<div class="card warn">${ic('queen-crown')} <b>皇后之路</b><div class="small" style="margin-top:6px;line-height:1.9">
+      ・<b>立你的兒子當太子</b>：${hm ? `<span class="jade">✓ 太子「${S.heirN}」</span>` : S.kids.some(k => k.sex) ? '有皇子了，培養他的學識武藝，等立儲時力爭' : '還沒有皇子，多侍寢、調養身子'}<br>
+      ・<b>成為一代女帝</b>（先帝駕崩時）：聖信 ${ok(S.trust, 75)}　心計 ${ok(S.st.mou, 100)}　母族勢力 ${ok(S.pow, 55)}<br>
+      ・<b>守住后位</b>：嫌疑別超過 80、別讓人抓到把柄<br>
+      <span class="dim">新行程「協理六宮」「召見母族」能提升母族勢力；「讀史研策」提升心計。</span></div></div>`; })() : ''}
   ${S.flags.yh && !S.flags.houFall ? `<div class="card warn">${ic('eye-target')} 元后之謎　線索 <b>${S.clues}／3</b>${S.clues >= 3 ? '　<b class="gold">可到「人物」頁對皇后設局</b>' : '　多打探消息、與太醫、太后交好'}</div>` : ''}
   <div class="card small dim">${S.sus >= 50 ? `<span class="red">${ic('eye-target')} 嫌疑太高了！少用栽贓、收買這類手段，多抄經禮佛。</span><br>` : ''}${S.mood < 25 ? `<span class="red">${ic('dead-wood')} 心境太差，會傷身子，安排些歇息、禮佛或散步。</span><br>` : ''}${!S.flags.firstNight && S.t >= 2 ? '還沒有承寵。多精心妝扮、去御花園走走，增加被皇上注意的機會。' : '每月三段行程，按「下個月」推進。人物頁每月可拜訪兩次。'}</div>`;
 }
@@ -1271,21 +1282,25 @@ let pickSlot = 0;
 function vPlan(bd) {
   if (S.cold) { bd.innerHTML = `<h2>${ic('candle-skull')} 冷宮</h2><div class="card">冷宮裡能做的事不多：抄經、做些針線活、熬過漫漫長夜。<br>每四個月會有一次翻身的機會。</div>`; return; }
   const slots = S.sched.map((a, i) => `<button class="slot ${pickSlot === i ? 'on' : ''}" data-s="${i}"><small>${['上旬', '中旬', '下旬'][i]}</small>${ic(ACTS[a].ic)}<b>${ACTS[a].n}</b></button>`).join('');
-  const acts = Object.entries(ACTS).map(([k, a]) => `<button class="act" data-a="${k}">${ic(a.ic)}<b>${a.n}</b><small>${a.d}</small></button>`).join('');
+  const acts = Object.entries(ACTS).filter(([k, a]) => (!a.need || S.rank >= a.need) && (!a.kid || S.kids.length)).map(([k, a]) => `<button class="act" data-a="${k}">${ic(a.ic)}<b>${a.n}</b><small>${a.d}</small></button>`).join('');
   bd.innerHTML = `<h2>${ic('calendar')} 本月行程<small>點選時段，再選要做的事</small></h2><div class="slots">${slots}</div><div class="acts">${acts}</div>`;
   bd.querySelectorAll('[data-s]').forEach(b => b.onclick = () => { pickSlot = +b.dataset.s; render(); });
   bd.querySelectorAll('[data-a]').forEach(b => b.onclick = () => { S.sched[pickSlot] = b.dataset.a; pickSlot = (pickSlot + 1) % 3; save(); render(); });
 }
 // ---------------- 人物 ----------------
 function vPpl(bd) {
-  const group = (t, ids) => `<h3>${t}</h3>` + ids.filter(id => S.npc[id] && (S.npc[id].alive || S.npc[id].cold) && (id !== 'qi' || S.flags.qiMet)).map(id => {
+  const shown = id => S.npc[id] && (S.npc[id].alive || S.npc[id].cold) && (id !== 'qi' || S.flags.qiMet);
+  const group = (t, ids0, self) => { const ids = ids0.filter(shown); return (ids.length || self) ? `<h3>${t}</h3>` + (self || '') + ids.map(id => {
     const n = N(id), b = NPCS[id], a = Math.round(n.aff), serv = id === 'chun' || id === 'fu';
     const tags = [n.ally ? '<span class="tag jade">盟友</span>' : '', S.dirt[id] ? `<span class="tag red">把柄 ${S.dirt[id]}</span>` : '', n.sons ? `<span class="tag gold">皇子 ${n.sons}</span>` : '', n.cold ? '<span class="tag">冷宮</span>' : ''].join('');
     const v = id === 'emp' ? `聖寵 ${Math.round(S.fav)}・聖信 ${Math.round(S.trust)}` : serv ? `忠心 ${Math.round(n.loy)}` : CONSORTS.includes(id) ? `聖寵約 ${Math.round(n.fav)}` : '';
     return `<div class="pc" data-p="${id}"><img src="${portrait(id)}" alt=""><div class="grow"><b>${b.n}</b> <small>${npcRankN(id)}</small><div class="ab ${a < 0 ? 'neg' : ''}"><i style="width:${Math.abs(a) / 2}%;${a < 0 ? 'right:50%' : 'left:50%'}"></i></div><small class="dim">${id === 'emp' ? '' : `好感 ${a}　`}${v}</small><div>${tags}</div></div></div>`;
-  }).join('');
+  }).join('') : ''; };
+  const cold = id => S.npc[id] && S.npc[id].cold, CS = ['hou', 'gui', 'liu', 'wan', 'lin', 'ayi'];
+  const six = CS.filter(id => id !== 'hou' && !cold(id)).sort((x, y) => (N(y).rank || 0) - (N(x).rank || 0));
+  const meQ = S.rank >= 8 && !S.cold ? `<div class="pc" style="cursor:default"><img src="${portrait('me')}" alt=""><div class="grow"><b>${S.name}</b> <small>${rankN()}</small><small class="dim" style="display:block">這是你</small></div></div>` : '';
   bd.innerHTML = `<div class="card small">本月還能拜訪 <b class="gold">${S.ap}</b> 次。好感高可以結盟；收集兩個把柄就能設局扳倒對方。</div>`
-    + group(`${ic('crown')} 帝后`, ['emp', 'dowager', 'hou']) + group(`${ic('flower-emblem')} 六宮`, ['gui', 'liu', 'wan', 'lin', 'ayi']) + group(`${ic('person')} 宮中`, ['qi', 'bai', 'su', 'chun', 'fu']);
+    + group(`${ic('crown')} 帝后`, ['emp', 'dowager'].concat(cold('hou') ? [] : ['hou']), meQ) + group(`${ic('flower-emblem')} 六宮`, six) + group(`${ic('person')} 宮中`, ['qi', 'bai', 'su', 'chun', 'fu']) + group(`${ic('candle-skull')} 冷宮`, CS.filter(cold));
   bd.querySelectorAll('[data-p]').forEach(el => el.onclick = () => pplSheet(el.dataset.p));
 }
 function pplSheet(id) {
