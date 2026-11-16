@@ -479,7 +479,13 @@ function doVisit(id, k) {
     case 'chat': add(R(3, 6) + S.st.de / 25); if (n.aff > 40 && chance(0.12)) { const c = pick(LEARNABLE.filter(x => !S.deck.includes(x))); if (c) { S.deck.push(c); return `你和${nm}聊得投機，她教了你一招【${CARDS[c].n}】。`; } } return `你和${nm}閒聊了一下午。<span class="pink">好感 ${Math.round(n.aff)}</span>`;
     case 'gift': if (S.money < 60) { S.ap++; return '銀兩不夠。'; } S.money -= 60; add(R(7, 11)); return `${nm}收下了你的禮物。<span class="pink">好感 ${Math.round(n.aff)}</span>`;
     case 'ally': n.ally = 1; S.deck.push('jie2'); log(`與${nm}義結金蘭，互為盟友。`, 'two-shadows', 2); return `你與${nm}焚香結拜，從此同進同退。<br><span class="dim">（盟友會在對質時作證，也會幫你擋下一些陰謀）</span>`;
-    case 'dirt': { const ok = chance(0.35 + S.st.mou / 250 + (N('fu').loy > 60 ? 0.15 : 0)); S.sus += 2; if (ok) { S.dirt[id] = (S.dirt[id] || 0) + 1; return `小福子打聽到了${nm}的一些見不得人的事。<br>把柄 <b>${S.dirt[id]}</b>／2${S.dirt[id] >= 2 ? '　<b class="gold">足以設局了</b>' : ''}`; } if (chance(0.25)) { add(-10); return `打探時被${nm}的人察覺了！好感 -10`; } return '這次沒打聽到什麼。'; }
+    case 'dirt': { const ok = chance(0.35 + S.st.mou / 250 + (N('fu').loy > 60 ? 0.15 : 0)); S.sus += 2; if (ok && id === 'hou') { const F = S.flags;
+        if (F.houFall) return '皇后已經失勢了。';
+        if (F.yh) { if (S.clues >= 3) return '元后之謎的證據已經齊了。<br><b class="gold">可以對皇后「設局扳倒」了</b>'; if (!chance(0.5 + S.st.mou / 300)) { S.dirt.hou = (S.dirt.hou || 0) + 1; return '小福子只打聽到一些皇后的小事，跟元后之死沒有關係。<br><span class="dim">繼續打探，或和太醫、太后交好，都可能找到線索。</span>'; } S.clues++; return `小福子打聽到一件跟元后之死有關的舊事。<br>元后之謎線索 <b>${S.clues}</b>／3${S.clues >= 3 ? '<br><b class="gold">證據齊了，可以對皇后「設局扳倒」了</b>' : ''}`; }
+        S.dirt.hou = (S.dirt.hou || 0) + 1;
+        if (S.rank >= 4 && S.dirt.hou >= 2) { F.yh = 1; F.yhAsk = 1; S.clues = Math.max(S.clues, 1); return `小福子查到一件怪事：元后當年死得蹊蹺，而皇后那晚就在她身邊。<br><b class="gold">你開始暗中追查「元后之謎」</b>，線索 <b>${S.clues}</b>／3<br><span class="dim">（湊齊 3 條線索就能扳倒皇后；繼續打探皇后、和太醫及太后交好都能找到線索）</span>`; }
+        return `小福子打聽到了皇后的一些事。<br>把柄 <b>${S.dirt.hou}</b><br><span class="dim">皇后是六宮之主，光靠小把柄扳不倒她。${S.rank < 4 ? '要先晉升到<b>嬪</b>位以上，才有資格查到她真正的秘密。' : '再多打探一次，或許能查到她真正的秘密。'}</span>`; }
+      if (ok) { S.dirt[id] = (S.dirt[id] || 0) + 1; return `小福子打聽到了${nm}的一些見不得人的事。<br>把柄 <b>${S.dirt[id]}</b>／2${S.dirt[id] >= 2 ? (n.rank < 8 ? '　<b class="gold">足以設局了</b>' : '') : ''}`; } if (chance(0.25)) { add(-10); return `打探時被${nm}的人察覺了！好感 -10`; } return '這次沒打聽到什麼。'; }
     case 'frame': return { duel: frameDuel(id) };
     case 'audience': { const g = R(3, 6) + S.st.mao / 40; S.fav = clamp(S.fav + g, 0, 100); return `你在養心殿陪皇上下了一盤棋。聖寵 +${g.toFixed(0)}`; }
     case 'policy': { const ok = chance(0.35 + S.st.mou / 200); if (ok) { S.trust += 4; S.pow += 2; return '你對北疆糧草之事的見解，讓皇上眼前一亮。<b>聖信 +4</b>、勢力 +2'; } S.trust -= 1; S.fav -= 3; return '皇上皺眉：「後宮不得干政。」聖寵 -3'; }
