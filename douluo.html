@@ -703,9 +703,13 @@ const SOUL = Object.fromEntries(SOULS.map(s => [s.id, s]));
 const QN = ['', '廢武魂', '普通武魂', '優秀武魂', '頂級武魂', '極品武魂', '頂級傳承', '神級武魂'];
 // 輔助系武魂：單數魂技是輔助、雙數魂技是攻擊
 const skKind = (t, i) => ['輔助', '治療', '食物'].includes(t) && i % 2 === 1 ? '強攻' : t;
+// 群攻魂技：第 3、6、8、9 魂技（攻擊類）打全體敵人，每個目標威力打折
+const AOE_X = { 2: 0.6, 5: 0.65, 7: 0.7, 8: 0.75 };
+const skAoe = (k, i) => ['強攻', '敏攻', '控制'].includes(k) && AOE_X[i] ? AOE_X[i] : 0;
 const skMultOf = (age, i) => 1.25 + ringFactor(age) * 2.6 + i * 0.08;
 function skDesc(t, i, age) {
-  const k = skKind(t, i), m = skMultOf(age, i).toFixed(1), cd = 1 + Math.floor(i / 2);
+  const k = skKind(t, i), m = skMultOf(age, i).toFixed(1), cd = 1 + Math.floor(i / 2), ax = skAoe(k, i);
+  if (ax) return `群攻・對<b>全體敵人</b>各造成 ${(skMultOf(age, i) * ax).toFixed(1)} 倍傷害${k === '控制' ? '，30% 機率讓敵人停一回合' : k === '敏攻' ? '，暴擊率高' : ''}・冷卻 ${cd} 回合`;
   const d = { 強攻: `攻擊・對單體造成 ${m} 倍傷害`, 敏攻: `攻擊・${m} 倍傷害，暴擊率高`, 控制: `控制・${m} 倍傷害，45% 機率讓敵人停一回合`, 輔助: `輔助・全隊攻擊提升`, 防禦: `防禦・替全隊加上護盾（一半機率），否則攻擊`, 治療: `治療・隊友生命低於 70% 時回復，否則攻擊`, 食物: `食物・回復並強化全隊，否則攻擊` }[k];
   return d + `・冷卻 ${cd} 回合`;
 }
@@ -888,9 +892,9 @@ function mkUnit(o) {
   u.hp = u.hpM;
   rs.forEach((r, i) => {
     const names = o.skills || []; const t = ringTier(r.age);
-    u.sk.push({ n: names[i] || `第${i + 1}魂技`, k: i + 1, age: r.age, tier: t, mult: (1.25 + ringFactor(r.age) * 2.6 + i * 0.08) * (r.over ? 1.15 : 1), cd: 1 + Math.floor(i / 2), kind: o.kinds ? o.kinds[i] : skKind(u.type, i) });
+    u.sk.push({ n: names[i] || `第${i + 1}魂技`, k: i + 1, age: r.age, tier: t, mult: (1.25 + ringFactor(r.age) * 2.6 + i * 0.08) * (r.over ? 1.15 : 1), cd: 1 + Math.floor(i / 2), kind: o.kinds ? o.kinds[i] : skKind(u.type, i) }); const z = u.sk[u.sk.length - 1]; z.aoe = o.beast ? 0 : skAoe(z.kind, i);
   });
-  if (o.skills2) rs2.forEach((r, i) => { u.sk.push({ n: o.skills2[i], k: i + 1, two: 1, age: r.age, tier: ringTier(r.age), mult: (1.25 + ringFactor(r.age) * 2.6 + i * 0.08) * (r.over ? 1.15 : 1), cd: 1 + Math.floor(i / 2), kind: skKind(o.type2 || '強攻', i) }); });
+  if (o.skills2) rs2.forEach((r, i) => { u.sk.push({ n: o.skills2[i], k: i + 1, two: 1, age: r.age, tier: ringTier(r.age), mult: (1.25 + ringFactor(r.age) * 2.6 + i * 0.08) * (r.over ? 1.15 : 1), cd: 1 + Math.floor(i / 2), kind: skKind(o.type2 || '強攻', i) }); const z = u.sk[u.sk.length - 1]; z.aoe = skAoe(z.kind, i); });
   return u;
 }
 function playerUnit() {
@@ -959,7 +963,7 @@ function* battleGen(A, B, st) {
       // 選技能
       const ready = u.sk.filter(s => !(u.cd[s.n] > 0)); for (const k in u.cd) u.cd[k]--;
       const rb = ready.filter(x => x.k === 10);
-      let s = ch ? (ch.si >= 0 && ready.includes(u.sk[ch.si]) ? u.sk[ch.si] : null) : rb.length && Math.random() < 0.55 ? pick(rb) : ready.length && Math.random() < 0.82 ? ready.sort((a, b) => b.mult - a.mult)[0] : null;
+      let s = ch ? (ch.si >= 0 && ready.includes(u.sk[ch.si]) ? u.sk[ch.si] : null) : rb.length && Math.random() < 0.55 ? pick(rb) : ready.length && Math.random() < 0.82 ? ready.sort((a, b) => b.mult * (b.aoe ? b.aoe * foes.length : 1) - a.mult * (a.aoe ? a.aoe * foes.length : 1))[0] : null;
       const kind = s ? s.kind : 'atk';
       if (s) u.cd[s.n] = s.cd;
       const mult = s ? s.mult : 1;
@@ -970,6 +974,15 @@ function* battleGen(A, B, st) {
       }
       if (s && kind === '輔助') { friends.forEach(f => f.buf = Math.min(2.2, f.buf + 0.1 + mult * 0.05)); P({ a: all.indexOf(u), t: friends.map(f => all.indexOf(f)), n: s.n, kind: 'buff', tier: s.tier, txt: `全隊攻擊提升` }); continue; }
       if (s && kind === '防禦' && (ch || Math.random() < 0.5)) { const sh = Math.round(u.def * mult * 1.6); friends.forEach(f => f.shield += sh); P({ a: all.indexOf(u), t: friends.map(f => all.indexOf(f)), n: s.n, kind: 'shield', tier: s.tier, txt: `護盾 +${fmt(sh)}` }); continue; }
+      if (s && s.aoe && foes.length) {
+        const dmg = t => { let d = Math.round(Math.max(1, u.atk * u.buf * mult * s.aoe * (crit0 ? (u.critB ? 2.3 : 1.8) : 1) - t.def * 0.55) * R(0.88, 1.12) * clamp(1 + (u.pw / t.pw - 1) * 0.6, 0.55, 1.7)); if (t.shield > 0) { const ab = Math.min(t.shield, d); t.shield -= ab; d -= ab; } t.hp -= d; if (t.reflect && d > 0) u.hp = Math.max(1, u.hp - Math.round(d * t.reflect)); return d; };
+        const crit0 = (u.type === '敏攻' ? 0.3 : 0.1) + u.critB > Math.random();
+        const ts = foes.slice(), ds = ts.map(dmg); let stunAny = false;
+        if (kind === '控制') ts.forEach(t => { if (t.hp > 0 && !t.stunImm && Math.random() < 0.3 * clamp(u.pw / t.pw, 0.25, 1.2)) { t.stun = 1; stunAny = true; } });
+        P({ a: all.indexOf(u), t: ts.map(t => all.indexOf(t)), d: ds, n: s.n, kind: kind === '控制' ? 'ctrl' : 'skill', tier: s.tier, crit: crit0, stun: stunAny, aoe: 1 });
+        for (const t of ts) if (t.hp <= 0 && t.nirvana) { t.nirvana = 0; t.hp = Math.round(t.hpM * 0.5); P({ a: all.indexOf(t), t: [all.indexOf(t)], d: [-t.hp], n: '浴火涅槃', kind: 'heal', tier: 4 }); }
+        continue;
+      }
       const ct = ch && ch.t != null ? all[ch.t] : null;
       const t = ct && ct.hp > 0 && ct.side !== u.side ? ct : foes.sort((a, b) => a.hp / a.hpM - b.hp / b.hpM + R(-0.3, 0.3))[0];
       let crit = (u.type === '敏攻' ? 0.3 : 0.1) + u.critB > Math.random();
@@ -2001,13 +2014,13 @@ function playBattle(res, title, done, bg) {
     const col = f.kind === 'fusion' ? '#ffd86a' : f.tier >= 0 ? RINGC[Math.min(f.tier, 5)].c : '#fff';
     if (f.kind === 'stun') { $('blog').innerHTML = `<span class="bl">${esc(a.nm)} 被控制，無法行動</span>`; if (ae) { const q = ctr(f.a); sp('chain', q.x, q.y, { '--c': '#8ad8ff' }, 900); } return setTimeout(step, speed); }
     if (f.kind === 'miss') $('blog').innerHTML = `<span class="bl">${esc(all[f.t[0]].nm)} 閃開了 ${esc(a.nm)} 的攻擊</span>`;
-    else $('blog').innerHTML = `${f.tier >= 0 ? `<span class="sk ${big ? 'big' : ''}" style="--c:${col}">${esc(f.n)}</span>` : ''}<span class="bl">${esc(a.nm)}${f.tier >= 0 ? '' : ' ' + esc(f.n)}${f.txt ? '・' + esc(f.txt) : ''}</span>`;
+    else $('blog').innerHTML = `${f.tier >= 0 ? `<span class="sk ${big ? 'big' : ''}" style="--c:${col}">${esc(f.n)}</span>` : ''}<span class="bl">${esc(a.nm)}${f.aoe ? '・群攻' : ''}${f.tier >= 0 ? '' : ' ' + esc(f.n)}${f.txt ? '・' + esc(f.txt) : ''}</span>`;
     if (ae) { ae.classList.remove('act'); void ae.offsetWidth; ae.classList.add('act'); if (f.tier >= 1 && f.kind !== 'atk') { const p = ctr(f.a); sp('cast', p.x, p.y, { '--c': col }, 700); const wsrc = f.tier >= 2 && ['skill', 'ctrl', 'heal', 'buff', 'shield'].includes(f.kind) && whSrc(a.wh); if (wsrc) { const d = sp('whfx' + (big ? ' big' : ''), p.x, p.y - 30, { '--c': col }, 1100); d.innerHTML = `<img src="${wsrc}" alt="">`; } } }
     const t0 = f.t && f.t[0] != null ? f.t[0] : null; let delay = 0;
     const offensive = ['atk', 'skill', 'ctrl', 'miss'].includes(f.kind);
     if (offensive && t0 != null) {
       if (f.kind === 'atk' || f.kind === 'miss') { lunge(f.a, t0, true); delay = 200; }
-      else { lunge(f.a, t0, false); proj(f.a, t0, col, f.kind === 'ctrl' ? 'orb ctrl' : 'orb', 280); delay = 300; }
+      else { lunge(f.a, t0, false); (f.aoe ? f.t : [t0]).forEach((t, j) => setTimeout(() => proj(f.a, t, col, f.kind === 'ctrl' ? 'orb ctrl' : 'orb', 280), j * 70)); delay = f.aoe ? 360 : 300; if (f.aoe) setTimeout(() => { flash(col); shake(1.3); }, 330); }
     } else if (f.kind === 'hidden') { f.t.forEach((t, j) => setTimeout(() => { for (let n = 0; n < (f.tier >= 5 ? 5 : 3); n++) setTimeout(() => proj(f.a, t, f.tier >= 5 ? '#ff6ab0' : '#cfe8ff', 'needle', 220), n * 50); }, j * 60)); delay = 300; if (f.tier >= 5) { const q = ctr(f.t[0]); setTimeout(() => { sp('lotus', IN.clientWidth / 2, q.y, {}, 1200); flash('#ff6ab0'); shake(1.5); }, 260); } }
     else if (f.kind === 'fusion') { flash('#ffd86a'); sp('vortex', IN.clientWidth / 2, IN.clientHeight * 0.32, { '--c': '#ffd86a' }, 1300); delay = 450; setTimeout(() => shake(2.2), 420); }
     if (big && f.kind !== 'fusion' && f.kind !== 'hidden') { setTimeout(() => { flash(col); shake(f.tier >= 5 ? 1.8 : 1.1); }, delay); }
@@ -2027,7 +2040,7 @@ function playBattle(res, title, done, bg) {
     const p = $('apanel'); p.classList.add('on');
     p.innerHTML = `<div class="ah">輪到你了<small>點敵人換目標</small></div><div class="ag">
       <button class="ab na" data-s="-1"><b>普通攻擊</b><small>不耗冷卻</small></button>${res.ask.fusion ? `<button class="ab fu" data-fu="1"><b>${esc(u.fusion)}</b><small>融合技・攻擊全體</small></button>` : ''}
-      ${sks.map(({ s, k, cd }) => `<button class="ab" data-s="${k}" style="--c:${RINGC[Math.min(s.tier, 5)].c}" ${cd > 0 ? 'disabled' : ''}><b>${esc(s.n)}</b><small>${s.k === 10 ? '魂骨・' : s.two ? `副武魂${s.k}環・` : `第${s.k}環・`}${KIND_TAG[s.kind] || '強攻'}${cd > 0 ? `・冷卻 ${cd}` : `・威力 ${s.mult.toFixed(1)}`}</small></button>`).join('')}
+      ${sks.map(({ s, k, cd }) => `<button class="ab" data-s="${k}" style="--c:${RINGC[Math.min(s.tier, 5)].c}" ${cd > 0 ? 'disabled' : ''}><b>${esc(s.n)}</b><small>${s.k === 10 ? '魂骨・' : s.two ? `副武魂${s.k}環・` : `第${s.k}環・`}${s.aoe ? '群攻' : KIND_TAG[s.kind] || '強攻'}${cd > 0 ? `・冷卻 ${cd}` : `・威力 ${(s.aoe ? s.mult * s.aoe : s.mult).toFixed(1)}${s.aoe ? '×全體' : ''}`}</small></button>`).join('')}
 </div>`;
     p.querySelectorAll('[data-s]').forEach(b => b.onclick = () => pump({ si: +b.dataset.s, t: tgt }));
     p.querySelectorAll('[data-fu]').forEach(b => b.onclick = () => pump({ fusion: true, t: tgt }));
