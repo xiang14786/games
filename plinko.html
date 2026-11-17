@@ -80,6 +80,7 @@ body.ov #stage{height:100vh;align-items:flex-end;padding-bottom:4vh}
     <h3>📡 自動接 FB 留言</h3>
     <div class="tip">搭配 Social Stream Ninja：觀眾留言含關鍵字，就自動丟一顆他的頭像彈珠。</div>
     <div class="row" style="margin-top:8px"><label style="flex:1">關鍵字（逗號分開；打 * 代表任何留言）<input type="text" id="kw"></label><label style="width:130px">同一人幾秒內只算一次<input type="number" id="cd" min="0"></label></div>
+    <label style="display:block;margin-top:6px"><input type="checkbox" id="needName"> 留言要先打自己的 FB 名字（例：王小晴抽）</label>
     <div class="row" style="margin-top:8px"><label style="flex:1">連線代碼（Session ID）<input type="text" id="sid"></label></div>
     <div class="row" style="margin-top:10px"><button class="btn ghost" id="conn">開始接留言</button><span id="wsState" class="tip">未連線</span></div>
     <div class="row" style="margin-top:8px"><button class="btn ghost" id="copyOv">複製手機直播用網址</button><span class="tip" id="ovTip"></span></div>
@@ -405,20 +406,25 @@ renderQueue();requestAnimationFrame(frame);
 const QS=new URLSearchParams(location.search);
 const OV=QS.get('mode')==='overlay';
 const rid=()=>'shine'+Math.random().toString(36).slice(2,9);
-let net={kw:LS('kw','抽'),cd:LS('cd',60),sid:LS('sid','')||rid()};SV('sid',net.sid);
+let net={kw:LS('kw','抽'),cd:LS('cd',60),sid:LS('sid','')||rid(),needName:LS('needName',true)};SV('sid',net.sid);
 if(QS.get('session'))net.sid=QS.get('session');if(QS.get('kw'))net.kw=QS.get('kw');if(QS.get('cd'))net.cd=+QS.get('cd');
 if(QS.get('t')){try{tiers=QS.get('t').split('_').map(x=>{const p=x.split('x');return[+p[0],+p[1],p.slice(2).join('x')||''];}).filter(x=>!isNaN(x[0])&&!isNaN(x[1]));assign();renderTiers();}catch(e){}}
 const $=id=>document.getElementById(id);
-$('kw').value=net.kw;$('cd').value=net.cd;$('sid').value=net.sid;
+$('kw').value=net.kw;$('cd').value=net.cd;$('sid').value=net.sid;$('needName').checked=!!net.needName;
+$('needName').onchange=()=>{net.needName=$('needName').checked;SV('needName',net.needName);pushCfg();};
 $('kw').onchange=()=>{net.kw=$('kw').value.trim()||'抽';SV('kw',net.kw);pushCfg();};
 $('cd').onchange=()=>{net.cd=Math.max(0,+$('cd').value||0);SV('cd',net.cd);pushCfg();};
 $('sid').onchange=()=>{net.sid=$('sid').value.trim()||rid();$('sid').value=net.sid;SV('sid',net.sid);};
 const lastBy=new Map();
+// 留言裡有沒有自己的名字（寬鬆比對：全名、名字裡任一段 2 個字以上、或中文名後 2 字）
+function hasName(msg,name){const m=msg.toLowerCase().replace(/\s+/g,''),n=name.toLowerCase().trim();if(!n)return false;if(m.includes(n.replace(/\s+/g,'')))return true;
+  const parts=n.split(/[\s._\-]+/).filter(p=>p.length>=2);if(parts.some(p=>m.includes(p)))return true;const cj=n.replace(/[^\u4e00-\u9fff]/g,'');if(cj.length>=2&&m.includes(cj.slice(-2)))return true;return false;}
 const DBG={rx:0,bad:0,last:'',hit:0,frames:0,err:''};window.addEventListener('error',e=>{DBG.err=String(e.message).slice(0,80);});
 function onComment(name,msg,img){
   name=(name||'').trim();msg=String(msg||'').replace(/<[^>]*>/g,'');if(!name)return;
   const kws=net.kw.split(/[,，]/).map(s=>s.trim()).filter(Boolean);
   if(!kws.some(k=>k==='*'||msg.includes(k)))return;
+  if(net.needName&&!hasName(msg,name))return;
   const now=Date.now(),t=lastBy.get(name)||0;if(now-t<net.cd*1000)return;lastBy.set(name,now);
   if(queue.length>=30)return;
   DBG.hit++;addBall(name,img?urlImg(img):null,img||'');
@@ -452,7 +458,7 @@ $('fakeGo').onclick=()=>{onComment($('fakeN').value||'測試觀眾',$('fakeM').v
 const REC=QS.get('mode')==='record';
 if(REC){listenResults();setState('📋 紀錄模式：接收手機彈珠台的中獎結果（代碼 '+net.sid+'）');$('conn').style.display='none';}
 else if(OV){document.body.classList.add('ov');document.documentElement.style.background='transparent';document.body.style.background='transparent';connect();
-  const cmdListen=()=>{const c=new WebSocket(QS.get('server')||'wss://io.socialstream.ninja');c.onopen=()=>c.send(JSON.stringify({join:net.sid,in:6,out:7}));c.onmessage=e=>{let m;try{m=JSON.parse(e.data);}catch(x){return;}const mm=(m.overlayNinja||m);if(mm.plinkoTilt){tilt=Object.assign({},TDEF,mm.plinkoTilt);SV('tiltR',tilt);applyTilt();return;}if(mm.plinkoCfg){applyCfg(mm.plinkoCfg);SV('cfgR',mm.plinkoCfg);return;}const k=mm.plinkoCmd;if(k==='flush'&&pending.length){volley=pending.length;}if(k==='sync'||k==='reveal'){try{ws.send(JSON.stringify({plinkoRound:round}));}catch(x){}}if(k==='ping'){try{ws.send(JSON.stringify({plinkoStatus:{v:11,ws:ws&&ws.readyState,kw:net.kw,cd:net.cd,bg:budget,stopped,pending:pending.length,balls:balls.length,fly:balls.filter(b=>b.state==='fly').length,round:roundTotal(),rx:DBG.rx,bad:DBG.bad,hit:DBG.hit,last:DBG.last,frames:DBG.frames,err:DBG.err,ua:navigator.userAgent.slice(-60)}}));}catch(x){}return;}if(k==='reveal')doReveal(true);else if(k==='hide')doReveal(false);else if(k==='reset')doNewRound();};c.onclose=()=>setTimeout(cmdListen,4000);};cmdListen();}
+  const cmdListen=()=>{const c=new WebSocket(QS.get('server')||'wss://io.socialstream.ninja');c.onopen=()=>c.send(JSON.stringify({join:net.sid,in:6,out:7}));c.onmessage=e=>{let m;try{m=JSON.parse(e.data);}catch(x){return;}const mm=(m.overlayNinja||m);if(mm.plinkoTilt){tilt=Object.assign({},TDEF,mm.plinkoTilt);SV('tiltR',tilt);applyTilt();return;}if(mm.plinkoCfg){applyCfg(mm.plinkoCfg);SV('cfgR',mm.plinkoCfg);return;}const k=mm.plinkoCmd;if(k==='flush'&&pending.length){volley=pending.length;}if(k==='sync'||k==='reveal'){try{ws.send(JSON.stringify({plinkoRound:round}));}catch(x){}}if(k==='ping'){try{ws.send(JSON.stringify({plinkoStatus:{v:12,ws:ws&&ws.readyState,kw:net.kw,cd:net.cd,bg:budget,stopped,pending:pending.length,balls:balls.length,fly:balls.filter(b=>b.state==='fly').length,round:roundTotal(),rx:DBG.rx,bad:DBG.bad,hit:DBG.hit,last:DBG.last,frames:DBG.frames,err:DBG.err,ua:navigator.userAgent.slice(-60)}}));}catch(x){}return;}if(k==='reveal')doReveal(true);else if(k==='hide')doReveal(false);else if(k==='reset')doNewRound();};c.onclose=()=>setTimeout(cmdListen,4000);};cmdListen();}
 else if(QS.get('session')){connect();}
 $('copyOv').insertAdjacentHTML('afterend',' <button class="btn ghost" id="copyRec">複製電腦紀錄用網址</button>');
 $('copyRec').onclick=()=>{const u=`${location.href.split('?')[0]}?mode=record&session=${encodeURIComponent(net.sid)}`;navigator.clipboard.writeText(u).then(()=>{$('ovTip').textContent='已複製 ✓';setTimeout(()=>$('ovTip').textContent='',2000);});};
@@ -463,7 +469,7 @@ const TDEF={rx:0,ry:0,rz:0,sc:100,op:85};
 var tilt=Object.assign({},TDEF,LS('tilt',{}));
 ['rx','ry','rz','sc','op'].forEach(k=>{if(QS.get(k)!=null)tilt[k]=+QS.get(k);});
 if(OV){const r=LS('tiltR',null);if(r)tilt=Object.assign({},TDEF,r);}
-function pushCfg(){if(OV||!resWs||resWs.readyState!==1)return;try{resWs.send(JSON.stringify({plinkoCfg:{kw:net.kw,cd:net.cd,bg:budget,tiers,bmin:bMin,bmax:bMax}}));}catch(e){}}
+function pushCfg(){if(OV||!resWs||resWs.readyState!==1)return;try{resWs.send(JSON.stringify({plinkoCfg:{needName:net.needName,kw:net.kw,cd:net.cd,bg:budget,tiers,bmin:bMin,bmax:bMax}}));}catch(e){}}
 let tiltT=0;function pushTilt(){if(!resWs||resWs.readyState!==1)return;clearTimeout(tiltT);tiltT=setTimeout(()=>{try{resWs.send(JSON.stringify({plinkoTilt:tilt}));}catch(e){}},80);}
 function applyTilt(){cv.style.transform=`rotateX(${tilt.rx}deg) rotateY(${tilt.ry}deg) rotateZ(${tilt.rz}deg) scale(${tilt.sc/100})`;cv.style.opacity=tilt.op/100;
   ['rx','ry','rz','sc','op'].forEach(k=>{$(k).value=tilt[k];$('v_'+k).textContent=tilt[k]+(k==='sc'||k==='op'?'%':'°');});}
@@ -479,7 +485,7 @@ $('budget').value=budget||'';
 $('budget').onchange=()=>{budget=Math.max(0,+$('budget').value||0);SV('budget',budget);stopped=false;checkBudget();renderQueue();pushCfg();};
 renderQueue();
 
-function applyCfg(c){if(!c)return;if(c.kw){net.kw=c.kw;$('kw').value=c.kw;}if(c.cd!=null){net.cd=+c.cd;$('cd').value=c.cd;}if(c.bg!=null){budget=+c.bg||0;$('budget').value=budget||'';stopped=false;}if(Array.isArray(c.tiers)&&c.tiers.length){tiers=c.tiers;assign();renderTiers();}if(c.bmin!=null){bMin=+c.bmin||1;bMax=+c.bmax||bMin;$('bmin').value=bMin;$('bmax').value=bMax;newTarget();}checkBudget();renderQueue();}
+function applyCfg(c){if(!c)return;if(c.needName!=null){net.needName=!!c.needName;$('needName').checked=net.needName;}if(c.kw){net.kw=c.kw;$('kw').value=c.kw;}if(c.cd!=null){net.cd=+c.cd;$('cd').value=c.cd;}if(c.bg!=null){budget=+c.bg||0;$('budget').value=budget||'';stopped=false;}if(Array.isArray(c.tiers)&&c.tiers.length){tiers=c.tiers;assign();renderTiers();}if(c.bmin!=null){bMin=+c.bmin||1;bMax=+c.bmax||bMin;$('bmin').value=bMin;$('bmax').value=bMax;newTarget();}checkBudget();renderQueue();}
 if(OV){const c=LS('cfgR',null);if(c)applyCfg(c);}
 
 /* ===== 累積幾顆一起發射 ===== */
