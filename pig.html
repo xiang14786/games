@@ -104,38 +104,18 @@ crackSeed();
 /* ===== 畫金豬 ===== */
 const PX=480,PY=420;
 function goldGrad(x,y,r){const g=ctx.createRadialGradient(x-r*.35,y-r*.45,r*.05,x,y,r*1.1);g.addColorStop(0,'#fffbe0');g.addColorStop(.25,'#ffe27a');g.addColorStop(.6,'#e2a92a');g.addColorStop(1,'#8a5a0c');return g;}
+const PIMG=[1,2,3,4].map(i=>{const im=new Image();im.src='pig'+i+'.png';return im;});
+const PW=540,PH=Math.round(540*429/560),PL=PX-PW/2,PT=PY-PH/2+10;
 function drawPig(prog,now){
-  const sx=(Math.random()-.5)*shake,sy=(Math.random()-.5)*shake;ctx.save();ctx.translate(PX+sx,PY+sy);
-  // 影子
-  ctx.fillStyle='rgba(0,0,0,.35)';ctx.beginPath();ctx.ellipse(0,175,230,26,0,0,7);ctx.fill();
-  // 腳
-  for(const [lx,ly] of [[-140,125],[-60,135],[60,135],[140,125]]){ctx.fillStyle=goldGrad(lx,ly+20,50);rr(lx-26,ly,52,58,20);ctx.fill();}
-  // 尾巴
-  ctx.strokeStyle='#c98f1f';ctx.lineWidth=9;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(228,-10);ctx.bezierCurveTo(275,-40,290,10,255,12);ctx.bezierCurveTo(235,14,240,-15,262,-18);ctx.stroke();
-  // 身體
-  ctx.fillStyle=goldGrad(-20,-10,250);ctx.beginPath();ctx.ellipse(0,0,240,175,0,0,7);ctx.fill();
-  // 耳朵（左右對稱、直立）
-  for(const ex of [-150,-60]){ctx.save();ctx.translate(ex,-150);ctx.fillStyle=goldGrad(0,0,55);ctx.beginPath();ctx.moveTo(-32,22);ctx.quadraticCurveTo(-26,-48,0,-58);ctx.quadraticCurveTo(26,-48,32,22);ctx.closePath();ctx.fill();
-    ctx.fillStyle='rgba(150,95,10,.45)';ctx.beginPath();ctx.moveTo(-18,14);ctx.quadraticCurveTo(-14,-30,0,-38);ctx.quadraticCurveTo(14,-30,18,14);ctx.closePath();ctx.fill();ctx.restore();}
-  // 鼻子
-  ctx.fillStyle=goldGrad(-238,-5,70);ctx.beginPath();ctx.ellipse(-232,-5,48,58,0,0,7);ctx.fill();
-  ctx.fillStyle='#7a4f08';for(const ny of [-24,16]){ctx.beginPath();ctx.ellipse(-250,ny,8,13,0,0,7);ctx.fill();}
-  // 眼睛
-  ctx.fillStyle='#3a2604';ctx.beginPath();ctx.ellipse(-150,-62,10,13,0,0,7);ctx.fill();ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(-146,-67,4,0,7);ctx.fill();
-  // 投幣孔
-  ctx.fillStyle='#5a3a06';rr(20,-176,80,13,6);ctx.fill();
-  // 高光（柔和光點）
-  const hl=ctx.createRadialGradient(-60,-80,10,-60,-80,150);hl.addColorStop(0,'rgba(255,255,255,.55)');hl.addColorStop(1,'rgba(255,255,255,0)');ctx.fillStyle=hl;ctx.beginPath();ctx.ellipse(-60,-80,160,100,0,0,7);ctx.fill();
-  ctx.strokeStyle='rgba(255,255,255,.3)';ctx.lineWidth=6;ctx.beginPath();ctx.ellipse(0,0,215,150,0,0.35,1.1);ctx.stroke();
-  // 裂痕
-  if(prog>0){ctx.save();ctx.beginPath();ctx.ellipse(0,0,236,171,0,0,7);ctx.clip();
-    const n=Math.min(cracks.length,Math.ceil(prog*cracks.length*1.05));const glow=Math.max(0,(prog-.55)/.45);
-    for(let i=0;i<n;i++){const c=cracks[i],grow=Math.min(1,prog*cracks.length/1.05-i+0.3),m=Math.max(2,Math.ceil(c.pts.length*grow));
-      const lw=2+prog*5;
-      if(glow>0){ctx.strokeStyle=`rgba(255,250,200,${.4+glow*.5})`;ctx.lineWidth=lw+6*glow;ctx.shadowColor='#fff4b0';ctx.shadowBlur=18*glow;line(c.pts.slice(0,m));ctx.shadowBlur=0;}
-      ctx.strokeStyle='#4a2f04';ctx.lineWidth=lw;line(c.pts.slice(0,m));
-      if(grow>.6)for(const b of c.br){ctx.lineWidth=lw*.6;line(b);}}
-    ctx.restore();}
+  const sx=(Math.random()-.5)*shake,sy=(Math.random()-.5)*shake;ctx.save();ctx.translate(sx,sy);
+  ctx.fillStyle='rgba(0,0,0,.35)';ctx.beginPath();ctx.ellipse(PX,PT+PH-12,230,22,0,0,7);ctx.fill();
+  // 依進度在 4 張圖之間淡入淡出：0→完好、0.35→小裂、0.7→大裂、0.92→發光
+  const keys=[0,.35,.7,.92];let i=0;while(i<3&&prog>=keys[i+1])i++;const f=i<3?Math.min(1,(prog-keys[i])/(keys[i+1]-keys[i])):1;
+  if(prog>.85){const g=.5+.5*Math.sin(now/120);ctx.shadowColor='rgba(255,220,120,.9)';ctx.shadowBlur=30+30*g;}
+  const ok=im=>im.complete&&im.naturalWidth;
+  if(ok(PIMG[i]))ctx.drawImage(PIMG[i],PL,PT,PW,PH);
+  ctx.shadowBlur=0;
+  if(i<3&&f>0&&ok(PIMG[i+1])){ctx.globalAlpha=f;ctx.drawImage(PIMG[i+1],PL,PT,PW,PH);ctx.globalAlpha=1;}
   ctx.restore();
 }
 function line(p){ctx.beginPath();ctx.moveTo(p[0][0],p[0][1]);for(let i=1;i<p.length;i++)ctx.lineTo(p[i][0],p[i][1]);ctx.lineJoin='round';ctx.lineCap='round';ctx.stroke();}
@@ -171,7 +151,9 @@ function impact(h){
 }
 function breakPig(h){
   pig.broken=true;pig.winner={n:h.name,s:h.img||'',hits:pig.hits,prize:cfg.prize,t:Date.now()};SV('pig',pig);brokeAt=performance.now();flash=1;queue.length=0;
-  for(let i=0;i<46;i++){const a=Math.random()*Math.PI*2,sp=250+Math.random()*650;shards.push({x:PX+Math.cos(a)*90,y:PY+Math.sin(a)*60,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-350,r:Math.random()*6,vr:(Math.random()-.5)*12,s:16+Math.random()*34});}
+  {const C=7,R=5,pts=[];for(let r=0;r<=R;r++)for(let c=0;c<=C;c++){const jx=(c>0&&c<C)?(Math.random()-.5)*.6:0,jy=(r>0&&r<R)?(Math.random()-.5)*.6:0;pts.push([(c+jx)/C*PW,(r+jy)/R*PH]);}
+   const P=(r,c)=>pts[r*(C+1)+c];for(let r=0;r<R;r++)for(let c=0;c<C;c++){const q=[P(r,c),P(r,c+1),P(r+1,c+1),P(r+1,c)];for(const tri of [[q[0],q[1],q[2]],[q[0],q[2],q[3]]]){const cx=(tri[0][0]+tri[1][0]+tri[2][0])/3,cy=(tri[0][1]+tri[1][1]+tri[2][1])/3;const dx=cx-PW/2,dy=cy-PH/2,d=Math.hypot(dx,dy)||1,sp=300+Math.random()*700;
+     shards.push({poly:tri.map(p=>[p[0]-cx,p[1]-cy]),sx0:cx,sy0:cy,x:PL+cx,y:PT+cy,vx:dx/d*sp+(Math.random()-.5)*200,vy:dy/d*sp-450-Math.random()*300,r:0,vr:(Math.random()-.5)*10});}}}
   for(let i=0;i<40;i++){const a=-Math.PI/2+(Math.random()-.5)*2.4,sp=300+Math.random()*700;coins.push({x:PX,y:PY-40,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,r:Math.random()*6});}
   if(!REC){wins.unshift(pig.winner);wins=wins.slice(0,200);SV('wins',wins);}
   sendUp({pigWin:pig.winner});renderUI();
@@ -182,7 +164,7 @@ let last=performance.now();
 function frame(now){
   const dt=Math.min(.05,(now-last)/1000);last=now;
   // 發槌（太多人同時留言就排隊，每 0.28 秒一支）
-  if(queue.length&&!pig.broken&&now-(frame.lt||0)>280&&hammers.length<6){const q=queue.shift();const slot=hammers.length%3;hammers.push({name:q.name,img:q.img,t0:now,px:PX+270+(slot-1)*70,py:PY-330+slot*6,hit:false});frame.lt=now;}
+  if(queue.length&&!pig.broken&&now-(frame.lt||0)>280&&hammers.length<6){const q=queue.shift();const slot=hammers.length%3;hammers.push({name:q.name,img:q.img,t0:now,px:PX+270+(slot-1)*70,py:PY-305+slot*6,hit:false});frame.lt=now;}
   ctx.clearRect(0,0,W,H);
   const prog=pig.broken?1:pig.hits/pig.target;
   if(!pig.broken||now-brokeAt<60)drawPig(Math.min(prog,.98),now);
@@ -192,7 +174,7 @@ function frame(now){
   for(let i=sparks.length-1;i>=0;i--){const p=sparks[i],k=(now-p.t0)/500;if(k>1){sparks.splice(i,1);continue;}p.x+=p.vx*dt;p.y+=p.vy*dt;p.vy+=1400*dt;ctx.fillStyle=`rgba(255,${220-k*80|0},120,${1-k})`;ctx.beginPath();ctx.arc(p.x,p.y,4*(1-k)+1,0,7);ctx.fill();}
   for(let i=pops.length-1;i>=0;i--){const p=pops[i],k=(now-p.t0)/900;if(k>1){pops.splice(i,1);continue;}ctx.globalAlpha=1-k;ctx.font='bold 30px '+FONT;ctx.textAlign='center';ctx.lineWidth=6;ctx.strokeStyle='rgba(0,0,0,.6)';ctx.strokeText(p.t,p.x,p.y-k*40);ctx.fillStyle='#ffe08a';ctx.fillText(p.t,p.x,p.y-k*40);ctx.globalAlpha=1;}
   // 爆開
-  for(const s of shards){s.x+=s.vx*dt;s.y+=s.vy*dt;s.vy+=1300*dt;s.r+=s.vr*dt;ctx.save();ctx.translate(s.x,s.y);ctx.rotate(s.r);ctx.fillStyle=goldGrad(0,0,s.s);ctx.beginPath();ctx.moveTo(-s.s/2,-s.s/3);ctx.lineTo(s.s/2,-s.s/4);ctx.lineTo(0,s.s/2);ctx.closePath();ctx.fill();ctx.restore();}
+  for(const s of shards){s.x+=s.vx*dt;s.y+=s.vy*dt;s.vy+=1300*dt;s.r+=s.vr*dt;ctx.save();ctx.translate(s.x,s.y);ctx.rotate(s.r);ctx.beginPath();ctx.moveTo(s.poly[0][0],s.poly[0][1]);ctx.lineTo(s.poly[1][0],s.poly[1][1]);ctx.lineTo(s.poly[2][0],s.poly[2][1]);ctx.closePath();ctx.clip();if(PIMG[3].complete)ctx.drawImage(PIMG[3],-s.sx0,-s.sy0,PW,PH);ctx.restore();}
   for(const c of coins){c.x+=c.vx*dt;c.y+=c.vy*dt;c.vy+=1200*dt;c.r+=dt*8;ctx.save();ctx.translate(c.x,c.y);ctx.scale(Math.abs(Math.cos(c.r))+.1,1);ctx.fillStyle='#ffd34d';ctx.beginPath();ctx.arc(0,0,14,0,7);ctx.fill();ctx.strokeStyle='#b8860b';ctx.lineWidth=3;ctx.stroke();ctx.fillStyle='#b8860b';ctx.font='bold 16px Arial';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('$',0,1);ctx.restore();}
   if(shards.length&&now-brokeAt>4000){shards.length=0;coins.length=0;}
   if(flash>0){ctx.fillStyle=`rgba(255,248,210,${flash})`;ctx.fillRect(0,0,W,H);flash=Math.max(0,flash-dt*1.6);}
@@ -244,7 +226,7 @@ function listenRec(){recWs=new WebSocket(SERVER);recWs.onopen=()=>{recWs.send(JS
   recWs.onmessage=e=>{let m;try{m=JSON.parse(e.data);}catch(x){return;}const d=m.overlayNinja||m;
     if(d.pigState||d.pigHit||d.pigWin){if(!overlaySeen){overlaySeen=true;setState('📋 紀錄模式：已連上手機金豬（代碼 '+sid+'）');}}
     if(d.pigState){pig=d.pigState;SV('pig',pig);crackSeed();renderUI();}
-    if(d.pigHit&&!pig.broken){pig.hits=d.pigHit.hits;hammers.push({name:d.pigHit.n,img:d.pigHit.s,t0:performance.now(),px:PX+270,py:PY-330,hit:true});renderUI();}
+    if(d.pigHit&&!pig.broken){pig.hits=d.pigHit.hits;hammers.push({name:d.pigHit.n,img:d.pigHit.s,t0:performance.now(),px:PX+270,py:PY-305,hit:true});renderUI();}
     if(d.pigWin){pig.broken=true;pig.winner=d.pigWin;pig.hits=d.pigWin.hits;brokeAt=performance.now();if(!wins.some(w=>w.t===d.pigWin.t)){wins.unshift(d.pigWin);SV('wins',wins);}renderUI();}};
   recWs.onclose=()=>setTimeout(listenRec,4000);}
 function pushCfg(){sendDown({pigCfg:{kw:cfg.kw,cd:cfg.cd,tmin:cfg.tmin,tmax:cfg.tmax,prize:cfg.prize,showT:cfg.showT,needName:cfg.needName}});}
