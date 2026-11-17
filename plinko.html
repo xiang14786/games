@@ -356,7 +356,7 @@ function drawReveal(now){
     ctx.fillStyle=colOf(r.a)==='#2b2b2b'?'#e2c28a':'#f3d9a6';ctx.font='bold 26px '+FONT;ctx.fillText(r.l||('購物金 $'+r.a),x+92,y+60);ctx.textAlign='center';});
   ctx.globalAlpha=1;
 }
-function frame(now){
+function frame(now){DBG.frames++;
   let dt=Math.min(.05,(now-last)/1000);last=now;
   tryLaunch(now);pull=Math.max(0,pull-dt*4);
   const fly=balls.filter(b=>b.state==='fly');
@@ -405,13 +405,14 @@ $('kw').onchange=()=>{net.kw=$('kw').value.trim()||'抽';SV('kw',net.kw);pushCfg
 $('cd').onchange=()=>{net.cd=Math.max(0,+$('cd').value||0);SV('cd',net.cd);pushCfg();};
 $('sid').onchange=()=>{net.sid=$('sid').value.trim()||rid();$('sid').value=net.sid;SV('sid',net.sid);};
 const lastBy=new Map();
+const DBG={rx:0,bad:0,last:'',hit:0,frames:0,err:''};window.addEventListener('error',e=>{DBG.err=String(e.message).slice(0,80);});
 function onComment(name,msg,img){
   name=(name||'').trim();msg=String(msg||'').replace(/<[^>]*>/g,'');if(!name)return;
   const kws=net.kw.split(/[,，]/).map(s=>s.trim()).filter(Boolean);
   if(!kws.some(k=>k==='*'||msg.includes(k)))return;
   const now=Date.now(),t=lastBy.get(name)||0;if(now-t<net.cd*1000)return;lastBy.set(name,now);
   if(queue.length>=30)return;
-  addBall(name,img?urlImg(img):null,img||'');
+  DBG.hit++;addBall(name,img?urlImg(img):null,img||'');
 }
 let ws=null,wsWant=false,resWs=null;
 function setState(t){$('wsState').textContent=t;$('ovState').textContent=t;}
@@ -420,7 +421,7 @@ function connect(){
   if(!OV&&!resWs)listenResults();
   setState('連線中…');ws=new WebSocket(QS.get('server')||'wss://io.socialstream.ninja');
   ws.onopen=()=>{ws.send(JSON.stringify({join:net.sid,in:4,out:5}));setState('✅ 已連線，等留言中（代碼 '+net.sid+'）');$('conn').textContent='停止接留言';};
-  ws.onmessage=e=>{let m;try{m=JSON.parse(e.data);}catch(x){return;}const d=m.overlayNinja||m;if(d&&(d.chatname||d.chatmessage))onComment(d.chatname,d.chatmessage,d.chatimg);};
+  ws.onmessage=e=>{DBG.rx++;let m;try{m=JSON.parse(e.data);}catch(x){DBG.bad++;return;}const d=m.overlayNinja||m;DBG.last=(d.chatname||'')+':'+String(d.chatmessage||'').slice(0,20);if(d&&(d.chatname||d.chatmessage))onComment(d.chatname,d.chatmessage,d.chatimg);};
   ws.onclose=()=>{setState('⚠️ 斷線，3 秒後重連…');$('conn').textContent='開始接留言';if(wsWant)setTimeout(()=>{if(wsWant)connect();},3000);};
   ws.onerror=()=>{};
 }
@@ -442,7 +443,7 @@ $('fakeGo').onclick=()=>{onComment($('fakeN').value||'測試觀眾',$('fakeM').v
 const REC=QS.get('mode')==='record';
 if(REC){listenResults();setState('📋 紀錄模式：接收手機彈珠台的中獎結果（代碼 '+net.sid+'）');$('conn').style.display='none';}
 else if(OV){document.body.classList.add('ov');document.documentElement.style.background='transparent';document.body.style.background='transparent';connect();
-  const cmdListen=()=>{const c=new WebSocket(QS.get('server')||'wss://io.socialstream.ninja');c.onopen=()=>c.send(JSON.stringify({join:net.sid,in:6,out:7}));c.onmessage=e=>{let m;try{m=JSON.parse(e.data);}catch(x){return;}const mm=(m.overlayNinja||m);if(mm.plinkoTilt){tilt=Object.assign({},TDEF,mm.plinkoTilt);SV('tiltR',tilt);applyTilt();return;}if(mm.plinkoCfg){applyCfg(mm.plinkoCfg);SV('cfgR',mm.plinkoCfg);return;}const k=mm.plinkoCmd;if(k==='reveal')doReveal(true);else if(k==='hide')doReveal(false);else if(k==='reset')doNewRound();};c.onclose=()=>setTimeout(cmdListen,4000);};cmdListen();}
+  const cmdListen=()=>{const c=new WebSocket(QS.get('server')||'wss://io.socialstream.ninja');c.onopen=()=>c.send(JSON.stringify({join:net.sid,in:6,out:7}));c.onmessage=e=>{let m;try{m=JSON.parse(e.data);}catch(x){return;}const mm=(m.overlayNinja||m);if(mm.plinkoTilt){tilt=Object.assign({},TDEF,mm.plinkoTilt);SV('tiltR',tilt);applyTilt();return;}if(mm.plinkoCfg){applyCfg(mm.plinkoCfg);SV('cfgR',mm.plinkoCfg);return;}const k=mm.plinkoCmd;if(k==='ping'){try{ws.send(JSON.stringify({plinkoStatus:{v:7,ws:ws&&ws.readyState,kw:net.kw,cd:net.cd,bg:budget,stopped,pending:pending.length,balls:balls.length,fly:balls.filter(b=>b.state==='fly').length,round:roundTotal(),rx:DBG.rx,bad:DBG.bad,hit:DBG.hit,last:DBG.last,frames:DBG.frames,err:DBG.err,ua:navigator.userAgent.slice(-60)}}));}catch(x){}return;}if(k==='reveal')doReveal(true);else if(k==='hide')doReveal(false);else if(k==='reset')doNewRound();};c.onclose=()=>setTimeout(cmdListen,4000);};cmdListen();}
 else if(QS.get('session')){connect();}
 $('copyOv').insertAdjacentHTML('afterend',' <button class="btn ghost" id="copyRec">複製電腦紀錄用網址</button>');
 $('copyRec').onclick=()=>{const u=`${location.href.split('?')[0]}?mode=record&session=${encodeURIComponent(net.sid)}`;navigator.clipboard.writeText(u).then(()=>{$('ovTip').textContent='已複製 ✓';setTimeout(()=>$('ovTip').textContent='',2000);});};
