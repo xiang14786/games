@@ -205,7 +205,7 @@ function renderTiers(){
   const s=tiers.reduce((x,t)=>x+t[1],0);const el=document.getElementById('tierSum');
   el.innerHTML=s===cups.length?`合計 ${s} / ${cups.length} ✓`:`<span style="color:#e2687a">合計 ${s} / ${cups.length}${s<cups.length?'（不足的洞會變成「再接再厲」）':'（太多了，多的不會放上去）'}</span>`;
 }
-tb.addEventListener('change',e=>{const t=e.target;if(t.dataset.i==null)return;const k=+t.dataset.k;tiers[+t.dataset.i][k]=k===2?t.value.trim():Math.max(0,Math.round(+t.value||0));SV('tiers4',tiers);assign();renderTiers();document.getElementById('simOut').innerHTML='';});
+tb.addEventListener('change',e=>{const t=e.target;if(t.dataset.i==null)return;const k=+t.dataset.k;tiers[+t.dataset.i][k]=k===2?t.value.trim():Math.max(0,Math.round(+t.value||0));SV('tiers4',tiers);assign();renderTiers();document.getElementById('simOut').innerHTML='';if(typeof pushCfg==='function')pushCfg();});
 tb.addEventListener('click',e=>{const d=e.target.dataset.del;if(d==null)return;tiers.splice(+d,1);SV('tiers4',tiers);assign();renderTiers();});
 document.getElementById('addTier').onclick=()=>{tiers.push([30,0,'']);SV('tiers4',tiers);renderTiers();};
 document.getElementById('reset').onclick=()=>{tiers=JSON.parse(JSON.stringify(DEF));SV('tiers4',tiers);assign();renderTiers();document.getElementById('simOut').innerHTML='';};
@@ -401,8 +401,8 @@ if(QS.get('session'))net.sid=QS.get('session');if(QS.get('kw'))net.kw=QS.get('kw
 if(QS.get('t')){try{tiers=QS.get('t').split('_').map(x=>{const p=x.split('x');return[+p[0],+p[1],p.slice(2).join('x')||''];}).filter(x=>!isNaN(x[0])&&!isNaN(x[1]));assign();renderTiers();}catch(e){}}
 const $=id=>document.getElementById(id);
 $('kw').value=net.kw;$('cd').value=net.cd;$('sid').value=net.sid;
-$('kw').onchange=()=>{net.kw=$('kw').value.trim()||'抽';SV('kw',net.kw);};
-$('cd').onchange=()=>{net.cd=Math.max(0,+$('cd').value||0);SV('cd',net.cd);};
+$('kw').onchange=()=>{net.kw=$('kw').value.trim()||'抽';SV('kw',net.kw);pushCfg();};
+$('cd').onchange=()=>{net.cd=Math.max(0,+$('cd').value||0);SV('cd',net.cd);pushCfg();};
 $('sid').onchange=()=>{net.sid=$('sid').value.trim()||rid();$('sid').value=net.sid;SV('sid',net.sid);};
 const lastBy=new Map();
 function onComment(name,msg,img){
@@ -428,7 +428,7 @@ $('conn').onclick=()=>{if(ws&&ws.readyState===1&&wsWant){wsWant=false;ws.close()
 // 手機畫面跑的結果，回傳給電腦這邊記錄
 onResult=(b,amt)=>{if(OV&&ws&&ws.readyState===1){try{ws.send(JSON.stringify({plinko:{n:b.name,a:amt,s:b.src||'',t:Date.now(),l:amt?labelOf(amt):''}}));}catch(e){}}};
 function listenResults(){if(OV)return;try{resWs&&resWs.close();}catch(e){}resWs=new WebSocket(QS.get('server')||'wss://io.socialstream.ninja');
-  resWs.onopen=()=>resWs.send(JSON.stringify({join:net.sid,in:5,out:6}));
+  resWs.onopen=()=>{resWs.send(JSON.stringify({join:net.sid,in:5,out:6}));setTimeout(()=>{pushCfg();pushTilt();},300);};
   resWs.onmessage=e=>{let m;try{m=JSON.parse(e.data);}catch(x){return;}const p=(m.overlayNinja||m).plinko;if(!p)return;if(hist.some(h=>h.t===p.t&&h.n===p.n))return;hist.unshift(Object.assign(p,{remote:1}));SV('hist',hist);renderHist();if(p.a>0){round.push({n:p.n,a:p.a,s:p.s,l:p.l});SV('round',round);renderQueue();}};
   sendCmd=c=>{try{resWs.readyState===1&&resWs.send(JSON.stringify({plinkoCmd:c}));}catch(e){}};
   resWs.onclose=()=>setTimeout(listenResults,5000);}
@@ -442,7 +442,7 @@ $('fakeGo').onclick=()=>{onComment($('fakeN').value||'測試觀眾',$('fakeM').v
 const REC=QS.get('mode')==='record';
 if(REC){listenResults();setState('📋 紀錄模式：接收手機彈珠台的中獎結果（代碼 '+net.sid+'）');$('conn').style.display='none';}
 else if(OV){document.body.classList.add('ov');document.documentElement.style.background='transparent';document.body.style.background='transparent';connect();
-  const cmdListen=()=>{const c=new WebSocket(QS.get('server')||'wss://io.socialstream.ninja');c.onopen=()=>c.send(JSON.stringify({join:net.sid,in:6,out:7}));c.onmessage=e=>{let m;try{m=JSON.parse(e.data);}catch(x){return;}const mm=(m.overlayNinja||m);if(mm.plinkoTilt){tilt=Object.assign({},TDEF,mm.plinkoTilt);SV('tiltR',tilt);applyTilt();return;}const k=mm.plinkoCmd;if(k==='reveal')doReveal(true);else if(k==='hide')doReveal(false);else if(k==='reset')doNewRound();};c.onclose=()=>setTimeout(cmdListen,4000);};cmdListen();}
+  const cmdListen=()=>{const c=new WebSocket(QS.get('server')||'wss://io.socialstream.ninja');c.onopen=()=>c.send(JSON.stringify({join:net.sid,in:6,out:7}));c.onmessage=e=>{let m;try{m=JSON.parse(e.data);}catch(x){return;}const mm=(m.overlayNinja||m);if(mm.plinkoTilt){tilt=Object.assign({},TDEF,mm.plinkoTilt);SV('tiltR',tilt);applyTilt();return;}if(mm.plinkoCfg){applyCfg(mm.plinkoCfg);SV('cfgR',mm.plinkoCfg);return;}const k=mm.plinkoCmd;if(k==='reveal')doReveal(true);else if(k==='hide')doReveal(false);else if(k==='reset')doNewRound();};c.onclose=()=>setTimeout(cmdListen,4000);};cmdListen();}
 else if(QS.get('session')){connect();}
 $('copyOv').insertAdjacentHTML('afterend',' <button class="btn ghost" id="copyRec">複製電腦紀錄用網址</button>');
 $('copyRec').onclick=()=>{const u=`${location.href.split('?')[0]}?mode=record&session=${encodeURIComponent(net.sid)}`;navigator.clipboard.writeText(u).then(()=>{$('ovTip').textContent='已複製 ✓';setTimeout(()=>$('ovTip').textContent='',2000);});};
@@ -453,6 +453,7 @@ const TDEF={rx:0,ry:0,rz:0,sc:100,op:85};
 var tilt=Object.assign({},TDEF,LS('tilt',{}));
 ['rx','ry','rz','sc','op'].forEach(k=>{if(QS.get(k)!=null)tilt[k]=+QS.get(k);});
 if(OV){const r=LS('tiltR',null);if(r)tilt=Object.assign({},TDEF,r);}
+function pushCfg(){if(OV||!resWs||resWs.readyState!==1)return;try{resWs.send(JSON.stringify({plinkoCfg:{kw:net.kw,cd:net.cd,bg:budget,tiers}}));}catch(e){}}
 let tiltT=0;function pushTilt(){if(!resWs||resWs.readyState!==1)return;clearTimeout(tiltT);tiltT=setTimeout(()=>{try{resWs.send(JSON.stringify({plinkoTilt:tilt}));}catch(e){}},80);}
 function applyTilt(){cv.style.transform=`rotateX(${tilt.rx}deg) rotateY(${tilt.ry}deg) rotateZ(${tilt.rz}deg) scale(${tilt.sc/100})`;cv.style.opacity=tilt.op/100;
   ['rx','ry','rz','sc','op'].forEach(k=>{$(k).value=tilt[k];$('v_'+k).textContent=tilt[k]+(k==='sc'||k==='op'?'%':'°');});}
@@ -465,6 +466,9 @@ if(OV){setTimeout(()=>{$('ovState').style.transition='opacity 1s';$('ovState').s
 /* ===== 單場上限 ===== */
 if(QS.get('bg')!=null)budget=+QS.get('bg')||0;
 $('budget').value=budget||'';
-$('budget').onchange=()=>{budget=Math.max(0,+$('budget').value||0);SV('budget',budget);stopped=false;checkBudget();renderQueue();};
+$('budget').onchange=()=>{budget=Math.max(0,+$('budget').value||0);SV('budget',budget);stopped=false;checkBudget();renderQueue();pushCfg();};
 renderQueue();
+
+function applyCfg(c){if(!c)return;if(c.kw){net.kw=c.kw;$('kw').value=c.kw;}if(c.cd!=null){net.cd=+c.cd;$('cd').value=c.cd;}if(c.bg!=null){budget=+c.bg||0;$('budget').value=budget||'';stopped=false;}if(Array.isArray(c.tiers)&&c.tiers.length){tiers=c.tiers;assign();renderTiers();}checkBudget();renderQueue();}
+if(OV){const c=LS('cfgR',null);if(c)applyCfg(c);}
 </script></body></html>
