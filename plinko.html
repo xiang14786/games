@@ -327,18 +327,19 @@ function drawCup(i,glow){
 function drawFlippers(){for(const f of PB.flips){const [tx,ty]=PB.tipOf(f);ctx.save();ctx.lineCap='round';ctx.strokeStyle='rgba(0,0,0,.35)';ctx.lineWidth=PB.FR*2+2;ctx.beginPath();ctx.moveTo(f.px+2,f.py+4);ctx.lineTo(tx+2,ty+4);ctx.stroke();
   const gr=ctx.createLinearGradient(f.px,f.py-10,f.px,f.py+10);gr.addColorStop(0,'#ff6b6b');gr.addColorStop(1,'#b3202a');ctx.strokeStyle=gr;ctx.lineWidth=PB.FR*2;ctx.beginPath();ctx.moveTo(f.px,f.py);ctx.lineTo(tx,ty);ctx.stroke();
   ctx.fillStyle='#ffe3a0';ctx.beginPath();ctx.arc(f.px,f.py,5,0,7);ctx.fill();ctx.restore();}}
+const DR=28; // 畫面上的彈珠比物理大一點，頭像看得清楚
 function drawBall(b,scale){
   ctx.save();ctx.translate(b.x,b.y);ctx.scale(scale,scale);
   ctx.shadowColor='rgba(0,0,0,.45)';ctx.shadowBlur=10;ctx.shadowOffsetY=5;
-  ctx.beginPath();ctx.arc(0,0,BR+3,0,7);ctx.fillStyle='#e9eef5';ctx.fill();ctx.shadowColor='transparent';
-  ctx.save();ctx.beginPath();ctx.arc(0,0,BR,0,7);ctx.clip();
-  if(b.img&&b.img.complete&&b.img.naturalWidth){ctx.rotate(b.rot);ctx.drawImage(b.img,-BR,-BR,BR*2,BR*2);}
-  else{ctx.fillStyle='#c9748a';ctx.fillRect(-BR,-BR,BR*2,BR*2);ctx.fillStyle='#fff';ctx.font='bold 22px '+FONT;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(b.name[0],0,1);}
+  ctx.beginPath();ctx.arc(0,0,DR+3,0,7);ctx.fillStyle='#e9eef5';ctx.fill();ctx.shadowColor='transparent';
+  ctx.save();ctx.beginPath();ctx.arc(0,0,DR,0,7);ctx.clip();
+  if(b.img&&b.img.complete&&b.img.naturalWidth){ctx.rotate(b.rot);ctx.drawImage(b.img,-DR,-DR,DR*2,DR*2);}
+  else{ctx.fillStyle='#c9748a';ctx.fillRect(-DR,-DR,DR*2,DR*2);ctx.fillStyle='#fff';ctx.font='bold 28px '+FONT;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(b.name[0],0,1);}
   ctx.restore();
-  const hl=ctx.createRadialGradient(-7,-8,1,0,0,BR+3);hl.addColorStop(0,'rgba(255,255,255,.55)');hl.addColorStop(.35,'rgba(255,255,255,0)');ctx.beginPath();ctx.arc(0,0,BR+3,0,7);ctx.fillStyle=hl;ctx.fill();
+  const hl=ctx.createRadialGradient(-9,-10,1,0,0,DR+3);hl.addColorStop(0,'rgba(255,255,255,.55)');hl.addColorStop(.35,'rgba(255,255,255,0)');ctx.beginPath();ctx.arc(0,0,DR+3,0,7);ctx.fillStyle=hl;ctx.fill();
   ctx.restore();
   const nm=b.name.length>8?b.name.slice(0,8)+'…':b.name;ctx.font='bold 19px '+FONT;const tw=ctx.measureText(nm).width+16;
-  let ny=b.y-BR-32,nx=Math.min(Math.max(b.x,tw/2+20),W-tw/2-20);if(ny<14)ny=b.y+BR+8;
+  let ny=b.y-DR-32,nx=Math.min(Math.max(b.x,tw/2+20),W-tw/2-20);if(ny<14)ny=b.y+DR+8;
   ctx.fillStyle='rgba(0,0,0,.65)';rr(nx-tw/2,ny,tw,26,13);ctx.fill();ctx.fillStyle='#fff';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(nm,nx,ny+13);
 }
 const pinGlow=new Map();let cupGlow=-1,cupGlowV=0,last=performance.now(),acc=0;
@@ -365,7 +366,7 @@ function frame(now){
       if(r==='cup'){b.state='in';b.inAt=now;cupGlow=b.cup;cupGlowV=1;finish(b,cupAmt[b.cup]);}
       else if(r==='miss'){b.state='gone';finish(b,0);}
       else if(r==='back'){PB.launch(b,0.75+Math.random()*0.25,Math.random);}}
-    for(let i=0;i<fly.length;i++){const p=fly[i];if(p.state!=='fly')continue;for(let j=i+1;j<fly.length;j++){const q=fly[j];if(q.state!=='fly')continue;const dx=q.x-p.x,dy=q.y-p.y,d=Math.hypot(dx,dy);if(d>0&&d<BR*2){const nx=dx/d,ny=dy/d,o=(BR*2-d)/2;p.x-=nx*o;p.y-=ny*o;q.x+=nx*o;q.y+=ny*o;const vr=(q.vx-p.vx)*nx+(q.vy-p.vy)*ny;if(vr<0){const im=-(1.7)*vr/2;p.vx-=im*nx;p.vy-=im*ny;q.vx+=im*nx;q.vy+=im*ny;}}}}
+    for(let i=0;i<fly.length;i++){const p=fly[i];if(p.state!=='fly')continue;for(let j=i+1;j<fly.length;j++){const q=fly[j];if(q.state!=='fly')continue;const dx=q.x-p.x,dy=q.y-p.y,d=Math.hypot(dx,dy);if(d>0&&d<52){const nx=dx/d,ny=dy/d,o=(52-d)/2;p.x-=nx*o;p.y-=ny*o;q.x+=nx*o;q.y+=ny*o;const vr=(q.vx-p.vx)*nx+(q.vy-p.vy)*ny;if(vr<0){const im=-(1.7)*vr/2;p.vx-=im*nx;p.vy-=im*ny;q.vx+=im*nx;q.vy+=im*ny;}}}}
   }}else acc=0;
   balls=balls.filter(b=>b.state==='fly'||(b.state==='in'&&now-b.inAt<2600));
   if(fly.length&&Math.random()<0.05)renderQueue();
