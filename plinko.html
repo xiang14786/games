@@ -69,7 +69,7 @@ body.ov #stage{height:100vh;align-items:flex-end;padding-bottom:4vh}
     <div class="tip" style="margin-top:8px">裝填或收到留言就<b>馬上發射</b>，好幾顆會同時在台上跑。</div>
 
     <h3>🎚️ 角度與大小（像拿在手上）</h3>
-    <div class="tip">拉拉看，直播畫面會照這個角度顯示。調好再按「複製手機直播用網址」。</div>
+    <div class="tip">在「電腦紀錄用網址」這頁拉滑桿，直播中的彈珠台會<b>即時跟著轉</b>（手機瀏覽器也能開）。</div>
     <label>前後傾斜 <span id="v_rx"></span><input type="range" id="rx" min="-45" max="45" step="1"></label>
     <label>左右轉 <span id="v_ry"></span><input type="range" id="ry" min="-45" max="45" step="1"></label>
     <label>歪一邊 <span id="v_rz"></span><input type="range" id="rz" min="-25" max="25" step="1"></label>
@@ -441,7 +441,8 @@ $('copyOv').onclick=()=>{
 $('fakeGo').onclick=()=>{onComment($('fakeN').value||'測試觀眾',$('fakeM').value||net.kw.split(/[,，]/)[0],'');};
 const REC=QS.get('mode')==='record';
 if(REC){listenResults();setState('📋 紀錄模式：接收手機彈珠台的中獎結果（代碼 '+net.sid+'）');$('conn').style.display='none';}
-else if(OV){document.body.classList.add('ov');document.documentElement.style.background='transparent';document.body.style.background='transparent';const op=+(QS.get('op')||0.85);cv.style.opacity=op;connect();}
+else if(OV){document.body.classList.add('ov');document.documentElement.style.background='transparent';document.body.style.background='transparent';connect();
+  const cmdListen=()=>{const c=new WebSocket(QS.get('server')||'wss://io.socialstream.ninja');c.onopen=()=>c.send(JSON.stringify({join:net.sid,in:6,out:7}));c.onmessage=e=>{let m;try{m=JSON.parse(e.data);}catch(x){return;}const mm=(m.overlayNinja||m);if(mm.plinkoTilt){tilt=Object.assign({},TDEF,mm.plinkoTilt);SV('tiltR',tilt);applyTilt();return;}const k=mm.plinkoCmd;if(k==='reveal')doReveal(true);else if(k==='hide')doReveal(false);else if(k==='reset')doNewRound();};c.onclose=()=>setTimeout(cmdListen,4000);};cmdListen();}
 else if(QS.get('session')){connect();}
 $('copyOv').insertAdjacentHTML('afterend',' <button class="btn ghost" id="copyRec">複製電腦紀錄用網址</button>');
 $('copyRec').onclick=()=>{const u=`${location.href.split('?')[0]}?mode=record&session=${encodeURIComponent(net.sid)}`;navigator.clipboard.writeText(u).then(()=>{$('ovTip').textContent='已複製 ✓';setTimeout(()=>$('ovTip').textContent='',2000);});};
@@ -451,11 +452,13 @@ $('copyRec').onclick=()=>{const u=`${location.href.split('?')[0]}?mode=record&se
 const TDEF={rx:0,ry:0,rz:0,sc:100,op:85};
 var tilt=Object.assign({},TDEF,LS('tilt',{}));
 ['rx','ry','rz','sc','op'].forEach(k=>{if(QS.get(k)!=null)tilt[k]=+QS.get(k);});
+if(OV){const r=LS('tiltR',null);if(r)tilt=Object.assign({},TDEF,r);}
+let tiltT=0;function pushTilt(){if(!resWs||resWs.readyState!==1)return;clearTimeout(tiltT);tiltT=setTimeout(()=>{try{resWs.send(JSON.stringify({plinkoTilt:tilt}));}catch(e){}},80);}
 function applyTilt(){cv.style.transform=`rotateX(${tilt.rx}deg) rotateY(${tilt.ry}deg) rotateZ(${tilt.rz}deg) scale(${tilt.sc/100})`;cv.style.opacity=tilt.op/100;
   ['rx','ry','rz','sc','op'].forEach(k=>{$(k).value=tilt[k];$('v_'+k).textContent=tilt[k]+(k==='sc'||k==='op'?'%':'°');});}
-['rx','ry','rz','sc','op'].forEach(k=>$(k).addEventListener('input',()=>{tilt[k]=+$(k).value;SV('tilt',tilt);applyTilt();}));
-$('tiltReset').onclick=()=>{tilt=Object.assign({},TDEF);SV('tilt',tilt);applyTilt();};
-$('tiltHold').onclick=()=>{tilt=Object.assign({},TDEF,{rx:22,ry:-12,rz:-6,sc:92});SV('tilt',tilt);applyTilt();};
+['rx','ry','rz','sc','op'].forEach(k=>$(k).addEventListener('input',()=>{tilt[k]=+$(k).value;SV('tilt',tilt);applyTilt();pushTilt();}));
+$('tiltReset').onclick=()=>{tilt=Object.assign({},TDEF);SV('tilt',tilt);applyTilt();pushTilt();};
+$('tiltHold').onclick=()=>{tilt=Object.assign({},TDEF,{rx:22,ry:-12,rz:-6,sc:92});SV('tilt',tilt);applyTilt();pushTilt();};
 applyTilt();
 if(OV){setTimeout(()=>{$('ovState').style.transition='opacity 1s';$('ovState').style.opacity=0;},8000);}
 
