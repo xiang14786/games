@@ -371,7 +371,11 @@ $('copyOv').onclick=()=>{
   if(location.protocol==='file:')$('ovTip').textContent='（要先把這個檔放上網站，網址才給手機用）';
 };
 $('fakeGo').onclick=()=>{onComment($('fakeN').value||'測試觀眾',$('fakeM').value||net.kw.split(/[,，]/)[0],'');};
-if(OV){document.body.classList.add('ov');document.documentElement.style.background='transparent';document.body.style.background='transparent';const op=+(QS.get('op')||0.85);cv.style.opacity=op;connect();}
+const REC=QS.get('mode')==='record';
+if(REC){listenResults();setState('📋 紀錄模式：接收手機彈珠台的中獎結果（代碼 '+net.sid+'）');$('conn').style.display='none';}
+else if(OV){document.body.classList.add('ov');document.documentElement.style.background='transparent';document.body.style.background='transparent';const op=+(QS.get('op')||0.85);cv.style.opacity=op;connect();}
 else if(QS.get('session')){connect();}
+$('copyOv').insertAdjacentHTML('afterend',' <button class="btn ghost" id="copyRec">複製電腦紀錄用網址</button>');
+$('copyRec').onclick=()=>{const u=`${location.href.split('?')[0]}?mode=record&session=${encodeURIComponent(net.sid)}`;navigator.clipboard.writeText(u).then(()=>{$('ovTip').textContent='已複製 ✓';setTimeout(()=>$('ovTip').textContent='',2000);});};
 
 </script></body></html>
