@@ -344,10 +344,10 @@ function drawBall(b,scale){
 }
 const pinGlow=new Map();let cupGlow=-1,cupGlowV=0,last=performance.now(),acc=0;
 function drawReveal(now){
-  const L=reveal.list,per=15,pages=Math.max(1,Math.ceil(L.length/per)),pg=Math.floor((now-reveal.t0)/7000)%pages,al=Math.min(1,(now-reveal.t0)/400);
+  const L=round.slice().sort((x,y)=>y.a-x.a),per=15,pages=Math.max(1,Math.ceil(L.length/per)),pg=Math.floor((now-reveal.t0)/7000)%pages,al=Math.min(1,(now-reveal.t0)/400);
   ctx.globalAlpha=al;ctx.fillStyle='rgba(10,12,20,.9)';rr(20,16,W-40,H-32,24);ctx.fill();ctx.strokeStyle='#e2c28a';ctx.lineWidth=4;ctx.stroke();
   ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle='#f3d9a6';ctx.font='bold 44px '+FONT;ctx.fillText('🎉 本輪中獎名單',W/2,70);
-  ctx.fillStyle='#cfd5df';ctx.font='bold 24px '+FONT;ctx.fillText(L.length?`共 ${L.length} 人中獎・總價值 $${L.reduce((s,r)=>s+r.a,0)}`+(pages>1?`（第 ${pg+1}/${pages} 頁）`:''):'這一輪還沒有人中獎',W/2,115);
+  ctx.fillStyle='#cfd5df';ctx.font='bold 24px '+FONT;ctx.fillText(L.length?`共 ${L.length} 人中獎`+(pages>1?`（第 ${pg+1}/${pages} 頁）`:''):'這一輪還沒有人中獎',W/2,115);
   const items=L.slice(pg*per,pg*per+per),cw=(W-80)/3;
   items.forEach((r,i)=>{const col=i%3,row=Math.floor(i/3),x=40+col*cw,y=150+row*96;
     ctx.fillStyle='rgba(255,255,255,.07)';rr(x+6,y,cw-12,84,16);ctx.fill();
@@ -429,8 +429,8 @@ $('conn').onclick=()=>{if(ws&&ws.readyState===1&&wsWant){wsWant=false;ws.close()
 // 手機畫面跑的結果，回傳給電腦這邊記錄
 onResult=(b,amt)=>{if(OV&&ws&&ws.readyState===1){try{ws.send(JSON.stringify({plinko:{n:b.name,a:amt,s:b.src||'',t:Date.now(),l:amt?labelOf(amt):''}}));}catch(e){}}};
 function listenResults(){if(OV)return;try{resWs&&resWs.close();}catch(e){}resWs=new WebSocket(QS.get('server')||'wss://io.socialstream.ninja');
-  resWs.onopen=()=>{resWs.send(JSON.stringify({join:net.sid,in:5,out:6}));setTimeout(()=>{pushCfg();pushTilt();},300);};
-  resWs.onmessage=e=>{let m;try{m=JSON.parse(e.data);}catch(x){return;}const p=(m.overlayNinja||m).plinko;if(!p)return;if(hist.some(h=>h.t===p.t&&h.n===p.n))return;hist.unshift(Object.assign(p,{remote:1}));SV('hist',hist);renderHist();if(p.a>0){round.push({n:p.n,a:p.a,s:p.s,l:p.l});SV('round',round);renderQueue();}};
+  resWs.onopen=()=>{resWs.send(JSON.stringify({join:net.sid,in:5,out:6}));setTimeout(()=>{pushCfg();pushTilt();if(sendCmd)sendCmd('sync');},300);};
+  resWs.onmessage=e=>{let m;try{m=JSON.parse(e.data);}catch(x){return;}const mm2=(m.overlayNinja||m);if(Array.isArray(mm2.plinkoRound)){round=mm2.plinkoRound;SV('round',round);renderQueue();return;}const p=mm2.plinko;if(!p)return;if(hist.some(h=>h.t===p.t&&h.n===p.n))return;hist.unshift(Object.assign(p,{remote:1}));SV('hist',hist);renderHist();if(p.a>0){round.push({n:p.n,a:p.a,s:p.s,l:p.l});SV('round',round);renderQueue();}};
   sendCmd=c=>{try{resWs.readyState===1&&resWs.send(JSON.stringify({plinkoCmd:c}));}catch(e){}};
   resWs.onclose=()=>setTimeout(listenResults,5000);}
 $('copyOv').onclick=()=>{
@@ -443,7 +443,7 @@ $('fakeGo').onclick=()=>{onComment($('fakeN').value||'測試觀眾',$('fakeM').v
 const REC=QS.get('mode')==='record';
 if(REC){listenResults();setState('📋 紀錄模式：接收手機彈珠台的中獎結果（代碼 '+net.sid+'）');$('conn').style.display='none';}
 else if(OV){document.body.classList.add('ov');document.documentElement.style.background='transparent';document.body.style.background='transparent';connect();
-  const cmdListen=()=>{const c=new WebSocket(QS.get('server')||'wss://io.socialstream.ninja');c.onopen=()=>c.send(JSON.stringify({join:net.sid,in:6,out:7}));c.onmessage=e=>{let m;try{m=JSON.parse(e.data);}catch(x){return;}const mm=(m.overlayNinja||m);if(mm.plinkoTilt){tilt=Object.assign({},TDEF,mm.plinkoTilt);SV('tiltR',tilt);applyTilt();return;}if(mm.plinkoCfg){applyCfg(mm.plinkoCfg);SV('cfgR',mm.plinkoCfg);return;}const k=mm.plinkoCmd;if(k==='ping'){try{ws.send(JSON.stringify({plinkoStatus:{v:7,ws:ws&&ws.readyState,kw:net.kw,cd:net.cd,bg:budget,stopped,pending:pending.length,balls:balls.length,fly:balls.filter(b=>b.state==='fly').length,round:roundTotal(),rx:DBG.rx,bad:DBG.bad,hit:DBG.hit,last:DBG.last,frames:DBG.frames,err:DBG.err,ua:navigator.userAgent.slice(-60)}}));}catch(x){}return;}if(k==='reveal')doReveal(true);else if(k==='hide')doReveal(false);else if(k==='reset')doNewRound();};c.onclose=()=>setTimeout(cmdListen,4000);};cmdListen();}
+  const cmdListen=()=>{const c=new WebSocket(QS.get('server')||'wss://io.socialstream.ninja');c.onopen=()=>c.send(JSON.stringify({join:net.sid,in:6,out:7}));c.onmessage=e=>{let m;try{m=JSON.parse(e.data);}catch(x){return;}const mm=(m.overlayNinja||m);if(mm.plinkoTilt){tilt=Object.assign({},TDEF,mm.plinkoTilt);SV('tiltR',tilt);applyTilt();return;}if(mm.plinkoCfg){applyCfg(mm.plinkoCfg);SV('cfgR',mm.plinkoCfg);return;}const k=mm.plinkoCmd;if(k==='sync'||k==='reveal'){try{ws.send(JSON.stringify({plinkoRound:round}));}catch(x){}}if(k==='ping'){try{ws.send(JSON.stringify({plinkoStatus:{v:8,ws:ws&&ws.readyState,kw:net.kw,cd:net.cd,bg:budget,stopped,pending:pending.length,balls:balls.length,fly:balls.filter(b=>b.state==='fly').length,round:roundTotal(),rx:DBG.rx,bad:DBG.bad,hit:DBG.hit,last:DBG.last,frames:DBG.frames,err:DBG.err,ua:navigator.userAgent.slice(-60)}}));}catch(x){}return;}if(k==='reveal')doReveal(true);else if(k==='hide')doReveal(false);else if(k==='reset')doNewRound();};c.onclose=()=>setTimeout(cmdListen,4000);};cmdListen();}
 else if(QS.get('session')){connect();}
 $('copyOv').insertAdjacentHTML('afterend',' <button class="btn ghost" id="copyRec">複製電腦紀錄用網址</button>');
 $('copyRec').onclick=()=>{const u=`${location.href.split('?')[0]}?mode=record&session=${encodeURIComponent(net.sid)}`;navigator.clipboard.writeText(u).then(()=>{$('ovTip').textContent='已複製 ✓';setTimeout(()=>$('ovTip').textContent='',2000);});};
