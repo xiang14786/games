@@ -66,7 +66,7 @@ body.ov #stage{height:100vh;align-items:flex-end;padding-bottom:4vh}
     <button class="btn go" id="load">裝填彈珠（Enter）</button>
     <div id="queue"></div>
 
-    <div class="row" style="margin-top:8px"><label style="flex:1">累積幾顆一起發射（1＝馬上發射）<input type="number" id="batch" min="1" max="30"></label><button class="btn ghost" id="flush" style="align-self:flex-end">⚡ 現在全部發射</button></div><div class="tip">集滿就一口氣連發；等超過 30 秒沒集滿也會自動發射。</div>
+    <div class="tip" style="margin-top:8px">累積幾顆一起發射（每次在這個範圍內隨機；兩格填一樣＝固定；填 1＝馬上發射）</div><div class="row"><input type="number" id="bmin" min="1" max="30" style="flex:1"><span>～</span><input type="number" id="bmax" min="1" max="30" style="flex:1"><span>顆</span></div><div class="row" style="margin-top:6px"><button class="btn ghost" id="flush">⚡ 現在全部發射</button><span class="tip">排隊的球會疊在右邊發射道；超過 30 秒沒集滿也會自動發射。</span></div>
 
     <h3>🎚️ 角度與大小（像拿在手上）</h3>
     <div class="tip">在「電腦紀錄用網址」這頁拉滑桿，直播中的彈珠台會<b>即時跟著轉</b>（手機瀏覽器也能開）。</div>
@@ -237,7 +237,8 @@ drop.ondrop=e=>{e.preventDefault();drop.classList.remove('on');const f=[...e.dat
 document.addEventListener('paste',e=>{const it=[...((e.clipboardData||{}).items||[])].find(i=>i.type.startsWith('image/'));if(it){e.preventDefault();setAvatar(it.getAsFile());}});
 
 /* --- 裝填 / 發射（同時多顆） --- */
-let budget=+LS('budget',0),stopped=false,batchN=+LS('batch',10),volley=0,firstWait=0;
+let budget=+LS('budget',0),stopped=false,bMin=+LS('bmin',5),bMax=+LS('bmax',20),batchN=0,volley=0,firstWait=0;
+function newTarget(){const a=Math.max(1,Math.min(bMin,bMax)),b=Math.max(bMin,bMax,1);batchN=a+Math.floor(Math.random()*(b-a+1));}newTarget();
 const roundTotal=()=>round.reduce((s,r)=>s+r.a,0);
 const pending=[];let balls=[],pull=0,lastLaunch=0,reveal=null,floaters=[],round=LS('round',[]);const MAXFLY=25;
 function addBall(name,img,src){if(stopped)return;if(pending.length<80){if(!pending.length)firstWait=performance.now();pending.push({name,img,src});}renderQueue();}
@@ -246,10 +247,10 @@ function loadBall(){
   const n=document.getElementById('nm').value.trim();if(!n&&!curImg){document.getElementById('nm').focus();return;}
   addBall(n||'神秘觀眾',curImg,curSrc);document.getElementById('nm').value='';clearAvatar();
 }
-function renderQueue(){const fly=balls.filter(b=>b.state==='fly').length;document.getElementById('queue').textContent=stopped?`🎊 本場購物金已送完，停止發射（本輪 $${roundTotal()}）`:`場上 ${fly} 顆・集氣中 ${pending.length}/${batchN} 顆・本輪中獎 ${round.length} 人`;const rc=document.getElementById('roundCnt');if(rc)rc.textContent=`本輪中獎 ${round.length} 人・已送 $${roundTotal()}`+(budget?` / 上限 $${budget}`:'');}
+function renderQueue(){const fly=balls.filter(b=>b.state==='fly').length;document.getElementById('queue').textContent=stopped?`🎊 本場購物金已送完，停止發射（本輪 $${roundTotal()}）`:`場上 ${fly} 顆・集氣中 ${pending.length} 顆（這次集滿 ${batchN} 顆發射）・本輪中獎 ${round.length} 人`;const rc=document.getElementById('roundCnt');if(rc)rc.textContent=`本輪中獎 ${round.length} 人・已送 $${roundTotal()}`+(budget?` / 上限 $${budget}`:'');}
 function tryLaunch(now){
   if(!pending.length)return;
-  if(!volley){if(pending.length>=Math.max(1,batchN)||now-firstWait>30000)volley=Math.min(pending.length,Math.max(batchN,1));else return;}
+  if(!volley){if(pending.length>=Math.max(1,batchN)||now-firstWait>30000){volley=pending.length;newTarget();}else return;}
   if(now-lastLaunch<(batchN>1?110:230))return;
   if(balls.filter(b=>b.state==='fly').length>=MAXFLY+10)return;
   if(balls.some(b=>b.state==='fly'&&b.x>IW&&b.y>FLOOR-(batchN>1?90:170)))return;
@@ -340,6 +341,7 @@ function drawBall(b,scale){
   ctx.restore();
   const hl=ctx.createRadialGradient(-9,-10,1,0,0,DR+3);hl.addColorStop(0,'rgba(255,255,255,.55)');hl.addColorStop(.35,'rgba(255,255,255,0)');ctx.beginPath();ctx.arc(0,0,DR+3,0,7);ctx.fillStyle=hl;ctx.fill();
   ctx.restore();
+  if(b.noLabel)return;
   const nm=b.name.length>8?b.name.slice(0,8)+'…':b.name;ctx.font='bold 19px '+FONT;const tw=ctx.measureText(nm).width+16;
   let ny=b.y-DR-32,nx=Math.min(Math.max(b.x,tw/2+20),W-tw/2-20);if(ny<14)ny=b.y+DR+8;
   ctx.fillStyle='rgba(0,0,0,.65)';rr(nx-tw/2,ny,tw,26,13);ctx.fill();ctx.fillStyle='#fff';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(nm,nx,ny+13);
@@ -388,9 +390,11 @@ function frame(now){DBG.frames++;
   }
   floaters=floaters.filter(f=>now-f.t0<1600);
   for(const f of floaters){const k=(now-f.t0)/1600;ctx.globalAlpha=1-k;ctx.font='bold 30px '+FONT;ctx.textAlign='center';ctx.textBaseline='middle';ctx.lineWidth=6;ctx.strokeStyle='rgba(0,0,0,.6)';const y=f.y-k*50;ctx.strokeText(f.t,f.x,y);ctx.fillStyle=f.win?'#ffe08a':'#ddd';ctx.fillText(f.t,f.x,y);ctx.globalAlpha=1;}
-  if(batchN>1&&pending.length&&!volley){const n=pending.length;ctx.save();ctx.fillStyle='rgba(0,0,0,.6)';rr(W-410,22,380,48,24);ctx.fill();ctx.fillStyle='#ffe08a';ctx.font='bold 24px '+FONT;ctx.textAlign='left';ctx.textBaseline='middle';ctx.fillText(`集氣中 ${n}/${batchN}`,W-394,47);
-    for(let i=0;i<Math.min(n,6);i++){const q=pending[n-1-i],x=W-60-i*26;ctx.save();ctx.beginPath();ctx.arc(x,47,16,0,7);ctx.clip();if(q.img&&q.img.complete&&q.img.naturalWidth)ctx.drawImage(q.img,x-16,31,32,32);else{ctx.fillStyle='#c9748a';ctx.fillRect(x-16,31,32,32);ctx.fillStyle='#fff';ctx.font='bold 16px '+FONT;ctx.textAlign='center';ctx.fillText(q.name[0],x,48);}ctx.restore();ctx.beginPath();ctx.arc(x,47,16,0,7);ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.stroke();}
-    ctx.restore();}
+  if(pending.length&&!volley&&batchN>1){const n=pending.length;
+    // 發射道裡排隊的球（最多 7 顆看得到）
+    const show=Math.min(n,7);for(let i=0;i<show;i++){const q=pending[i];drawBall({x:SX,y:FLOOR-BR-i*54,img:q.img,name:q.name,rot:0,noLabel:true},0.92);}
+    ctx.save();ctx.fillStyle='rgba(0,0,0,.65)';rr(W-330,20,300,50,25);ctx.fill();ctx.fillStyle='#ffe08a';ctx.font='bold 26px '+FONT;ctx.textAlign='center';ctx.textBaseline='middle';
+    const dots='.'.repeat(1+Math.floor(now/400)%3);ctx.fillText(`⚡ 集氣中 ${n} 顆${dots}`,W-180,46);ctx.restore();}
   if(reveal)drawReveal(now);
   if(toast){const age=now-toast.at;if(age>1800)toast=null;else{ctx.globalAlpha=Math.min(1,(1800-age)/300);ctx.fillStyle='rgba(0,0,0,.75)';ctx.font='bold 28px '+FONT;const tw=ctx.measureText(toast.t).width+40;rr(W/2-tw/2,420,tw,56,28);ctx.fill();ctx.fillStyle='#fff';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(toast.t,W/2,448);ctx.globalAlpha=1;}}
   requestAnimationFrame(frame);
@@ -448,7 +452,7 @@ $('fakeGo').onclick=()=>{onComment($('fakeN').value||'測試觀眾',$('fakeM').v
 const REC=QS.get('mode')==='record';
 if(REC){listenResults();setState('📋 紀錄模式：接收手機彈珠台的中獎結果（代碼 '+net.sid+'）');$('conn').style.display='none';}
 else if(OV){document.body.classList.add('ov');document.documentElement.style.background='transparent';document.body.style.background='transparent';connect();
-  const cmdListen=()=>{const c=new WebSocket(QS.get('server')||'wss://io.socialstream.ninja');c.onopen=()=>c.send(JSON.stringify({join:net.sid,in:6,out:7}));c.onmessage=e=>{let m;try{m=JSON.parse(e.data);}catch(x){return;}const mm=(m.overlayNinja||m);if(mm.plinkoTilt){tilt=Object.assign({},TDEF,mm.plinkoTilt);SV('tiltR',tilt);applyTilt();return;}if(mm.plinkoCfg){applyCfg(mm.plinkoCfg);SV('cfgR',mm.plinkoCfg);return;}const k=mm.plinkoCmd;if(k==='flush'&&pending.length){volley=pending.length;}if(k==='sync'||k==='reveal'){try{ws.send(JSON.stringify({plinkoRound:round}));}catch(x){}}if(k==='ping'){try{ws.send(JSON.stringify({plinkoStatus:{v:10,ws:ws&&ws.readyState,kw:net.kw,cd:net.cd,bg:budget,stopped,pending:pending.length,balls:balls.length,fly:balls.filter(b=>b.state==='fly').length,round:roundTotal(),rx:DBG.rx,bad:DBG.bad,hit:DBG.hit,last:DBG.last,frames:DBG.frames,err:DBG.err,ua:navigator.userAgent.slice(-60)}}));}catch(x){}return;}if(k==='reveal')doReveal(true);else if(k==='hide')doReveal(false);else if(k==='reset')doNewRound();};c.onclose=()=>setTimeout(cmdListen,4000);};cmdListen();}
+  const cmdListen=()=>{const c=new WebSocket(QS.get('server')||'wss://io.socialstream.ninja');c.onopen=()=>c.send(JSON.stringify({join:net.sid,in:6,out:7}));c.onmessage=e=>{let m;try{m=JSON.parse(e.data);}catch(x){return;}const mm=(m.overlayNinja||m);if(mm.plinkoTilt){tilt=Object.assign({},TDEF,mm.plinkoTilt);SV('tiltR',tilt);applyTilt();return;}if(mm.plinkoCfg){applyCfg(mm.plinkoCfg);SV('cfgR',mm.plinkoCfg);return;}const k=mm.plinkoCmd;if(k==='flush'&&pending.length){volley=pending.length;}if(k==='sync'||k==='reveal'){try{ws.send(JSON.stringify({plinkoRound:round}));}catch(x){}}if(k==='ping'){try{ws.send(JSON.stringify({plinkoStatus:{v:11,ws:ws&&ws.readyState,kw:net.kw,cd:net.cd,bg:budget,stopped,pending:pending.length,balls:balls.length,fly:balls.filter(b=>b.state==='fly').length,round:roundTotal(),rx:DBG.rx,bad:DBG.bad,hit:DBG.hit,last:DBG.last,frames:DBG.frames,err:DBG.err,ua:navigator.userAgent.slice(-60)}}));}catch(x){}return;}if(k==='reveal')doReveal(true);else if(k==='hide')doReveal(false);else if(k==='reset')doNewRound();};c.onclose=()=>setTimeout(cmdListen,4000);};cmdListen();}
 else if(QS.get('session')){connect();}
 $('copyOv').insertAdjacentHTML('afterend',' <button class="btn ghost" id="copyRec">複製電腦紀錄用網址</button>');
 $('copyRec').onclick=()=>{const u=`${location.href.split('?')[0]}?mode=record&session=${encodeURIComponent(net.sid)}`;navigator.clipboard.writeText(u).then(()=>{$('ovTip').textContent='已複製 ✓';setTimeout(()=>$('ovTip').textContent='',2000);});};
@@ -459,7 +463,7 @@ const TDEF={rx:0,ry:0,rz:0,sc:100,op:85};
 var tilt=Object.assign({},TDEF,LS('tilt',{}));
 ['rx','ry','rz','sc','op'].forEach(k=>{if(QS.get(k)!=null)tilt[k]=+QS.get(k);});
 if(OV){const r=LS('tiltR',null);if(r)tilt=Object.assign({},TDEF,r);}
-function pushCfg(){if(OV||!resWs||resWs.readyState!==1)return;try{resWs.send(JSON.stringify({plinkoCfg:{kw:net.kw,cd:net.cd,bg:budget,tiers,bn:batchN}}));}catch(e){}}
+function pushCfg(){if(OV||!resWs||resWs.readyState!==1)return;try{resWs.send(JSON.stringify({plinkoCfg:{kw:net.kw,cd:net.cd,bg:budget,tiers,bmin:bMin,bmax:bMax}}));}catch(e){}}
 let tiltT=0;function pushTilt(){if(!resWs||resWs.readyState!==1)return;clearTimeout(tiltT);tiltT=setTimeout(()=>{try{resWs.send(JSON.stringify({plinkoTilt:tilt}));}catch(e){}},80);}
 function applyTilt(){cv.style.transform=`rotateX(${tilt.rx}deg) rotateY(${tilt.ry}deg) rotateZ(${tilt.rz}deg) scale(${tilt.sc/100})`;cv.style.opacity=tilt.op/100;
   ['rx','ry','rz','sc','op'].forEach(k=>{$(k).value=tilt[k];$('v_'+k).textContent=tilt[k]+(k==='sc'||k==='op'?'%':'°');});}
@@ -475,11 +479,11 @@ $('budget').value=budget||'';
 $('budget').onchange=()=>{budget=Math.max(0,+$('budget').value||0);SV('budget',budget);stopped=false;checkBudget();renderQueue();pushCfg();};
 renderQueue();
 
-function applyCfg(c){if(!c)return;if(c.kw){net.kw=c.kw;$('kw').value=c.kw;}if(c.cd!=null){net.cd=+c.cd;$('cd').value=c.cd;}if(c.bg!=null){budget=+c.bg||0;$('budget').value=budget||'';stopped=false;}if(Array.isArray(c.tiers)&&c.tiers.length){tiers=c.tiers;assign();renderTiers();}if(c.bn!=null){batchN=Math.max(1,+c.bn||1);$('batch').value=batchN;}checkBudget();renderQueue();}
+function applyCfg(c){if(!c)return;if(c.kw){net.kw=c.kw;$('kw').value=c.kw;}if(c.cd!=null){net.cd=+c.cd;$('cd').value=c.cd;}if(c.bg!=null){budget=+c.bg||0;$('budget').value=budget||'';stopped=false;}if(Array.isArray(c.tiers)&&c.tiers.length){tiers=c.tiers;assign();renderTiers();}if(c.bmin!=null){bMin=+c.bmin||1;bMax=+c.bmax||bMin;$('bmin').value=bMin;$('bmax').value=bMax;newTarget();}checkBudget();renderQueue();}
 if(OV){const c=LS('cfgR',null);if(c)applyCfg(c);}
 
 /* ===== 累積幾顆一起發射 ===== */
-$('batch').value=batchN;
-$('batch').onchange=()=>{batchN=Math.max(1,Math.round(+$('batch').value||1));$('batch').value=batchN;SV('batch',batchN);renderQueue();pushCfg();};
+$('bmin').value=bMin;$('bmax').value=bMax;
+['bmin','bmax'].forEach(id=>$(id).onchange=()=>{bMin=Math.max(1,Math.round(+$('bmin').value||1));bMax=Math.max(1,Math.round(+$('bmax').value||bMin));$('bmin').value=bMin;$('bmax').value=bMax;SV('bmin',bMin);SV('bmax',bMax);newTarget();renderQueue();pushCfg();});
 $('flush').onclick=()=>{if(pending.length)volley=pending.length;if(sendCmd)sendCmd('flush');};
 </script></body></html>
