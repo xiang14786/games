@@ -106,6 +106,7 @@ body.ov #stage{height:100vh;align-items:flex-end;padding-bottom:4vh}
     <div class="tip">盤面共有 <b id="nCups"></b> 個獎洞。設定每種獎要幾個洞（0＝「再接再厲」洞）。獎品名稱空白就是購物金；有填名稱（例：贈品區任選券）就顯示名稱，價值算進單場上限。金額越大的會自動放在越難進的位置。</div>
     <table><thead><tr><th>價值 $</th><th>幾個洞</th><th>獎品名稱</th><th></th></tr></thead><tbody id="tiers"></tbody></table>
     <div class="row" style="margin-top:6px"><button class="btn ghost" id="addTier">＋ 加一種金額</button><button class="btn ghost" id="reset">還原預設</button><span class="tip" id="tierSum"></span></div>
+    <label style="display:block;margin-top:10px">整體中獎率 <b id="wrv" style="color:var(--gold)"></b><input type="range" id="winRate" min="5" max="100" step="5"></label><div class="tip">球進有獎的洞時，只有這個比例會算數，其他會自然彈出來繼續滾。改完按下面「模擬」看每 100 人大約送多少。</div>
     <div class="row" style="margin-top:10px"><button class="btn ghost" id="sim">模擬 1000 顆，看實際中獎率</button></div>
     <div id="simOut"></div>
     <div class="row" style="margin-top:12px"><button class="btn ghost" id="show">只顯示彈珠台（直播畫面用）</button></div>
@@ -215,7 +216,7 @@ renderTiers();
 /* --- 模擬 --- */
 document.getElementById('sim').onclick=()=>{
   const out=document.getElementById('simOut');const N=1000;let done=0,miss=0,pay=0;const by={};
-  const run=()=>{const end=Math.min(N,done+50);for(;done<end;done++){let r;const b=PB.newBall();do{PB.launch(b,0.3+Math.random()*0.7,Math.random);for(let k=0;k<240*30;k++){PB.tick(1/240,[b],Math.random);r=PB.step(b,1/240,Math.random);if(r)break;}}while(r==='back');
+  const run=()=>{const end=Math.min(N,done+50);for(;done<end;done++){let r;const b=PB.newBall();if(winRate<100)b.luck=winRate/100;do{PB.launch(b,0.3+Math.random()*0.7,Math.random);for(let k=0;k<240*30;k++){PB.tick(1/240,[b],Math.random);r=PB.step(b,1/240,Math.random);if(r)break;}}while(r==='back');
       if(r==='cup'){const a=cupAmt[b.cup];by[a]=(by[a]||0)+1;pay+=a;if(!a)miss++;}else miss++;}
     out.textContent=`模擬中… ${done}/${N}`;
     if(done<N)setTimeout(run,0);else{
@@ -238,7 +239,7 @@ drop.ondrop=e=>{e.preventDefault();drop.classList.remove('on');const f=[...e.dat
 document.addEventListener('paste',e=>{const it=[...((e.clipboardData||{}).items||[])].find(i=>i.type.startsWith('image/'));if(it){e.preventDefault();setAvatar(it.getAsFile());}});
 
 /* --- 裝填 / 發射（同時多顆） --- */
-let budget=+LS('budget',0),stopped=false,bMin=+LS('bmin',5),bMax=+LS('bmax',20),batchN=0,volley=0,firstWait=0;
+let budget=+LS('budget',0),winRate=+LS('winRate',100),stopped=false,bMin=+LS('bmin',5),bMax=+LS('bmax',20),batchN=0,volley=0,firstWait=0;
 function newTarget(){const a=Math.max(1,Math.min(bMin,bMax)),b=Math.max(bMin,bMax,1);batchN=a+Math.floor(Math.random()*(b-a+1));}newTarget();
 const roundTotal=()=>round.reduce((s,r)=>s+r.a,0);
 const pending=[];let balls=[],pull=0,lastLaunch=0,reveal=null,floaters=[],round=LS('round',[]);const MAXFLY=25;
@@ -255,7 +256,7 @@ function tryLaunch(now){
   if(now-lastLaunch<(batchN>1?110:230))return;
   if(balls.filter(b=>b.state==='fly').length>=MAXFLY+10)return;
   if(balls.some(b=>b.state==='fly'&&b.x>IW&&b.y>FLOOR-(batchN>1?90:170)))return;
-  const q=pending.shift();const b=Object.assign(PB.newBall(),q,{rot:0});const won=round.filter(r=>r.n===b.name).length;if(won)b.luck=won===1?0.35:0.15;PB.launch(b,0.5+Math.random()*0.5,Math.random);balls.push(b);lastLaunch=now;pull=0.8;volley=Math.max(0,volley-1);if(!volley&&pending.length)firstWait=now;renderQueue();
+  const q=pending.shift();const b=Object.assign(PB.newBall(),q,{rot:0});const won=round.filter(r=>r.n===b.name).length;const lk=(winRate/100)*(won?(won===1?0.35:0.15):1);if(lk<1)b.luck=lk;PB.launch(b,0.5+Math.random()*0.5,Math.random);balls.push(b);lastLaunch=now;pull=0.8;volley=Math.max(0,volley-1);if(!volley&&pending.length)firstWait=now;renderQueue();
 }
 document.getElementById('load').onclick=loadBall;
 document.getElementById('nm').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();loadBall();}});
@@ -460,7 +461,7 @@ $('fakeGo').onclick=()=>{onComment($('fakeN').value||'測試觀眾',$('fakeM').v
 const REC=QS.get('mode')==='record';
 if(REC){listenResults();setState('📋 紀錄模式：接收手機彈珠台的中獎結果（代碼 '+net.sid+'）');$('conn').style.display='none';}
 else if(OV){document.body.classList.add('ov');document.documentElement.style.background='transparent';document.body.style.background='transparent';connect();
-  const cmdListen=()=>{const c=new WebSocket(QS.get('server')||'wss://io.socialstream.ninja');c.onopen=()=>c.send(JSON.stringify({join:net.sid,in:6,out:7}));c.onmessage=e=>{let m;try{m=JSON.parse(e.data);}catch(x){return;}const mm=(m.overlayNinja||m);if(mm.plinkoTilt){tilt=Object.assign({},TDEF,mm.plinkoTilt);SV('tiltR',tilt);applyTilt();return;}if(mm.plinkoCfg){applyCfg(mm.plinkoCfg);SV('cfgR',mm.plinkoCfg);return;}const k=mm.plinkoCmd;if(k==='flush'&&pending.length){volley=pending.length;}if(k==='sync'||k==='reveal'){try{ws.send(JSON.stringify({plinkoRound:round}));}catch(x){}}if(k==='ping'){try{ws.send(JSON.stringify({plinkoStatus:{v:13,ws:ws&&ws.readyState,kw:net.kw,cd:net.cd,bg:budget,stopped,pending:pending.length,balls:balls.length,fly:balls.filter(b=>b.state==='fly').length,round:roundTotal(),rx:DBG.rx,bad:DBG.bad,hit:DBG.hit,last:DBG.last,frames:DBG.frames,err:DBG.err,ua:navigator.userAgent.slice(-60)}}));}catch(x){}return;}if(k==='reveal')doReveal(true);else if(k==='hide')doReveal(false);else if(k==='reset')doNewRound();};c.onclose=()=>setTimeout(cmdListen,4000);};cmdListen();}
+  const cmdListen=()=>{const c=new WebSocket(QS.get('server')||'wss://io.socialstream.ninja');c.onopen=()=>c.send(JSON.stringify({join:net.sid,in:6,out:7}));c.onmessage=e=>{let m;try{m=JSON.parse(e.data);}catch(x){return;}const mm=(m.overlayNinja||m);if(mm.plinkoTilt){tilt=Object.assign({},TDEF,mm.plinkoTilt);SV('tiltR',tilt);applyTilt();return;}if(mm.plinkoCfg){applyCfg(mm.plinkoCfg);SV('cfgR',mm.plinkoCfg);return;}const k=mm.plinkoCmd;if(k==='flush'&&pending.length){volley=pending.length;}if(k==='sync'||k==='reveal'){try{ws.send(JSON.stringify({plinkoRound:round}));}catch(x){}}if(k==='ping'){try{ws.send(JSON.stringify({plinkoStatus:{v:15,ws:ws&&ws.readyState,kw:net.kw,cd:net.cd,bg:budget,stopped,pending:pending.length,balls:balls.length,fly:balls.filter(b=>b.state==='fly').length,round:roundTotal(),rx:DBG.rx,bad:DBG.bad,hit:DBG.hit,last:DBG.last,frames:DBG.frames,err:DBG.err,ua:navigator.userAgent.slice(-60)}}));}catch(x){}return;}if(k==='reveal')doReveal(true);else if(k==='hide')doReveal(false);else if(k==='reset')doNewRound();};c.onclose=()=>setTimeout(cmdListen,4000);};cmdListen();}
 else if(QS.get('session')){connect();}
 $('copyOv').insertAdjacentHTML('afterend',' <button class="btn ghost" id="copyRec">複製電腦紀錄用網址</button>');
 $('copyRec').onclick=()=>{const u=`${location.href.split('?')[0]}?mode=record&session=${encodeURIComponent(net.sid)}`;navigator.clipboard.writeText(u).then(()=>{$('ovTip').textContent='已複製 ✓';setTimeout(()=>$('ovTip').textContent='',2000);});};
@@ -471,7 +472,7 @@ const TDEF={rx:0,ry:0,rz:0,sc:100,op:85};
 var tilt=Object.assign({},TDEF,LS('tilt',{}));
 ['rx','ry','rz','sc','op'].forEach(k=>{if(QS.get(k)!=null)tilt[k]=+QS.get(k);});
 if(OV){const r=LS('tiltR',null);if(r)tilt=Object.assign({},TDEF,r);}
-function pushCfg(){if(OV||!resWs||resWs.readyState!==1)return;try{resWs.send(JSON.stringify({plinkoCfg:{needName:net.needName,kw:net.kw,cd:net.cd,bg:budget,tiers,bmin:bMin,bmax:bMax}}));}catch(e){}}
+function pushCfg(){if(OV||!resWs||resWs.readyState!==1)return;try{resWs.send(JSON.stringify({plinkoCfg:{needName:net.needName,kw:net.kw,cd:net.cd,bg:budget,tiers,bmin:bMin,bmax:bMax,wr:winRate}}));}catch(e){}}
 let tiltT=0;function pushTilt(){if(!resWs||resWs.readyState!==1)return;clearTimeout(tiltT);tiltT=setTimeout(()=>{try{resWs.send(JSON.stringify({plinkoTilt:tilt}));}catch(e){}},80);}
 function applyTilt(){cv.style.transform=`rotateX(${tilt.rx}deg) rotateY(${tilt.ry}deg) rotateZ(${tilt.rz}deg) scale(${tilt.sc/100})`;cv.style.opacity=tilt.op/100;
   ['rx','ry','rz','sc','op'].forEach(k=>{$(k).value=tilt[k];$('v_'+k).textContent=tilt[k]+(k==='sc'||k==='op'?'%':'°');});}
@@ -487,11 +488,16 @@ $('budget').value=budget||'';
 $('budget').onchange=()=>{budget=Math.max(0,+$('budget').value||0);SV('budget',budget);stopped=false;checkBudget();renderQueue();pushCfg();};
 renderQueue();
 
-function applyCfg(c){if(!c)return;if(c.needName!=null){net.needName=!!c.needName;$('needName').checked=net.needName;}if(c.kw){net.kw=c.kw;$('kw').value=c.kw;}if(c.cd!=null){net.cd=+c.cd;$('cd').value=c.cd;}if(c.bg!=null){budget=+c.bg||0;$('budget').value=budget||'';stopped=false;}if(Array.isArray(c.tiers)&&c.tiers.length){tiers=c.tiers;assign();renderTiers();}if(c.bmin!=null){bMin=+c.bmin||1;bMax=+c.bmax||bMin;$('bmin').value=bMin;$('bmax').value=bMax;newTarget();}checkBudget();renderQueue();}
+function applyCfg(c){if(!c)return;if(c.wr!=null){winRate=+c.wr;$('winRate').value=winRate;$('wrv').textContent=winRate+'%';}if(c.needName!=null){net.needName=!!c.needName;$('needName').checked=net.needName;}if(c.kw){net.kw=c.kw;$('kw').value=c.kw;}if(c.cd!=null){net.cd=+c.cd;$('cd').value=c.cd;}if(c.bg!=null){budget=+c.bg||0;$('budget').value=budget||'';stopped=false;}if(Array.isArray(c.tiers)&&c.tiers.length){tiers=c.tiers;assign();renderTiers();}if(c.bmin!=null){bMin=+c.bmin||1;bMax=+c.bmax||bMin;$('bmin').value=bMin;$('bmax').value=bMax;newTarget();}checkBudget();renderQueue();}
 if(OV){const c=LS('cfgR',null);if(c)applyCfg(c);}
 
 /* ===== 累積幾顆一起發射 ===== */
 $('bmin').value=bMin;$('bmax').value=bMax;
 ['bmin','bmax'].forEach(id=>$(id).onchange=()=>{bMin=Math.max(1,Math.round(+$('bmin').value||1));bMax=Math.max(1,Math.round(+$('bmax').value||bMin));$('bmin').value=bMin;$('bmax').value=bMax;SV('bmin',bMin);SV('bmax',bMax);newTarget();renderQueue();pushCfg();});
 $('flush').onclick=()=>{if(pending.length)volley=pending.length;if(sendCmd)sendCmd('flush');};
+
+/* ===== 整體中獎率 ===== */
+$('winRate').value=winRate;$('wrv').textContent=winRate+'%';
+$('winRate').addEventListener('input',()=>{winRate=+$('winRate').value;$('wrv').textContent=winRate+'%';SV('winRate',winRate);document.getElementById('simOut').innerHTML='';});
+$('winRate').addEventListener('change',()=>pushCfg());
 </script></body></html>

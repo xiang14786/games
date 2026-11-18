@@ -87,7 +87,7 @@ let sid=QS.get('session')||LS('sid','')||rid();SV('sid',sid);
 if(OV){const c=LS('cfgR',null);if(c)Object.assign(cfg,c);}
 /* 金豬狀態 */
 let pig=LS('pig',null);
-function newPig(){const a=Math.max(1,Math.min(cfg.tmin,cfg.tmax)),b=Math.max(cfg.tmin,cfg.tmax,1);pig={target:a+Math.floor(Math.random()*(b-a+1)),hits:0,broken:false,winner:null,id:Date.now()};SV('pig',pig);queue.length=0;hammers.length=0;shards.length=0;coins.length=0;crackSeed();renderUI();}
+function newPig(forced){const a=Math.max(1,Math.min(cfg.tmin,cfg.tmax)),b=Math.max(cfg.tmin,cfg.tmax,1);pig={target:forced||a+Math.floor(Math.random()*(b-a+1)),hits:0,broken:false,winner:null,id:Date.now()};SV('pig',pig);queue.length=0;hammers.length=0;shards.length=0;coins.length=0;crackSeed();renderUI();}
 let wins=LS('wins',[]);
 const queue=[],hammers=[],shards=[],coins=[],sparks=[],pops=[];let shake=0,flash=0,brokeAt=0,lastHit=0;
 if(!pig)newPig();
@@ -145,7 +145,7 @@ function impact(h){
   const ix=h.px+Math.cos(2.65)*300,iy=h.py+Math.sin(2.65)*300+40;
   for(let i=0;i<14;i++)sparks.push({x:ix,y:iy,vx:(Math.random()-.5)*700,vy:-Math.random()*500,t0:performance.now()});
   pops.push({x:ix,y:iy-60,t:`第 ${pig.hits} 下`,t0:performance.now()});
-  sendUp({pigHit:{n:h.name,s:h.img||'',hits:pig.hits}});
+  sendUp({pigHit:{n:h.name,s:h.img||'',hits:pig.hits,target:pig.target}});
   if(pig.hits>=pig.target)breakPig(h);
   renderUI();
 }
@@ -218,7 +218,7 @@ function listenCmd(){cmdWs=new WebSocket(SERVER);cmdWs.onopen=()=>cmdWs.send(JSO
   cmdWs.onmessage=e=>{let m;try{m=JSON.parse(e.data);}catch(x){return;}const d=m.overlayNinja||m;
     if(d.pigCfg){Object.assign(cfg,d.pigCfg);SV('cfgR',cfg);renderUI();}
     
-    if(d.pigCmd==='new')newPig();
+    if(d.pigCmd==='new'){if(d.cfg)Object.assign(cfg,d.cfg);newPig(+d.target||0);}
     if(d.pigCmd==='hit')onComment(d.n||'測試',sampleMsg(d.n||'測試'),'');
     if(d.pigCmd==='sync'||d.pigCmd==='new')sendUp({pigState:pig});};
   cmdWs.onclose=()=>setTimeout(listenCmd,4000);}
@@ -226,7 +226,7 @@ function listenRec(){recWs=new WebSocket(SERVER);recWs.onopen=()=>{recWs.send(JS
   recWs.onmessage=e=>{let m;try{m=JSON.parse(e.data);}catch(x){return;}const d=m.overlayNinja||m;
     if(d.pigState||d.pigHit||d.pigWin){if(!overlaySeen){overlaySeen=true;setState('📋 紀錄模式：已連上手機金豬（代碼 '+sid+'）');}}
     if(d.pigState){pig=d.pigState;SV('pig',pig);crackSeed();renderUI();}
-    if(d.pigHit&&!pig.broken){pig.hits=d.pigHit.hits;hammers.push({name:d.pigHit.n,img:d.pigHit.s,t0:performance.now(),px:PX+270,py:PY-305,hit:true});renderUI();}
+    if(d.pigHit&&!pig.broken){pig.hits=d.pigHit.hits;if(d.pigHit.target)pig.target=d.pigHit.target;hammers.push({name:d.pigHit.n,img:d.pigHit.s,t0:performance.now(),px:PX+270,py:PY-305,hit:true});renderUI();}
     if(d.pigWin){pig.broken=true;pig.winner=d.pigWin;pig.hits=d.pigWin.hits;brokeAt=performance.now();if(!wins.some(w=>w.t===d.pigWin.t)){wins.unshift(d.pigWin);SV('wins',wins);}renderUI();}};
   recWs.onclose=()=>setTimeout(listenRec,4000);}
 function pushCfg(){sendDown({pigCfg:{kw:cfg.kw,cd:cfg.cd,tmin:cfg.tmin,tmax:cfg.tmax,prize:cfg.prize,showT:cfg.showT,needName:cfg.needName}});}
@@ -241,7 +241,7 @@ $('needName').checked=!!cfg.needName;$('kw').value=cfg.kw;$('cd').value=cfg.cd;$
 function saveCfg(){cfg.kw=$('kw').value.trim()||'抽';cfg.cd=Math.max(0,+$('cd').value||0);cfg.tmin=Math.max(1,+$('tmin').value||1);cfg.tmax=Math.max(1,+$('tmax').value||cfg.tmin);cfg.prize=$('prize').value.trim();cfg.showT=$('showT').checked;cfg.needName=$('needName').checked;SV('cfg2',cfg);pushCfg();renderUI();}
 ['kw','cd','tmin','tmax','prize','showT','needName'].forEach(id=>$(id).addEventListener('change',saveCfg));
 $('sid').onchange=()=>{sid=$('sid').value.trim()||rid();$('sid').value=sid;SV('sid',sid);};
-$('newPig').onclick=()=>{if(!confirm('換一隻新金豬？目前這隻的進度會清空。'))return;newPig();sendDown({pigCmd:'new'});};
+$('newPig').onclick=()=>{if(!confirm('換一隻新金豬？目前這隻的進度會清空。'))return;newPig();sendDown({pigCmd:'new',target:pig.target,cfg:{tmin:cfg.tmin,tmax:cfg.tmax,prize:cfg.prize}});};
 $('conn').onclick=()=>{connect();if(!REC&&!recWs)listenRec();};
 const sampleMsg=n=>n+(cfg.kw.split(/[,，]/)[0]==='*'?'x':cfg.kw.split(/[,，]/)[0])+'+1';
 function fakeHit(n){if(REC&&overlaySeen)sendDown({pigCmd:'hit',n});else onComment(n,sampleMsg(n),'');}
