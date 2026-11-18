@@ -199,8 +199,8 @@ const lastBy=new Map();
 function hasName(msg,name){const m=msg.toLowerCase().replace(/\s+/g,''),n=name.toLowerCase().trim();if(!n)return false;if(m.includes(n.replace(/\s+/g,'')))return true;
   const parts=n.split(/[\s._\-]+/).filter(p=>p.length>=2);if(parts.some(p=>m.includes(p)))return true;const cj=n.replace(/[^\u4e00-\u9fff]/g,'');if(cj.length>=2&&m.includes(cj.slice(-2)))return true;return false;}
 function onComment(name,msg,img){
-  name=(name||'').trim();msg=String(msg||'').replace(/<[^>]*>/g,'');if(!name||pig.broken)return;
-  const kws=cfg.kw.split(/[,，]/).map(s=>s.trim()).filter(Boolean);if(!kws.some(k=>k==='*'||msg.includes(k)))return;
+  name=(name||'').trim();msg=String(msg||'').replace(/<img[^>]*alt="([^"]*)"[^>]*>/gi,'$1').replace(/<[^>]*>/g,'').replace(/\uFE0F/g,'');if(!name||pig.broken)return;
+  const kws=cfg.kw.replace(/\uFE0F/g,'').split(/[,，]/).map(s=>s.trim()).filter(Boolean);if(!kws.some(k=>k==='*'||msg.includes(k)))return;
   if(cfg.needName&&!hasName(msg,name))return;
   const now=Date.now();if(now-(lastBy.get(name)||0)<cfg.cd*1000)return;lastBy.set(name,now);
   if(queue.length<200)queue.push({name,img:img||''});
