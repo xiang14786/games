@@ -202,7 +202,7 @@ function frame(now){
     const t=`👊 留言「${kw==='*'?'任何字':kw}」爆揍渣男！`;ctx.font='bold 30px '+FONT;const tw=ctx.measureText(t).width+44;ctx.fillStyle='rgba(0,0,0,.65)';rr(W/2-tw/2,14,tw,52,26);ctx.fill();ctx.fillStyle='#ffe08a';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(t,W/2,40);
     const bw=640,bx=W/2-bw/2,by=80,r=boss.hp/boss.max;ctx.fillStyle='rgba(0,0,0,.6)';rr(bx-6,by-6,bw+12,44,22);ctx.fill();
     ctx.fillStyle='#3a1a22';rr(bx,by,bw,32,16);ctx.fill();if(r>0){const g=ctx.createLinearGradient(bx,0,bx+bw,0);g.addColorStop(0,'#ff4d6d');g.addColorStop(1,'#ff9a5a');ctx.fillStyle=g;rr(bx,by,Math.max(32,bw*r),32,16);ctx.fill();}
-    ctx.fillStyle='#fff';ctx.font='bold 21px '+FONT;ctx.fillText(`渣男血量 ${boss.hp} / ${boss.max}`,W/2,by+17);
+    ctx.fillStyle='#fff';ctx.font='bold 21px '+FONT;ctx.fillText(`渣男血量 ${boss.hp>0?Math.max(1,Math.ceil(boss.hp/boss.max*100)):0}%`,W/2,by+17);
     if(cr){ctx.font='bold 26px '+FONT;const sub=`留言「${cr}」＝ 💥暴擊 ×3`;const sw=ctx.measureText(sub).width+36;ctx.fillStyle='rgba(0,0,0,.62)';rr(W/2-sw/2,H-56,sw,46,23);ctx.fill();ctx.fillStyle='#fff';ctx.fillText(sub,W/2,H-33);}}
   // KO 得獎卡
   if(boss.ko&&boss.winner&&(!koAt||now-koAt>1100)){const k=koAt?Math.min(1,(now-koAt-1100)/400):1,w=boss.winner;ctx.globalAlpha=k;
