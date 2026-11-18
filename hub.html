@@ -30,6 +30,7 @@ h1{font-size:24px;margin:0 10px 0 0;color:var(--gold)}
     <button class="g" data-g="pig">🔨 敲金豬</button>
     <button class="g" data-g="arena">⚔️ 頭像大逃殺</button>
     <button class="g" data-g="fish">🐟 撈金魚</button>
+    <button class="g" data-g="zhanan">👊 爆揍渣男</button>
     <button class="g off" data-g="none">🙈 先關掉遊戲畫面</button>
     <div id="st">手機：<span id="phone">還沒連上</span></div>
   </header>
@@ -39,7 +40,7 @@ h1{font-size:24px;margin:0 10px 0 0;color:var(--gold)}
 </div>
 <script>
 const SERVER=new URLSearchParams(location.search).get('server')||'wss://io.socialstream.ninja';
-const GAMES={plinko:'🎯 彈珠台',pig:'🔨 敲金豬',arena:'⚔️ 頭像大逃殺',fish:'🐟 撈金魚',none:'🙈 沒有顯示遊戲'};
+const GAMES={plinko:'🎯 彈珠台',pig:'🔨 敲金豬',arena:'⚔️ 頭像大逃殺',fish:'🐟 撈金魚',zhanan:'👊 爆揍渣男',none:'🙈 沒有顯示遊戲'};
 const QS=new URLSearchParams(location.search),OV=QS.get('mode')==='overlay';
 const LS=(k,d)=>{try{const v=localStorage.getItem('hub_'+k);return v==null?d:JSON.parse(v);}catch(e){return d;}};
 const SV=(k,v)=>{try{localStorage.setItem('hub_'+k,JSON.stringify(v));}catch(e){}};

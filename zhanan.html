@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Shine欣 爆揍渣男</title>
+<style>
+:root{--bg:#14161b;--panel:#1c1f26;--line:#2c313b;--txt:#eceef2;--sub:#9aa3b2;--gold:#e2c28a}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--txt);font:18px/1.6 "Microsoft JhengHei","PingFang TC","Noto Sans TC",sans-serif}
+#wrap{display:flex;gap:18px;height:100%;padding:12px}
+#stage{flex:1 1 auto;min-width:0;height:100%;display:flex;align-items:center;justify-content:center}
+canvas{width:100%;max-height:100%;aspect-ratio:1290/700;object-fit:contain;display:block;background:radial-gradient(ellipse at 40% 55%,#3a2a38,#16141c);border-radius:16px}
+#panel{flex:0 0 400px;overflow:auto;background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:16px 18px}
+h2{margin:4px 0 10px;font-size:22px;color:var(--gold)}
+h3{margin:18px 0 8px;font-size:19px;color:var(--gold)}
+input,button,select{font:inherit}
+input[type=text],input[type=number],select{width:100%;padding:10px 12px;border-radius:10px;border:1px solid #3a404c;background:#252a33;color:#fff}
+.btn{border:none;border-radius:12px;padding:10px 16px;font-weight:700;cursor:pointer}
+.go{width:100%;background:linear-gradient(180deg,#f0d29b,#c99a57);color:#1a1a1a;font-size:20px}
+.ghost{background:#2c313b;color:var(--txt);font-size:16px;padding:8px 14px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.tip{color:var(--sub);font-size:15px}
+label{display:block;margin-top:6px}
+#log div{padding:5px 0;border-bottom:1px solid var(--line);display:flex;gap:10px;align-items:center;font-size:16px}
+#log img,#log .ph{width:32px;height:32px;border-radius:50%;object-fit:cover;background:#2c313b}
+body.ov,body.ov #wrap{background:transparent!important}
+body.ov #panel{display:none}
+body.ov #wrap{padding:0}
+body.ov #stage{height:100vh;align-items:flex-end;padding-bottom:3vh}
+body.ov canvas{background:transparent;border-radius:0}
+#ovState{display:none;position:fixed;left:6px;top:6px;font-size:13px;color:#fff;background:rgba(0,0,0,.4);padding:2px 8px;border-radius:8px;transition:opacity 1s}
+body.ov #ovState{display:block}
+@media (max-width:900px){#wrap{flex-direction:column;height:auto}#stage{height:auto}#panel{flex:none}}
+</style>
+</head>
+<body>
+<div id="wrap">
+  <div id="stage"><canvas id="cv" width="1290" height="700"></canvas></div>
+  <div id="panel">
+    <h2>👊 爆揍渣男</h2>
+    <div class="tip" id="state"></div>
+    <div class="row" style="margin-top:8px"><button class="btn go" id="newBtn">😏 換一個新渣男（血量回滿）</button></div>
+
+    <h3>⚙️ 遊戲設定</h3>
+    <label>渣男血量（一拳 10 血，暴擊 30 血）<input type="number" id="hp" min="10" step="10"></label>
+    <label>得獎方式<select id="winMode"><option value="last">打出最後一擊的人</option><option value="draw">從有出手的人裡隨機抽一位</option><option value="top">傷害最高的人</option></select></label>
+    <label>獎品名稱<input type="text" id="prize" placeholder="例：贈品任選券"></label>
+    <div class="tip">改了血量要按「換一個新渣男」才會用新的數字。</div>
+
+    <h3>📡 自動接 FB 留言</h3>
+    <div class="row"><label style="flex:1">出拳關鍵字（逗號分開；* ＝任何留言）<input type="text" id="kw"></label><label style="width:120px">同一人幾秒算一次<input type="number" id="cd" min="0"></label></div>
+    <label>💥 暴擊關鍵字（留言裡有這些字＝傷害 ×3）<input type="text" id="crit"></label>
+    <label>連線代碼（Session ID）<input type="text" id="sid"></label>
+    <div class="row" style="margin-top:8px"><button class="btn ghost" id="conn">開始接留言</button><span id="wsState" class="tip">未連線</span></div>
+    <div class="row" style="margin-top:8px"><button class="btn ghost" id="copyOv">複製手機直播用網址</button><button class="btn ghost" id="copyRec">複製電腦紀錄用網址</button><span class="tip" id="ovTip"></span></div>
+    <details style="margin-top:8px"><summary class="tip" style="cursor:pointer">不用直播，先模擬揍一下</summary>
+      <div class="row" style="margin-top:6px"><input type="text" id="fakeN" placeholder="名字" style="flex:1"><button class="btn ghost" id="fakeGo">揍！</button><button class="btn ghost" id="fake10">10 人一起揍</button></div>
+    </details>
+
+    <h3>🏆 得獎紀錄</h3>
+    <div class="row"><button class="btn ghost" id="copyWin">複製得獎名單</button><button class="btn ghost" id="clrWin">清空紀錄</button></div>
+    <div id="log"></div>
+  </div>
+</div>
+<div id="ovState"></div>
+<script>
+const cv=document.getElementById('cv'),ctx=cv.getContext('2d'),W=1000,H=700,$=id=>document.getElementById(id);
+const FONT='"Microsoft JhengHei","PingFang TC",sans-serif';
+const LS=(k,d)=>{try{const v=localStorage.getItem('zh_'+k);return v?JSON.parse(v):d}catch(e){return d}};
+const SV=(k,v)=>{try{localStorage.setItem('zh_'+k,JSON.stringify(v))}catch(e){}};
+const QS=new URLSearchParams(location.search),OV=QS.get('mode')==='overlay',REC=QS.get('mode')==='record';
+const SERVER=QS.get('server')||'wss://io.socialstream.ninja';
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function rr(x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();}
+const imgCache=new Map();function imgOf(s){if(!s)return null;if(!imgCache.has(s)){const im=new Image();im.referrerPolicy='no-referrer';im.src=s;imgCache.set(s,im);}return imgCache.get(s);}
+const ok=im=>im&&im.complete&&im.naturalWidth>0;
+/* 渣男圖（Gemini 生的 4 張：得意、小傷、鼻青臉腫、KO）；還沒放圖時用畫的 */
+const ZIMG=[1,2,3,4].map(i=>{const im=new Image();im.src=`zh${i}.png`;return im;});
+
+/* ===== 設定 ===== */
+const rid=()=>'shine'+Math.random().toString(36).slice(2,9);
+let cfg=Object.assign({kw:'揍,打',cd:5,hp:500,winMode:'last',prize:'贈品任選券',crit:'喜歡,愛心,❤,♥,💕,💖,😍,🥰,💗,💓'},LS('cfg',{}));
+let sid=QS.get('session')||LS('sid','')||rid();SV('sid',sid);
+if(OV){const c=LS('cfgR',null);if(c)Object.assign(cfg,c);}
+let boss=LS('boss',null),wins=LS('wins',[]);
+const queue=[],shots=[],pops=[],sparks=[];let shake=0,hurt=0,koAt=0,bubble=null,remote=null;
+function newBoss(hp){if(typeof clearFeed==='function')clearFeed();const m=Math.max(10,+hp||+cfg.hp||500);boss={max:m,hp:m,hits:0,dmg:{},imgs:{},ko:false,winner:null,id:Date.now()};SV('boss',boss);queue.length=0;shots.length=0;koAt=0;bubble=null;renderUI();}
+if(!boss)newBoss();
+
+const QUOTES=['她只是我妹妹啦','是妳想太多了','我手機沒電啦','我在加班啊','我們只是朋友','妳聽我解釋！','我最愛的是妳','那是誤會啦','我沒有啦','是她先撩我的','我再也不敢了','不要打臉！','別打了我錯了'];
+const WEAPONS=['👊','🩴','🍳','👜','🥿','🧹'];
+const HX=470,HY=420; // 渣男位置
+
+/* ===== 出拳 ===== */
+function fire(name,img,crit){
+  const side=Math.random()<.5?-1:1,sx=side<0?-60:W+60,sy=150+Math.random()*420;
+  shots.push({name,img,crit,w:WEAPONS[Math.floor(Math.random()*WEAPONS.length)],sx,sy,tx:HX+(Math.random()-.5)*120,ty:HY-120+(Math.random()-.5)*140,t0:performance.now(),dur:520+Math.random()*180,hit:false,rot:(Math.random()-.5)*8});
+}
+function impact(s,now){
+  if(boss.ko&&!REC)return;
+  const d=s.crit?30:10;
+  if(!(REC&&overlaySeen)){boss.hp=Math.max(0,boss.hp-d);boss.hits++;boss.dmg[s.name]=(boss.dmg[s.name]||0)+d;boss.imgs[s.name]=s.img;SV('boss',boss);
+    sendUp({zhHit:{n:s.name,s:s.img,crit:s.crit,hp:boss.hp,max:boss.max}});}
+  shake=s.crit?22:11;hurt=1;
+  pops.push({x:s.tx,y:s.ty-30,t:s.crit?`💥 暴擊 -${d}`:`-${d}`,t0:now,c:s.crit?'#ff6b6b':'#ffe08a',big:s.crit});
+  for(let i=0;i<(s.crit?22:12);i++){const a=Math.random()*Math.PI*2,v=200+Math.random()*400;sparks.push({x:s.tx,y:s.ty,vx:Math.cos(a)*v,vy:Math.sin(a)*v,t0:now,c:s.crit?'#ff8a8a':'#ffe08a'});}
+  if(!bubble||now-bubble.t0>1400){if(Math.random()<.45)bubble={t:QUOTES[Math.floor(Math.random()*QUOTES.length)],t0:now};}
+  if(boss.hp<=0&&!boss.ko&&!(REC&&overlaySeen))knockout(s,now);
+  renderUI();
+}
+function knockout(s,now){
+  boss.ko=true;koAt=now;queue.length=0;
+  const names=Object.keys(boss.dmg);let wn=s.name;
+  if(cfg.winMode==='draw')wn=names[Math.floor(Math.random()*names.length)];
+  if(cfg.winMode==='top')wn=names.sort((a,b)=>boss.dmg[b]-boss.dmg[a])[0];
+  boss.winner={n:wn,s:boss.imgs[wn]||'',prize:cfg.prize,mode:cfg.winMode,dmg:boss.dmg[wn]||0,count:names.length,hits:boss.hits,t:Date.now()};SV('boss',boss);
+  if(!REC){wins.unshift(boss.winner);wins=wins.slice(0,200);SV('wins',wins);}
+  sendUp({zhWin:boss.winner});renderUI();
+}
+
+/* ===== 畫渣男 ===== */
+function stage(){if(boss.ko)return 3;const r=boss.hp/boss.max;return r>.66?0:r>.33?1:2;}
+function drawGuy(now){
+  const st=stage();let x=HX,y=HY,rot=0,sc=1,al=1;
+  if(boss.ko&&koAt){const k=Math.min(1,(now-koAt)/900);x=HX+k*60;rot=k*0.35;y=HY+k*40;}
+  x+=(Math.random()-.5)*shake;y+=(Math.random()-.5)*shake*.6;
+  if(!boss.ko)y+=Math.sin(now/400)*4;
+  ctx.save();ctx.translate(x,y);ctx.rotate(rot);ctx.scale(sc,sc);ctx.globalAlpha=al;
+  // 影子
+  ctx.fillStyle='rgba(0,0,0,.35)';ctx.beginPath();ctx.ellipse(0,250,170,26,0,0,7);ctx.fill();
+  const im=ZIMG[st];
+  if(ok(im)){const h=520,w=h*im.naturalWidth/im.naturalHeight;ctx.drawImage(im,-w/2,250-h,w,h);
+    if(hurt>0){ctx.globalCompositeOperation='source-atop';ctx.fillStyle=`rgba(255,60,60,${hurt*.35})`;ctx.fillRect(-w/2,250-h,w,h);ctx.globalCompositeOperation='source-over';}}
+  else drawPlaceholder(st,now);
+  ctx.restore();
+}
+function drawPlaceholder(st,now){
+  // 身體＋花襯衫
+  ctx.fillStyle='#e05a7a';rr(-130,40,260,210,60);ctx.fill();
+  ctx.fillStyle='rgba(255,230,120,.8)';for(let i=0;i<9;i++){const px=-100+(i%3)*90,py=70+Math.floor(i/3)*60;ctx.beginPath();ctx.arc(px,py,12,0,7);ctx.fill();}
+  ctx.strokeStyle='#f5c542';ctx.lineWidth=6;ctx.beginPath();ctx.arc(0,40,60,0.2,Math.PI-0.2);ctx.stroke(); // 金項鍊
+  if(st>=2){ctx.strokeStyle='#5a1a2a';ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(-60,90);ctx.lineTo(-20,140);ctx.lineTo(-50,190);ctx.stroke();}
+  // 頭
+  ctx.fillStyle=hurt>0?`rgb(255,${200-hurt*60|0},${170-hurt*60|0})`:'#ffd2a8';ctx.beginPath();ctx.ellipse(0,-70,105,118,0,0,7);ctx.fill();
+  // 油頭
+  ctx.fillStyle='#1d1d24';ctx.beginPath();ctx.ellipse(st>=2?-10:0,-160,st>=2?120:110,st>=2?55:45,st>=2?-0.3:-0.15,0,7);ctx.fill();
+  if(st<2){ctx.strokeStyle='rgba(255,255,255,.5)';ctx.lineWidth=4;ctx.beginPath();ctx.arc(-20,-170,50,3.6,4.6);ctx.stroke();}
+  ctx.fillStyle='#1d1d24';ctx.textAlign='center';ctx.textBaseline='middle';
+  if(st===3){ctx.font='bold 50px Arial';ctx.fillText('X',-40,-80);ctx.fillText('X',40,-80);ctx.font='40px serif';ctx.fillText('💫',0,-220);}
+  else if(st===0){ctx.fillRect(-70,-95,50,22);ctx.fillRect(20,-95,50,22);ctx.fillRect(-20,-90,40,6);} // 墨鏡
+  else{ctx.beginPath();ctx.arc(-40,-80,14,0,7);ctx.arc(40,-80,14,0,7);ctx.fill();if(st===2){ctx.fillStyle='rgba(90,40,120,.55)';ctx.beginPath();ctx.arc(-40,-80,32,0,7);ctx.fill();}}
+  // 嘴
+  ctx.strokeStyle='#7a2e2e';ctx.lineWidth=6;ctx.beginPath();
+  if(st===0){ctx.arc(10,-25,32,0.2,Math.PI-0.9);}else if(st===1){ctx.moveTo(-25,-20);ctx.lineTo(25,-25);}else{ctx.arc(0,-5,24,Math.PI+0.3,-0.3);}ctx.stroke();
+  // 傷
+  if(st>=1){ctx.fillStyle='#f2c49b';ctx.save();ctx.translate(65,-40);ctx.rotate(.6);rr(-28,-10,56,20,8);ctx.fill();ctx.restore();ctx.fillStyle='rgba(220,60,80,.5)';ctx.beginPath();ctx.arc(-70,-30,20,0,7);ctx.fill();}
+  if(st>=2){ctx.fillStyle='rgba(220,60,80,.55)';ctx.beginPath();ctx.arc(55,-120,22,0,7);ctx.fill();ctx.fillStyle='#8fd3ff';ctx.beginPath();ctx.ellipse(-45,-50,6,12,0,0,7);ctx.ellipse(45,-50,6,12,0,0,7);ctx.fill();}
+  // 手機
+  if(st<3){ctx.fillStyle='#222';ctx.save();ctx.translate(145,60);ctx.rotate(.25);rr(-22,-40,44,80,8);ctx.fill();ctx.fillStyle='#6ad';rr(-17,-33,34,62,4);ctx.fill();ctx.restore();}
+  ctx.fillStyle='rgba(255,255,255,.35)';ctx.font='16px '+FONT;ctx.fillText('（暫時的圖，等 Gemini 圖換上）',0,285);
+}
+function drawShot(s,now){
+  const k=Math.min(1,(now-s.t0)/s.dur);
+  if(k>=1&&!s.hit){s.hit=true;s.ht=now;impact(s,now);}
+  if(s.hit){const a=1-(now-s.ht)/350;if(a<=0)return false;ctx.globalAlpha=a;}
+  const e=k*k,x=s.sx+(s.tx-s.sx)*e,y=s.sy+(s.ty-s.sy)*e-Math.sin(k*Math.PI)*120;
+  const r=s.crit?44:36;ctx.save();ctx.translate(x,y);
+  if(s.crit){ctx.shadowColor='#ff5050';ctx.shadowBlur=30;}
+  const im=imgOf(s.img);ctx.save();ctx.beginPath();ctx.arc(0,0,r,0,7);ctx.clip();if(ok(im))ctx.drawImage(im,-r,-r,r*2,r*2);else{ctx.fillStyle='#c9748a';ctx.fillRect(-r,-r,r*2,r*2);ctx.fillStyle='#fff';ctx.font=`bold ${r}px ${FONT}`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(s.name[0]||'?',0,2);}ctx.restore();
+  ctx.shadowBlur=0;ctx.beginPath();ctx.arc(0,0,r,0,7);ctx.strokeStyle=s.crit?'#ff6b6b':'#fff';ctx.lineWidth=4;ctx.stroke();
+  // 武器
+  ctx.save();ctx.translate(s.sx<HX?r*.9:-r*.9,-r*.4);ctx.rotate(s.rot*k);ctx.font=`${s.crit?54:44}px serif`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(s.w,0,0);ctx.restore();
+  ctx.font='bold 18px '+FONT;ctx.textAlign='center';const nm=s.name.length>6?s.name.slice(0,6)+'…':s.name;const tw=ctx.measureText(nm).width+12;ctx.fillStyle='rgba(0,0,0,.6)';rr(-tw/2,r+4,tw,24,12);ctx.fill();ctx.fillStyle='#fff';ctx.textBaseline='middle';ctx.fillText(nm,0,r+16);
+  ctx.restore();ctx.globalAlpha=1;return true;
+}
+
+/* ===== 主迴圈 ===== */
+let last=performance.now();
+function frame(now){
+  const dt=Math.min(.05,(now-last)/1000);last=now;
+  if(queue.length&&!boss.ko&&now-(frame.lt||0)>130&&shots.filter(s=>!s.hit).length<10){const q=queue.shift();fire(q.name,q.img,q.crit);frame.lt=now;}
+  ctx.clearRect(0,0,W,H);
+  shake=Math.max(0,shake-dt*70);hurt=Math.max(0,hurt-dt*4);
+  drawGuy(now);
+  // 幹話泡泡
+  if(bubble&&!boss.ko){const age=now-bubble.t0;if(age>1800)bubble=null;else{const a=Math.min(1,age/150)*Math.min(1,(1800-age)/300);ctx.globalAlpha=a;ctx.font='bold 30px '+FONT;const tw=ctx.measureText(bubble.t).width+40,bx=HX+150,by=HY-330;
+    ctx.fillStyle='#fff';rr(bx,by,tw,62,24);ctx.fill();ctx.beginPath();ctx.moveTo(bx+30,by+60);ctx.lineTo(bx+5,by+95);ctx.lineTo(bx+60,by+60);ctx.fill();
+    ctx.fillStyle='#2a1a22';ctx.textAlign='left';ctx.textBaseline='middle';ctx.fillText(bubble.t,bx+20,by+32);ctx.globalAlpha=1;}}
+  for(let i=shots.length-1;i>=0;i--)if(!drawShot(shots[i],now))shots.splice(i,1);
+  for(let i=sparks.length-1;i>=0;i--){const p=sparks[i],k=(now-p.t0)/450;if(k>1){sparks.splice(i,1);continue;}p.x+=p.vx*dt;p.y+=p.vy*dt;p.vy+=900*dt;ctx.globalAlpha=1-k;ctx.fillStyle=p.c;ctx.beginPath();ctx.arc(p.x,p.y,5*(1-k)+1,0,7);ctx.fill();ctx.globalAlpha=1;}
+  for(let i=pops.length-1;i>=0;i--){const p=pops[i],k=(now-p.t0)/900;if(k>1){pops.splice(i,1);continue;}ctx.globalAlpha=1-k;ctx.font=`bold ${p.big?46:34}px ${FONT}`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.lineWidth=7;ctx.strokeStyle='rgba(0,0,0,.65)';ctx.strokeText(p.t,p.x,p.y-k*50);ctx.fillStyle=p.c;ctx.fillText(p.t,p.x,p.y-k*50);ctx.globalAlpha=1;}
+  // 上方標題＋血條
+  if(!boss.ko){const kw=(cfg.kw.split(/[,，]/)[0]||'揍').trim(),cr=(cfg.crit.split(/[,，]/)[0]||'').trim();
+    const t=`👊 留言「${kw==='*'?'任何字':kw}」爆揍渣男！`;ctx.font='bold 30px '+FONT;const tw=ctx.measureText(t).width+44;ctx.fillStyle='rgba(0,0,0,.65)';rr(W/2-tw/2,14,tw,52,26);ctx.fill();ctx.fillStyle='#ffe08a';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(t,W/2,40);
+    const bw=640,bx=W/2-bw/2,by=80,r=boss.hp/boss.max;ctx.fillStyle='rgba(0,0,0,.6)';rr(bx-6,by-6,bw+12,44,22);ctx.fill();
+    ctx.fillStyle='#3a1a22';rr(bx,by,bw,32,16);ctx.fill();if(r>0){const g=ctx.createLinearGradient(bx,0,bx+bw,0);g.addColorStop(0,'#ff4d6d');g.addColorStop(1,'#ff9a5a');ctx.fillStyle=g;rr(bx,by,Math.max(32,bw*r),32,16);ctx.fill();}
+    ctx.fillStyle='#fff';ctx.font='bold 21px '+FONT;ctx.fillText(`渣男血量 ${boss.hp} / ${boss.max}`,W/2,by+17);
+    if(cr){ctx.font='bold 26px '+FONT;const sub=`留言「${cr}」＝ 💥暴擊 ×3`;const sw=ctx.measureText(sub).width+36;ctx.fillStyle='rgba(0,0,0,.62)';rr(W/2-sw/2,H-56,sw,46,23);ctx.fill();ctx.fillStyle='#fff';ctx.fillText(sub,W/2,H-33);}}
+  // KO 得獎卡
+  if(boss.ko&&boss.winner&&(!koAt||now-koAt>1100)){const k=koAt?Math.min(1,(now-koAt-1100)/400):1,w=boss.winner;ctx.globalAlpha=k;
+    ctx.fillStyle='rgba(12,14,22,.92)';rr(170,120,660,440,30);ctx.fill();ctx.strokeStyle='#f3d9a6';ctx.lineWidth=5;ctx.stroke();
+    ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle='#ff8a8a';ctx.font='bold 52px '+FONT;ctx.fillText('💥 渣男被 KO 了！',W/2,185);
+    ctx.fillStyle='#cfd5df';ctx.font='24px '+FONT;ctx.fillText(`${w.count} 位姊妹一起出手，共揍了 ${w.hits} 下`,W/2,235);
+    const im=imgOf(w.s);ctx.save();ctx.beginPath();ctx.arc(W/2,325,58,0,7);ctx.clip();if(ok(im))ctx.drawImage(im,W/2-58,267,116,116);else{ctx.fillStyle='#c9748a';ctx.fillRect(W/2-58,267,116,116);ctx.fillStyle='#fff';ctx.font='bold 52px '+FONT;ctx.fillText(w.n[0],W/2,328);}ctx.restore();ctx.beginPath();ctx.arc(W/2,325,58,0,7);ctx.strokeStyle='#ffe08a';ctx.lineWidth=5;ctx.stroke();
+    ctx.fillStyle='#fff';ctx.font='bold 38px '+FONT;ctx.fillText(`恭喜 ${w.n}`,W/2,425);
+    ctx.fillStyle='#cfd5df';ctx.font='24px '+FONT;ctx.fillText(w.mode==='draw'?'從出手的姊妹中抽中，獲得':w.mode==='top'?`傷害最高（${w.dmg}），獲得`:'打出最後一擊，獲得',W/2,468);
+    ctx.fillStyle='#ffe08a';ctx.font='bold 44px '+FONT;ctx.fillText(w.prize||'大獎',W/2,520);ctx.globalAlpha=1;}
+  drawSide(now,`留言「${(cfg.kw.split(/[,，]/)[0]||'揍').trim()}」就會出現在這`);
+  requestAnimationFrame(frame);
+}
+/* ===== 右側有效留言欄 ===== */
+var feed=[],validN=0,feedNames=new Set();
+function addFeed(name,img,txt,c){validN++;feedNames.add(name);feed.unshift({name,img,txt,c,t:performance.now()});if(feed.length>30)feed.length=30;}
+function clearFeed(){feed=[];validN=0;feedNames=new Set();}
+function drawSide(now,hint){
+  ctx.save();ctx.setTransform(1,0,0,1,0,0);const X=W+10,Y=6,PW=cv.width-X-6,PH=H-12;ctx.clearRect(W,0,cv.width-W,H);
+  ctx.fillStyle='rgba(10,14,24,.8)';rr(X,Y,PW,PH,18);ctx.fill();ctx.strokeStyle='rgba(243,217,166,.7)';ctx.lineWidth=2;ctx.stroke();
+  ctx.textAlign='left';ctx.textBaseline='middle';ctx.fillStyle='#f3d9a6';ctx.font='bold 28px '+FONT;ctx.fillText('💬 有效留言',X+16,Y+32);
+  ctx.font='bold 19px '+FONT;ctx.fillStyle='#cfd5df';ctx.fillText(`有效 ${validN} 則・${feedNames.size} 人參加`,X+16,Y+66);
+  ctx.fillStyle='rgba(255,255,255,.18)';ctx.fillRect(X+14,Y+86,PW-28,2);
+  const RH=60,top=Y+96,maxR=Math.floor((PH-104)/RH);
+  if(!feed.length){ctx.fillStyle='rgba(255,255,255,.55)';ctx.font='20px '+FONT;ctx.fillText(/mode=record/.test(location.search)?'（實際留言看手機直播畫面）':(hint||'有效留言會出現在這'),X+16,top+30);}
+  feed.slice(0,maxR).forEach((e,i)=>{const age=now-e.t,a=Math.min(1,age/250),y=top+i*RH-(1-a)*20;ctx.globalAlpha=a*(i>=maxR-2?0.55:1);
+    if(age<1200){ctx.fillStyle=`rgba(255,224,138,${.22*(1-age/1200)})`;rr(X+8,y,PW-16,RH-6,12);ctx.fill();}
+    const r=23,cx=X+16+r,cy=y+(RH-6)/2;const im=imgOf(e.img);ctx.save();ctx.beginPath();ctx.arc(cx,cy,r,0,7);ctx.clip();
+    if(ok(im))ctx.drawImage(im,cx-r,cy-r,r*2,r*2);else{ctx.fillStyle='#c9748a';ctx.fillRect(cx-r,cy-r,r*2,r*2);ctx.fillStyle='#fff';ctx.font='bold 22px '+FONT;ctx.textAlign='center';ctx.fillText(e.name[0]||'?',cx,cy+1);ctx.textAlign='left';}ctx.restore();
+    ctx.beginPath();ctx.arc(cx,cy,r,0,7);ctx.strokeStyle='rgba(255,255,255,.85)';ctx.lineWidth=2;ctx.stroke();
+    const nm=e.name.length>8?e.name.slice(0,8)+'…':e.name;ctx.fillStyle='#fff';ctx.font='bold 21px '+FONT;ctx.fillText(nm,cx+r+10,cy-12);ctx.fillStyle=e.c;ctx.font='bold 19px '+FONT;ctx.fillText(e.txt,cx+r+10,cy+13);ctx.globalAlpha=1;});
+  ctx.restore();
+}
+requestAnimationFrame(frame);
+
+/* ===== 留言 ===== */
+const lastBy=new Map();
+const list=s=>String(s||'').replace(/️/g,'').split(/[,，]/).map(x=>x.trim()).filter(Boolean);
+function onComment(name,msg,img){
+  name=(name||'').trim();msg=String(msg||'').replace(/<img[^>]*alt="([^"]*)"[^>]*>/gi,'$1').replace(/<[^>]*>/g,'').replace(/️/g,'');if(!name||boss.ko)return;
+  const crit=list(cfg.crit).some(k=>msg.includes(k));
+  if(!crit&&!list(cfg.kw).some(k=>k==='*'||msg.includes(k)))return;
+  const now=Date.now();if(now-(lastBy.get(name)||0)<cfg.cd*1000)return;lastBy.set(name,now);
+  if(queue.length<200){queue.push({name,img:img||'',crit});addFeed(name,img||'',crit?'💥 暴擊！':'👊 揍了一拳',crit?'#ff8a8a':'#ffe08a');}
+}
+/* ===== 連線 ===== */
+let ws=null,cmdWs=null,recWs=null,overlaySeen=false;
+function setState(t){$('wsState').textContent=t;$('ovState').textContent=t;}
+function sendUp(o){if(OV&&ws&&ws.readyState===1){try{ws.send(JSON.stringify(o));}catch(e){}}}
+function sendDown(o){if(recWs&&recWs.readyState===1){try{recWs.send(JSON.stringify(o));}catch(e){}}}
+function connect(){try{ws&&ws.close();}catch(e){}setState('連線中…');ws=new WebSocket(SERVER);
+  ws.onopen=()=>{ws.send(JSON.stringify({join:sid,in:4,out:5}));setState('✅ 已連線，等留言中（代碼 '+sid+'）');$('conn').textContent='已連線';};
+  ws.onmessage=e=>{let m;try{m=JSON.parse(e.data);}catch(x){return;}const d=m.overlayNinja||m;if(d&&(d.chatname||d.chatmessage))onComment(d.chatname,d.chatmessage,d.chatimg);};
+  ws.onclose=()=>{setState('⚠️ 斷線，3 秒後重連…');setTimeout(connect,3000);};}
+function listenCmd(){cmdWs=new WebSocket(SERVER);cmdWs.onopen=()=>cmdWs.send(JSON.stringify({join:sid,in:6,out:7}));
+  cmdWs.onmessage=e=>{let m;try{m=JSON.parse(e.data);}catch(x){return;}const d=m.overlayNinja||m;
+    if(d.zhCfg){Object.assign(cfg,d.zhCfg);SV('cfgR',cfg);renderUI();}
+    if(d.zhCmd==='new'){if(d.cfg)Object.assign(cfg,d.cfg);newBoss(d.hp);}
+    if(d.zhCmd==='hit')onComment(d.n||'測試',d.crit?'喜歡':'揍',d.s||'');
+    if(d.zhCmd==='sync'||d.zhCmd==='new')sendUp({zhState:boss});};
+  cmdWs.onclose=()=>setTimeout(listenCmd,4000);}
+function listenRec(){recWs=new WebSocket(SERVER);recWs.onopen=()=>{recWs.send(JSON.stringify({join:sid,in:5,out:6}));setTimeout(()=>{pushCfg();sendDown({zhCmd:'sync'});},300);};
+  recWs.onmessage=e=>{let m;try{m=JSON.parse(e.data);}catch(x){return;}const d=m.overlayNinja||m;
+    if(d.zhState||d.zhHit||d.zhWin){if(!overlaySeen){overlaySeen=true;setState('📋 紀錄模式：已連上手機（代碼 '+sid+'）');}}
+    if(d.zhState){boss=d.zhState;SV('boss',boss);if(!boss.ko)koAt=0;renderUI();}
+    if(d.zhHit&&!boss.ko){boss.hp=d.zhHit.hp;boss.max=d.zhHit.max;boss.hits++;fire(d.zhHit.n,d.zhHit.s,d.zhHit.crit);renderUI();}
+    if(d.zhWin){boss.ko=true;boss.hp=0;boss.winner=d.zhWin;koAt=performance.now();if(!wins.some(w=>w.t===d.zhWin.t)){wins.unshift(d.zhWin);SV('wins',wins);}renderUI();}};
+  recWs.onclose=()=>setTimeout(listenRec,4000);}
+function pushCfg(){sendDown({zhCfg:{kw:cfg.kw,cd:cfg.cd,crit:cfg.crit,winMode:cfg.winMode,prize:cfg.prize,hp:cfg.hp}});}
+
+/* ===== 介面 ===== */
+const MODE={last:'最後一擊',draw:'抽一位',top:'傷害最高'};
+function renderUI(){
+  $('state').textContent=boss.ko?`已 KO！得獎：${boss.winner&&boss.winner.n}`:`渣男血量 ${boss.hp} / ${boss.max}・已揍 ${boss.hits} 下`;
+  $('log').innerHTML=wins.map(w=>`<div>${w.s?`<img src="${esc(w.s)}" referrerpolicy="no-referrer">`:'<span class="ph"></span>'}<span>${esc(w.n)}</span><span class="tip">${MODE[w.mode]||''}・${w.count} 人</span><span style="margin-left:auto;color:var(--gold);font-weight:700">${esc(w.prize||'')}</span></div>`).join('')||'<div class="tip">還沒有人得獎</div>';
+}
+['kw','cd','hp','prize','crit','winMode'].forEach(k=>$(k).value=cfg[k]);$('sid').value=sid;
+function saveCfg(){cfg.kw=$('kw').value.trim()||'揍';cfg.cd=Math.max(0,+$('cd').value||0);cfg.hp=Math.max(10,+$('hp').value||500);cfg.prize=$('prize').value.trim();cfg.crit=$('crit').value.trim();cfg.winMode=$('winMode').value;SV('cfg',cfg);pushCfg();renderUI();}
+['kw','cd','hp','prize','crit','winMode'].forEach(id=>$(id).addEventListener('change',saveCfg));
+$('sid').onchange=()=>{sid=$('sid').value.trim()||rid();$('sid').value=sid;SV('sid',sid);};
+$('newBtn').onclick=()=>{if(!boss.ko&&boss.hits&&!confirm('換一個新渣男？目前的進度會清空。'))return;newBoss(cfg.hp);sendDown({zhCmd:'new',hp:cfg.hp,cfg:{kw:cfg.kw,cd:cfg.cd,crit:cfg.crit,winMode:cfg.winMode,prize:cfg.prize,hp:cfg.hp}});};
+$('conn').onclick=()=>{connect();if(!REC&&!recWs)listenRec();};
+function fakeHit(n,crit){if(REC&&overlaySeen)sendDown({zhCmd:'hit',n,crit});else onComment(n,crit?'喜歡':'揍','');}
+$('fakeGo').onclick=()=>fakeHit($('fakeN').value.trim()||'測試觀眾',false);
+$('fake10').onclick=()=>{for(let i=0;i<10;i++)fakeHit('測試'+Math.floor(Math.random()*1000),Math.random()<.25);};
+const base=()=>location.href.split('?')[0];
+function copy(u){navigator.clipboard.writeText(u).then(()=>{$('ovTip').textContent='已複製 ✓';setTimeout(()=>$('ovTip').textContent='',2000);});}
+$('copyOv').onclick=()=>copy(`${base()}?mode=overlay&session=${encodeURIComponent(sid)}&v=1`);
+$('copyRec').onclick=()=>copy(`${base()}?mode=record&session=${encodeURIComponent(sid)}`);
+$('copyWin').onclick=()=>copy(wins.slice().reverse().map(w=>`${w.n}　${w.prize}（${MODE[w.mode]||''}）`).join('\n')||'目前沒有');
+$('clrWin').onclick=()=>{if(confirm('清空得獎紀錄？')){wins=[];SV('wins',wins);renderUI();}};
+
+/* ===== 啟動 ===== */
+renderUI();
+if(OV){document.body.classList.add('ov');document.documentElement.style.background='transparent';connect();listenCmd();setTimeout(()=>$('ovState').style.opacity=0,8000);}
+else if(REC){listenRec();$('conn').style.display='none';setState('📋 紀錄模式：還沒偵測到手機（現在模擬揍會在這頁自己跑）');}
+else if(QS.get('session')){connect();}
+</script>
+</body>
+</html>
