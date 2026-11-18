@@ -80,7 +80,7 @@ body.ov #stage{height:100vh;align-items:flex-end;padding-bottom:4vh}
     <h3>📡 自動接 FB 留言</h3>
     <div class="tip">搭配 Social Stream Ninja：觀眾留言含關鍵字，就自動丟一顆他的頭像彈珠。</div>
     <div class="row" style="margin-top:8px"><label style="flex:1">關鍵字（逗號分開；打 * 代表任何留言）<input type="text" id="kw"></label><label style="width:130px">同一人幾秒內只算一次<input type="number" id="cd" min="0"></label></div>
-    <label style="display:block;margin-top:6px"><input type="checkbox" id="needName"> 留言要先打自己的 FB 名字（例：王小晴抽）</label>
+    <label style="display:none"><input type="checkbox" id="needName"> 留言要先打自己的 FB 名字（例：王小晴抽）</label>
     <div class="row" style="margin-top:8px"><label style="flex:1">連線代碼（Session ID）<input type="text" id="sid"></label></div>
     <div class="row" style="margin-top:10px"><button class="btn ghost" id="conn">開始接留言</button><span id="wsState" class="tip">未連線</span></div>
     <div class="row" style="margin-top:8px"><button class="btn ghost" id="copyOv">複製手機直播用網址</button><span class="tip" id="ovTip"></span></div>
@@ -397,7 +397,7 @@ function frame(now){DBG.frames++;
     const show=Math.min(n,7);for(let i=0;i<show;i++){const q=pending[i];drawBall({x:SX,y:FLOOR-BR-i*54,img:q.img,name:q.name,rot:0,noLabel:true},0.92);}
     ctx.save();ctx.fillStyle='rgba(0,0,0,.65)';rr(W-330,82,300,50,25);ctx.fill();ctx.fillStyle='#ffe08a';ctx.font='bold 26px '+FONT;ctx.textAlign='center';ctx.textBaseline='middle';
     const dots='.'.repeat(1+Math.floor(now/400)%3);ctx.fillText(`⚡ 集氣中 ${n} 顆${dots}`,W-180,108);ctx.restore();}
-  if(!reveal){const k0=(net.kw.split(/[,，]/)[0]||'抽').trim();const t=`🎯 留言「${net.needName?'你的FB名字＋':''}${k0==='*'?'任何字':k0}」就能射彈珠！`;
+  if(!reveal){const k0=(net.kw.split(/[,，]/)[0]||'抽').trim();const t=`🎯 留言「${k0==='*'?'任何字':k0}」就能射彈珠！`;
     ctx.save();ctx.font='bold 28px '+FONT;const tw=ctx.measureText(t).width+44;ctx.fillStyle='rgba(0,0,0,.65)';rr(W/2-tw/2,14,tw,52,26);ctx.fill();ctx.fillStyle='#ffe08a';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(t,W/2,41);ctx.restore();}
   if(reveal)drawReveal(now);
   drawSide(now,`留言「${(net.kw.split(/[,，]/)[0]||'抽').trim()}」就會出現在這`);
@@ -449,7 +449,7 @@ function onComment(name,msg,img){
   name=(name||'').trim();msg=String(msg||'').replace(/<img[^>]*alt="([^"]*)"[^>]*>/gi,'$1').replace(/<[^>]*>/g,'').replace(/\uFE0F/g,'');if(!name)return;
   const kws=net.kw.replace(/\uFE0F/g,'').split(/[,，]/).map(s=>s.trim()).filter(Boolean);
   if(!kws.some(k=>k==='*'||msg.includes(k)))return;
-  if(net.needName&&!hasName(msg,name))return;
+  // 不再需要打FB名字
   const now=Date.now(),t=lastBy.get(name)||0;if(now-t<net.cd*1000)return;lastBy.set(name,now);
   if(queue.length>=30)return;
   DBG.hit++;if(!stopped)addFeed(name,img||'','🎯 射彈珠','#ffe08a');addBall(name,img?urlImg(img):null,img||'');

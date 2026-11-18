@@ -50,7 +50,7 @@ body.ov #ovState{display:block}
     <div class="row"><input type="number" id="tmin" min="1" style="flex:1"><span>～</span><input type="number" id="tmax" min="1" style="flex:1"><span>下</span></div>
     <label>獎品名稱<input type="text" id="prize" placeholder="例：贈品任選券"></label>
     <label><input type="checkbox" id="showT"> 畫面上顯示目標（例：已敲 23 / 88 下）</label>
-    <label><input type="checkbox" id="needName"> 留言要先打自己的 FB 名字（例：王小晴敲一棒+1）</label>
+    <label style="display:none"><input type="checkbox" id="needName"> 留言要先打自己的 FB 名字（例：王小晴敲一棒+1）</label>
     <div class="tip">改了要按「換一隻新金豬」才會用新的數字。</div>
 
     <h3>📡 自動接 FB 留言</h3>
@@ -179,7 +179,7 @@ function frame(now){
   if(shards.length&&now-brokeAt>4000){shards.length=0;coins.length=0;}
   if(flash>0){ctx.fillStyle=`rgba(255,248,210,${flash})`;ctx.fillRect(0,0,W,H);flash=Math.max(0,flash-dt*1.6);}
   // 上方標題
-  if(!pig.broken){ctx.fillStyle='rgba(0,0,0,.6)';const kw=cfg.kw.split(/[,，]/)[0]||'抽';const t=`🔨 留言「${cfg.needName?'你的FB名字＋':''}${kw==='*'?'任何字':kw}${cfg.needName?'+1':''}」敲金豬！ 已敲 ${pig.hits}${cfg.showT?' / '+pig.target:''} 下`;ctx.font='bold 30px '+FONT;const tw=ctx.measureText(t).width+44;rr(W/2-tw/2,18,tw,54,27);ctx.fill();ctx.fillStyle='#ffe08a';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(t,W/2,46);
+  if(!pig.broken){ctx.fillStyle='rgba(0,0,0,.6)';const kw=cfg.kw.split(/[,，]/)[0]||'抽';const t=`🔨 留言「${kw==='*'?'任何字':kw}」敲金豬！ 已敲 ${pig.hits}${cfg.showT?' / '+pig.target:''} 下`;ctx.font='bold 30px '+FONT;const tw=ctx.measureText(t).width+44;rr(W/2-tw/2,18,tw,54,27);ctx.fill();ctx.fillStyle='#ffe08a';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(t,W/2,46);
     if(queue.length){ctx.fillStyle='#fff';ctx.font='20px '+FONT;ctx.fillText(`還有 ${queue.length} 支槌子排隊中`,W/2,92);}}
   // 得獎卡
   if(pig.broken&&now-brokeAt>900||pig.broken&&!brokeAt){const k=brokeAt?Math.min(1,(now-brokeAt-900)/400):1,w=pig.winner;ctx.globalAlpha=k;
@@ -223,7 +223,7 @@ function hasName(msg,name){const m=msg.toLowerCase().replace(/\s+/g,''),n=name.t
 function onComment(name,msg,img){
   name=(name||'').trim();msg=String(msg||'').replace(/<img[^>]*alt="([^"]*)"[^>]*>/gi,'$1').replace(/<[^>]*>/g,'').replace(/\uFE0F/g,'');if(!name||pig.broken)return;
   const kws=cfg.kw.replace(/\uFE0F/g,'').split(/[,，]/).map(s=>s.trim()).filter(Boolean);if(!kws.some(k=>k==='*'||msg.includes(k)))return;
-  if(cfg.needName&&!hasName(msg,name))return;
+  // 不再需要打FB名字
   const now=Date.now();if(now-(lastBy.get(name)||0)<cfg.cd*1000)return;lastBy.set(name,now);
   if(queue.length<200){queue.push({name,img:img||''});addFeed(name,img||'','🔨 敲一棒','#ffe08a');}
 }
