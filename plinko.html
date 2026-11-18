@@ -10,7 +10,7 @@
 html,body{margin:0;height:100%;background:var(--bg);color:var(--txt);font:18px/1.6 "Microsoft JhengHei","PingFang TC","Noto Sans TC",sans-serif}
 #wrap{display:flex;gap:18px;height:100%;padding:12px}
 #stage{flex:1 1 auto;min-width:0;height:100%;display:flex;align-items:center;justify-content:center;perspective:1400px;touch-action:none;user-select:none}
-canvas{width:100%;max-height:100%;aspect-ratio:1000/690;object-fit:contain;display:block;transform-origin:50% 60%;filter:drop-shadow(0 18px 24px rgba(0,0,0,.45))}
+canvas{width:100%;max-height:100%;aspect-ratio:1290/690;object-fit:contain;display:block;transform-origin:50% 60%;filter:drop-shadow(0 18px 24px rgba(0,0,0,.45))}
 input[type=range]{width:100%;accent-color:#e2c28a}
 #panel{flex:0 0 400px;overflow:auto;background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:16px 18px}
 h2{margin:4px 0 10px;font-size:22px;color:var(--gold)}
@@ -54,7 +54,7 @@ body.ov #stage{height:100vh;align-items:flex-end;padding-bottom:4vh}
 </head>
 <body>
 <div id="wrap">
-  <div id="stage"><canvas id="cv" width="1000" height="690"></canvas></div>
+  <div id="stage"><canvas id="cv" width="1290" height="690"></canvas></div>
   <div id="panel">
     <h2>① 裝填觀眾彈珠</h2>
     <input type="text" id="nm" placeholder="觀眾名字（例：王小晴）">
@@ -275,7 +275,7 @@ function checkBudget(){if(!budget){stopped=false;return;}const minWin=Math.min(.
 /* --- 公布 / 新一輪 --- */
 const imgCache=new Map();function imgOf(s){if(!s)return null;if(!imgCache.has(s))imgCache.set(s,urlImg(s));return imgCache.get(s);}
 function doReveal(on){if(on){const list=round.slice().sort((x,y)=>y.a-x.a);reveal={list,t0:performance.now()};}else reveal=null;document.getElementById('revealBtn').textContent=reveal?'🙈 收起中獎名單':'📣 公布中獎名單';}
-function doNewRound(){stopped=false;round=[];SV('round',round);reveal=null;document.getElementById('revealBtn').textContent='📣 公布中獎名單';renderQueue();}
+function doNewRound(){if(typeof clearFeed==='function')clearFeed();stopped=false;round=[];SV('round',round);reveal=null;document.getElementById('revealBtn').textContent='📣 公布中獎名單';renderQueue();}
 let sendCmd=null;
 document.getElementById('revealBtn').onclick=()=>{const on=!reveal;doReveal(on);if(sendCmd)sendCmd(on?'reveal':'hide');};
 document.getElementById('newRound').onclick=()=>{if(!confirm('開始新的一輪？本輪中獎名單會清空（中獎紀錄還會保留）。'))return;doNewRound();if(sendCmd)sendCmd('reset');};
@@ -400,8 +400,30 @@ function frame(now){DBG.frames++;
   if(!reveal){const k0=(net.kw.split(/[,，]/)[0]||'抽').trim();const t=`🎯 留言「${net.needName?'你的FB名字＋':''}${k0==='*'?'任何字':k0}」就能射彈珠！`;
     ctx.save();ctx.font='bold 28px '+FONT;const tw=ctx.measureText(t).width+44;ctx.fillStyle='rgba(0,0,0,.65)';rr(W/2-tw/2,14,tw,52,26);ctx.fill();ctx.fillStyle='#ffe08a';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(t,W/2,41);ctx.restore();}
   if(reveal)drawReveal(now);
+  drawSide(now,`留言「${(net.kw.split(/[,，]/)[0]||'抽').trim()}」就會出現在這`);
   if(toast){const age=now-toast.at;if(age>1800)toast=null;else{ctx.globalAlpha=Math.min(1,(1800-age)/300);ctx.fillStyle='rgba(0,0,0,.75)';ctx.font='bold 28px '+FONT;const tw=ctx.measureText(toast.t).width+40;rr(W/2-tw/2,420,tw,56,28);ctx.fill();ctx.fillStyle='#fff';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(toast.t,W/2,448);ctx.globalAlpha=1;}}
   requestAnimationFrame(frame);
+}
+/* ===== 右側有效留言欄 ===== */
+var feed=[],validN=0,feedNames=new Set();
+function addFeed(name,img,txt,c){validN++;feedNames.add(name);feed.unshift({name,img,txt,c,t:performance.now()});if(feed.length>30)feed.length=30;}
+function clearFeed(){feed=[];validN=0;feedNames=new Set();}
+function drawSide(now,hint){
+  const okI=im=>im&&im.complete&&im.naturalWidth>0;
+  ctx.save();ctx.setTransform(1,0,0,1,0,0);const X=W+10,Y=6,PW=cv.width-X-6,PH=H-12;ctx.clearRect(W,0,cv.width-W,H);
+  ctx.fillStyle='rgba(10,14,24,.8)';rr(X,Y,PW,PH,18);ctx.fill();ctx.strokeStyle='rgba(243,217,166,.7)';ctx.lineWidth=2;ctx.stroke();
+  ctx.textAlign='left';ctx.textBaseline='middle';ctx.fillStyle='#f3d9a6';ctx.font='bold 28px '+FONT;ctx.fillText('💬 有效留言',X+16,Y+32);
+  ctx.font='bold 19px '+FONT;ctx.fillStyle='#cfd5df';ctx.fillText(`有效 ${validN} 則・${feedNames.size} 人參加`,X+16,Y+66);
+  ctx.fillStyle='rgba(255,255,255,.18)';ctx.fillRect(X+14,Y+86,PW-28,2);
+  const RH=60,top=Y+96,maxR=Math.floor((PH-104)/RH);
+  if(!feed.length){ctx.fillStyle='rgba(255,255,255,.55)';ctx.font='20px '+FONT;ctx.fillText(hint||'有效留言會出現在這',X+16,top+30);}
+  feed.slice(0,maxR).forEach((e,i)=>{const age=now-e.t,a=Math.min(1,age/250),y=top+i*RH-(1-a)*20;ctx.globalAlpha=a*(i>=maxR-2?0.55:1);
+    if(age<1200){ctx.fillStyle=`rgba(255,224,138,${.22*(1-age/1200)})`;rr(X+8,y,PW-16,RH-6,12);ctx.fill();}
+    const r=23,cx=X+16+r,cy=y+(RH-6)/2;const im=imgOf(e.img);ctx.save();ctx.beginPath();ctx.arc(cx,cy,r,0,7);ctx.clip();
+    if(okI(im))ctx.drawImage(im,cx-r,cy-r,r*2,r*2);else{ctx.fillStyle='#c9748a';ctx.fillRect(cx-r,cy-r,r*2,r*2);ctx.fillStyle='#fff';ctx.font='bold 22px '+FONT;ctx.textAlign='center';ctx.fillText(e.name[0]||'?',cx,cy+1);ctx.textAlign='left';}ctx.restore();
+    ctx.beginPath();ctx.arc(cx,cy,r,0,7);ctx.strokeStyle='rgba(255,255,255,.85)';ctx.lineWidth=2;ctx.stroke();
+    const nm=e.name.length>8?e.name.slice(0,8)+'…':e.name;ctx.fillStyle='#fff';ctx.font='bold 21px '+FONT;ctx.fillText(nm,cx+r+10,cy-12);ctx.fillStyle=e.c;ctx.font='bold 19px '+FONT;ctx.fillText(e.txt,cx+r+10,cy+13);ctx.globalAlpha=1;});
+  ctx.restore();
 }
 renderQueue();requestAnimationFrame(frame);
 
@@ -430,7 +452,7 @@ function onComment(name,msg,img){
   if(net.needName&&!hasName(msg,name))return;
   const now=Date.now(),t=lastBy.get(name)||0;if(now-t<net.cd*1000)return;lastBy.set(name,now);
   if(queue.length>=30)return;
-  DBG.hit++;addBall(name,img?urlImg(img):null,img||'');
+  DBG.hit++;if(!stopped)addFeed(name,img||'','🎯 射彈珠','#ffe08a');addBall(name,img?urlImg(img):null,img||'');
 }
 let ws=null,wsWant=false,resWs=null;
 function setState(t){$('wsState').textContent=t;$('ovState').textContent=t;}

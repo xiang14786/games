@@ -10,7 +10,7 @@
 html,body{margin:0;height:100%;background:var(--bg);color:var(--txt);font:18px/1.6 "Microsoft JhengHei","PingFang TC","Noto Sans TC",sans-serif}
 #wrap{display:flex;gap:18px;height:100%;padding:12px}
 #stage{flex:1 1 auto;min-width:0;height:100%;display:flex;align-items:center;justify-content:center;perspective:1400px}
-canvas{width:100%;max-height:100%;aspect-ratio:1000/700;object-fit:contain;display:block;transform-origin:50% 60%;background:radial-gradient(ellipse at 50% 60%,#2a2d38,#15171d);border-radius:16px}
+canvas{width:100%;max-height:100%;aspect-ratio:1290/700;object-fit:contain;display:block;transform-origin:50% 60%;background:radial-gradient(ellipse at 50% 60%,#2a2d38,#15171d);border-radius:16px}
 #panel{flex:0 0 400px;overflow:auto;background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:16px 18px}
 h2{margin:4px 0 10px;font-size:22px;color:var(--gold)}
 h3{margin:18px 0 8px;font-size:19px;color:var(--gold)}
@@ -38,7 +38,7 @@ body.ov #ovState{display:block}
 </head>
 <body>
 <div id="wrap">
-  <div id="stage"><canvas id="cv" width="1000" height="700"></canvas></div>
+  <div id="stage"><canvas id="cv" width="1290" height="700"></canvas></div>
   <div id="panel">
     <h2>🐷 敲金豬</h2>
     <div class="tip" id="state"></div>
@@ -87,7 +87,7 @@ let sid=QS.get('session')||LS('sid','')||rid();SV('sid',sid);
 if(OV){const c=LS('cfgR',null);if(c)Object.assign(cfg,c);}
 /* 金豬狀態 */
 let pig=LS('pig',null);
-function newPig(forced){const a=Math.max(1,Math.min(cfg.tmin,cfg.tmax)),b=Math.max(cfg.tmin,cfg.tmax,1);pig={target:forced||a+Math.floor(Math.random()*(b-a+1)),hits:0,broken:false,winner:null,id:Date.now()};SV('pig',pig);queue.length=0;hammers.length=0;shards.length=0;coins.length=0;crackSeed();renderUI();}
+function newPig(forced){if(typeof clearFeed==='function')clearFeed();const a=Math.max(1,Math.min(cfg.tmin,cfg.tmax)),b=Math.max(cfg.tmin,cfg.tmax,1);pig={target:forced||a+Math.floor(Math.random()*(b-a+1)),hits:0,broken:false,winner:null,id:Date.now()};SV('pig',pig);queue.length=0;hammers.length=0;shards.length=0;coins.length=0;crackSeed();renderUI();}
 let wins=LS('wins',[]);
 const queue=[],hammers=[],shards=[],coins=[],sparks=[],pops=[];let shake=0,flash=0,brokeAt=0,lastHit=0;
 if(!pig)newPig();
@@ -189,7 +189,29 @@ function frame(now){
     ctx.fillStyle='#fff';ctx.font='bold 38px '+FONT;ctx.fillText(`恭喜 ${w.n}`,W/2,415);
     ctx.fillStyle='#cfd5df';ctx.font='26px '+FONT;ctx.fillText(`敲下第 ${w.hits} 下，獲得`,W/2,460);
     ctx.fillStyle='#ffe08a';ctx.font='bold 46px '+FONT;ctx.fillText(w.prize||'大獎',W/2,515);ctx.globalAlpha=1;}
+  drawSide(now,`留言「${(cfg.kw.split(/[,，]/)[0]||"").trim()}」就會出現在這`);
   requestAnimationFrame(frame);
+}
+/* ===== 右側有效留言欄 ===== */
+var feed=[],validN=0,feedNames=new Set();
+function addFeed(name,img,txt,c){validN++;feedNames.add(name);feed.unshift({name,img,txt,c,t:performance.now()});if(feed.length>30)feed.length=30;}
+function clearFeed(){feed=[];validN=0;feedNames=new Set();}
+function drawSide(now,hint){
+  const okI=im=>im&&im.complete&&im.naturalWidth>0;
+  ctx.save();ctx.setTransform(1,0,0,1,0,0);const X=W+10,Y=6,PW=cv.width-X-6,PH=H-12;ctx.clearRect(W,0,cv.width-W,H);
+  ctx.fillStyle='rgba(10,14,24,.8)';rr(X,Y,PW,PH,18);ctx.fill();ctx.strokeStyle='rgba(243,217,166,.7)';ctx.lineWidth=2;ctx.stroke();
+  ctx.textAlign='left';ctx.textBaseline='middle';ctx.fillStyle='#f3d9a6';ctx.font='bold 28px '+FONT;ctx.fillText('💬 有效留言',X+16,Y+32);
+  ctx.font='bold 19px '+FONT;ctx.fillStyle='#cfd5df';ctx.fillText(`有效 ${validN} 則・${feedNames.size} 人參加`,X+16,Y+66);
+  ctx.fillStyle='rgba(255,255,255,.18)';ctx.fillRect(X+14,Y+86,PW-28,2);
+  const RH=60,top=Y+96,maxR=Math.floor((PH-104)/RH);
+  if(!feed.length){ctx.fillStyle='rgba(255,255,255,.55)';ctx.font='20px '+FONT;ctx.fillText(hint||'有效留言會出現在這',X+16,top+30);}
+  feed.slice(0,maxR).forEach((e,i)=>{const age=now-e.t,a=Math.min(1,age/250),y=top+i*RH-(1-a)*20;ctx.globalAlpha=a*(i>=maxR-2?0.55:1);
+    if(age<1200){ctx.fillStyle=`rgba(255,224,138,${.22*(1-age/1200)})`;rr(X+8,y,PW-16,RH-6,12);ctx.fill();}
+    const r=23,cx=X+16+r,cy=y+(RH-6)/2;const im=imgOf(e.img);ctx.save();ctx.beginPath();ctx.arc(cx,cy,r,0,7);ctx.clip();
+    if(okI(im))ctx.drawImage(im,cx-r,cy-r,r*2,r*2);else{ctx.fillStyle='#c9748a';ctx.fillRect(cx-r,cy-r,r*2,r*2);ctx.fillStyle='#fff';ctx.font='bold 22px '+FONT;ctx.textAlign='center';ctx.fillText(e.name[0]||'?',cx,cy+1);ctx.textAlign='left';}ctx.restore();
+    ctx.beginPath();ctx.arc(cx,cy,r,0,7);ctx.strokeStyle='rgba(255,255,255,.85)';ctx.lineWidth=2;ctx.stroke();
+    const nm=e.name.length>8?e.name.slice(0,8)+'…':e.name;ctx.fillStyle='#fff';ctx.font='bold 21px '+FONT;ctx.fillText(nm,cx+r+10,cy-12);ctx.fillStyle=e.c;ctx.font='bold 19px '+FONT;ctx.fillText(e.txt,cx+r+10,cy+13);ctx.globalAlpha=1;});
+  ctx.restore();
 }
 requestAnimationFrame(frame);
 
@@ -203,7 +225,7 @@ function onComment(name,msg,img){
   const kws=cfg.kw.replace(/\uFE0F/g,'').split(/[,，]/).map(s=>s.trim()).filter(Boolean);if(!kws.some(k=>k==='*'||msg.includes(k)))return;
   if(cfg.needName&&!hasName(msg,name))return;
   const now=Date.now();if(now-(lastBy.get(name)||0)<cfg.cd*1000)return;lastBy.set(name,now);
-  if(queue.length<200)queue.push({name,img:img||''});
+  if(queue.length<200){queue.push({name,img:img||''});addFeed(name,img||'','🔨 敲一棒','#ffe08a');}
 }
 /* ===== 連線 ===== */
 let ws=null,cmdWs=null,recWs=null,overlaySeen=false;
