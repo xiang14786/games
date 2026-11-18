@@ -10,7 +10,7 @@
 html,body{margin:0;height:100%;background:var(--bg);color:var(--txt);font:18px/1.6 "Microsoft JhengHei","PingFang TC","Noto Sans TC",sans-serif}
 #wrap{display:flex;gap:18px;height:100%;padding:12px}
 #stage{flex:1 1 auto;min-width:0;height:100%;display:flex;align-items:center;justify-content:center}
-canvas{width:100%;max-height:100%;aspect-ratio:1000/559;object-fit:contain;display:block;border-radius:14px}
+canvas{width:100%;max-height:100%;aspect-ratio:790/559;object-fit:contain;display:block;border-radius:14px}
 #panel{flex:0 0 400px;overflow:auto;background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:16px 18px}
 h2{margin:4px 0 10px;font-size:22px;color:var(--gold)}
 h3{margin:18px 0 8px;font-size:19px;color:var(--gold)}
@@ -38,7 +38,7 @@ body.ov #ovState{display:block}
 </head>
 <body>
 <div id="wrap">
-  <div id="stage"><canvas id="cv" width="1000" height="559"></canvas></div>
+  <div id="stage"><canvas id="cv" width="790" height="559"></canvas></div>
   <div id="panel">
     <h2>🎣 撈金魚大逃殺</h2>
     <div id="state"></div>
@@ -233,7 +233,7 @@ function frame(now){
     if(phase==='lobby'&&cfg.auto>0&&firstJoin&&now-firstJoin>cfg.auto*1000&&fish.length>=Math.max(2,cfg.minP))startGame();
     step(dt,now);
   }
-  ctx.clearRect(0,0,W,H);
+  ctx.setTransform(1,0,0,1,0,0);ctx.clearRect(0,0,cv.width,H);ctx.setTransform(1,0,0,1,-105,0); // 左右裁掉，只留魚池
   if(ok(POND))ctx.drawImage(POND,0,0,W,H);else{ctx.fillStyle='#2a6fa8';ctx.fillRect(0,0,W,H);}
   for(let i=ripples.length-1;i>=0;i--){const r=ripples[i],k=(now-r.t0)/900;if(k>1){ripples.splice(i,1);continue;}if(ok(SPL)){const sz=r.r*2*(0.5+k*0.8);ctx.globalAlpha=(1-k);ctx.drawImage(SPL,r.x-sz/2,r.y-sz*0.27,sz,sz*0.547);ctx.drawImage(SPL,r.x-sz/2,r.y-sz*0.27,sz,sz*0.547);ctx.globalAlpha=1;}else{ctx.strokeStyle=`rgba(255,255,255,${.6*(1-k)})`;ctx.lineWidth=3;ctx.beginPath();ctx.ellipse(r.x,r.y,r.r*k,r.r*k*.75,0,0,7);ctx.stroke();}}
   const order=fish.filter(f=>f.st==='swim').sort((a,b)=>a.size-b.size);for(const f of order)drawFish(f,now,1,1);
@@ -241,7 +241,7 @@ function frame(now){
   for(let i=pops.length-1;i>=0;i--){const p=pops[i],k=(now-p.t0)/(p.big?1400:1200);if(k>1){pops.splice(i,1);continue;}ctx.globalAlpha=1-k;ctx.font=`bold ${p.big?66:24}px ${FONT}`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.lineWidth=6;ctx.strokeStyle='rgba(0,0,0,.65)';ctx.strokeText(p.t,p.x,p.y-k*30);ctx.fillStyle=p.c;ctx.fillText(p.t,p.x,p.y-k*30);ctx.globalAlpha=1;}
   if(phase!=='end'){const t=phase==='lobby'?`🎣 留言「${f1(cfg.kw)}」變成金魚！ 已有 ${fish.length} 隻`:`🎣 撈魚中！ 剩 ${alive().length} 隻・最後 ${cfg.winN} 隻得獎`;
     ctx.font='bold 28px '+FONT;const tw=ctx.measureText(t).width+44;ctx.fillStyle='rgba(0,0,0,.65)';rr(W/2-tw/2,12,tw,50,25);ctx.fill();ctx.fillStyle='#ffe08a';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(t,W/2,37);
-    ctx.font='bold 19px '+FONT;const sub=`留言「${f1(cfg.big)}」變大隻更難撈　留言「${f1(cfg.fast)}」游更快`;const sw=ctx.measureText(sub).width+30;ctx.fillStyle='rgba(0,0,0,.55)';rr(W/2-sw/2,H-44,sw,34,17);ctx.fill();ctx.fillStyle='#fff';ctx.fillText(sub,W/2,H-27);
+    ctx.font='bold 27px '+FONT;const sub=`留言「${f1(cfg.big)}」變大隻更難撈　留言「${f1(cfg.fast)}」游更快`;const sw=ctx.measureText(sub).width+36;ctx.fillStyle='rgba(0,0,0,.62)';rr(W/2-sw/2,H-56,sw,46,23);ctx.fill();ctx.fillStyle='#fff';ctx.fillText(sub,W/2,H-33);
     if(phase==='lobby'&&cfg.auto>0&&firstJoin){ctx.font='bold 22px '+FONT;ctx.fillStyle='#fff';ctx.fillText(`${Math.max(0,Math.ceil(cfg.auto-(now-firstJoin)/1000))} 秒後開始撈`,W/2,82);}}
   if(phase==='end'&&winners&&now-endAt>500){const k=Math.min(1,(now-endAt-500)/400),L=winners.list;ctx.globalAlpha=k;
     ctx.fillStyle='rgba(12,14,22,.9)';rr(180,90,640,380,30);ctx.fill();ctx.strokeStyle='#f3d9a6';ctx.lineWidth=5;ctx.stroke();
