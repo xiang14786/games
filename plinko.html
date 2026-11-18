@@ -68,14 +68,15 @@ body.ov #stage{height:100vh;align-items:flex-end;padding-bottom:4vh}
 
     <div class="tip" style="margin-top:8px">累積幾顆一起發射（每次在這個範圍內隨機；兩格填一樣＝固定；填 1＝馬上發射）</div><div class="row"><input type="number" id="bmin" min="1" max="30" style="flex:1"><span>～</span><input type="number" id="bmax" min="1" max="30" style="flex:1"><span>顆</span></div><div class="row" style="margin-top:6px"><button class="btn ghost" id="flush">⚡ 現在全部發射</button><span class="tip">排隊的球會疊在右邊發射道；超過 30 秒沒集滿也會自動發射。</span></div>
 
-    <h3>🎚️ 角度與大小（像拿在手上）</h3>
+    <div style="display:none"><h3>🎚️ 角度與大小（像拿在手上）</h3>
     <div class="tip">在「電腦紀錄用網址」這頁拉滑桿，直播中的彈珠台會<b>即時跟著轉</b>（手機瀏覽器也能開）。</div>
     <label>前後傾斜 <span id="v_rx"></span><input type="range" id="rx" min="-45" max="45" step="1"></label>
     <label>左右轉 <span id="v_ry"></span><input type="range" id="ry" min="-45" max="45" step="1"></label>
     <label>歪一邊 <span id="v_rz"></span><input type="range" id="rz" min="-25" max="25" step="1"></label>
     <label>大小 <span id="v_sc"></span><input type="range" id="sc" min="40" max="100" step="1"></label>
     <label>透明度 <span id="v_op"></span><input type="range" id="op" min="40" max="100" step="1"></label>
-    <div class="row" style="margin-top:6px"><button class="btn ghost" id="tiltReset">擺正</button><button class="btn ghost" id="tiltHold">手拿的角度</button></div>
+    <div class="row" style="margin-top:6px"><button class="btn ghost" id="tiltReset">擺正</button><button class="btn ghost" id="tiltHold">手拿的角度</button></div></div>
+    <div class="tip" style="margin-top:10px">透明度改到「遊戲總台」上方調整。</div>
 
     <h3>📡 自動接 FB 留言</h3>
     <div class="tip">搭配 Social Stream Ninja：觀眾留言含關鍵字，就自動丟一顆他的頭像彈珠。</div>
@@ -496,7 +497,7 @@ var tilt=Object.assign({},TDEF,LS('tilt',{}));
 if(OV){const r=LS('tiltR',null);if(r)tilt=Object.assign({},TDEF,r);}
 function pushCfg(){if(OV||!resWs||resWs.readyState!==1)return;try{resWs.send(JSON.stringify({plinkoCfg:{needName:net.needName,kw:net.kw,cd:net.cd,bg:budget,tiers,bmin:bMin,bmax:bMax,wr:winRate}}));}catch(e){}}
 let tiltT=0;function pushTilt(){if(!resWs||resWs.readyState!==1)return;clearTimeout(tiltT);tiltT=setTimeout(()=>{try{resWs.send(JSON.stringify({plinkoTilt:tilt}));}catch(e){}},80);}
-function applyTilt(){cv.style.transform=`rotateX(${tilt.rx}deg) rotateY(${tilt.ry}deg) rotateZ(${tilt.rz}deg) scale(${tilt.sc/100})`;cv.style.opacity=tilt.op/100;
+function applyTilt(){tilt=Object.assign({},TDEF,{op:100});cv.style.transform=`rotateX(${tilt.rx}deg) rotateY(${tilt.ry}deg) rotateZ(${tilt.rz}deg) scale(${tilt.sc/100})`;cv.style.opacity=tilt.op/100;
   ['rx','ry','rz','sc','op'].forEach(k=>{$(k).value=tilt[k];$('v_'+k).textContent=tilt[k]+(k==='sc'||k==='op'?'%':'°');});}
 ['rx','ry','rz','sc','op'].forEach(k=>$(k).addEventListener('input',()=>{tilt[k]=+$(k).value;SV('tilt',tilt);applyTilt();pushTilt();}));
 $('tiltReset').onclick=()=>{tilt=Object.assign({},TDEF);SV('tilt',tilt);applyTilt();pushTilt();};
