@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Shine欣 直播遊戲總台</title>
+<style>
+:root{--bg:#14161d;--card:#1f222c;--line:#323644;--ink:#eef0f5;--sub:#a9afbf;--gold:#f3d9a6;--on:#e0a95a}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family:"Microsoft JhengHei","PingFang TC",sans-serif}
+body.ov,html.ov{background:transparent!important}
+#ovFrame{position:fixed;inset:0;width:100%;height:100%;border:0;background:transparent;transition:opacity .4s}
+#ctl{display:flex;flex-direction:column;height:100%}
+header{padding:14px 18px;border-bottom:1px solid var(--line);display:flex;flex-wrap:wrap;gap:12px;align-items:center;background:#181a22}
+h1{font-size:24px;margin:0 10px 0 0;color:var(--gold)}
+.g{font-size:21px;font-weight:700;padding:12px 20px;border-radius:14px;border:2px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer}
+.g.on{border-color:var(--on);background:#3a2e1c;color:#ffe3b0}
+.g.off{font-size:17px;color:var(--sub)}
+#st{font-size:18px;color:var(--sub);margin-left:auto;text-align:right;line-height:1.5}
+#st b{color:#9fe7a4}
+#sess{font-size:16px;color:var(--sub);display:flex;gap:8px;align-items:center}
+#sess input{font-size:16px;padding:6px 10px;border-radius:8px;border:1px solid var(--line);background:#0f1116;color:var(--ink);width:150px}
+#url{font-size:15px;color:var(--sub);padding:8px 18px;background:#16181f;border-bottom:1px solid var(--line);word-break:break-all}
+#url button{font-size:15px;margin-left:8px;padding:4px 10px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer}
+#recFrame{flex:1;width:100%;border:0;background:var(--bg)}
+#empty{flex:1;display:flex;align-items:center;justify-content:center;font-size:24px;color:var(--sub)}
+</style></head>
+<body>
+<div id="ctl" style="display:none">
+  <header>
+    <h1>🎮 直播遊戲總台</h1>
+    <button class="g" data-g="plinko">🎯 彈珠台</button>
+    <button class="g" data-g="pig">🔨 敲金豬</button>
+    <button class="g" data-g="arena">⚔️ 頭像大逃殺</button>
+    <button class="g" data-g="fish">🐟 撈金魚</button>
+    <button class="g off" data-g="none">🙈 先關掉遊戲畫面</button>
+    <div id="st">手機：<span id="phone">還沒連上</span></div>
+  </header>
+  <div id="url"><span id="sess">連線代碼 <input id="sid"></span> 手機 PRISM 網址：<span id="ovUrl"></span><button id="cp">複製</button></div>
+  <iframe id="recFrame" style="display:none"></iframe>
+  <div id="empty">👆 按上面的遊戲，手機直播畫面就會換成那個遊戲</div>
+</div>
+<script>
+const SERVER=new URLSearchParams(location.search).get('server')||'wss://io.socialstream.ninja';
+const GAMES={plinko:'🎯 彈珠台',pig:'🔨 敲金豬',arena:'⚔️ 頭像大逃殺',fish:'🐟 撈金魚',none:'🙈 沒有顯示遊戲'};
+const QS=new URLSearchParams(location.search),OV=QS.get('mode')==='overlay';
+const LS=(k,d)=>{try{const v=localStorage.getItem('hub_'+k);return v==null?d:JSON.parse(v);}catch(e){return d;}};
+const SV=(k,v)=>{try{localStorage.setItem('hub_'+k,JSON.stringify(v));}catch(e){}};
+let sid=QS.get('session')||LS('sid','')||'';
+const base=location.href.split('?')[0].replace(/hub\.html$/,'');
+const gameUrl=(g,mode)=>`${base}${g}.html?mode=${mode}&session=${encodeURIComponent(sid)}&v=${Date.now()}`+(QS.get('server')?'&server='+encodeURIComponent(QS.get('server')):'');
+
+if(OV){
+  /* ===== 手機：只放這一個網址 ===== */
+  document.documentElement.classList.add('ov');document.body.classList.add('ov');
+  const fr=document.createElement('iframe');fr.id='ovFrame';fr.setAttribute('allowtransparency','true');document.body.appendChild(fr);
+  let cur=null,ws=null;
+  function show(g){if(!GAMES[g])return;if(g===cur)return;cur=g;SV('ovGame',g);
+    fr.style.opacity=0;setTimeout(()=>{fr.src=g==='none'?'about:blank':gameUrl(g,'overlay');fr.onload=()=>{fr.style.opacity=1;};},300);report();}
+  function report(){if(ws&&ws.readyState===1){try{ws.send(JSON.stringify({hubState:{game:cur,t:Date.now()}}));}catch(e){}}}
+  function connect(){ws=new WebSocket(SERVER);
+    ws.onopen=()=>{ws.send(JSON.stringify({join:sid,in:6,out:5}));setTimeout(report,300);};
+    ws.onmessage=e=>{let m;try{m=JSON.parse(e.data);}catch(x){return;}const d=m.overlayNinja||m;
+      if(d.hubGame)show(d.hubGame);if(d.hubCmd==='sync')report();};
+    ws.onclose=()=>setTimeout(connect,3000);}
+  show(QS.get('game')||LS('ovGame','none'));connect();
+  setInterval(report,15000);
+}else{
+  /* ===== 電腦：總控 ===== */
+  const $=id=>document.getElementById(id);$('ctl').style.display='flex';
+  if(!sid){sid='JUVRjNBuLH';}
+  $('sid').value=sid;
+  const ovUrl=()=>`${base}hub.html?mode=overlay&session=${encodeURIComponent(sid)}`;
+  $('ovUrl').textContent=ovUrl();
+  $('cp').onclick=()=>navigator.clipboard.writeText(ovUrl()).then(()=>{$('cp').textContent='已複製 ✓';setTimeout(()=>$('cp').textContent='複製',1500);});
+  $('sid').onchange=()=>{sid=$('sid').value.trim()||sid;$('sid').value=sid;SV('sid',sid);$('ovUrl').textContent=ovUrl();connect();if(curRec)openRec(curRec,true);};
+  let ws=null,curRec=null,lastSeen=0,phoneGame=null;
+  function openRec(g,force){if(g===curRec&&!force)return;curRec=g;SV('recGame',g);
+    document.querySelectorAll('.g').forEach(b=>b.classList.toggle('on',b.dataset.g===g));
+    if(g==='none'){$('recFrame').style.display='none';$('empty').style.display='flex';$('empty').textContent='🙈 手機直播畫面目前沒有遊戲';return;}
+    $('empty').style.display='none';$('recFrame').style.display='block';$('recFrame').src=gameUrl(g,'record');}
+  function send(o){if(ws&&ws.readyState===1){try{ws.send(JSON.stringify(o));}catch(e){}}}
+  document.querySelectorAll('.g').forEach(b=>b.onclick=()=>{const g=b.dataset.g;send({hubGame:g});openRec(g);});
+  function connect(){try{ws&&ws.close();}catch(e){}ws=new WebSocket(SERVER);
+    ws.onopen=()=>{ws.send(JSON.stringify({join:sid,in:5,out:6}));setTimeout(()=>send({hubCmd:'sync'}),300);};
+    ws.onmessage=e=>{let m;try{m=JSON.parse(e.data);}catch(x){return;}const d=m.overlayNinja||m;
+      if(d.hubState){lastSeen=Date.now();phoneGame=d.hubState.game;if(!curRec&&phoneGame)openRec(phoneGame);paint();}};
+    ws.onclose=()=>setTimeout(connect,3000);}
+  function paint(){const ok=Date.now()-lastSeen<40000;$('phone').innerHTML=ok?`<b>✅ 已連上</b>・正在顯示 ${GAMES[phoneGame]||'?'}`:'⚠️ 還沒連上（手機 PRISM 有開總台網址嗎？）';}
+  setInterval(paint,3000);paint();connect();
+  const g0=LS('recGame',null);if(g0)setTimeout(()=>{if(!curRec)openRec(g0);},1500);
+}
+</script>
+</body></html>

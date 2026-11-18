@@ -230,7 +230,7 @@ function drawSide(now,hint){
   ctx.font='bold 19px '+FONT;ctx.fillStyle='#cfd5df';ctx.fillText(`有效 ${validN} 則・${feedNames.size} 人參加`,X+16,Y+66);
   ctx.fillStyle='rgba(255,255,255,.18)';ctx.fillRect(X+14,Y+86,PW-28,2);
   const RH=60,top=Y+96,maxR=Math.floor((PH-104)/RH);
-  if(!feed.length){ctx.fillStyle='rgba(255,255,255,.55)';ctx.font='20px '+FONT;ctx.fillText(hint||'有效留言會出現在這',X+16,top+30);}
+  if(!feed.length){ctx.fillStyle='rgba(255,255,255,.55)';ctx.font='20px '+FONT;ctx.fillText(/mode=record/.test(location.search)?'（實際留言看手機直播畫面）':(hint||'有效留言會出現在這'),X+16,top+30);}
   feed.slice(0,maxR).forEach((e,i)=>{const age=now-e.t,a=Math.min(1,age/250),y=top+i*RH-(1-a)*20;ctx.globalAlpha=a*(i>=maxR-2?0.55:1);
     if(age<1200){ctx.fillStyle=`rgba(255,224,138,${.22*(1-age/1200)})`;rr(X+8,y,PW-16,RH-6,12);ctx.fill();}
     const r=23,cx=X+16+r,cy=y+(RH-6)/2;const im=imgOf(e.img);ctx.save();ctx.beginPath();ctx.arc(cx,cy,r,0,7);ctx.clip();
