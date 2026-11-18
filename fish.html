@@ -10,7 +10,7 @@
 html,body{margin:0;height:100%;background:var(--bg);color:var(--txt);font:18px/1.6 "Microsoft JhengHei","PingFang TC","Noto Sans TC",sans-serif}
 #wrap{display:flex;gap:18px;height:100%;padding:12px}
 #stage{flex:1 1 auto;min-width:0;height:100%;display:flex;align-items:center;justify-content:center}
-canvas{width:100%;max-height:100%;aspect-ratio:790/559;object-fit:contain;display:block;border-radius:14px}
+canvas{width:100%;max-height:100%;aspect-ratio:1070/559;object-fit:contain;display:block;border-radius:14px}
 #panel{flex:0 0 400px;overflow:auto;background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:16px 18px}
 h2{margin:4px 0 10px;font-size:22px;color:var(--gold)}
 h3{margin:18px 0 8px;font-size:19px;color:var(--gold)}
@@ -38,7 +38,7 @@ body.ov #ovState{display:block}
 </head>
 <body>
 <div id="wrap">
-  <div id="stage"><canvas id="cv" width="790" height="559"></canvas></div>
+  <div id="stage"><canvas id="cv" width="1070" height="559"></canvas></div>
   <div id="panel">
     <h2>🎣 撈金魚大逃殺</h2>
     <div id="state"></div>
@@ -98,7 +98,8 @@ let wins=LS('wins',[]);
 
 /* ===== 遊戲狀態 ===== */
 let phase='lobby',fish=[],nets=[],t0=0,firstJoin=0,winners=null,endAt=0,lastSpawn=0;
-const pops=[],ripples=[];
+const pops=[],ripples=[];let feed=[],validN=0;
+function addFeed(name,img,txt,c){validN++;feed.unshift({name,img,txt,c,t:performance.now()});if(feed.length>30)feed.length=30;}
 const MAXLV=5;
 function baseLen(){const n=Math.max(1,fish.length);return Math.max(92,Math.min(175,Math.sqrt((WX1-WX0)*(WY1-WY0)*0.3/n)*1.35));}
 function lenOf(f){return baseLen()*(1+0.16*f.size);}
@@ -108,14 +109,14 @@ function join(name,img){
   fish.push({name,img:img||'',x,y,vx:Math.cos(a)*40,vy:Math.sin(a)*40,ang:a,sp:Math.floor(Math.random()*4),size:0,speed:0,st:'swim',born:performance.now(),tw:Math.random()*9,cdBy:{},wa:a,boost:0});
   if(!firstJoin)firstJoin=performance.now();
   ripples.push({x,y,t0:performance.now(),r:60});
-  pops.push({x,y:y-40,t:`${name} 下水了！`,t0:performance.now(),c:'#bff3ff'});
+  pops.push({x,y:y-40,t:`${name} 下水了！`,t0:performance.now(),c:'#bff3ff'});addFeed(name,img,'🐟 下水了','#9fe7ff');
   sendUp({fiState:stateMsg()});renderUI();return true;
 }
 function upgrade(name,kind){
   if(phase==='end')return;const f=fish.find(f=>f.name===name&&f.st==='swim');if(!f)return;
   const now=performance.now();if(f.cdBy[kind]!=null&&now-f.cdBy[kind]<cfg.cd*1000)return;f.cdBy[kind]=now;
   if(f[kind]>=MAXLV){pops.push({x:f.x,y:f.y-40,t:kind==='size'?'已經最大隻了':'已經最快了',t0:now,c:'#cfd5df'});return;}
-  f[kind]++;f.boost=now+900;
+  f[kind]++;f.boost=now+900;addFeed(f.name,f.img,kind==='size'?`🐳 變大隻 Lv${f.size}`:`⚡ 游更快 Lv${f.speed}`,kind==='size'?'#ffe08a':'#ffc38a');
   pops.push({x:f.x,y:f.y-46,t:kind==='size'?`🐳 變大隻！Lv${f.size}`:`⚡ 游更快！Lv${f.speed}`,t0:now,c:'#ffe08a'});
   ripples.push({x:f.x,y:f.y,t0:now,r:50});
 }
@@ -124,7 +125,7 @@ function startGame(){
   phase='battle';t0=performance.now();lastSpawn=t0-2000;
   pops.push({x:W/2,y:H/2,t:'🎣 開始撈魚！',t0:performance.now(),c:'#ffb070',big:1});sendUp({fiState:stateMsg()});renderUI();
 }
-function newRound(){phase='lobby';fish=[];nets=[];winners=null;firstJoin=0;endAt=0;pops.length=0;sendUp({fiState:stateMsg()});renderUI();}
+function newRound(){feed=[];validN=0;phase='lobby';fish=[];nets=[];winners=null;firstJoin=0;endAt=0;pops.length=0;sendUp({fiState:stateMsg()});renderUI();}
 const alive=()=>fish.filter(f=>f.st==='swim');
 function stateMsg(){return{phase,joined:fish.length,alive:alive().length,winners};}
 function finish(now){if(phase!=='battle')return;phase='end';endAt=now;
@@ -251,7 +252,22 @@ function frame(now){
     ctx.fillStyle='#ffe08a';ctx.font='bold 42px '+FONT;ctx.fillText(winners.prize||'大獎',W/2,438);ctx.globalAlpha=1;}
   if(REC&&overlaySeen){ctx.fillStyle='rgba(0,0,0,.6)';rr(W/2-300,H/2-25,600,50,25);ctx.fill();ctx.fillStyle='#fff';ctx.font='22px '+FONT;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(`手機上：${remote.phase==='lobby'?'報名中':remote.phase==='battle'?'撈魚中':'已結束'}・報名 ${remote.joined} 隻・剩 ${remote.alive} 隻`,W/2,H/2);}
   if(toast){const age=now-toast.at;if(age>1800)toast=null;else{ctx.globalAlpha=Math.min(1,(1800-age)/300);ctx.fillStyle='rgba(0,0,0,.75)';ctx.font='bold 26px '+FONT;const tw=ctx.measureText(toast.t).width+40;rr(W/2-tw/2,H/2-28,tw,56,28);ctx.fill();ctx.fillStyle='#fff';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(toast.t,W/2,H/2);ctx.globalAlpha=1;}}
+  drawSide(now);
   requestAnimationFrame(frame);
+}
+function drawSide(now){
+  ctx.setTransform(1,0,0,1,0,0);const X=800,Y=6,PW=cv.width-X-6,PH=H-12;
+  ctx.fillStyle='rgba(10,14,24,.78)';rr(X,Y,PW,PH,18);ctx.fill();ctx.strokeStyle='rgba(243,217,166,.7)';ctx.lineWidth=2;ctx.stroke();
+  ctx.textAlign='left';ctx.textBaseline='middle';ctx.fillStyle='#f3d9a6';ctx.font='bold 26px '+FONT;ctx.fillText('💬 有效留言',X+16,Y+30);
+  ctx.font='bold 18px '+FONT;ctx.fillStyle='#cfd5df';ctx.fillText(`有效 ${validN} 則・${fish.length} 人參加`,X+16,Y+62);
+  ctx.fillStyle='rgba(255,255,255,.18)';ctx.fillRect(X+14,Y+80,PW-28,2);
+  const RH=56,top=Y+90,maxR=Math.floor((PH-100)/RH);
+  if(!feed.length){ctx.fillStyle='rgba(255,255,255,.5)';ctx.font='19px '+FONT;ctx.fillText(`留言「${f1(cfg.kw)}」就會出現在這`,X+16,top+30);}
+  feed.slice(0,maxR).forEach((e,i)=>{const age=now-e.t,a=Math.min(1,age/250),y=top+i*RH+(1-a)*-20;ctx.globalAlpha=a*(i>=maxR-2?0.55:1);
+    if(age<1200){ctx.fillStyle=`rgba(255,224,138,${.22*(1-age/1200)})`;rr(X+8,y,PW-16,RH-6,12);ctx.fill();}
+    const r=21,cx=X+16+r,cy=y+(RH-6)/2;const im=imgOf(e.img);ctx.save();ctx.beginPath();ctx.arc(cx,cy,r,0,7);ctx.clip();if(ok(im))ctx.drawImage(im,cx-r,cy-r,r*2,r*2);else{ctx.fillStyle='#c9748a';ctx.fillRect(cx-r,cy-r,r*2,r*2);ctx.fillStyle='#fff';ctx.font=`bold 20px ${FONT}`;ctx.textAlign='center';ctx.fillText(e.name[0]||'?',cx,cy+1);ctx.textAlign='left';}ctx.restore();
+    ctx.beginPath();ctx.arc(cx,cy,r,0,7);ctx.strokeStyle='rgba(255,255,255,.85)';ctx.lineWidth=2;ctx.stroke();
+    const nm=e.name.length>8?e.name.slice(0,8)+'…':e.name;ctx.fillStyle='#fff';ctx.font='bold 20px '+FONT;ctx.fillText(nm,cx+r+10,cy-11);ctx.fillStyle=e.c;ctx.font='bold 18px '+FONT;ctx.fillText(e.txt,cx+r+10,cy+13);ctx.globalAlpha=1;});
 }
 requestAnimationFrame(frame);
 
