@@ -308,6 +308,12 @@ else if(QS.get('session')){connect();}
 /* 紀錄頁：一直確認手機有沒有在線（手機晚開、或總台切換遊戲也能接上） */
 var lastOv=0;
 if(REC)setInterval(()=>{sendDown({arCmd:'sync'});if(overlaySeen&&Date.now()-lastOv>15000){overlaySeen=false;setState('📋 紀錄模式：還沒偵測到手機（現在按按鈕會在這頁自己跑）');try{renderUI();}catch(e){}}},4000);
+
+/* 手機直播畫面：用程式算大小（iPhone 不會超出框、字不會被切掉）；總台可切換「填滿」 */
+if(OV){window.__fill=window.__fill||false;window.__fit=function(){const c=document.getElementById('cv');if(!c)return;const vw=innerWidth,vh=innerHeight;let w,h;
+  if(window.__fill){w=vw;h=vh;}else{const s=Math.min(vw/c.width,vh/c.height);w=c.width*s;h=c.height*s;}
+  Object.assign(c.style,{position:'fixed',left:((vw-w)/2)+'px',top:'0px',width:w+'px',height:h+'px',maxHeight:'none',aspectRatio:'auto',objectFit:'fill',transform:'none',margin:'0'});};
+  addEventListener('resize',window.__fit);setInterval(window.__fit,1000);window.__fit();}
 </script>
 </body>
 </html>

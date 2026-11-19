@@ -57,7 +57,7 @@ if(OV){
   let fills=LS('fills',{}),sizes=LS('sizes',{});
   function applySize(){const z=sizes[cur]||{w:100,h:100};fr.style.width=z.w+'%';fr.style.height=z.h+'%';fr.style.left=((100-z.w)/2)+'%';fr.style.right='auto';fr.style.top='0';fr.style.bottom='auto';}
   const FILLCSS='html,body{height:100%!important;overflow:hidden!important}#wrap{padding:0!important;height:100vh!important}#stage{height:100vh!important;padding:0!important;align-items:stretch!important}canvas{width:100vw!important;height:100vh!important;max-height:none!important;aspect-ratio:auto!important;object-fit:fill!important;transform:none!important}';
-  function applyFill(){try{const d=fr.contentDocument;if(!d||!d.head)return;let st=d.getElementById('hubFill');const on=!!fills[cur];if(on&&!st){st=d.createElement('style');st.id='hubFill';st.textContent=FILLCSS;d.head.appendChild(st);}if(!on&&st)st.remove();}catch(e){}}
+  function applyFill(){try{const w=fr.contentWindow;if(!w)return;w.__fill=!!fills[cur];if(w.__fit)w.__fit();}catch(e){}}
   const applyOp=()=>{fr.style.opacity=cur&&cur!=='none'?(ops[cur]!=null?ops[cur]:100)/100:0;applyFill();applySize();};
   function show(g){if(!GAMES[g])return;if(g===cur)return;cur=g;SV('ovGame',g);
     fr.style.opacity=0;setTimeout(()=>{fr.src=g==='none'?'about:blank':gameUrl(g,'overlay');fr.onload=applyOp;},300);report();}
