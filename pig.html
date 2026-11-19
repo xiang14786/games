@@ -102,7 +102,7 @@ function crackSeed(){let s=(pig&&pig.id||1)%2147483647;const R=()=>(s=s*16807%21
 crackSeed();
 
 /* ===== 畫金豬 ===== */
-const PX=480,PY=420;
+const PX=480,PY=372;
 function goldGrad(x,y,r){const g=ctx.createRadialGradient(x-r*.35,y-r*.45,r*.05,x,y,r*1.1);g.addColorStop(0,'#fffbe0');g.addColorStop(.25,'#ffe27a');g.addColorStop(.6,'#e2a92a');g.addColorStop(1,'#8a5a0c');return g;}
 const PIMG=[1,2,3,4].map(i=>{const im=new Image();im.src='pig'+i+'.png';return im;});
 const PW=540,PH=Math.round(540*429/560),PL=PX-PW/2,PT=PY-PH/2+10;
@@ -179,8 +179,9 @@ function frame(now){
   if(shards.length&&now-brokeAt>4000){shards.length=0;coins.length=0;}
   if(flash>0){ctx.fillStyle=`rgba(255,248,210,${flash})`;ctx.fillRect(0,0,W,H);flash=Math.max(0,flash-dt*1.6);}
   // 上方標題
-  if(!pig.broken){ctx.fillStyle='rgba(0,0,0,.6)';const kw=cfg.kw.split(/[,，]/)[0]||'抽';const t=`🔨 留言「${kw==='*'?'任何字':kw}」敲金豬！ 已敲 ${pig.hits}${cfg.showT?' / '+pig.target:''} 下`;ctx.font='bold 30px '+FONT;const tw=ctx.measureText(t).width+44;rr(W/2-tw/2,18,tw,54,27);ctx.fill();ctx.fillStyle='#ffe08a';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(t,W/2,46);
-    if(queue.length){ctx.fillStyle='#fff';ctx.font='20px '+FONT;ctx.fillText(`還有 ${queue.length} 支槌子排隊中`,W/2,92);}}
+  if(!pig.broken){const kw=cfg.kw.split(/[,，]/)[0]||'抽';const t=`🔨 留言「${kw==='*'?'任何字':kw}」敲金豬！ 已敲 ${pig.hits}${cfg.showT?' / '+pig.target:''} 下`;
+    bannerT(t,H-38,32);
+    if(queue.length)bannerT(`還有 ${queue.length} 支槌子排隊中`,H-94,22,'#fff','rgba(0,0,0,.5)');}
   // 得獎卡
   if(pig.broken&&now-brokeAt>900||pig.broken&&!brokeAt){const k=brokeAt?Math.min(1,(now-brokeAt-900)/400):1,w=pig.winner;ctx.globalAlpha=k;
     ctx.fillStyle='rgba(12,14,22,.9)';rr(170,150,660,400,30);ctx.fill();ctx.strokeStyle='#f3d9a6';ctx.lineWidth=5;ctx.stroke();
@@ -192,6 +193,10 @@ function frame(now){
   drawSide(now,`留言「${(cfg.kw.split(/[,，]/)[0]||"").trim()}」就會出現在這`);
   requestAnimationFrame(frame);
 }
+/* 置中文字條（自己算位置，iPhone 也不會跑掉；太長會自動縮小） */
+function bannerT(t,y,size,col,bg){t=String(t).replace(/️/g,'');ctx.save();ctx.font=`bold ${size}px ${FONT}`;let w=ctx.measureText(t).width;const max=(typeof BT_MAX!=='undefined'?BT_MAX:W-30);
+  if(w+40>max){size=Math.max(14,Math.floor(size*(max-40)/w));ctx.font=`bold ${size}px ${FONT}`;w=ctx.measureText(t).width;}
+  const h=size+22,tw=w+40;ctx.fillStyle=bg||'rgba(0,0,0,.7)';rr(W/2-tw/2,y-h/2,tw,h,h/2);ctx.fill();ctx.fillStyle=col||'#ffe08a';ctx.textAlign='left';ctx.textBaseline='middle';ctx.fillText(t,W/2-w/2,y+1);ctx.restore();}
 /* ===== 右側有效留言欄 ===== */
 var feed=[],validN=0,feedNames=new Set();
 function addFeed(name,img,txt,c){validN++;feedNames.add(name);feed.unshift({name,img,txt,c,t:performance.now()});if(feed.length>30)feed.length=30;}
@@ -246,7 +251,7 @@ function listenCmd(){cmdWs=new WebSocket(SERVER);cmdWs.onopen=()=>cmdWs.send(JSO
   cmdWs.onclose=()=>setTimeout(listenCmd,4000);}
 function listenRec(){recWs=new WebSocket(SERVER);recWs.onopen=()=>{recWs.send(JSON.stringify({join:sid,in:5,out:6}));setTimeout(()=>{pushCfg();sendDown({pigCmd:'sync'});},300);};
   recWs.onmessage=e=>{let m;try{m=JSON.parse(e.data);}catch(x){return;}const d=m.overlayNinja||m;
-    if(d.pigState||d.pigHit||d.pigWin){if(!overlaySeen){overlaySeen=true;setState('📋 紀錄模式：已連上手機金豬（代碼 '+sid+'）');}}
+    if(d.pigState||d.pigHit||d.pigWin){lastOv=Date.now();if(!overlaySeen){overlaySeen=true;setState('📋 紀錄模式：已連上手機金豬（代碼 '+sid+'）');}}
     if(d.pigState){pig=d.pigState;SV('pig',pig);crackSeed();renderUI();}
     if(d.pigHit&&!pig.broken){pig.hits=d.pigHit.hits;if(d.pigHit.target)pig.target=d.pigHit.target;hammers.push({name:d.pigHit.n,img:d.pigHit.s,t0:performance.now(),px:PX+270,py:PY-305,hit:true});renderUI();}
     if(d.pigWin){pig.broken=true;pig.winner=d.pigWin;pig.hits=d.pigWin.hits;brokeAt=performance.now();if(!wins.some(w=>w.t===d.pigWin.t)){wins.unshift(d.pigWin);SV('wins',wins);}renderUI();}};
@@ -281,6 +286,10 @@ renderUI();
 if(OV){document.body.classList.add('ov');document.documentElement.style.background='transparent';connect();listenCmd();setTimeout(()=>$('ovState').style.opacity=0,8000);}
 else if(REC){listenRec();$('conn').style.display='none';setState('📋 紀錄模式：還沒偵測到手機上的金豬（現在模擬敲會在這頁自己跑）');}
 else if(QS.get('session')){connect();}
+
+/* 紀錄頁：一直確認手機有沒有在線（手機晚開、或總台切換遊戲也能接上） */
+var lastOv=0;
+if(REC)setInterval(()=>{sendDown({pigCmd:'sync'});if(overlaySeen&&Date.now()-lastOv>15000){overlaySeen=false;setState('📋 紀錄模式：還沒偵測到手機（現在按按鈕會在這頁自己跑）');try{renderUI();}catch(e){}}},4000);
 </script>
 </body>
 </html>

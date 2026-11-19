@@ -10,7 +10,7 @@
 html,body{margin:0;height:100%;background:var(--bg);color:var(--txt);font:18px/1.6 "Microsoft JhengHei","PingFang TC","Noto Sans TC",sans-serif}
 #wrap{display:flex;gap:18px;height:100%;padding:12px}
 #stage{flex:1 1 auto;min-width:0;height:100%;display:flex;align-items:center;justify-content:center;perspective:1400px;touch-action:none;user-select:none}
-canvas{width:100%;max-height:100%;aspect-ratio:1290/690;object-fit:contain;display:block;transform-origin:50% 60%;filter:drop-shadow(0 18px 24px rgba(0,0,0,.45))}
+canvas{width:100%;max-height:100%;aspect-ratio:1290/760;object-fit:contain;display:block;transform-origin:50% 60%;filter:drop-shadow(0 18px 24px rgba(0,0,0,.45))}
 input[type=range]{width:100%;accent-color:#e2c28a}
 #panel{flex:0 0 400px;overflow:auto;background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:16px 18px}
 h2{margin:4px 0 10px;font-size:22px;color:var(--gold)}
@@ -54,7 +54,7 @@ body.ov #stage{height:100vh;align-items:flex-end;padding-bottom:4vh}
 </head>
 <body>
 <div id="wrap">
-  <div id="stage"><canvas id="cv" width="1290" height="690"></canvas></div>
+  <div id="stage"><canvas id="cv" width="1290" height="760"></canvas></div>
   <div id="panel">
     <h2>① 裝填觀眾彈珠</h2>
     <input type="text" id="nm" placeholder="觀眾名字（例：王小晴）">
@@ -377,7 +377,7 @@ function frame(now){DBG.frames++;
   }}else acc=0;
   balls=balls.filter(b=>b.state==='fly'||(b.state==='in'&&now-b.inAt<2600));
   if(fly.length&&Math.random()<0.05)renderQueue();
-  ctx.clearRect(0,0,W,H);ctx.drawImage(bgc,0,0);
+  ctx.clearRect(0,0,cv.width,cv.height);ctx.drawImage(bgc,0,0);
   for(const [p,v] of pinGlow){ctx.beginPath();ctx.arc(p.x,p.y,PR+6*v,0,7);ctx.fillStyle=`rgba(255,250,200,${v*.9})`;ctx.fill();const nv=v-dt*3;if(nv<=0)pinGlow.delete(p);else pinGlow.set(p,nv);}
   for(let i=0;i<cups.length;i++)drawCup(i,i===cupGlow?cupGlowV:0);
   drawFlippers();
@@ -396,15 +396,19 @@ function frame(now){DBG.frames++;
   if(pending.length&&!volley&&batchN>1){const n=pending.length;
     // 發射道裡排隊的球（最多 7 顆看得到）
     const show=Math.min(n,7);for(let i=0;i<show;i++){const q=pending[i];drawBall({x:SX,y:FLOOR-BR-i*54,img:q.img,name:q.name,rot:0,noLabel:true},0.92);}
-    ctx.save();ctx.fillStyle='rgba(0,0,0,.65)';rr(W-330,82,300,50,25);ctx.fill();ctx.fillStyle='#ffe08a';ctx.font='bold 26px '+FONT;ctx.textAlign='center';ctx.textBaseline='middle';
-    const dots='.'.repeat(1+Math.floor(now/400)%3);ctx.fillText(`⚡ 集氣中 ${n} 顆${dots}`,W-180,108);ctx.restore();}
-  if(!reveal){const k0=(net.kw.split(/[,，]/)[0]||'抽').trim();const t=`🎯 留言「${k0==='*'?'任何字':k0}」就能射彈珠！`;
-    ctx.save();ctx.font='bold 28px '+FONT;const tw=ctx.measureText(t).width+44;ctx.fillStyle='rgba(0,0,0,.65)';rr(W/2-tw/2,14,tw,52,26);ctx.fill();ctx.fillStyle='#ffe08a';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(t,W/2,41);ctx.restore();}
+  }
+  if(!reveal){const k0=(net.kw.split(/[,，]/)[0]||'抽').trim();const n=pending.length;const dots='.'.repeat(1+Math.floor(now/400)%3);
+    // 放在最下面（彈珠台下方的空間），才不會被直播人數擋住
+    bannerT(`🎯 留言「${k0==='*'?'任何字':k0}」就能射彈珠！${n&&!volley&&batchN>1?`　⚡集氣中 ${n} 顆${dots}`:''}`,H+35,30);}
   if(reveal)drawReveal(now);
   drawSide(now,`留言「${(net.kw.split(/[,，]/)[0]||'抽').trim()}」就會出現在這`);
   if(toast){const age=now-toast.at;if(age>1800)toast=null;else{ctx.globalAlpha=Math.min(1,(1800-age)/300);ctx.fillStyle='rgba(0,0,0,.75)';ctx.font='bold 28px '+FONT;const tw=ctx.measureText(toast.t).width+40;rr(W/2-tw/2,420,tw,56,28);ctx.fill();ctx.fillStyle='#fff';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(toast.t,W/2,448);ctx.globalAlpha=1;}}
   requestAnimationFrame(frame);
 }
+/* 置中文字條（自己算位置，iPhone 也不會跑掉；太長會自動縮小） */
+function bannerT(t,y,size,col,bg){t=String(t).replace(/️/g,'');ctx.save();ctx.font=`bold ${size}px ${FONT}`;let w=ctx.measureText(t).width;const max=(typeof BT_MAX!=='undefined'?BT_MAX:W-30);
+  if(w+40>max){size=Math.max(14,Math.floor(size*(max-40)/w));ctx.font=`bold ${size}px ${FONT}`;w=ctx.measureText(t).width;}
+  const h=size+22,tw=w+40;ctx.fillStyle=bg||'rgba(0,0,0,.7)';rr(W/2-tw/2,y-h/2,tw,h,h/2);ctx.fill();ctx.fillStyle=col||'#ffe08a';ctx.textAlign='left';ctx.textBaseline='middle';ctx.fillText(t,W/2-w/2,y+1);ctx.restore();}
 /* ===== 右側有效留言欄 ===== */
 var feed=[],validN=0,feedNames=new Set();
 function addFeed(name,img,txt,c){validN++;feedNames.add(name);feed.unshift({name,img,txt,c,t:performance.now()});if(feed.length>30)feed.length=30;}

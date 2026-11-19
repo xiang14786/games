@@ -87,10 +87,10 @@ let wins=LS('wins',[]);
 
 /* 躲藏地點 */
 const SPOTS={
-  sofa:{n:'沙發',ic:'🛋️',x:40,y:360,w:360,h:150,stand:[240,555],k:'kSofa'},
+  sofa:{n:'沙發',ic:'💺',x:40,y:335,w:360,h:120,stand:[240,555],k:'kSofa'},
   ward:{n:'衣櫃',ic:'🚪',x:620,y:120,w:165,h:300,stand:[700,520],k:'kWard'},
-  curt:{n:'窗簾',ic:'🪟',x:822,y:90,w:160,h:400,stand:[880,545],k:'kCurt'},
-  none:{n:'沒躲好',ic:'😱',x:420,y:450,w:190,h:90,stand:[515,555]}
+  curt:{n:'窗簾',ic:'🪟',x:822,y:90,w:160,h:360,stand:[880,545],k:'kCurt'},
+  none:{n:'沒躲好',ic:'😱',x:420,y:395,w:190,h:70,stand:[515,555]}
 };
 const DOOR={x:505,y:415};
 const QUOTES=['又在買衣服？','這個多少錢？','我兒子賺錢很辛苦欸','整天在家都在幹嘛','冰箱怎麼又空了','被我抓到了吧！','躲什麼躲！','又在看直播買東西？','衣服是不是又變多了'];
@@ -188,15 +188,16 @@ function frame(now){
       if(bubble&&now-bubble.t0<2200&&phase!=='enter'){ctx.font='bold 28px '+FONT;const tw=ctx.measureText(bubble.t).width+36;let bx=po.x+w*0.3,by=po.y-h-10;if(bx+tw>W-10)bx=po.x-w*0.3-tw;by=Math.max(60,by);
         ctx.fillStyle='#fff';rr(bx,by,tw,56,22);ctx.fill();ctx.strokeStyle='#c9302c';ctx.lineWidth=3;ctx.stroke();ctx.fillStyle='#8a1c1c';ctx.textAlign='left';ctx.textBaseline='middle';ctx.fillText(bubble.t,bx+18,by+29);}}}
   for(let i=pops.length-1;i>=0;i--){const p=pops[i],k=(now-p.t0)/(p.big?1600:1300);if(k>1){pops.splice(i,1);continue;}ctx.globalAlpha=1-k;ctx.font=`bold ${p.big?54:30}px ${FONT}`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.lineWidth=7;ctx.strokeStyle='rgba(0,0,0,.7)';ctx.strokeText(p.t,p.x,p.y-k*30);ctx.fillStyle=p.c;ctx.fillText(p.t,p.x,p.y-k*30);ctx.globalAlpha=1;}
-  // 上方標題
+  // 下方標題（放下面，才不會被直播人數擋住）
   const kws=`「${f1(cfg.kSofa)}」「${f1(cfg.kWard)}」「${f1(cfg.kCurt)}」`;
   if(phase!=='end'){let t;
     if(phase==='lobby')t=`👵 婆婆要來突襲了！留言 ${kws} 躲起來`;
     else if(phase==='count'){const s=Math.max(0,Math.ceil((tEnd-now)/1000));t=`⏰ 婆婆 ${s} 秒後進來檢查！第 ${round} 輪・還有 ${alive().length} 人`;}
     else t=`😱 婆婆進來了！第 ${round} 輪・還有 ${alive().length} 人`;
-    ctx.font='bold 27px '+FONT;const tw=ctx.measureText(t).width+44;ctx.fillStyle=phase==='count'&&tEnd-now<10000?'rgba(160,20,30,.85)':'rgba(0,0,0,.68)';rr(W/2-tw/2,10,tw,50,25);ctx.fill();ctx.fillStyle='#ffe08a';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(t,W/2,35);
-    if(phase==='count'&&round>1){ctx.font='bold 22px '+FONT;const sub=`每輪都要重新留言躲！${kws}，沒躲的會被抓`;const sw=ctx.measureText(sub).width+30;ctx.fillStyle='rgba(0,0,0,.6)';rr(W/2-sw/2,66,sw,38,19);ctx.fill();ctx.fillStyle='#fff';ctx.fillText(sub,W/2,85);}
-    if(phase==='lobby'&&!ppl.length){ctx.fillStyle='rgba(20,10,20,.82)';rr(W/2-260,150,520,150,24);ctx.fill();ctx.strokeStyle='#ffb070';ctx.lineWidth=3;ctx.stroke();ctx.fillStyle='#fff';ctx.font='bold 28px '+FONT;ctx.fillText('婆婆要來家裡突襲檢查了！',W/2,195);ctx.fillStyle='#ffd39a';ctx.font='bold 24px '+FONT;ctx.fillText('快留言選地方躲，最後沒被抓到的有獎',W/2,240);ctx.fillStyle='#ffe08a';ctx.font='bold 22px '+FONT;ctx.fillText(`🛋️ ${f1(cfg.kSofa)}　🚪 ${f1(cfg.kWard)}　🪟 ${f1(cfg.kCurt)}`,W/2,278);}}
+    bannerT(t,H-36,29,'#ffe08a',phase==='count'&&tEnd-now<10000?'rgba(160,20,30,.88)':'rgba(0,0,0,.7)');
+    if(phase==='count'&&round>1)bannerT(`每輪都要重新留言躲！${kws}，沒躲的會被抓`,H-88,23,'#fff','rgba(0,0,0,.62)');
+    ctx.textAlign='center';ctx.textBaseline='middle';
+    if(phase==='lobby'&&!ppl.length){ctx.fillStyle='rgba(20,10,20,.82)';rr(W/2-260,150,520,150,24);ctx.fill();ctx.strokeStyle='#ffb070';ctx.lineWidth=3;ctx.stroke();ctx.fillStyle='#fff';ctx.font='bold 28px '+FONT;ctx.fillText('婆婆要來家裡突襲檢查了！',W/2,195);ctx.fillStyle='#ffd39a';ctx.font='bold 24px '+FONT;ctx.fillText('快留言選地方躲，最後沒被抓到的有獎',W/2,240);ctx.fillStyle='#ffe08a';ctx.font='bold 22px '+FONT;ctx.fillText(`💺 ${f1(cfg.kSofa)}　🚪 ${f1(cfg.kWard)}　🪟 ${f1(cfg.kCurt)}`,W/2,278);}}
   // 得獎卡
   if(phase==='end'&&winners&&now-endAt>400){const k=Math.min(1,(now-endAt-400)/400),Lw=winners.list;ctx.globalAlpha=k;
     ctx.fillStyle='rgba(12,14,22,.92)';rr(170,70,660,420,30);ctx.fill();ctx.strokeStyle='#f3d9a6';ctx.lineWidth=5;ctx.stroke();
@@ -204,13 +205,17 @@ function frame(now){
     ctx.fillStyle='#cfd5df';ctx.font='22px '+FONT;ctx.fillText(`${winners.count} 人參加，婆婆檢查了 ${winners.rounds} 輪`,W/2,168);
     const n=Lw.length,gap=n===1?0:175;Lw.forEach((w,i)=>{const x=W/2+(i-(n-1)/2)*gap,y=265,r=n===1?62:50;drawAvatar({name:w.n,img:w.s},x,y,r,k,true);ctx.globalAlpha=k;ctx.fillStyle='#fff';ctx.font=`bold ${n===1?34:24}px ${FONT}`;ctx.textAlign='center';ctx.fillText(w.n.length>7?w.n.slice(0,7)+'…':w.n,x,y+r+44);});
     ctx.fillStyle='#ffe08a';ctx.font='bold 40px '+FONT;ctx.fillText(`獲得【${winners.prize||'神秘小禮'}】`,W/2,445);ctx.globalAlpha=1;}
-  if(REC&&overlaySeen&&remote){ctx.fillStyle='rgba(0,0,0,.6)';rr(W/2-300,H-60,600,46,23);ctx.fill();ctx.fillStyle='#fff';ctx.font='21px '+FONT;ctx.textAlign='center';ctx.textBaseline='middle';
-    ctx.fillText(`手機上：${{lobby:'報名中',count:'倒數中',enter:'婆婆進門',search:'婆婆翻找中',result:'這輪結束',end:'已結束'}[remote.phase]||''}・第 ${remote.round} 輪・剩 ${remote.alive}/${remote.joined} 人`,W/2,H-37);}
+  if(REC&&overlaySeen&&remote){ctx.fillStyle='rgba(0,0,0,.6)';rr(W/2-300,H/2-23,600,46,23);ctx.fill();ctx.fillStyle='#fff';ctx.font='21px '+FONT;ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText(`手機上：${{lobby:'報名中',count:'倒數中',enter:'婆婆進門',search:'婆婆翻找中',result:'這輪結束',end:'已結束'}[remote.phase]||''}・第 ${remote.round} 輪・剩 ${remote.alive}/${remote.joined} 人`,W/2,H/2);}
   if(toast){const age=now-toast.at;if(age>1800)toast=null;else{ctx.globalAlpha=Math.min(1,(1800-age)/300);ctx.fillStyle='rgba(0,0,0,.75)';ctx.font='bold 26px '+FONT;const tw=ctx.measureText(toast.t).width+40;rr(W/2-tw/2,H/2-28,tw,56,28);ctx.fill();ctx.fillStyle='#fff';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(toast.t,W/2,H/2);ctx.globalAlpha=1;}}
   drawSide(now,`留言 ${kws} 就會出現在這`);
   requestAnimationFrame(frame);
 }
 const f1=s=>(String(s).split(/[,，]/)[0]||'').trim();
+/* 置中文字條（自己算位置，iPhone 也不會跑掉；太長會自動縮小） */
+function bannerT(t,y,size,col,bg){t=String(t).replace(/️/g,'');ctx.save();ctx.font=`bold ${size}px ${FONT}`;let w=ctx.measureText(t).width;const max=(typeof BT_MAX!=='undefined'?BT_MAX:W-30);
+  if(w+40>max){size=Math.max(14,Math.floor(size*(max-40)/w));ctx.font=`bold ${size}px ${FONT}`;w=ctx.measureText(t).width;}
+  const h=size+22,tw=w+40;ctx.fillStyle=bg||'rgba(0,0,0,.7)';rr(W/2-tw/2,y-h/2,tw,h,h/2);ctx.fill();ctx.fillStyle=col||'#ffe08a';ctx.textAlign='left';ctx.textBaseline='middle';ctx.fillText(t,W/2-w/2,y+1);ctx.restore();}
 /* ===== 右側有效留言欄 ===== */
 var feed=[],validN=0,feedNames=new Set();
 function addFeed(name,img,txt,c){validN++;feedNames.add(name);feed.unshift({name,img,txt,c,t:performance.now()});if(feed.length>30)feed.length=30;}
@@ -262,7 +267,7 @@ function listenCmd(){cmdWs=new WebSocket(SERVER);cmdWs.onopen=()=>cmdWs.send(JSO
   cmdWs.onclose=()=>setTimeout(listenCmd,4000);}
 function listenRec(){recWs=new WebSocket(SERVER);recWs.onopen=()=>{recWs.send(JSON.stringify({join:sid,in:5,out:6}));setTimeout(()=>{pushCfg();sendDown({popoCmd:'sync'});},300);};
   recWs.onmessage=e=>{let m;try{m=JSON.parse(e.data);}catch(x){return;}const d=m.overlayNinja||m;
-    if(d.popoState||d.popoWin){if(!overlaySeen){overlaySeen=true;setState('📋 紀錄模式：已連上手機（代碼 '+sid+'）');}}
+    if(d.popoState||d.popoWin){lastOv=Date.now();if(!overlaySeen){overlaySeen=true;setState('📋 紀錄模式：已連上手機（代碼 '+sid+'）');}}
     if(d.popoState){remote=d.popoState;renderUI();}
     if(d.popoWin){if(!wins.some(w=>w.t===d.popoWin.t)){wins.unshift(d.popoWin);SV('wins',wins);}renderUI();}};
   recWs.onclose=()=>setTimeout(listenRec,4000);}
@@ -296,6 +301,10 @@ renderUI();
 if(OV){document.body.classList.add('ov');document.documentElement.style.background='transparent';connect();listenCmd();setTimeout(()=>$('ovState').style.opacity=0,8000);}
 else if(REC){listenRec();$('conn').style.display='none';setState('📋 紀錄模式：還沒偵測到手機（現在按按鈕會在這頁自己跑）');}
 else if(QS.get('session')){connect();}
+
+/* 紀錄頁：一直確認手機有沒有在線（手機晚開、或總台切換遊戲也能接上） */
+var lastOv=0;
+if(REC)setInterval(()=>{sendDown({popoCmd:'sync'});if(overlaySeen&&Date.now()-lastOv>15000){overlaySeen=false;setState('📋 紀錄模式：還沒偵測到手機（現在按按鈕會在這頁自己跑）');try{renderUI();}catch(e){}}},4000);
 </script>
 </body>
 </html>
