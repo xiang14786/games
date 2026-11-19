@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Shine欣 九宮格搶地盤</title>
+<style>
+:root{--bg:#14161b;--panel:#1c1f26;--line:#2c313b;--txt:#eceef2;--sub:#9aa3b2;--gold:#e2c28a}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--txt);font:18px/1.6 "Microsoft JhengHei","PingFang TC","Noto Sans TC",sans-serif}
+#wrap{display:flex;gap:18px;height:100%;padding:12px}
+#stage{flex:1 1 auto;min-width:0;height:100%;display:flex;align-items:center;justify-content:center}
+canvas{height:100%;max-width:100%;aspect-ratio:720/1280;display:block;border-radius:14px;background:repeating-conic-gradient(#3a3f4a 0 25%,#30343d 0 50%) 0 0/40px 40px}
+#panel{flex:0 0 400px;overflow:auto;background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:16px 18px}
+h2{margin:4px 0 10px;font-size:22px;color:var(--gold)}
+h3{margin:18px 0 8px;font-size:19px;color:var(--gold)}
+input,button,select{font:inherit}
+input[type=text],input[type=number],select{width:100%;padding:10px 12px;border-radius:10px;border:1px solid #3a404c;background:#252a33;color:#fff}
+.btn{border:none;border-radius:12px;padding:10px 16px;font-weight:700;cursor:pointer}
+.go{width:100%;background:linear-gradient(180deg,#f0d29b,#c99a57);color:#1a1a1a;font-size:20px}
+.ghost{background:#2c313b;color:var(--txt);font-size:16px;padding:8px 14px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.tip{color:var(--sub);font-size:15px}
+label{display:block;margin-top:6px}
+#cells{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:6px}
+#cells input{text-align:center;font-size:24px;font-weight:700;padding:8px}
+#log div{padding:6px 0;border-bottom:1px solid var(--line);font-size:16px}
+body.ov,body.ov #wrap{background:transparent!important}
+body.ov #panel{display:none}
+body.ov #wrap{padding:0}
+body.ov canvas{background:transparent;border-radius:0}
+#ovState{display:none;position:fixed;left:6px;bottom:6px;font-size:13px;color:#fff;background:rgba(0,0,0,.4);padding:2px 8px;border-radius:8px;transition:opacity 1s}
+body.ov #ovState{display:block}
+@media (max-width:900px){#wrap{flex-direction:column;height:auto}#stage{height:80vh}#panel{flex:none}}
+</style>
+</head>
+<body>
+<div id="wrap">
+  <div id="stage"><canvas id="cv" width="720" height="1280"></canvas></div>
+  <div id="panel">
+    <h2>👑 九宮格搶地盤</h2>
+    <div class="tip" id="state"></div>
+    <div class="row" style="margin-top:8px"><button class="btn go" id="startBtn">👑 開始搶地盤</button></div>
+    <div class="row" style="margin-top:8px"><button class="btn ghost" id="endBtn">🏁 結算（公布地主）</button><button class="btn ghost" id="newBtn">🔄 清空重來</button></div>
+
+    <h3>🔤 九宮格的字（每格一個字）</h3>
+    <div id="cells"></div>
+    <div class="tip">觀眾留言「字＋1」，例如「超+1」就能佔領那一格。改字要按「清空重來」才會換。</div>
+
+    <h3>⚙️ 遊戲設定</h3>
+    <label>九宮格放在畫面哪裡<select id="pos"><option value="tr">右上角</option><option value="tl">左上角</option><option value="br">右下角</option><option value="bl">左下角</option></select></label>
+    <div class="row"><label style="flex:1">每格最多幾滴血<input type="number" id="maxHp" min="1" max="20"></label><label style="flex:1">同一人幾秒算一次<input type="number" id="cd" min="0"></label></div>
+    <label>遊戲時間（分鐘，0＝不限，按「結算」才結束）<input type="number" id="dur" min="0"></label>
+    <label>佔領最多格的人得到<input type="text" id="prizeTop" placeholder="例：購物金50元（空白＝沒有）"></label>
+    <label>結算時每一格的地主得到<input type="text" id="prizeCell" placeholder="例：購物金10元（空白＝沒有）"></label>
+
+    <h3>📡 自動接 FB 留言</h3>
+    <label>連線代碼（Session ID）<input type="text" id="sid"></label>
+    <div class="row" style="margin-top:8px"><button class="btn ghost" id="conn">開始接留言</button><span id="wsState" class="tip">未連線</span></div>
+    <div class="row" style="margin-top:8px"><button class="btn ghost" id="copyOv">複製手機直播用網址</button><button class="btn ghost" id="copyRec">複製電腦紀錄用網址</button><span class="tip" id="ovTip"></span></div>
+    <div class="row" style="margin-top:8px"><button class="btn ghost" id="fakeBtn">模擬 10 則留言</button></div>
+
+    <h3>🏆 得獎紀錄</h3>
+    <div class="row"><button class="btn ghost" id="copyWin">複製得獎名單</button><button class="btn ghost" id="clrWin">清空紀錄</button></div>
+    <div id="log"></div>
+  </div>
+</div>
+<div id="ovState"></div>
+<script>
+const cv=document.getElementById('cv'),ctx=cv.getContext('2d'),W=720,H=1280,$=id=>document.getElementById(id);
+const FONT='"Microsoft JhengHei","PingFang TC",sans-serif';
+const LS=(k,d)=>{try{const v=localStorage.getItem('gd_'+k);return v?JSON.parse(v):d}catch(e){return d}};
+const SV=(k,v)=>{try{localStorage.setItem('gd_'+k,JSON.stringify(v))}catch(e){}};
+const QS=new URLSearchParams(location.search),OV=QS.get('mode')==='overlay',REC=QS.get('mode')==='record';
+const SERVER=QS.get('server')||'wss://io.socialstream.ninja';
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function rr(x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();}
+const imgCache=new Map();function imgOf(s){if(!s)return null;if(!imgCache.has(s)){const im=new Image();im.referrerPolicy='no-referrer';im.src=s;imgCache.set(s,im);}return imgCache.get(s);}
+const ok=im=>im&&im.complete&&im.naturalWidth>0;
+
+/* ===== 設定 ===== */
+const rid=()=>'shine'+Math.random().toString(36).slice(2,9);
+let cfg=Object.assign({chars:'我是超級奶爸無敵帥',pos:'tr',maxHp:5,cd:3,dur:0,prizeTop:'購物金50元',prizeCell:''},LS('cfg',{}));
+let sid=QS.get('session')||LS('sid','')||rid();SV('sid',sid);
+if(OV){const c=LS('cfgR',null);if(c)Object.assign(cfg,c);}
+let wins=LS('wins',[]);
+const charsOf=()=>{const a=[...String(cfg.chars||'')].filter(c=>c.trim());while(a.length<9)a.push(String(a.length+1));return a.slice(0,9);};
+
+/* ===== 狀態 ===== */
+// phase: idle（還沒開始）→ play → end
+let phase='idle',cells=[],t0=0,endAt=0,result=null,remote=null;const fxs=[];
+function blank(){const ch=charsOf();return ch.map(c=>({ch:c,n:'',s:'',hp:0,hit:0,take:0}));}
+cells=LS('cells',null)||blank();phase=LS('phase','idle');
+function save(){if(!REC){SV('cells',cells);SV('phase',phase);}}
+function newGame(){cells=blank();phase='idle';result=null;t0=0;clearFeed();save();sendUp({gdState:stateMsg()});renderUI();}
+function startGame(){if(phase==='end')newGame();phase='play';t0=Date.now();save();sendUp({gdState:stateMsg()});renderUI();}
+function counts(){const m={};cells.forEach(c=>{if(c.n){m[c.n]=m[c.n]||{n:c.n,s:c.s,c:0};m[c.n].c++;}});return Object.values(m).sort((a,b)=>b.c-a.c);}
+function finish(){if(phase!=='play')return;phase='end';endAt=performance.now();const rk=counts();
+  result={top:rk[0]&&cfg.prizeTop?[{n:rk[0].n,s:rk[0].s,c:rk[0].c,prize:cfg.prizeTop}]:[],cells:cells.map(c=>({ch:c.ch,n:c.n,s:c.s})),prizeCell:cfg.prizeCell,rank:rk.slice(0,5),t:Date.now()};
+  if(rk[1]&&rk[0]&&rk[1].c===rk[0].c)result.tie=true;
+  if(!REC){wins.unshift(result);wins=wins.slice(0,100);SV('wins',wins);}
+  save();sendUp({gdWin:result,gdState:stateMsg()});renderUI();}
+function stateMsg(){return{phase,cells:cells.map(c=>({ch:c.ch,n:c.n,s:c.s,hp:c.hp})),left:cfg.dur>0&&phase==='play'?Math.max(0,cfg.dur*60-Math.floor((Date.now()-t0)/1000)):-1,result};}
+
+/* ===== 規則：佔領／加血／攻擊／擊倒 ===== */
+function act(i,name,img){
+  const c=cells[i],now=performance.now();const mx=Math.max(1,+cfg.maxHp||5);
+  if(!c.n){c.n=name;c.s=img||'';c.hp=1;c.take=now;addFeed(name,img,`佔領「${c.ch}」`,'#9fe7a4');boom(i,'#9fe7a4');}
+  else if(c.n===name){if(c.hp<mx){c.hp++;addFeed(name,img,`「${c.ch}」加血 ❤${c.hp}`,'#ffb3c6');}else addFeed(name,img,`「${c.ch}」血已滿`,'#cfd5df');c.heal=now;}
+  else{c.hp--;c.hit=now;if(c.hp<=0){const old=c.n;c.n=name;c.s=img||'';c.hp=1;c.take=now;addFeed(name,img,`擊倒 ${old.slice(0,4)} 搶下「${c.ch}」`,'#ffe08a');boom(i,'#ffe08a');}else addFeed(name,img,`攻擊「${c.ch}」`,'#ff9a9a');}
+  save();sendUp({gdState:stateMsg()});}
+function boom(i,col){const r=cellRect(i);for(let k=0;k<16;k++){const a=Math.random()*Math.PI*2,v=120+Math.random()*200;fxs.push({x:r.x+r.s/2,y:r.y+r.s/2,vx:Math.cos(a)*v,vy:Math.sin(a)*v,t0:performance.now(),c:col});}}
+
+/* ===== 畫面 ===== */
+const CS=128,GAP=8,GS=CS*3+GAP*2;
+function gridXY(){const p=cfg.pos||'tr';return{x:p[1]==='r'?W-GS-16:16,y:p[0]==='t'?190:H-GS-150};}
+function cellRect(i){const g=gridXY();return{x:g.x+(i%3)*(CS+GAP),y:g.y+Math.floor(i/3)*(CS+GAP),s:CS};}
+function drawAv(img,name,x,y,r){const im=imgOf(img);ctx.save();ctx.beginPath();ctx.arc(x,y,r,0,7);ctx.clip();if(ok(im))ctx.drawImage(im,x-r,y-r,r*2,r*2);else{ctx.fillStyle='#c9748a';ctx.fillRect(x-r,y-r,r*2,r*2);ctx.fillStyle='#fff';ctx.font=`bold ${r|0}px ${FONT}`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText((name||'?')[0],x,y+2);}ctx.restore();}
+function txt(t,x,y,size,col,align,stroke){ctx.font=`bold ${size}px ${FONT}`;ctx.textAlign=align||'center';ctx.textBaseline='middle';if(stroke){ctx.lineWidth=6;ctx.strokeStyle='rgba(0,0,0,.75)';ctx.strokeText(t,x,y);}ctx.fillStyle=col||'#fff';ctx.fillText(t,x,y);}
+function drawCell(i,now){
+  const c=cells[i],R=cellRect(i);let sx=0;
+  if(c.hit&&now-c.hit<400)sx=Math.sin((now-c.hit)/30)*6*(1-(now-c.hit)/400);
+  ctx.save();ctx.translate(R.x+sx,R.y);
+  const owned=!!c.n;ctx.fillStyle=owned?'rgba(20,16,30,.78)':'rgba(10,14,24,.55)';rr(0,0,CS,CS,18);ctx.fill();
+  ctx.lineWidth=owned?4:2;ctx.strokeStyle=owned?'#f3d9a6':'rgba(255,255,255,.45)';
+  if(c.take&&now-c.take<900){ctx.strokeStyle=`rgba(255,224,138,${1-(now-c.take)/900})`;ctx.lineWidth=8;}
+  ctx.stroke();
+  if(!owned){txt(c.ch,CS/2,CS/2-8,64,'#fff','center',true);txt(c.ch+'+1',CS/2,CS-22,22,'#ffe08a','center',true);}
+  else{
+    ctx.save();rr(4,4,CS-8,CS-8,14);ctx.clip();const im=imgOf(c.s);
+    if(ok(im))ctx.drawImage(im,4,4,CS-8,CS-8);else{ctx.fillStyle='#c9748a';ctx.fillRect(4,4,CS-8,CS-8);txt((c.n||'?')[0],CS/2,CS/2,60,'#fff');}
+    ctx.fillStyle='rgba(0,0,0,.55)';ctx.fillRect(4,CS-38,CS-8,34);ctx.restore();
+    if(c.hit&&now-c.hit<300){ctx.fillStyle=`rgba(255,40,40,${.45*(1-(now-c.hit)/300)})`;rr(0,0,CS,CS,18);ctx.fill();}
+    // 字（左上角）
+    ctx.fillStyle='rgba(243,217,166,.95)';rr(-6,-8,46,46,12);ctx.fill();txt(c.ch,17,15,30,'#2a1a22');
+    // 名字＋血
+    txt(c.n.length>5?c.n.slice(0,5)+'…':c.n,CS/2,CS-21,20,'#fff');
+    const mx=Math.max(1,+cfg.maxHp||5),hw=Math.min(18,(CS-50)/mx);for(let k=0;k<mx;k++){ctx.fillStyle=k<c.hp?'#ff5c7a':'rgba(255,255,255,.25)';rr(46+k*hw,-2,hw-3,12,4);ctx.fill();}
+    if(c.heal&&now-c.heal<700)txt('+❤',CS-24,30-(now-c.heal)/25,26,'#ff9ab3','center',true);
+  }
+  ctx.restore();}
+let last=performance.now();
+function frame(now){
+  const dt=Math.min(.05,(now-last)/1000);last=now;ctx.clearRect(0,0,W,H);
+  if(phase==='play'&&cfg.dur>0&&!(REC&&overlaySeen)&&Date.now()-t0>cfg.dur*60000)finish();
+  const g=gridXY();
+  // 標題（九宮格上方）
+  const left=cfg.dur>0&&phase==='play'?Math.max(0,cfg.dur*60-Math.floor((Date.now()-t0)/1000)):-1;
+  ctx.fillStyle='rgba(10,14,24,.6)';rr(g.x,g.y-62,GS,52,26);ctx.fill();
+  txt(phase==='end'?'🏁 地盤結算！':`👑 九宮格搶地盤${left>=0?`　⏰${Math.floor(left/60)}:${String(left%60).padStart(2,'0')}`:''}`,g.x+GS/2,g.y-36,28,'#ffe08a');
+  for(let i=0;i<9;i++)drawCell(i,now);
+  // 下方說明＋即時
+  let y=g.y+GS+30;ctx.fillStyle='rgba(10,14,24,.6)';rr(g.x,y-24,GS,48,24);ctx.fill();txt('留言「字+1」佔領・同格再留加血',g.x+GS/2,y,22,'#fff');
+  y+=40;feed.slice(0,3).forEach((e,i)=>{const age=now-e.t;ctx.globalAlpha=Math.min(1,age/250)*(1-i*.22);ctx.fillStyle='rgba(10,14,24,.55)';rr(g.x,y-19,GS,38,19);ctx.fill();
+    drawAv(e.img,e.name,g.x+22,y,15);txt(`${e.name.length>5?e.name.slice(0,5)+'…':e.name} ${e.txt}`,g.x+44,y,20,e.c,'left');ctx.globalAlpha=1;y+=44;});
+  for(let i=fxs.length-1;i>=0;i--){const f=fxs[i],k=(now-f.t0)/900;if(k>1){fxs.splice(i,1);continue;}f.x+=f.vx*dt;f.y+=f.vy*dt;ctx.globalAlpha=1-k;ctx.fillStyle=f.c;ctx.beginPath();ctx.arc(f.x,f.y,6*(1-k)+1,0,7);ctx.fill();ctx.globalAlpha=1;}
+  // 結算卡
+  if(phase==='end'&&result){const k=Math.min(1,(now-endAt)/500);ctx.save();ctx.globalAlpha=k;const top=H/2-260;
+    ctx.fillStyle='rgba(12,14,22,.9)';rr(40,top,W-80,520,30);ctx.fill();ctx.strokeStyle='#f3d9a6';ctx.lineWidth=5;ctx.stroke();
+    txt('👑 本場地主',W/2,top+60,44,'#f3d9a6');
+    const rk=result.rank||[];if(!rk.length)txt('沒有人佔領…',W/2,top+260,30,'#fff');
+    rk.slice(0,4).forEach((r,i)=>{const yy=top+150+i*86;drawAv(r.s,r.n,110,yy,32);txt(`${['🥇','🥈','🥉','4'][i]} ${r.n.length>7?r.n.slice(0,7)+'…':r.n}`,160,yy-14,28,'#fff','left');txt(`佔領 ${r.c} 格`,160,yy+20,22,'#cfd5df','left');
+      if(i===0&&result.top&&result.top.length)txt(result.top[0].prize,W-70,yy,26,'#ffe08a','right');});
+    if(result.prizeCell)txt(`每一格地主都得到 ${result.prizeCell}`,W/2,top+490,24,'#ffe08a');
+    ctx.restore();}
+  if(phase==='idle'&&(REC||!OV))txt('按「開始搶地盤」',W/2,H/2+200,30,'#fff','center',true);
+  requestAnimationFrame(frame);
+}
+var feed=[],validN=0;function addFeed(name,img,txt,c){validN++;feed.unshift({name,img,txt,c,t:performance.now()});if(feed.length>20)feed.length=20;}function clearFeed(){feed=[];validN=0;}
+requestAnimationFrame(frame);
+
+/* ===== 留言：「字+1」（全形＋１也可以） ===== */
+const lastBy=new Map();
+function norm(s){return String(s||'').replace(/[！-～]/g,c=>String.fromCharCode(c.charCodeAt(0)-0xFEE0)).replace(/\s+/g,'');}
+function onComment(name,msg,img){try{if(window.parent!==window&&window.parent.__hubPaused)return;}catch(e){}
+  name=(name||'').trim();if(!name||phase!=='play')return;
+  msg=norm(String(msg||'').replace(/<img[^>]*alt="([^"]*)"[^>]*>/gi,'$1').replace(/<[^>]*>/g,''));
+  const done=new Set();cells.forEach((c,i)=>{if(done.has(c.ch))return;if(msg.includes(c.ch+'+1')){done.add(c.ch);const key=name+'|'+i,now=Date.now();if(now-(lastBy.get(key)||0)<(+cfg.cd||0)*1000)return;lastBy.set(key,now);act(i,name,img);}});
+}
+/* ===== 連線 ===== */
+let ws=null,cmdWs=null,recWs=null,overlaySeen=false;
+function setState(t){$('wsState').textContent=t;$('ovState').textContent=t;}
+function sendUp(o){if(OV&&ws&&ws.readyState===1){try{ws.send(JSON.stringify(o));}catch(e){}}}
+function sendDown(o){if(recWs&&recWs.readyState===1){try{recWs.send(JSON.stringify(o));}catch(e){}}}
+function connect(){try{ws&&ws.close();}catch(e){}setState('連線中…');ws=new WebSocket(SERVER);
+  ws.onopen=()=>{ws.send(JSON.stringify({join:sid,in:4,out:5}));setState('✅ 已連線，等留言中（代碼 '+sid+'）');$('conn').textContent='已連線';};
+  ws.onmessage=e=>{let m;try{m=JSON.parse(e.data);}catch(x){return;}const d=m.overlayNinja||m;if(d&&(d.chatname||d.chatmessage))onComment(d.chatname,d.chatmessage,d.chatimg);};
+  ws.onclose=()=>{setState('⚠️ 斷線，3 秒後重連…');setTimeout(connect,3000);};}
+function fake10(){const ns=['小美','阿花','珍珍','Amy','小恩恩'];for(let i=0;i<10;i++){const c=cells[Math.floor(Math.random()*9)];lastBy.clear();onComment(ns[Math.floor(Math.random()*ns.length)],c.ch+'+1','');}}
+function listenCmd(){cmdWs=new WebSocket(SERVER);cmdWs.onopen=()=>cmdWs.send(JSON.stringify({join:sid,in:6,out:7}));
+  cmdWs.onmessage=e=>{let m;try{m=JSON.parse(e.data);}catch(x){return;}const d=m.overlayNinja||m;
+    if(d.gdCfg){const oldChars=cfg.chars;Object.assign(cfg,d.gdCfg);SV('cfgR',cfg);if(cfg.chars!==oldChars&&phase==='idle'){cells=blank();save();}renderUI();sendUp({gdCfgNow:cfg});}
+    if(d.gdCmd==='start')startGame();if(d.gdCmd==='end')finish();if(d.gdCmd==='new')newGame();if(d.gdCmd==='fake')fake10();
+    if(d.gdCmd==='sync'){sendUp({gdCfgNow:cfg});sendUp({gdState:stateMsg()});}};
+  cmdWs.onclose=()=>setTimeout(listenCmd,4000);}
+var lastOv=0,_lastCfgJ='';
+function adoptCfg(c){const j=JSON.stringify(c);if(j===_lastCfgJ)return;_lastCfgJ=j;for(const k in c){if(!(k in cfg))continue;cfg[k]=c[k];const el=document.getElementById(k);if(!el||el===document.activeElement)continue;el.value=c[k];}SV('cfg',cfg);paintChars();renderUI();}
+function listenRec(){recWs=new WebSocket(SERVER);recWs.onopen=()=>{recWs.send(JSON.stringify({join:sid,in:5,out:6}));setTimeout(()=>sendDown({gdCmd:'sync'}),300);};
+  recWs.onmessage=e=>{let m;try{m=JSON.parse(e.data);}catch(x){return;}const d=m.overlayNinja||m;
+    if(d.gdCfgNow)adoptCfg(d.gdCfgNow);
+    if(d.gdState||d.gdWin){lastOv=Date.now();if(!overlaySeen){overlaySeen=true;setState('📋 紀錄模式：已連上手機（代碼 '+sid+'）');}}
+    if(d.gdState){remote=d.gdState;const now=performance.now();const old=cells;phase=remote.phase;cells=remote.cells.map((c,i)=>{const o=old[i]||{};const n={...c,hit:o.hit||0,take:o.take||0,heal:o.heal||0};if(o.n&&o.n===c.n&&c.hp<o.hp)n.hit=now;if(c.n&&o.n!==c.n){n.take=now;if(c.n)addFeed(c.n,c.s,`佔領「${c.ch}」`,'#9fe7a4');}else if(c.n&&c.hp>(o.hp||0))n.heal=now;return n;});if(remote.result)result=remote.result;renderUI();}
+    if(d.gdWin){result=d.gdWin;phase='end';endAt=performance.now();if(!wins.some(w=>w.t===d.gdWin.t)){wins.unshift(d.gdWin);SV('wins',wins);}renderUI();}};
+  recWs.onclose=()=>setTimeout(listenRec,4000);}
+if(REC)setInterval(()=>{sendDown({gdCmd:'sync'});if(overlaySeen&&Date.now()-lastOv>15000){overlaySeen=false;setState('📋 紀錄模式：還沒偵測到手機（現在按按鈕會在這頁自己跑）');}},4000);
+const CFGK=['pos','maxHp','cd','dur','prizeTop','prizeCell'];
+function pushCfg(){const o={chars:cfg.chars};CFGK.forEach(k=>o[k]=cfg[k]);sendDown({gdCfg:o});}
+setInterval(()=>{if(OV)sendUp({gdState:stateMsg()});},5000);
+
+/* ===== 介面 ===== */
+function renderUI(){
+  const rk=counts();
+  $('state').textContent=phase==='idle'?'還沒開始':phase==='end'?`已結算：${rk[0]?rk[0].n+' 佔領 '+rk[0].c+' 格':'沒有人佔領'}`:`進行中：${cells.filter(c=>c.n).length}/9 格被佔領${rk[0]?'，領先：'+rk[0].n+'（'+rk[0].c+' 格）':''}`;
+  $('log').innerHTML=wins.map(w=>`<div>${(w.rank||[]).slice(0,3).map((r,i)=>`${['🥇','🥈','🥉'][i]} ${esc(r.n)}（${r.c} 格）${i===0&&w.top&&w.top.length?` <b style="color:var(--gold)">${esc(w.top[0].prize)}</b>`:''}`).join('<br>')||'沒有人佔領'}${w.prizeCell?`<div class="tip">每格地主：${w.cells.filter(c=>c.n).map(c=>c.ch+'＝'+esc(c.n)).join('、')}（各 ${esc(w.prizeCell)}）</div>`:''}<div class="tip">${new Date(w.t).toLocaleString('zh-TW')}${w.tie?'・第一名同分，請自行決定':''}</div></div>`).join('')||'<div class="tip">還沒有紀錄</div>';
+}
+function paintChars(){const ch=charsOf();$('cells').innerHTML=ch.map((c,i)=>`<input type="text" maxlength="1" data-i="${i}" value="${esc(c)}">`).join('');
+  $('cells').querySelectorAll('input').forEach(inp=>inp.addEventListener('change',()=>{const a=charsOf();a[+inp.dataset.i]=(inp.value.trim()||a[+inp.dataset.i]).slice(0,1);cfg.chars=a.join('');SV('cfg',cfg);if(phase==='idle'&&!(REC&&overlaySeen)){cells=blank();save();}pushCfg();renderUI();}));}
+paintChars();CFGK.forEach(k=>$(k).value=cfg[k]);$('sid').value=sid;
+CFGK.forEach(k=>$(k).addEventListener('change',()=>{const v=$(k).value;cfg[k]=(k==='pos'||k.startsWith('prize'))?v.trim():Math.max(0,+v||0);if(k==='maxHp')cfg.maxHp=Math.max(1,Math.min(20,cfg.maxHp));SV('cfg',cfg);pushCfg();renderUI();}));
+$('sid').onchange=()=>{sid=$('sid').value.trim()||rid();$('sid').value=sid;SV('sid',sid);};
+const ctl=(cmd,fn)=>()=>{if(REC&&overlaySeen)sendDown({gdCmd:cmd});else fn();};
+$('startBtn').onclick=ctl('start',startGame);
+$('endBtn').onclick=()=>{if(!confirm('現在結算、公布地主？'))return;ctl('end',finish)();};
+$('newBtn').onclick=()=>{if(phase==='play'&&!confirm('清空重來？目前的佔領會全部清掉。'))return;ctl('new',newGame)();};
+$('fakeBtn').onclick=ctl('fake',fake10);
+$('conn').onclick=()=>{connect();if(!REC&&!recWs)listenRec();};
+const base=()=>location.href.split('?')[0];
+function copy(u){navigator.clipboard.writeText(u).then(()=>{$('ovTip').textContent='已複製 ✓';setTimeout(()=>$('ovTip').textContent='',2000);});}
+$('copyOv').onclick=()=>copy(`${base()}?mode=overlay&session=${encodeURIComponent(sid)}&v=1`);
+$('copyRec').onclick=()=>copy(`${base()}?mode=record&session=${encodeURIComponent(sid)}`);
+$('copyWin').onclick=()=>copy(wins.slice().reverse().map(w=>[(w.rank&&w.rank[0]&&w.top&&w.top.length?`最多格：${w.rank[0].n}（${w.rank[0].c}格）${w.top[0].prize}`:''),(w.prizeCell?w.cells.filter(c=>c.n).map(c=>`「${c.ch}」${c.n}　${w.prizeCell}`).join('\n'):'')].filter(Boolean).join('\n')).join('\n\n')||'目前沒有');
+$('clrWin').onclick=()=>{if(confirm('清空得獎紀錄？')){wins=[];SV('wins',wins);renderUI();}};
+
+/* ===== 啟動 ===== */
+renderUI();
+if(OV){document.body.classList.add('ov');document.documentElement.style.background='transparent';connect();listenCmd();setTimeout(()=>$('ovState').style.opacity=0,8000);}
+else if(REC){listenRec();$('conn').style.display='none';setState('📋 紀錄模式：還沒偵測到手機（現在按按鈕會在這頁自己跑）');}
+else if(QS.get('session')){connect();}
+if(OV){window.__fill=false;window.__fit=function(){const vw=innerWidth,vh=innerHeight;const s=Math.min(vw/cv.width,vh/cv.height);const w=cv.width*s,h=cv.height*s;
+  Object.assign(cv.style,{position:'fixed',left:((vw-w)/2)+'px',top:((vh-h)/2)+'px',width:w+'px',height:h+'px',maxWidth:'none',aspectRatio:'auto',margin:'0'});};
+  addEventListener('resize',window.__fit);setInterval(window.__fit,1000);window.__fit();}
+</script>
+</body>
+</html>
