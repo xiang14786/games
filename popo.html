@@ -191,13 +191,17 @@ function frame(now){
   // 下方標題（放下面，才不會被直播人數擋住）
   const kws=`「${f1(cfg.kSofa)}」「${f1(cfg.kWard)}」「${f1(cfg.kCurt)}」`;
   if(phase!=='end'){let t;
-    if(phase==='lobby')t=`👵 婆婆要來突襲了！留言 ${kws} 躲起來`;
-    else if(phase==='count'){const s=Math.max(0,Math.ceil((tEnd-now)/1000));t=`⏰ 婆婆 ${s} 秒後進來檢查！第 ${round} 輪・還有 ${alive().length} 人`;}
-    else t=`😱 婆婆進來了！第 ${round} 輪・還有 ${alive().length} 人`;
-    bannerT(t,H-36,29,'#ffe08a',phase==='count'&&tEnd-now<10000?'rgba(160,20,30,.88)':'rgba(0,0,0,.7)');
-    if(phase==='count'&&round>1)bannerT(`每輪都要重新留言躲！${kws}，沒躲的會被抓`,H-88,23,'#fff','rgba(0,0,0,.62)');
+    if(phase==='lobby')t=`👵 婆婆要來突襲了！`;
+    else if(phase==='count'){const s=Math.max(0,Math.ceil((tEnd-now)/1000));t=`⏰ ${s} 秒後婆婆進來！第${round}輪・剩${alive().length}人`;}
+    else t=`😱 婆婆進來了！第${round}輪・剩${alive().length}人`;
+    bannerT(t,H-104,36,'#ffe08a',phase==='count'&&tEnd-now<10000?'rgba(160,20,30,.88)':'rgba(0,0,0,.7)');
+    bannerT(`留言${kws}躲起來`,H-40,34,'#fff','rgba(0,0,0,.7)');
+    if(phase==='count'&&round>1)bannerT('每輪都要重新留言躲！沒躲的會被抓',H-168,28,'#fff','rgba(0,0,0,.62)');
     ctx.textAlign='center';ctx.textBaseline='middle';
-    if(phase==='lobby'&&!ppl.length){ctx.fillStyle='rgba(20,10,20,.82)';rr(W/2-300,500,600,150,24);ctx.fill();ctx.strokeStyle='#ffb070';ctx.lineWidth=3;ctx.stroke();ctx.fillStyle='#fff';ctx.font='bold 28px '+FONT;ctx.fillText('婆婆要來家裡突襲檢查了！',W/2,545);ctx.fillStyle='#ffd39a';ctx.font='bold 24px '+FONT;ctx.fillText('快留言選地方躲，最後沒被抓到的有獎',W/2,590);ctx.fillStyle='#ffe08a';ctx.font='bold 22px '+FONT;ctx.fillText(`💺 ${f1(cfg.kSofa)}　🚪 ${f1(cfg.kWard)}　🎐 ${f1(cfg.kCurt)}`,W/2,628);}}
+    if(phase==='lobby'&&!ppl.length){ctx.fillStyle='rgba(20,10,20,.85)';rr(W/2-330,470,660,230,26);ctx.fill();ctx.strokeStyle='#ffb070';ctx.lineWidth=3;ctx.stroke();
+      ctx.fillStyle='#fff';ctx.font='bold 38px '+FONT;ctx.fillText('婆婆要來家裡突襲檢查了！',W/2,525);
+      ctx.fillStyle='#ffd39a';ctx.font='bold 30px '+FONT;ctx.fillText('快留言選地方躲',W/2,583);ctx.fillText('最後沒被抓到的有獎！',W/2,625);
+      ctx.fillStyle='#ffe08a';ctx.font='bold 30px '+FONT;ctx.fillText(`💺${f1(cfg.kSofa)}　🚪${f1(cfg.kWard)}　🎐${f1(cfg.kCurt)}`,W/2,672);}}
   // 得獎卡
   if(phase==='end'&&winners&&now-endAt>400){const k=Math.min(1,(now-endAt-400)/400),Lw=winners.list;ctx.save();ctx.translate(0,H/2-300);ctx.globalAlpha=k;
     ctx.fillStyle='rgba(12,14,22,.92)';rr(W/2-340,70,680,420,30);ctx.fill();ctx.strokeStyle='#f3d9a6';ctx.lineWidth=5;ctx.stroke();
