@@ -45,6 +45,7 @@ body.ov #ovState{display:block}
     <h3>⚙️ 遊戲設定</h3>
     <label>集氣關鍵字（逗號分開；* ＝任何留言）<input type="text" id="kw"></label>
     <div class="row"><label style="flex:1">要集幾次才滿<input type="number" id="goal" min="1"></label><label style="flex:1">同一人幾秒算一次<input type="number" id="cd" min="0"></label></div>
+    <label>集滿時的大字（可以打你想說的話）<input type="text" id="msg" placeholder="例：歐膩今天好漂亮💕"></label>
     <label>集滿的特效<select id="fx"><option value="both">城堡＋天馬</option><option value="castle">只有城堡</option><option value="pegasus">只有天馬</option></select></label>
     <label>集氣條放哪裡<select id="pos"><option value="left">左邊</option><option value="right">右邊</option><option value="top">上面</option></select></label>
     <div class="row"><label style="flex:1">抽幾個人<input type="number" id="winN" min="1" max="20"></label><label style="flex:1">集滿後自動抽<select id="autoDraw"><option value="1">是</option><option value="0">否（我按抽）</option></select></label></div>
@@ -82,7 +83,7 @@ const shim=document.createElement('canvas'),sctx=shim.getContext('2d');const tra
 
 /* ===== 設定 ===== */
 const rid=()=>'shine'+Math.random().toString(36).slice(2,9);
-let cfg=Object.assign({fx:'both',kw:'集氣,加油',goal:100,cd:3,pos:'left',winN:3,autoDraw:'1',prize:'購物金50元'},LS('cfg',{}));
+let cfg=Object.assign({msg:'🎉 集氣成功！',fx:'both',kw:'集氣,加油',goal:100,cd:3,pos:'left',winN:3,autoDraw:'1',prize:'購物金50元'},LS('cfg',{}));
 let sid=QS.get('session')||LS('sid','')||rid();SV('sid',sid);
 if(OV){const c=LS('cfgR',null);if(c)Object.assign(cfg,c);}
 let wins=LS('wins',[]);
@@ -184,7 +185,7 @@ function fullFX(now,dt){
   if(!ok(CASTLE)&&!ok(PEG)){ctx.save();ctx.globalAlpha=Math.min(1,age/1400);castle(W/2,H*0.72,1,now);ctx.restore();}
   if(Math.random()<dt*3.5)spawnFirework(now);
   if(Math.random()<dt*40)parts.push({x:Math.random()*W,y:-20,vx:(Math.random()-.5)*60,vy:150+Math.random()*150,t0:now,life:5000,c:['#ffe08a','#ff8ab3','#9fe7ff','#c6a0ff'][Math.floor(Math.random()*4)],s:7,conf:1,rot:Math.random()*7});
-  const tk=Math.min(1,Math.max(0,(age-900)/500));ctx.save();ctx.globalAlpha=tk;const sc=1+0.15*Math.sin(now/250);ctx.translate(W/2,H*0.13);ctx.scale(sc,sc);txt('🎉 集氣成功！',0,0,70,'#fff3b0','center',10);ctx.restore();
+  const tk=Math.min(1,Math.max(0,(age-900)/500));ctx.save();ctx.globalAlpha=tk;const sc=1+0.15*Math.sin(now/250);ctx.translate(W/2,H*0.13);ctx.scale(sc,sc);{const m=String(cfg.msg||'🎉 集氣成功！');ctx.font='bold 70px '+FONT;const mw=ctx.measureText(m).width,f=Math.min(70,Math.floor(70*(W-60)/Math.max(1,mw)));txt(m,0,0,f,'#fff3b0','center',10);}ctx.restore();
   ctx.globalAlpha=tk;txt(`感謝 ${Object.keys(who).length} 位姊妹一起集氣`,W/2,H*0.86,34,'#fff','center',true);if(cfg.autoDraw==='1')txt('馬上抽出幸運兒…',W/2,H*0.91,28,'#ffe08a','center',true);ctx.globalAlpha=1;
 }
 function drawCard(now){
@@ -248,7 +249,7 @@ function listenRec(){recWs=new WebSocket(SERVER);recWs.onopen=()=>{recWs.send(JS
     if(d.chWin){result=d.chWin;phase='draw';drawAt=performance.now();if(!wins.some(w=>w.t===d.chWin.t)){wins.unshift(d.chWin);SV('wins',wins);}renderUI();}};
   recWs.onclose=()=>setTimeout(listenRec,4000);}
 if(REC)setInterval(()=>{sendDown({chCmd:'sync'});if(overlaySeen&&Date.now()-lastOv>15000){overlaySeen=false;setState('📋 紀錄模式：還沒偵測到手機（現在按按鈕會在這頁自己跑）');}},4000);
-const CFGK=['fx','kw','goal','cd','pos','winN','autoDraw','prize'],TXT=['fx','kw','pos','autoDraw','prize'];
+const CFGK=['msg','fx','kw','goal','cd','pos','winN','autoDraw','prize'],TXT=['msg','fx','kw','pos','autoDraw','prize'];
 function pushCfg(){const o={};CFGK.forEach(k=>o[k]=cfg[k]);sendDown({chCfg:o});}
 setInterval(()=>{if(OV)sendUp({chState:stateMsg()});},5000);
 
