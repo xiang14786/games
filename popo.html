@@ -10,7 +10,7 @@
 html,body{margin:0;height:100%;background:var(--bg);color:var(--txt);font:18px/1.6 "Microsoft JhengHei","PingFang TC","Noto Sans TC",sans-serif}
 #wrap{display:flex;gap:18px;height:100%;padding:12px}
 #stage{flex:1 1 auto;min-width:0;height:100%;display:flex;align-items:center;justify-content:center}
-canvas{width:100%;max-height:100%;aspect-ratio:1290/559;object-fit:contain;display:block;border-radius:14px}
+canvas{width:100%;max-height:100%;aspect-ratio:990/1280;object-fit:contain;display:block;border-radius:14px}
 #panel{flex:0 0 400px;overflow:auto;background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:16px 18px}
 h2{margin:4px 0 10px;font-size:22px;color:var(--gold)}
 h3{margin:18px 0 8px;font-size:19px;color:var(--gold)}
@@ -36,7 +36,7 @@ body.ov #ovState{display:block}
 </head>
 <body>
 <div id="wrap">
-  <div id="stage"><canvas id="cv" width="1290" height="559"></canvas></div>
+  <div id="stage"><canvas id="cv" width="990" height="1280"></canvas></div>
   <div id="panel">
     <h2>👵 婆婆來了</h2>
     <div class="tip" id="state"></div>
@@ -65,7 +65,7 @@ body.ov #ovState{display:block}
 </div>
 <div id="ovState"></div>
 <script>
-const cv=document.getElementById('cv'),ctx=cv.getContext('2d'),W=1000,H=559,$=id=>document.getElementById(id);
+const cv=document.getElementById('cv'),ctx=cv.getContext('2d'),W=720,H=1280,$=id=>document.getElementById(id);
 const FONT='"Microsoft JhengHei","PingFang TC",sans-serif';
 const LS=(k,d)=>{try{const v=localStorage.getItem('popo_'+k);return v?JSON.parse(v):d}catch(e){return d}};
 const SV=(k,v)=>{try{localStorage.setItem('popo_'+k,JSON.stringify(v))}catch(e){}};
@@ -76,7 +76,7 @@ function rr(x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h
 const imgCache=new Map();function imgOf(s){if(!s)return null;if(!imgCache.has(s)){const im=new Image();im.referrerPolicy='no-referrer';im.src=s;imgCache.set(s,im);}return imgCache.get(s);}
 const ok=im=>im&&im.complete&&im.naturalWidth>0;
 const L=s=>{const i=new Image();i.src=s;return i;};
-const BG=L('popo_bg.jpg'),PO=[L('popo1.png'),L('popo2.png')];
+const BG=L('popo_bg_v.jpg'),PO=[L('popo1.png'),L('popo2.png')];
 
 /* ===== 設定 ===== */
 const rid=()=>'shine'+Math.random().toString(36).slice(2,9);
@@ -87,12 +87,12 @@ let wins=LS('wins',[]);
 
 /* 躲藏地點 */
 const SPOTS={
-  sofa:{n:'沙發',ic:'💺',x:40,y:335,w:360,h:120,stand:[240,555],k:'kSofa'},
-  ward:{n:'衣櫃',ic:'🚪',x:620,y:120,w:165,h:300,stand:[700,520],k:'kWard'},
-  curt:{n:'窗簾',ic:'🎐',x:822,y:90,w:160,h:360,stand:[880,545],k:'kCurt'},
-  none:{n:'沒躲好',ic:'😱',x:420,y:395,w:190,h:70,stand:[515,555]}
+  sofa:{n:'沙發',ic:'💺',x:20,y:660,w:300,h:190,stand:[340,1010],k:'kSofa'},
+  ward:{n:'衣櫃',ic:'🚪',x:562,y:600,w:150,h:320,stand:[500,1040],k:'kWard'},
+  curt:{n:'窗簾',ic:'🎐',x:448,y:130,w:150,h:390,stand:[420,740],k:'kCurt'},
+  none:{n:'沒躲好',ic:'😱',x:170,y:965,w:380,h:140,stand:[360,1170]}
 };
-const DOOR={x:505,y:415};
+const DOOR={x:268,y:462};
 const QUOTES=['又在買衣服？','這個多少錢？','我兒子賺錢很辛苦欸','整天在家都在幹嘛','冰箱怎麼又空了','被我抓到了吧！','躲什麼躲！','又在看直播買東西？','衣服是不是又變多了'];
 const EMPTY=['咦？沒人？','算妳們好運…','我明明聽到聲音…'];
 
@@ -149,12 +149,12 @@ function stepPo(now,dt){
   if(phase==='enter'&&age>1400){phase='search';po.t0=now;po.step=0;po.go=SPOTS[po.plan[0]].stand;}
   if(phase==='search'){
     const tg=po.go,dx=tg[0]-po.x,dy=tg[1]-po.y,d=Math.hypot(dx,dy);
-    if(d>4&&!po.wait){const s=Math.min(d,330*dt);po.x+=dx/d*s;po.y+=dy/d*s;po.sc=Math.min(1,0.62+(po.y-DOOR.y)/140*0.38);}
+    if(d>4&&!po.wait){const s=Math.min(d,330*dt);po.x+=dx/d*s;po.y+=dy/d*s;po.sc=Math.min(1.25,0.62+(po.y-DOOR.y)/560*0.63);}
     else if(!po.wait){po.wait=now;po.img=1;catchAt(po.plan[po.step],now);renderUI();}
     else if(now-po.wait>1900){po.wait=0;po.img=0;po.step++;
       if(po.step>=po.plan.length||alive().length<=Math.max(1,cfg.winN)){phase='result';po.t0=now;sendUp({popoState:stateMsg()});renderUI();}
       else po.go=SPOTS[po.plan[po.step]].stand;}}
-  if(phase==='result'){const tg=[DOOR.x,DOOR.y],dx=tg[0]-po.x,dy=tg[1]-po.y,d=Math.hypot(dx,dy);if(d>4){const s=Math.min(d,380*dt);po.x+=dx/d*s;po.y+=dy/d*s;po.sc=Math.max(.62,0.62+(po.y-DOOR.y)/140*0.38);}
+  if(phase==='result'){const tg=[DOOR.x,DOOR.y],dx=tg[0]-po.x,dy=tg[1]-po.y,d=Math.hypot(dx,dy);if(d>4){const s=Math.min(d,380*dt);po.x+=dx/d*s;po.y+=dy/d*s;po.sc=Math.max(.62,0.62+(po.y-DOOR.y)/560*0.63);}
     if(now-po.t0>1600){po=null;if(alive().length<=Math.max(1,cfg.winN))finish(now);else startRound();}}
 }
 
@@ -183,8 +183,8 @@ function frame(now){
     drawAvatar(p,p.x+jx,p.y+jy,p.r,1);}
   // 婆婆
   if(po){const im=PO[po.img];let a=1;if(phase==='enter')a=Math.min(1,(now-po.t0)/500);
-    if(phase==='enter'){ctx.fillStyle=`rgba(30,20,10,${.55*a})`;ctx.fillRect(452,160,110,255);}
-    if(ok(im)){const h=330*po.sc,w=h*im.naturalWidth/im.naturalHeight;ctx.globalAlpha=a;ctx.drawImage(im,po.x-w/2,po.y-h,w,h);ctx.globalAlpha=1;
+    if(phase==='enter'){ctx.fillStyle=`rgba(30,20,10,${.55*a})`;ctx.fillRect(170,72,200,390);}
+    if(ok(im)){const h=400*po.sc,w=h*im.naturalWidth/im.naturalHeight;ctx.globalAlpha=a;ctx.drawImage(im,po.x-w/2,po.y-h,w,h);ctx.globalAlpha=1;
       if(bubble&&now-bubble.t0<2200&&phase!=='enter'){ctx.font='bold 28px '+FONT;const tw=ctx.measureText(bubble.t).width+36;let bx=po.x+w*0.3,by=po.y-h-10;if(bx+tw>W-10)bx=po.x-w*0.3-tw;by=Math.max(60,by);
         ctx.fillStyle='#fff';rr(bx,by,tw,56,22);ctx.fill();ctx.strokeStyle='#c9302c';ctx.lineWidth=3;ctx.stroke();ctx.fillStyle='#8a1c1c';ctx.textAlign='left';ctx.textBaseline='middle';ctx.fillText(bubble.t,bx+18,by+29);}}}
   for(let i=pops.length-1;i>=0;i--){const p=pops[i],k=(now-p.t0)/(p.big?1600:1300);if(k>1){pops.splice(i,1);continue;}ctx.globalAlpha=1-k;ctx.font=`bold ${p.big?54:30}px ${FONT}`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.lineWidth=7;ctx.strokeStyle='rgba(0,0,0,.7)';ctx.strokeText(p.t,p.x,p.y-k*30);ctx.fillStyle=p.c;ctx.fillText(p.t,p.x,p.y-k*30);ctx.globalAlpha=1;}
@@ -197,14 +197,14 @@ function frame(now){
     bannerT(t,H-36,29,'#ffe08a',phase==='count'&&tEnd-now<10000?'rgba(160,20,30,.88)':'rgba(0,0,0,.7)');
     if(phase==='count'&&round>1)bannerT(`每輪都要重新留言躲！${kws}，沒躲的會被抓`,H-88,23,'#fff','rgba(0,0,0,.62)');
     ctx.textAlign='center';ctx.textBaseline='middle';
-    if(phase==='lobby'&&!ppl.length){ctx.fillStyle='rgba(20,10,20,.82)';rr(W/2-260,150,520,150,24);ctx.fill();ctx.strokeStyle='#ffb070';ctx.lineWidth=3;ctx.stroke();ctx.fillStyle='#fff';ctx.font='bold 28px '+FONT;ctx.fillText('婆婆要來家裡突襲檢查了！',W/2,195);ctx.fillStyle='#ffd39a';ctx.font='bold 24px '+FONT;ctx.fillText('快留言選地方躲，最後沒被抓到的有獎',W/2,240);ctx.fillStyle='#ffe08a';ctx.font='bold 22px '+FONT;ctx.fillText(`💺 ${f1(cfg.kSofa)}　🚪 ${f1(cfg.kWard)}　🎐 ${f1(cfg.kCurt)}`,W/2,278);}}
+    if(phase==='lobby'&&!ppl.length){ctx.fillStyle='rgba(20,10,20,.82)';rr(W/2-300,500,600,150,24);ctx.fill();ctx.strokeStyle='#ffb070';ctx.lineWidth=3;ctx.stroke();ctx.fillStyle='#fff';ctx.font='bold 28px '+FONT;ctx.fillText('婆婆要來家裡突襲檢查了！',W/2,545);ctx.fillStyle='#ffd39a';ctx.font='bold 24px '+FONT;ctx.fillText('快留言選地方躲，最後沒被抓到的有獎',W/2,590);ctx.fillStyle='#ffe08a';ctx.font='bold 22px '+FONT;ctx.fillText(`💺 ${f1(cfg.kSofa)}　🚪 ${f1(cfg.kWard)}　🎐 ${f1(cfg.kCurt)}`,W/2,628);}}
   // 得獎卡
-  if(phase==='end'&&winners&&now-endAt>400){const k=Math.min(1,(now-endAt-400)/400),Lw=winners.list;ctx.globalAlpha=k;
-    ctx.fillStyle='rgba(12,14,22,.92)';rr(170,70,660,420,30);ctx.fill();ctx.strokeStyle='#f3d9a6';ctx.lineWidth=5;ctx.stroke();
+  if(phase==='end'&&winners&&now-endAt>400){const k=Math.min(1,(now-endAt-400)/400),Lw=winners.list;ctx.save();ctx.translate(0,H/2-300);ctx.globalAlpha=k;
+    ctx.fillStyle='rgba(12,14,22,.92)';rr(W/2-340,70,680,420,30);ctx.fill();ctx.strokeStyle='#f3d9a6';ctx.lineWidth=5;ctx.stroke();
     ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle='#f3d9a6';ctx.font='bold 40px '+FONT;ctx.fillText('🎉 成功躲過婆婆的姊妹！',W/2,125);
     ctx.fillStyle='#cfd5df';ctx.font='22px '+FONT;ctx.fillText(`${winners.count} 人參加，婆婆檢查了 ${winners.rounds} 輪`,W/2,168);
     const n=Lw.length,gap=n===1?0:175;Lw.forEach((w,i)=>{const x=W/2+(i-(n-1)/2)*gap,y=265,r=n===1?62:50;drawAvatar({name:w.n,img:w.s},x,y,r,k,true);ctx.globalAlpha=k;ctx.fillStyle='#fff';ctx.font=`bold ${n===1?34:24}px ${FONT}`;ctx.textAlign='center';ctx.fillText(w.n.length>7?w.n.slice(0,7)+'…':w.n,x,y+r+44);});
-    ctx.fillStyle='#ffe08a';ctx.font='bold 40px '+FONT;ctx.fillText(`獲得【${winners.prize||'神秘小禮'}】`,W/2,445);ctx.globalAlpha=1;}
+    ctx.fillStyle='#ffe08a';ctx.font='bold 40px '+FONT;ctx.fillText(`獲得【${winners.prize||'神秘小禮'}】`,W/2,445);ctx.globalAlpha=1;ctx.restore();}
   if(REC&&overlaySeen&&remote){ctx.fillStyle='rgba(0,0,0,.6)';rr(W/2-300,H/2-23,600,46,23);ctx.fill();ctx.fillStyle='#fff';ctx.font='21px '+FONT;ctx.textAlign='center';ctx.textBaseline='middle';
     ctx.fillText(`手機上：${{lobby:'報名中',count:'倒數中',enter:'婆婆進門',search:'婆婆翻找中',result:'這輪結束',end:'已結束'}[remote.phase]||''}・第 ${remote.round} 輪・剩 ${remote.alive}/${remote.joined} 人`,W/2,H/2);}
   if(toast){const age=now-toast.at;if(age>1800)toast=null;else{ctx.globalAlpha=Math.min(1,(1800-age)/300);ctx.fillStyle='rgba(0,0,0,.75)';ctx.font='bold 26px '+FONT;const tw=ctx.measureText(toast.t).width+40;rr(W/2-tw/2,H/2-28,tw,56,28);ctx.fill();ctx.fillStyle='#fff';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(toast.t,W/2,H/2);ctx.globalAlpha=1;}}
@@ -221,19 +221,22 @@ var feed=[],validN=0,feedNames=new Set();
 function addFeed(name,img,txt,c){validN++;feedNames.add(name);feed.unshift({name,img,txt,c,t:performance.now()});if(feed.length>30)feed.length=30;}
 function clearFeed(){feed=[];validN=0;feedNames=new Set();}
 function drawSide(now,hint){
-  ctx.save();ctx.setTransform(1,0,0,1,0,0);const X=W+10,Y=6,PW=cv.width-X-6,PH=H-12;ctx.clearRect(W,0,cv.width-W,H);
-  ctx.fillStyle='rgba(10,14,24,.8)';rr(X,Y,PW,PH,18);ctx.fill();ctx.strokeStyle='rgba(243,217,166,.7)';ctx.lineWidth=2;ctx.stroke();
-  ctx.textAlign='left';ctx.textBaseline='middle';ctx.fillStyle='#f3d9a6';ctx.font='bold 28px '+FONT;ctx.fillText('💬 有效留言',X+16,Y+32);
-  ctx.font='bold 19px '+FONT;ctx.fillStyle='#cfd5df';ctx.fillText(`有效 ${validN} 則・${feedNames.size} 人參加`,X+16,Y+66);
-  ctx.fillStyle='rgba(255,255,255,.18)';ctx.fillRect(X+14,Y+86,PW-28,2);
-  const RH=60,top=Y+96,maxR=Math.floor((PH-104)/RH);
-  if(!feed.length){ctx.fillStyle='rgba(255,255,255,.55)';ctx.font='18px '+FONT;ctx.fillText(/mode=record/.test(location.search)?'（實際留言看手機直播畫面）':(hint||'有效留言會出現在這'),X+16,top+30);}
+  // 直式版：字和頭像放大，手機上看得清楚
+  const okI=im=>im&&im.complete&&im.naturalWidth>0;
+  ctx.save();ctx.setTransform(1,0,0,1,0,0);const X=W+10,Y=6,PW=cv.width-X-6,PH=H-12;ctx.clearRect(W,0,cv.width-W,cv.height);
+  ctx.fillStyle='rgba(10,14,24,.8)';rr(X,Y,PW,PH,20);ctx.fill();ctx.strokeStyle='rgba(243,217,166,.7)';ctx.lineWidth=2;ctx.stroke();
+  const ppl=(typeof feedNames!=='undefined')?feedNames.size:new Set(feed.map(e=>e.name)).size;
+  ctx.textAlign='left';ctx.textBaseline='middle';ctx.fillStyle='#f3d9a6';ctx.font='bold 34px '+FONT;ctx.fillText('💬 有效留言',X+14,Y+40);
+  ctx.font='bold 23px '+FONT;ctx.fillStyle='#cfd5df';ctx.fillText(`${validN} 則・${ppl} 人`,X+14,Y+84);
+  ctx.fillStyle='rgba(255,255,255,.18)';ctx.fillRect(X+12,Y+108,PW-24,2);
+  const RH=86,top=Y+120,maxR=Math.floor((PH-128)/RH);
+  if(!feed.length){ctx.fillStyle='rgba(255,255,255,.55)';ctx.font='22px '+FONT;const t=/mode=record/.test(location.search)?'（實際留言看手機直播畫面）':(hint||'有效留言會出現在這');for(let k=0;k*9<t.length;k++)ctx.fillText(t.slice(k*9,k*9+9),X+14,top+30+k*34);}
   feed.slice(0,maxR).forEach((e,i)=>{const age=now-e.t,a=Math.min(1,age/250),y=top+i*RH-(1-a)*20;ctx.globalAlpha=a*(i>=maxR-2?0.55:1);
-    if(age<1200){ctx.fillStyle=`rgba(255,224,138,${.22*(1-age/1200)})`;rr(X+8,y,PW-16,RH-6,12);ctx.fill();}
-    const r=23,cx=X+16+r,cy=y+(RH-6)/2;const im=imgOf(e.img);ctx.save();ctx.beginPath();ctx.arc(cx,cy,r,0,7);ctx.clip();
-    if(ok(im))ctx.drawImage(im,cx-r,cy-r,r*2,r*2);else{ctx.fillStyle='#c9748a';ctx.fillRect(cx-r,cy-r,r*2,r*2);ctx.fillStyle='#fff';ctx.font='bold 22px '+FONT;ctx.textAlign='center';ctx.fillText(e.name[0]||'?',cx,cy+1);ctx.textAlign='left';}ctx.restore();
-    ctx.beginPath();ctx.arc(cx,cy,r,0,7);ctx.strokeStyle='rgba(255,255,255,.85)';ctx.lineWidth=2;ctx.stroke();
-    const nm=e.name.length>8?e.name.slice(0,8)+'…':e.name;ctx.fillStyle='#fff';ctx.font='bold 21px '+FONT;ctx.fillText(nm,cx+r+10,cy-12);ctx.fillStyle=e.c;ctx.font='bold 19px '+FONT;ctx.fillText(e.txt,cx+r+10,cy+13);ctx.globalAlpha=1;});
+    if(age<1200){ctx.fillStyle=`rgba(255,224,138,${.22*(1-age/1200)})`;rr(X+6,y,PW-12,RH-8,14);ctx.fill();}
+    const r=32,cx=X+12+r,cy=y+(RH-8)/2;const im=imgOf(e.img);ctx.save();ctx.beginPath();ctx.arc(cx,cy,r,0,7);ctx.clip();
+    if(okI(im))ctx.drawImage(im,cx-r,cy-r,r*2,r*2);else{ctx.fillStyle='#c9748a';ctx.fillRect(cx-r,cy-r,r*2,r*2);ctx.fillStyle='#fff';ctx.font='bold 30px '+FONT;ctx.textAlign='center';ctx.fillText(e.name[0]||'?',cx,cy+1);ctx.textAlign='left';}ctx.restore();
+    ctx.beginPath();ctx.arc(cx,cy,r,0,7);ctx.strokeStyle='rgba(255,255,255,.85)';ctx.lineWidth=3;ctx.stroke();
+    const nm=e.name.length>5?e.name.slice(0,5)+'…':e.name;ctx.fillStyle='#fff';ctx.font='bold 27px '+FONT;ctx.fillText(nm,cx+r+10,cy-16);ctx.fillStyle=e.c;ctx.font='bold 23px '+FONT;ctx.fillText(String(e.txt).replace(/️/g,''),cx+r+10,cy+18);ctx.globalAlpha=1;});
   ctx.restore();
 }
 requestAnimationFrame(frame);

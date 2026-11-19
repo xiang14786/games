@@ -10,7 +10,7 @@
 html,body{margin:0;height:100%;background:var(--bg);color:var(--txt);font:18px/1.6 "Microsoft JhengHei","PingFang TC","Noto Sans TC",sans-serif}
 #wrap{display:flex;gap:18px;height:100%;padding:12px}
 #stage{flex:1 1 auto;min-width:0;height:100%;display:flex;align-items:center;justify-content:center}
-canvas{width:100%;max-height:100%;aspect-ratio:1070/559;object-fit:contain;display:block;border-radius:14px}
+canvas{width:100%;max-height:100%;aspect-ratio:990/1280;object-fit:contain;display:block;border-radius:14px}
 #panel{flex:0 0 400px;overflow:auto;background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:16px 18px}
 h2{margin:4px 0 10px;font-size:22px;color:var(--gold)}
 h3{margin:18px 0 8px;font-size:19px;color:var(--gold)}
@@ -38,7 +38,7 @@ body.ov #ovState{display:block}
 </head>
 <body>
 <div id="wrap">
-  <div id="stage"><canvas id="cv" width="1070" height="559"></canvas></div>
+  <div id="stage"><canvas id="cv" width="990" height="1280"></canvas></div>
   <div id="panel">
     <h2>🎣 撈金魚大逃殺</h2>
     <div id="state"></div>
@@ -71,7 +71,7 @@ body.ov #ovState{display:block}
 </div>
 <div id="ovState"></div>
 <script>
-const cv=document.getElementById('cv'),ctx=cv.getContext('2d'),W=1000,H=559,$=id=>document.getElementById(id);
+const cv=document.getElementById('cv'),ctx=cv.getContext('2d'),W=720,H=1280,$=id=>document.getElementById(id);
 const FONT='"Microsoft JhengHei","PingFang TC",sans-serif';
 const LS=(k,d)=>{try{const v=localStorage.getItem('fi_'+k);return v?JSON.parse(v):d}catch(e){return d}};
 const SV=(k,v)=>{try{localStorage.setItem('fi_'+k,JSON.stringify(v))}catch(e){}};
@@ -83,11 +83,11 @@ const imgCache=new Map();function imgOf(s){if(!s)return null;if(!imgCache.has(s)
 const ok=im=>im&&im.complete&&im.naturalWidth;
 
 /* ===== 圖片 ===== */
-const POND=new Image();POND.src='pond.jpg';
+const POND=new Image();POND.src='pond_v.jpg';
 const FISH=[{src:'fish1.png',w:360,h:192,cx:229.6,cy:97.8,r:20.7},{src:'fish2.png',w:360,h:178,cx:218.4,cy:91.1,r:26.8},{src:'fish3.png',w:360,h:197,cx:222.7,cy:100.9,r:20.9},{src:'fish4.png',w:360,h:200,cx:223.3,cy:103.7,r:23.8}];
 const NETI=new Image();NETI.src='net.png';const NETB=new Image();NETB.src='netb.png';const NETS={w:300,h:440,cx:150.4,cy:150.4,r:125};const SPL=new Image();SPL.src='splash.png';
 FISH.forEach(f=>{f.img=new Image();f.img.src=f.src;});
-const WX0=188,WX1=828,WY0=140,WY1=422;   // 水面範圍（魚可以游的地方）
+const WX0=108,WX1=658,WY0=262,WY1=1112;   // 水面範圍（魚可以游的地方）
 
 /* ===== 設定 ===== */
 const rid=()=>'shine'+Math.random().toString(36).slice(2,9);
@@ -98,7 +98,7 @@ let wins=LS('wins',[]);
 
 /* ===== 遊戲狀態 ===== */
 let phase='lobby',fish=[],nets=[],t0=0,firstJoin=0,winners=null,endAt=0,lastSpawn=0;
-const pops=[],ripples=[];var BT_MAX=760;
+const pops=[],ripples=[];
 /* 置中文字條（自己算位置，iPhone 也不會跑掉；太長會自動縮小） */
 function bannerT(t,y,size,col,bg){t=String(t).replace(/️/g,'');ctx.save();ctx.font=`bold ${size}px ${FONT}`;let w=ctx.measureText(t).width;const max=(typeof BT_MAX!=='undefined'?BT_MAX:W-30);
   if(w+40>max){size=Math.max(14,Math.floor(size*(max-40)/w));ctx.font=`bold ${size}px ${FONT}`;w=ctx.measureText(t).width;}
@@ -239,7 +239,7 @@ function frame(now){
     if(phase==='lobby'&&cfg.auto>0&&firstJoin&&now-firstJoin>cfg.auto*1000&&fish.length>=Math.max(2,cfg.minP))startGame();
     step(dt,now);
   }
-  ctx.setTransform(1,0,0,1,0,0);ctx.clearRect(0,0,cv.width,H);ctx.setTransform(1,0,0,1,-105,0); // 左右裁掉，只留魚池
+  ctx.setTransform(1,0,0,1,0,0);ctx.clearRect(0,0,cv.width,H);
   if(ok(POND))ctx.drawImage(POND,0,0,W,H);else{ctx.fillStyle='#2a6fa8';ctx.fillRect(0,0,W,H);}
   for(let i=ripples.length-1;i>=0;i--){const r=ripples[i],k=(now-r.t0)/900;if(k>1){ripples.splice(i,1);continue;}if(ok(SPL)){const sz=r.r*2*(0.5+k*0.8);ctx.globalAlpha=(1-k);ctx.drawImage(SPL,r.x-sz/2,r.y-sz*0.27,sz,sz*0.547);ctx.drawImage(SPL,r.x-sz/2,r.y-sz*0.27,sz,sz*0.547);ctx.globalAlpha=1;}else{ctx.strokeStyle=`rgba(255,255,255,${.6*(1-k)})`;ctx.lineWidth=3;ctx.beginPath();ctx.ellipse(r.x,r.y,r.r*k,r.r*k*.75,0,0,7);ctx.stroke();}}
   const order=fish.filter(f=>f.st==='swim').sort((a,b)=>a.size-b.size);for(const f of order)drawFish(f,now,1,1);
@@ -249,30 +249,35 @@ function frame(now){
     bannerT(`留言「${f1(cfg.big)}」變大隻更難撈　留言「${f1(cfg.fast)}」游更快`,H-90,26,'#fff','rgba(0,0,0,.62)');
     bannerT(t,H-36,30);
     if(phase==='lobby'&&cfg.auto>0&&firstJoin)bannerT(`${Math.max(0,Math.ceil(cfg.auto-(now-firstJoin)/1000))} 秒後開始撈`,H-142,22,'#fff','rgba(0,0,0,.5)');}
-  if(phase==='end'&&winners&&now-endAt>500){const k=Math.min(1,(now-endAt-500)/400),L=winners.list;ctx.globalAlpha=k;
-    ctx.fillStyle='rgba(12,14,22,.9)';rr(180,90,640,380,30);ctx.fill();ctx.strokeStyle='#f3d9a6';ctx.lineWidth=5;ctx.stroke();
+  if(phase==='end'&&winners&&now-endAt>500){const k=Math.min(1,(now-endAt-500)/400),L=winners.list;ctx.save();ctx.translate(0,H/2-300);ctx.globalAlpha=k;
+    ctx.fillStyle='rgba(12,14,22,.9)';rr(W/2-320,90,640,380,30);ctx.fill();ctx.strokeStyle='#f3d9a6';ctx.lineWidth=5;ctx.stroke();
     ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle='#f3d9a6';ctx.font='bold 40px '+FONT;ctx.fillText(L.length>1?'🐟 最後活下來的金魚！':'🐟 最後一隻金魚！',W/2,145);
     const n=L.length,gap=n===1?0:170;L.forEach((w,i)=>{const x=W/2+(i-(n-1)/2)*gap,y=255,r=n===1?60:48;const im=imgOf(w.s);ctx.save();ctx.beginPath();ctx.arc(x,y,r,0,7);ctx.clip();if(ok(im))ctx.drawImage(im,x-r,y-r,r*2,r*2);else{ctx.fillStyle='#c9748a';ctx.fillRect(x-r,y-r,r*2,r*2);ctx.fillStyle='#fff';ctx.font=`bold ${r}px ${FONT}`;ctx.fillText(w.n[0],x,y+3);}ctx.restore();ctx.beginPath();ctx.arc(x,y,r,0,7);ctx.strokeStyle='#ffe08a';ctx.lineWidth=5;ctx.stroke();ctx.fillStyle='#fff';ctx.font=`bold ${n===1?36:26}px ${FONT}`;ctx.fillText(w.n.length>7?w.n.slice(0,7)+'…':w.n,x,y+r+34);});
     ctx.fillStyle='#cfd5df';ctx.font='24px '+FONT;ctx.fillText(`從 ${winners.count} 隻金魚中活下來，獲得`,W/2,390);
-    ctx.fillStyle='#ffe08a';ctx.font='bold 42px '+FONT;ctx.fillText(winners.prize||'大獎',W/2,438);ctx.globalAlpha=1;}
+    ctx.fillStyle='#ffe08a';ctx.font='bold 42px '+FONT;ctx.fillText(winners.prize||'大獎',W/2,438);ctx.globalAlpha=1;ctx.restore();}
   if(REC&&overlaySeen){ctx.fillStyle='rgba(0,0,0,.6)';rr(W/2-300,H/2-25,600,50,25);ctx.fill();ctx.fillStyle='#fff';ctx.font='22px '+FONT;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(`手機上：${remote.phase==='lobby'?'報名中':remote.phase==='battle'?'撈魚中':'已結束'}・報名 ${remote.joined} 隻・剩 ${remote.alive} 隻`,W/2,H/2);}
   if(toast){const age=now-toast.at;if(age>1800)toast=null;else{ctx.globalAlpha=Math.min(1,(1800-age)/300);ctx.fillStyle='rgba(0,0,0,.75)';ctx.font='bold 26px '+FONT;const tw=ctx.measureText(toast.t).width+40;rr(W/2-tw/2,H/2-28,tw,56,28);ctx.fill();ctx.fillStyle='#fff';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(toast.t,W/2,H/2);ctx.globalAlpha=1;}}
   drawSide(now);
   requestAnimationFrame(frame);
 }
-function drawSide(now){
-  ctx.setTransform(1,0,0,1,0,0);const X=800,Y=6,PW=cv.width-X-6,PH=H-12;
-  ctx.fillStyle='rgba(10,14,24,.78)';rr(X,Y,PW,PH,18);ctx.fill();ctx.strokeStyle='rgba(243,217,166,.7)';ctx.lineWidth=2;ctx.stroke();
-  ctx.textAlign='left';ctx.textBaseline='middle';ctx.fillStyle='#f3d9a6';ctx.font='bold 26px '+FONT;ctx.fillText('💬 有效留言',X+16,Y+30);
-  ctx.font='bold 18px '+FONT;ctx.fillStyle='#cfd5df';ctx.fillText(`有效 ${validN} 則・${fish.length} 人參加`,X+16,Y+62);
-  ctx.fillStyle='rgba(255,255,255,.18)';ctx.fillRect(X+14,Y+80,PW-28,2);
-  const RH=56,top=Y+90,maxR=Math.floor((PH-100)/RH);
-  if(!feed.length){ctx.fillStyle='rgba(255,255,255,.5)';ctx.font='19px '+FONT;ctx.fillText(/mode=record/.test(location.search)?'（實際留言看手機直播畫面）':`留言「${f1(cfg.kw)}」就會出現在這`,X+16,top+30);}
-  feed.slice(0,maxR).forEach((e,i)=>{const age=now-e.t,a=Math.min(1,age/250),y=top+i*RH+(1-a)*-20;ctx.globalAlpha=a*(i>=maxR-2?0.55:1);
-    if(age<1200){ctx.fillStyle=`rgba(255,224,138,${.22*(1-age/1200)})`;rr(X+8,y,PW-16,RH-6,12);ctx.fill();}
-    const r=21,cx=X+16+r,cy=y+(RH-6)/2;const im=imgOf(e.img);ctx.save();ctx.beginPath();ctx.arc(cx,cy,r,0,7);ctx.clip();if(ok(im))ctx.drawImage(im,cx-r,cy-r,r*2,r*2);else{ctx.fillStyle='#c9748a';ctx.fillRect(cx-r,cy-r,r*2,r*2);ctx.fillStyle='#fff';ctx.font=`bold 20px ${FONT}`;ctx.textAlign='center';ctx.fillText(e.name[0]||'?',cx,cy+1);ctx.textAlign='left';}ctx.restore();
-    ctx.beginPath();ctx.arc(cx,cy,r,0,7);ctx.strokeStyle='rgba(255,255,255,.85)';ctx.lineWidth=2;ctx.stroke();
-    const nm=e.name.length>8?e.name.slice(0,8)+'…':e.name;ctx.fillStyle='#fff';ctx.font='bold 20px '+FONT;ctx.fillText(nm,cx+r+10,cy-11);ctx.fillStyle=e.c;ctx.font='bold 18px '+FONT;ctx.fillText(e.txt,cx+r+10,cy+13);ctx.globalAlpha=1;});
+function drawSide(now,hint){
+  // 直式版：字和頭像放大，手機上看得清楚
+  const okI=im=>im&&im.complete&&im.naturalWidth>0;
+  ctx.save();ctx.setTransform(1,0,0,1,0,0);const X=W+10,Y=6,PW=cv.width-X-6,PH=H-12;ctx.clearRect(W,0,cv.width-W,cv.height);
+  ctx.fillStyle='rgba(10,14,24,.8)';rr(X,Y,PW,PH,20);ctx.fill();ctx.strokeStyle='rgba(243,217,166,.7)';ctx.lineWidth=2;ctx.stroke();
+  const ppl=(typeof feedNames!=='undefined')?feedNames.size:new Set(feed.map(e=>e.name)).size;
+  ctx.textAlign='left';ctx.textBaseline='middle';ctx.fillStyle='#f3d9a6';ctx.font='bold 34px '+FONT;ctx.fillText('💬 有效留言',X+14,Y+40);
+  ctx.font='bold 23px '+FONT;ctx.fillStyle='#cfd5df';ctx.fillText(`${validN} 則・${ppl} 人`,X+14,Y+84);
+  ctx.fillStyle='rgba(255,255,255,.18)';ctx.fillRect(X+12,Y+108,PW-24,2);
+  const RH=86,top=Y+120,maxR=Math.floor((PH-128)/RH);
+  if(!feed.length){ctx.fillStyle='rgba(255,255,255,.55)';ctx.font='22px '+FONT;const t=/mode=record/.test(location.search)?'（實際留言看手機直播畫面）':(hint||'有效留言會出現在這');for(let k=0;k*9<t.length;k++)ctx.fillText(t.slice(k*9,k*9+9),X+14,top+30+k*34);}
+  feed.slice(0,maxR).forEach((e,i)=>{const age=now-e.t,a=Math.min(1,age/250),y=top+i*RH-(1-a)*20;ctx.globalAlpha=a*(i>=maxR-2?0.55:1);
+    if(age<1200){ctx.fillStyle=`rgba(255,224,138,${.22*(1-age/1200)})`;rr(X+6,y,PW-12,RH-8,14);ctx.fill();}
+    const r=32,cx=X+12+r,cy=y+(RH-8)/2;const im=imgOf(e.img);ctx.save();ctx.beginPath();ctx.arc(cx,cy,r,0,7);ctx.clip();
+    if(okI(im))ctx.drawImage(im,cx-r,cy-r,r*2,r*2);else{ctx.fillStyle='#c9748a';ctx.fillRect(cx-r,cy-r,r*2,r*2);ctx.fillStyle='#fff';ctx.font='bold 30px '+FONT;ctx.textAlign='center';ctx.fillText(e.name[0]||'?',cx,cy+1);ctx.textAlign='left';}ctx.restore();
+    ctx.beginPath();ctx.arc(cx,cy,r,0,7);ctx.strokeStyle='rgba(255,255,255,.85)';ctx.lineWidth=3;ctx.stroke();
+    const nm=e.name.length>5?e.name.slice(0,5)+'…':e.name;ctx.fillStyle='#fff';ctx.font='bold 27px '+FONT;ctx.fillText(nm,cx+r+10,cy-16);ctx.fillStyle=e.c;ctx.font='bold 23px '+FONT;ctx.fillText(String(e.txt).replace(/️/g,''),cx+r+10,cy+18);ctx.globalAlpha=1;});
+  ctx.restore();
 }
 requestAnimationFrame(frame);
 
