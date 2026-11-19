@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Shine欣 九宮格搶地盤</title>
+<title>Shine欣 我的地盤我做主</title>
 <style>
 :root{--bg:#14161b;--panel:#1c1f26;--line:#2c313b;--txt:#eceef2;--sub:#9aa3b2;--gold:#e2c28a}
 *{box-sizing:border-box}
@@ -38,7 +38,7 @@ body.ov #ovState{display:block}
 <div id="wrap">
   <div id="stage"><canvas id="cv" width="720" height="1280"></canvas></div>
   <div id="panel">
-    <h2>👑 九宮格搶地盤</h2>
+    <h2>👑 我的地盤我做主</h2>
     <div class="tip" id="state"></div>
     <div class="row" style="margin-top:8px"><button class="btn go" id="startBtn">👑 開始搶地盤</button></div>
     <div class="row" style="margin-top:8px"><button class="btn ghost" id="endBtn">🏁 結算（公布地主）</button><button class="btn ghost" id="newBtn">🔄 清空重來</button></div>
@@ -147,7 +147,7 @@ function frame(now){
   // 標題（九宮格上方）
   const left=cfg.dur>0&&phase==='play'?Math.max(0,cfg.dur*60-Math.floor((Date.now()-t0)/1000)):-1;
   ctx.fillStyle='rgba(10,14,24,.6)';rr(g.x,g.y-62,GS,52,26);ctx.fill();
-  txt(phase==='end'?'🏁 地盤結算！':`👑 九宮格搶地盤${left>=0?`　⏰${Math.floor(left/60)}:${String(left%60).padStart(2,'0')}`:''}`,g.x+GS/2,g.y-36,28,'#ffe08a');
+  txt(phase==='end'?'🏁 地盤結算！':`👑 我的地盤我做主${left>=0?`　⏰${Math.floor(left/60)}:${String(left%60).padStart(2,'0')}`:''}`,g.x+GS/2,g.y-36,28,'#ffe08a');
   for(let i=0;i<9;i++)drawCell(i,now);
   // 下方說明＋即時
   let y=g.y+GS+30;ctx.fillStyle='rgba(10,14,24,.6)';rr(g.x,y-24,GS,48,24);ctx.fill();txt('留言「字+1」佔領・同格再留加血',g.x+GS/2,y,22,'#fff');
