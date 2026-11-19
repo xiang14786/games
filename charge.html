@@ -119,7 +119,7 @@ const kw1=()=>{const k=(String(cfg.kw).split(/[,，]/)[0]||'集氣').trim();retu
 function gauge(now){
   const r=pts/goal(),pos=cfg.pos||'left',glow=0.5+0.5*Math.sin(now/300);
   let bx,by,bw,bh,vert=pos!=='top';
-  if(vert){bw=30;bh=680;by=260;bx=pos==='left'?30:W-30-bw;}else{bw=W-120;bh=26;bx=60;by=170;}
+  if(vert){bw=30;bh=640;by=330;bx=pos==='left'?30:W-30-bw;}else{bw=W-120;bh=26;bx=60;by=170;}
   ctx.save();
   ctx.fillStyle='rgba(10,14,24,.6)';rr(bx-6,by-6,bw+12,bh+12,vert?21:19);ctx.fill();
   ctx.fillStyle='rgba(255,255,255,.12)';rr(bx,by,bw,bh,vert?15:13);ctx.fill();
@@ -139,7 +139,7 @@ function drawPops(G,now){
   // 參與集氣的提示：集氣條旁邊一則一則往上冒
   pops.forEach((p,i)=>{const age=now-p.t;if(age>4500)return;const a=Math.min(1,age/250)*(age>3800?1-(age-3800)/700:1)*(1-i*.12);
     const t=`${p.name.length>6?p.name.slice(0,6)+'…':p.name} 參與集氣！`;ctx.font='bold 24px '+FONT;const tw=ctx.measureText(t).width+70;
-    let x,y;if(G.vert){y=G.by+G.bh-60-i*58-(1-Math.min(1,age/250))*20;x=G.pos==='left'?G.bx+G.bw+20:G.bx-20-tw;}else{x=30;y=G.by+G.bh+50+i*54;}
+    if(i>2)return;let x,y;if(G.vert){y=G.by-90-i*54-(1-Math.min(1,age/250))*14;x=G.pos==='left'?G.bx-6:G.bx+G.bw+6-tw;}else{x=30;y=G.by+G.bh+50+i*54;}
     ctx.globalAlpha=Math.max(0,a);ctx.fillStyle='rgba(10,14,24,.72)';rr(x,y-23,tw,46,23);ctx.fill();ctx.strokeStyle='rgba(255,224,138,.8)';ctx.lineWidth=2;ctx.stroke();
     drawAv(p.img,p.name,x+24,y,18);txt(t,x+50,y,24,'#ffe08a','left');ctx.globalAlpha=1;});
 }
