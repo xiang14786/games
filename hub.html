@@ -45,7 +45,7 @@ h1{font-size:24px;margin:0 10px 0 0;color:var(--gold)}
     <button class="g" id="pauseBtn" style="display:none"></button>
     <button class="g" id="vibeBtn">🌈 彈幕＋愛心雨：關</button>
     <button class="g off" id="vibeSet">⚙️ 彈幕設定</button>
-    <div id="st">手機：<span id="phone">還沒連上</span></div>
+    <div id="st">手機：<span id="phone">還沒連上</span><br>FB 留言：<span id="cmt">檢查中…</span></div>
   </header>
   <div id="url"><span id="sess">連線代碼 <input id="sid"></span> 手機 PRISM 網址：<span id="ovUrl"></span><button id="cp">複製</button><span id="opBox" style="margin-left:18px;font-size:17px;color:var(--ink);display:none">🔆 <span id="opName"></span>透明度 <input type="range" id="op" min="20" max="100" step="5" style="width:180px;vertical-align:middle;accent-color:#e0a95a"> <b id="opV"></b> <span style="color:var(--sub);font-size:15px">（往左越透明）</span><span style="display:none"><input type="checkbox" id="fill"><input type="range" id="sw"><b id="swV"></b><input type="range" id="sh"><b id="shV"></b></span></span></div>
   <iframe id="recFrame" style="display:none"></iframe>
@@ -127,6 +127,11 @@ if(OV){
       if(d.hubState&&d.hubState.vibe!==undefined&&vibeUI!==!!d.hubState.vibe){vibeUI=!!d.hubState.vibe;paintVibe();}
       if(d.hubState){lastSeen=Date.now();phoneGame=d.hubState.game;if(d.hubState.paused!==undefined&&d.hubState.game===curRec){pausedUI=!!d.hubState.paused;paintPause();}if(d.hubState.ops){ops=d.hubState.ops;fills=d.hubState.fills||{};sizes=d.hubState.sizes||{};SV('ops',ops);SV('fills',fills);SV('sizes',sizes);if(document.activeElement!==$('op')&&document.activeElement!==$('sw')&&document.activeElement!==$('sh'))paintOp();}if(!curRec&&phoneGame)openRec(phoneGame);paint();}};
     ws.onclose=()=>setTimeout(connect,3000);}
+  // 直接偵測外掛有沒有把 FB 留言送出來
+  let lastCmt=0,lastTxt='';function listenCmt(){const c=new WebSocket(SERVER);c.onopen=()=>c.send(JSON.stringify({join:sid,in:4,out:99}));
+    c.onmessage=e=>{let m;try{m=JSON.parse(e.data);}catch(x){return;}const d=m.overlayNinja||m;if(d&&(d.chatname||d.chatmessage)){lastCmt=Date.now();lastTxt=`${d.chatname}：${String(d.chatmessage||'').replace(/<img[^>]*alt="([^"]*)"[^>]*>/gi,'$1').replace(/<[^>]*>/g,'').slice(0,20)}`;paintCmt();}};c.onclose=()=>setTimeout(listenCmt,3000);}
+  function paintCmt(){const s=Math.floor((Date.now()-lastCmt)/1000);$('cmt').innerHTML=!lastCmt?'<span style="color:#ffb070">⚠️ 還沒收到任何留言（檢查外掛、FB直播頁）</span>':s<120?`<b>✅ ${s} 秒前</b> ${lastTxt.replace(/</g,'&lt;')}`:`<span style="color:#ffb070">⚠️ ${Math.floor(s/60)} 分鐘沒收到留言了</span>`;}
+  listenCmt();setInterval(paintCmt,2000);
   function paint(){const ok=Date.now()-lastSeen<40000;$('phone').innerHTML=ok?`<b>✅ 已連上</b>・正在顯示 ${GAMES[phoneGame]||'?'}`:'⚠️ 還沒連上（手機 PRISM 有開總台網址嗎？）';}
   setInterval(paint,3000);paint();connect();setInterval(()=>send({hubCmd:'sync'}),5000);
   const g0=LS('recGame',null);if(g0)setTimeout(()=>{if(!curRec)openRec(g0);},1500);

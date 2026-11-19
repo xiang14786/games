@@ -64,7 +64,7 @@ function rr(x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h
 const BAL=new Image();BAL.src='ht_balloon.png';
 const imgCache=new Map();function imgOf(s){if(!s)return null;if(!imgCache.has(s)){const im=new Image();im.referrerPolicy='no-referrer';im.src=s;imgCache.set(s,im);}return imgCache.get(s);}
 const ok=im=>im&&im.complete&&im.naturalWidth>0;
-let cfg=Object.assign({dmOn:'1',dmMode:'kw',dmKw:'美,漂亮,好看,可愛,正,讚,歐膩,帥,喜歡,好穿,必買,想要',dmArea:'both',dmSpeed:3,htOn:'1',htKw:'❤,♥,💕,💖,💗,💓,😍,🥰,愛心,愛',htSide:'right'},LS(OV?'cfgR':'cfg',{}));
+let cfg0=Object.assign({dmOn:'1',dmMode:'kw',dmKw:'美,漂亮,好看,可愛,正,讚,歐膩,帥,喜歡,好穿,必買,想要',dmArea:'both',dmSpeed:3,htOn:'1',htKw:'❤,♥,💕,💖,💗,💓,💞,💘,💝,💟,❣,💛,🧡,💚,💙,💜,🩷,🩵,🤍,🖤,🤎,😍,🥰,😘,😻,愛心',htSide:'right'},LS(OV?'cfgR':'cfg',{}));if(!cfg0.v4){cfg0.htKw='❤,♥,💕,💖,💗,💓,💞,💘,💝,💟,❣,💛,🧡,💚,💙,💜,🩷,🩵,🤍,🖤,🤎,😍,🥰,😘,😻,愛心';cfg0.v4=1;}let cfg=cfg0;
 const list=s=>String(s||'').replace(/️/g,'').split(/[,，]/).map(x=>x.trim()).filter(Boolean);
 
 /* ===== 彈幕 ===== */
@@ -114,7 +114,7 @@ const lastHeart=new Map();
 function onComment(name,raw,img){
   name=(name||'').trim();if(!name)return;
   const msg=String(raw||'').replace(/<img[^>]*alt="([^"]*)"[^>]*>/gi,'$1').replace(/<[^>]*>/g,'').replace(/️/g,'').trim();if(!msg)return;
-  if(cfg.htOn==='1'&&list(cfg.htKw).some(k=>msg.includes(k))){const now=Date.now();if(now-(lastHeart.get(name)||0)>800){lastHeart.set(name,now);const n=Math.min(5,(msg.match(/[❤♥💕💖💗💓😍🥰]/gu)||[1]).length);addHeart(name,img,n);}}
+  if(cfg.htOn==='1'&&list(cfg.htKw).some(k=>msg.includes(k))){const now=Date.now();if(now-(lastHeart.get(name)||0)>800){lastHeart.set(name,now);const n=Math.min(5,(msg.match(/[❤♥💕💖💗💓💞💘💝💟❣💛🧡💚💙💜🩷🩵🤍🖤🤎😍🥰😘😻]/gu)||[1]).length);addHeart(name,img,n);}}
   if(cfg.dmOn==='1'&&(cfg.dmMode==='all'||list(cfg.dmKw).some(k=>msg.includes(k))))addDm(name,msg,img);
 }
 /* ===== 連線 ===== */
