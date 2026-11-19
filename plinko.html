@@ -474,8 +474,8 @@ $('conn').onclick=()=>{if(ws&&ws.readyState===1&&wsWant){wsWant=false;ws.close()
 // 手機畫面跑的結果，回傳給電腦這邊記錄
 onResult=(b,amt)=>{if(OV&&ws&&ws.readyState===1){try{ws.send(JSON.stringify({plinko:{n:b.name,a:amt,s:b.src||'',t:Date.now(),l:amt?labelOf(amt):''}}));}catch(e){}}};
 function listenResults(){if(OV)return;try{resWs&&resWs.close();}catch(e){}resWs=new WebSocket(QS.get('server')||'wss://io.socialstream.ninja');
-  resWs.onopen=()=>{resWs.send(JSON.stringify({join:net.sid,in:5,out:6}));setTimeout(()=>{pushCfg();pushTilt();if(sendCmd)sendCmd('sync');},300);};
-  resWs.onmessage=e=>{let m;try{m=JSON.parse(e.data);}catch(x){return;}const mm2=(m.overlayNinja||m);if(Array.isArray(mm2.plinkoRound)){round=mm2.plinkoRound;SV('round',round);renderQueue();return;}const p=mm2.plinko;if(!p)return;if(hist.some(h=>h.t===p.t&&h.n===p.n))return;hist.unshift(Object.assign(p,{remote:1}));SV('hist',hist);renderHist();if(p.a>0){round.push({n:p.n,a:p.a,s:p.s,l:p.l});SV('round',round);renderQueue();}};
+  resWs.onopen=()=>{resWs.send(JSON.stringify({join:net.sid,in:5,out:6}));setTimeout(()=>{if(sendCmd)sendCmd('sync');},300);};
+  resWs.onmessage=e=>{let m;try{m=JSON.parse(e.data);}catch(x){return;}const mm2=(m.overlayNinja||m);if(mm2.plinkoCfgNow){adoptCfgP(mm2.plinkoCfgNow);return;}if(Array.isArray(mm2.plinkoRound)){round=mm2.plinkoRound;SV('round',round);renderQueue();return;}const p=mm2.plinko;if(!p)return;if(hist.some(h=>h.t===p.t&&h.n===p.n))return;hist.unshift(Object.assign(p,{remote:1}));SV('hist',hist);renderHist();if(p.a>0){round.push({n:p.n,a:p.a,s:p.s,l:p.l});SV('round',round);renderQueue();}};
   sendCmd=c=>{try{resWs.readyState===1&&resWs.send(JSON.stringify({plinkoCmd:c}));}catch(e){}};
   resWs.onclose=()=>setTimeout(listenResults,5000);}
 $('copyOv').onclick=()=>{
@@ -488,7 +488,7 @@ $('fakeGo').onclick=()=>{onComment($('fakeN').value||'測試觀眾',$('fakeM').v
 const REC=QS.get('mode')==='record';
 if(REC){listenResults();setState('📋 紀錄模式：接收手機彈珠台的中獎結果（代碼 '+net.sid+'）');$('conn').style.display='none';}
 else if(OV){document.body.classList.add('ov');document.documentElement.style.background='transparent';document.body.style.background='transparent';connect();
-  const cmdListen=()=>{const c=new WebSocket(QS.get('server')||'wss://io.socialstream.ninja');c.onopen=()=>c.send(JSON.stringify({join:net.sid,in:6,out:7}));c.onmessage=e=>{let m;try{m=JSON.parse(e.data);}catch(x){return;}const mm=(m.overlayNinja||m);if(mm.plinkoTilt){tilt=Object.assign({},TDEF,mm.plinkoTilt);SV('tiltR',tilt);applyTilt();return;}if(mm.plinkoCfg){applyCfg(mm.plinkoCfg);SV('cfgR',mm.plinkoCfg);return;}const k=mm.plinkoCmd;if(k==='flush'&&pending.length){volley=pending.length;}if(k==='sync'||k==='reveal'){try{ws.send(JSON.stringify({plinkoRound:round}));}catch(x){}}if(k==='ping'){try{ws.send(JSON.stringify({plinkoStatus:{v:15,ws:ws&&ws.readyState,kw:net.kw,cd:net.cd,bg:budget,stopped,pending:pending.length,balls:balls.length,fly:balls.filter(b=>b.state==='fly').length,round:roundTotal(),rx:DBG.rx,bad:DBG.bad,hit:DBG.hit,last:DBG.last,frames:DBG.frames,err:DBG.err,ua:navigator.userAgent.slice(-60)}}));}catch(x){}return;}if(k==='reveal')doReveal(true);else if(k==='hide')doReveal(false);else if(k==='reset')doNewRound();};c.onclose=()=>setTimeout(cmdListen,4000);};cmdListen();}
+  const cmdListen=()=>{const c=new WebSocket(QS.get('server')||'wss://io.socialstream.ninja');c.onopen=()=>c.send(JSON.stringify({join:net.sid,in:6,out:7}));c.onmessage=e=>{let m;try{m=JSON.parse(e.data);}catch(x){return;}const mm=(m.overlayNinja||m);if(mm.plinkoTilt){tilt=Object.assign({},TDEF,mm.plinkoTilt);SV('tiltR',tilt);applyTilt();return;}if(mm.plinkoCfg){applyCfg(mm.plinkoCfg);SV('cfgR',mm.plinkoCfg);try{ws.send(JSON.stringify({plinkoCfgNow:curCfg()}));}catch(x){}return;}const k=mm.plinkoCmd;if(k==='flush'&&pending.length){volley=pending.length;}if(k==='sync'||k==='reveal'){try{ws.send(JSON.stringify({plinkoRound:round}));}catch(x){}}if(k==='sync'){try{ws.send(JSON.stringify({plinkoCfgNow:curCfg()}));}catch(x){}}if(k==='ping'){try{ws.send(JSON.stringify({plinkoStatus:{v:15,ws:ws&&ws.readyState,kw:net.kw,cd:net.cd,bg:budget,stopped,pending:pending.length,balls:balls.length,fly:balls.filter(b=>b.state==='fly').length,round:roundTotal(),rx:DBG.rx,bad:DBG.bad,hit:DBG.hit,last:DBG.last,frames:DBG.frames,err:DBG.err,ua:navigator.userAgent.slice(-60)}}));}catch(x){}return;}if(k==='reveal')doReveal(true);else if(k==='hide')doReveal(false);else if(k==='reset')doNewRound();};c.onclose=()=>setTimeout(cmdListen,4000);};cmdListen();}
 else if(QS.get('session')){connect();}
 $('copyOv').insertAdjacentHTML('afterend',' <button class="btn ghost" id="copyRec">複製電腦紀錄用網址</button>');
 $('copyRec').onclick=()=>{const u=`${location.href.split('?')[0]}?mode=record&session=${encodeURIComponent(net.sid)}`;navigator.clipboard.writeText(u).then(()=>{$('ovTip').textContent='已複製 ✓';setTimeout(()=>$('ovTip').textContent='',2000);});};
@@ -533,4 +533,12 @@ if(OV){window.__fill=window.__fill||false;window.__fit=function(){const c=docume
   if(window.__fill){w=vw;h=vh;}else{const s=Math.min(vw/c.width,vh/c.height);w=c.width*s;h=c.height*s;}
   Object.assign(c.style,{position:'fixed',left:((vw-w)/2)+'px',top:'0px',width:w+'px',height:h+'px',maxHeight:'none',aspectRatio:'auto',objectFit:'fill',transform:'none',margin:'0'});};
   addEventListener('resize',window.__fit);setInterval(window.__fit,1000);window.__fit();}
+
+/* 兩台電腦同步：以手機上的設定為準 */
+function curCfg(){return{needName:net.needName,kw:net.kw,cd:net.cd,bg:budget,tiers,bmin:bMin,bmax:bMax,wr:winRate};}
+var _lastCfgJ='';
+function adoptCfgP(c){const j=JSON.stringify(c);if(j===_lastCfgJ)return;_lastCfgJ=j;if(JSON.stringify(curCfg())===j)return;
+  const keepStop=stopped;applyCfg(c);stopped=keepStop;
+  try{SV('kw',net.kw);SV('cd',net.cd);SV('needName',net.needName);SV('budget',budget);SV('tiers4',tiers);SV('bmin',bMin);SV('bmax',bMax);SV('winRate',winRate);}catch(e){}}
+if(REC)setInterval(()=>{if(sendCmd)sendCmd('sync');},4000);
 </script></body></html>

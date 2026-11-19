@@ -261,12 +261,12 @@ function fake10(){const ks=['sofa','ward','curt'];for(let i=0;i<10;i++){const n=
   for(const p of alive())if(phase==='count'&&p.spot==='none'&&Math.random()<.8)hide(p.name,ks[Math.floor(Math.random()*3)]);}
 function listenCmd(){cmdWs=new WebSocket(SERVER);cmdWs.onopen=()=>cmdWs.send(JSON.stringify({join:sid,in:6,out:7}));
   cmdWs.onmessage=e=>{let m;try{m=JSON.parse(e.data);}catch(x){return;}const d=m.overlayNinja||m;
-    if(d.popoCfg){Object.assign(cfg,d.popoCfg);SV('cfgR',cfg);renderUI();}
+    if(d.popoCfg){Object.assign(cfg,d.popoCfg);SV('cfgR',cfg);renderUI();sendUp({popoCfgNow:cfg});}
     if(d.popoCmd==='start')startRound();if(d.popoCmd==='new')newGame();if(d.popoCmd==='fake')fake10();
-    if(d.popoCmd==='sync')sendUp({popoState:stateMsg()});};
+    if(d.popoCmd==='sync')sendUp({popoCfgNow:cfg});if(d.popoCmd==='sync')sendUp({popoState:stateMsg()});};
   cmdWs.onclose=()=>setTimeout(listenCmd,4000);}
-function listenRec(){recWs=new WebSocket(SERVER);recWs.onopen=()=>{recWs.send(JSON.stringify({join:sid,in:5,out:6}));setTimeout(()=>{pushCfg();sendDown({popoCmd:'sync'});},300);};
-  recWs.onmessage=e=>{let m;try{m=JSON.parse(e.data);}catch(x){return;}const d=m.overlayNinja||m;
+function listenRec(){recWs=new WebSocket(SERVER);recWs.onopen=()=>{recWs.send(JSON.stringify({join:sid,in:5,out:6}));setTimeout(()=>{sendDown({popoCmd:'sync'});},300);};
+  recWs.onmessage=e=>{let m;try{m=JSON.parse(e.data);}catch(x){return;}const d=m.overlayNinja||m;if(d.popoCfgNow)adoptCfg(d.popoCfgNow);
     if(d.popoState||d.popoWin){lastOv=Date.now();if(!overlaySeen){overlaySeen=true;setState('📋 紀錄模式：已連上手機（代碼 '+sid+'）');}}
     if(d.popoState){remote=d.popoState;renderUI();}
     if(d.popoWin){if(!wins.some(w=>w.t===d.popoWin.t)){wins.unshift(d.popoWin);SV('wins',wins);}renderUI();}};
@@ -311,6 +311,12 @@ if(OV){window.__fill=window.__fill||false;window.__fit=function(){const c=docume
   if(window.__fill){w=vw;h=vh;}else{const s=Math.min(vw/c.width,vh/c.height);w=c.width*s;h=c.height*s;}
   Object.assign(c.style,{position:'fixed',left:((vw-w)/2)+'px',top:'0px',width:w+'px',height:h+'px',maxHeight:'none',aspectRatio:'auto',objectFit:'fill',transform:'none',margin:'0'});};
   addEventListener('resize',window.__fit);setInterval(window.__fit,1000);window.__fit();}
+
+/* 兩台電腦同步：以手機上的設定為準，大家都跟著手機 */
+var _lastCfgJ='';
+function adoptCfg(c){const j=JSON.stringify(c);if(j===_lastCfgJ)return;_lastCfgJ=j;
+  for(const k in c){if(!(k in cfg))continue;cfg[k]=c[k];const el=document.getElementById(k);if(!el||el===document.activeElement)continue;if(el.type==='checkbox')el.checked=!!c[k];else el.value=c[k];}
+  SV('cfg',cfg);try{renderUI();}catch(e){}}
 </script>
 </body>
 </html>

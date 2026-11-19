@@ -61,7 +61,7 @@ if(OV){
   const applyOp=()=>{fr.style.opacity=cur&&cur!=='none'?(ops[cur]!=null?ops[cur]:100)/100:0;applyFill();applySize();};
   function show(g){if(!GAMES[g])return;if(g===cur)return;cur=g;SV('ovGame',g);
     fr.style.opacity=0;setTimeout(()=>{fr.src=g==='none'?'about:blank':gameUrl(g,'overlay');fr.onload=applyOp;},300);report();}
-  function report(){if(ws&&ws.readyState===1){try{ws.send(JSON.stringify({hubState:{game:cur,t:Date.now()}}));}catch(e){}}}
+  function report(){if(ws&&ws.readyState===1){try{ws.send(JSON.stringify({hubState:{game:cur,t:Date.now(),ops,fills,sizes}}));}catch(e){}}}
   function connect(){ws=new WebSocket(SERVER);
     ws.onopen=()=>{ws.send(JSON.stringify({join:sid,in:6,out:5}));setTimeout(report,300);};
     ws.onmessage=e=>{let m;try{m=JSON.parse(e.data);}catch(x){return;}const d=m.overlayNinja||m;
@@ -95,12 +95,12 @@ if(OV){
   function send(o){if(ws&&ws.readyState===1){try{ws.send(JSON.stringify(o));}catch(e){}}}
   document.querySelectorAll('.g').forEach(b=>b.onclick=()=>{const g=b.dataset.g;send({hubGame:g});openRec(g);});
   function connect(){try{ws&&ws.close();}catch(e){}ws=new WebSocket(SERVER);
-    ws.onopen=()=>{ws.send(JSON.stringify({join:sid,in:5,out:6}));setTimeout(()=>{send({hubOps:ops});send({hubFills:fills});send({hubSizes:sizes});send({hubCmd:'sync'});},300);};
+    ws.onopen=()=>{ws.send(JSON.stringify({join:sid,in:5,out:6}));setTimeout(()=>{send({hubCmd:'sync'});},300);};
     ws.onmessage=e=>{let m;try{m=JSON.parse(e.data);}catch(x){return;}const d=m.overlayNinja||m;
-      if(d.hubState){lastSeen=Date.now();phoneGame=d.hubState.game;if(!curRec&&phoneGame)openRec(phoneGame);paint();}};
+      if(d.hubState){lastSeen=Date.now();phoneGame=d.hubState.game;if(d.hubState.ops){ops=d.hubState.ops;fills=d.hubState.fills||{};sizes=d.hubState.sizes||{};SV('ops',ops);SV('fills',fills);SV('sizes',sizes);if(document.activeElement!==$('op')&&document.activeElement!==$('sw')&&document.activeElement!==$('sh'))paintOp();}if(!curRec&&phoneGame)openRec(phoneGame);paint();}};
     ws.onclose=()=>setTimeout(connect,3000);}
   function paint(){const ok=Date.now()-lastSeen<40000;$('phone').innerHTML=ok?`<b>✅ 已連上</b>・正在顯示 ${GAMES[phoneGame]||'?'}`:'⚠️ 還沒連上（手機 PRISM 有開總台網址嗎？）';}
-  setInterval(paint,3000);paint();connect();
+  setInterval(paint,3000);paint();connect();setInterval(()=>send({hubCmd:'sync'}),5000);
   const g0=LS('recGame',null);if(g0)setTimeout(()=>{if(!curRec)openRec(g0);},1500);
 }
 </script>
