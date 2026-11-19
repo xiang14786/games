@@ -102,7 +102,7 @@ function join(name,img){
   pops.push({x:W/2,y:110,t:`${name} 加入了！`,t0:performance.now(),c:'#9fe7a4'});addFeed(name,img||'','🔥 進場了','#9fe7a4');
   sendUp({arState:stateMsg()});renderUI();return true;
 }
-const GEAR={armor:['🥋','鎧甲'],weapon:['🔪','武器'],helmet:['🪖','頭盔'],level:['⭐','升級']},GMAX=5;
+const GEAR={armor:['🥋','鎧甲'],weapon:['🔪','武器'],helmet:['🎩','頭盔'],level:['⭐','升級']},GMAX=5;
 function power(p){return 1+0.35*p.armor+0.25*p.helmet+0.3*p.level+0.1*p.weapon;}
 function gear(name,slot){
   if(phase==='end')return;const p=players.find(p=>p.name===name&&!p.fall);if(!p)return;
@@ -201,10 +201,11 @@ function frame(now){
   // 下方標題（放下面，才不會被直播人數擋住）
   if(phase!=='end'){const k0=(cfg.kw.split(/[,，]/)[0]||'衝').trim();
     const t=phase==='lobby'?`🔥 留言「${k0}」加入大逃殺！ 已報名 ${players.length} 人`:`🔥 大逃殺中！ 剩 ${alive().length} 人`;
-    bannerT(`強化：${f1(cfg.armor)}＝🥋鎧甲　${f1(cfg.weapon)}＝🔪武器　${f1(cfg.helmet)}＝🪖頭盔　${f1(cfg.level)}＝⭐升級`,H-96,26,'#fff','rgba(0,0,0,.62)');
-    bannerT(t,H-38,32);
-    if(phase==='lobby'&&cfg.auto>0&&firstJoin){const left=Math.max(0,Math.ceil(cfg.auto-(now-firstJoin)/1000));bannerT(`${left} 秒後開戰`,H-148,24,'#fff','rgba(0,0,0,.5)');}
-    if(phase==='battle'){const left=Math.max(0,Math.ceil(cfg.dur-(now-battleT0)/1000));bannerT(left>0?`場地縮小中… ${left}`:'最後決戰！',H-148,24,'#ffb0b0','rgba(0,0,0,.5)');}}
+    bannerT(`強化：${f1(cfg.armor)}＝🥋鎧甲　${f1(cfg.weapon)}＝🔪武器`,H-160,30,'#fff','rgba(0,0,0,.62)');
+    bannerT(`${f1(cfg.helmet)}＝🎩頭盔　${f1(cfg.level)}＝⭐升級`,H-102,30,'#fff','rgba(0,0,0,.62)');
+    bannerT(t,H-40,34);
+    if(phase==='lobby'&&cfg.auto>0&&firstJoin){const left=Math.max(0,Math.ceil(cfg.auto-(now-firstJoin)/1000));bannerT(`${left} 秒後開戰`,H-218,26,'#fff','rgba(0,0,0,.5)');}
+    if(phase==='battle'){const left=Math.max(0,Math.ceil(cfg.dur-(now-battleT0)/1000));bannerT(left>0?`場地縮小中… ${left}`:'最後決戰！',H-218,26,'#ffb0b0','rgba(0,0,0,.5)');}}
   // 冠軍卡
   if(phase==='end'&&winner&&now-endAt>600){const k=Math.min(1,(now-endAt-600)/400),w=winner;ctx.save();ctx.translate(0,H/2-370);ctx.globalAlpha=k;
     ctx.fillStyle='rgba(12,14,22,.9)';rr(W/2-330,170,660,390,30);ctx.fill();ctx.strokeStyle='#f3d9a6';ctx.lineWidth=5;ctx.stroke();
@@ -313,8 +314,8 @@ if(REC)setInterval(()=>{sendDown({arCmd:'sync'});if(overlaySeen&&Date.now()-last
 
 /* 手機直播畫面：用程式算大小（iPhone 不會超出框、字不會被切掉）；總台可切換「填滿」 */
 if(OV){window.__fill=window.__fill||false;window.__fit=function(){const c=document.getElementById('cv');if(!c)return;const vw=innerWidth,vh=innerHeight;let w,h;
-  if(window.__fill){w=vw;h=vh;}else{const s=Math.min(vw/c.width,vh/c.height);w=c.width*s;h=c.height*s;}
-  Object.assign(c.style,{position:'fixed',left:((vw-w)/2)+'px',top:'0px',width:w+'px',height:h+'px',maxHeight:'none',aspectRatio:'auto',objectFit:'fill',transform:'none',margin:'0'});};
+  if(window.__fill){w=vw;h=vh;}else{const s=Math.min(vw/c.width,vh/c.height)*0.9;w=c.width*s;h=c.height*s;}
+  Object.assign(c.style,{position:'fixed',left:((vw-w)/2)+'px',top:((vh-h)/2)+'px',width:w+'px',height:h+'px',maxHeight:'none',aspectRatio:'auto',objectFit:'fill',transform:'none',margin:'0'});};
   addEventListener('resize',window.__fit);setInterval(window.__fit,1000);window.__fit();}
 
 /* 兩台電腦同步：以手機上的設定為準，大家都跟著手機 */
