@@ -48,7 +48,7 @@ body.ov #ovState{display:block}
     <label>集滿時的大字（可以打你想說的話）<input type="text" id="msg" placeholder="例：歐膩今天好漂亮💕"></label>
     <label>集滿的特效<select id="fx"><option value="both">城堡＋天馬</option><option value="castle">只有城堡</option><option value="pegasus">只有天馬</option></select></label>
     <label>集氣條放哪裡<select id="pos"><option value="left">左邊</option><option value="right">右邊</option><option value="top">上面</option></select></label>
-    <div class="row"><label style="flex:1">抽幾個人<input type="number" id="winN" min="1" max="20"></label><label style="flex:1">集滿後自動抽<select id="autoDraw"><option value="1">是</option><option value="0">否（我按抽）</option></select></label></div>
+    <div class="row"><label style="flex:1">抽幾個人<input type="number" id="winN" min="1" max="20"></label><label style="flex:1">集滿後自動抽<select id="autoDraw"><option value="1">是（特效一結束馬上抽）</option><option value="0">否（我按抽）</option></select></label></div>
     <label>獎品<input type="text" id="prize" placeholder="例：購物金50元"></label>
     <div class="tip">中獎機率：有集氣的人都有機會；留言越多機率稍微高一點（最多約一般人的 3 倍），不會一面倒。</div>
 
@@ -83,9 +83,11 @@ const shim=document.createElement('canvas'),sctx=shim.getContext('2d');const tra
 
 /* ===== 設定 ===== */
 const rid=()=>'shine'+Math.random().toString(36).slice(2,9);
-let cfg=Object.assign({msg:'🎉 集氣成功！',fx:'both',kw:'集氣,加油',goal:100,cd:3,pos:'left',winN:3,autoDraw:'1',prize:'購物金50元'},LS('cfg',{}));
+const HEARTS='❤,♥,💕,💖,💗,💓,💞,💘,😍,🥰,😘,愛心';
+const DEF={msg:'🎉 集氣成功！',fx:'both',kw:HEARTS,goal:150,cd:3,pos:'left',winN:3,autoDraw:'1',prize:'購物金20元',v:2};
+const _sv=LS('cfg',{});let cfg=Object.assign({},DEF,_sv);if(_sv.v!==2){Object.assign(cfg,{kw:HEARTS,goal:150,prize:'購物金20元',autoDraw:'1',v:2});SV('cfg',cfg);}
 let sid=QS.get('session')||LS('sid','')||rid();SV('sid',sid);
-if(OV){const c=LS('cfgR',null);if(c)Object.assign(cfg,c);}
+if(OV){const c=LS('cfgR',null);if(c&&c.v===2)Object.assign(cfg,c);}
 let wins=LS('wins',[]);
 
 /* ===== 狀態 ===== */
@@ -98,7 +100,7 @@ function addPoint(name,img){pts=Math.min(goal(),pts+1);who[name]=(who[name]||0)+
   pops.unshift({name,img,t:performance.now()});if(pops.length>6)pops.length=6;
   if(pts>=goal())goFull();sendUp({chAdd:{n:name,s:img||''},chState:stateMsg()});renderUI();}
 function goFull(){if(phase!=='play')return;phase='full';fullAt=performance.now();sendUp({chState:stateMsg()});
-  if(cfg.autoDraw==='1'&&!(REC&&overlaySeen))setTimeout(()=>{if(phase==='full')doDraw();},7500);renderUI();}
+  if(cfg.autoDraw==='1'&&!(REC&&overlaySeen))setTimeout(()=>{if(phase==='full')doDraw();},6500);renderUI();}
 function weight(c){return Math.min(3,1+0.55*Math.log(c));} // 1 則＝1，10 則≈2.3，40 則以上封頂 3
 function doDraw(){if(!(phase==='full'||phase==='play'))return;const names=Object.keys(who);const n=Math.max(1,Math.min(20,+cfg.winN||1));
   const pool=names.map(nm=>({n:nm,w:weight(who[nm])}));const picked=[];

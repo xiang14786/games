@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Shine欣 彩虹彈幕＋愛心雨</title>
+<style>
+:root{--bg:#14161b;--panel:#1c1f26;--line:#2c313b;--txt:#eceef2;--sub:#9aa3b2;--gold:#e2c28a}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--txt);font:18px/1.6 "Microsoft JhengHei","PingFang TC","Noto Sans TC",sans-serif}
+#wrap{display:flex;gap:18px;height:100%;padding:12px}
+#stage{flex:1 1 auto;min-width:0;height:100%;display:flex;align-items:center;justify-content:center}
+canvas{height:100%;max-width:100%;aspect-ratio:720/1280;display:block;border-radius:14px;background:repeating-conic-gradient(#3a3f4a 0 25%,#30343d 0 50%) 0 0/40px 40px}
+#panel{flex:0 0 420px;overflow:auto;background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:16px 18px}
+h2{margin:4px 0 10px;font-size:22px;color:var(--gold)}
+h3{margin:18px 0 8px;font-size:19px;color:var(--gold)}
+input,button,select{font:inherit}
+input[type=text],input[type=number],select{width:100%;padding:10px 12px;border-radius:10px;border:1px solid #3a404c;background:#252a33;color:#fff}
+.btn{border:none;border-radius:12px;padding:10px 16px;font-weight:700;cursor:pointer}
+.ghost{background:#2c313b;color:var(--txt);font-size:16px;padding:8px 14px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.tip{color:var(--sub);font-size:15px}
+label{display:block;margin-top:6px}
+body.ov,body.ov #wrap{background:transparent!important}
+body.ov #panel{display:none}
+body.ov #wrap{padding:0}
+body.ov canvas{background:transparent;border-radius:0}
+@media (max-width:900px){#wrap{flex-direction:column;height:auto}#stage{height:80vh}#panel{flex:none}}
+</style>
+</head>
+<body>
+<div id="wrap">
+  <div id="stage"><canvas id="cv" width="720" height="1280"></canvas></div>
+  <div id="panel">
+    <h2>🌈 彩虹彈幕＋💗 愛心雨</h2>
+    <div class="tip">這兩個效果會疊在任何遊戲上面，也可以單獨開著邊介紹衣服。開關在「遊戲總台」上方。</div>
+    <div class="tip" id="st" style="margin-top:6px"></div>
+
+    <h3>🌈 彩虹彈幕</h3>
+    <label>要不要開<select id="dmOn"><option value="1">開</option><option value="0">關</option></select></label>
+    <label>哪些留言會變彈幕<select id="dmMode"><option value="kw">有下面這些字的留言</option><option value="all">所有留言</option></select></label>
+    <label>彈幕關鍵字（逗號分開）<input type="text" id="dmKw"></label>
+    <div class="row"><label style="flex:1">彈幕飄的區域<select id="dmArea"><option value="top">上半部</option><option value="mid">中間</option><option value="both">上面＋下面（中間留空）</option></select></label><label style="flex:1">速度（1慢～5快）<input type="number" id="dmSpeed" min="1" max="5"></label></div>
+
+    <h3>💗 愛心雨</h3>
+    <label>要不要開<select id="htOn"><option value="1">開</option><option value="0">關</option></select></label>
+    <label>愛心關鍵字（逗號分開，愛心表情符號也算）<input type="text" id="htKw"></label>
+    <label>愛心從哪邊飄上來<select id="htSide"><option value="right">右下角</option><option value="left">左下角</option><option value="both">兩邊</option></select></label>
+
+    <h3>🧪 測試</h3>
+    <div class="row"><button class="btn ghost" id="t1">測試彈幕</button><button class="btn ghost" id="t2">測試愛心 ×10</button></div>
+    <div class="tip">在這頁按測試，手機上的直播畫面也會出現。</div>
+  </div>
+</div>
+<script>
+const cv=document.getElementById('cv'),ctx=cv.getContext('2d'),W=720,H=1280,$=id=>document.getElementById(id);
+const FONT='"Microsoft JhengHei","PingFang TC",sans-serif';
+const LS=(k,d)=>{try{const v=localStorage.getItem('vb_'+k);return v?JSON.parse(v):d}catch(e){return d}};
+const SV=(k,v)=>{try{localStorage.setItem('vb_'+k,JSON.stringify(v))}catch(e){}};
+const QS=new URLSearchParams(location.search),OV=QS.get('mode')==='overlay';
+const SERVER=QS.get('server')||'wss://io.socialstream.ninja';
+let sid=QS.get('session')||LS('sid','JUVRjNBuLH');SV('sid',sid);
+function rr(x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();}
+const imgCache=new Map();function imgOf(s){if(!s)return null;if(!imgCache.has(s)){const im=new Image();im.referrerPolicy='no-referrer';im.src=s;imgCache.set(s,im);}return imgCache.get(s);}
+const ok=im=>im&&im.complete&&im.naturalWidth>0;
+let cfg=Object.assign({dmOn:'1',dmMode:'kw',dmKw:'美,漂亮,好看,可愛,正,讚,歐膩,帥,喜歡,好穿,必買,想要',dmArea:'both',dmSpeed:3,htOn:'1',htKw:'❤,♥,💕,💖,💗,💓,😍,🥰,愛心,愛',htSide:'right'},LS(OV?'cfgR':'cfg',{}));
+const list=s=>String(s||'').replace(/️/g,'').split(/[,，]/).map(x=>x.trim()).filter(Boolean);
+
+/* ===== 彈幕 ===== */
+const dms=[],hearts=[],sparks=[];let laneNext=[];
+function lanes(){const a=cfg.dmArea;if(a==='top')return [150,240,330,420,510];if(a==='mid')return [470,560,650,740,830];return [150,240,330,950,1040,1130];}
+function addDm(name,text,img){
+  text=String(text).replace(/\s+/g,' ').trim();if(!text)return;if(text.length>22)text=text.slice(0,22)+'…';
+  const L=lanes(),now=performance.now();let best=0,bt=Infinity;L.forEach((y,i)=>{const t=laneNext[i]||0;if(t<bt){bt=t;best=i;}});
+  ctx.font='bold 40px '+FONT;const tw=ctx.measureText(text).width;const w=tw+120;
+  const sp=110+(+cfg.dmSpeed||3)*45;laneNext[best]=Math.max(now,bt)+ (w+60)/sp*1000;
+  dms.push({name,text,img,x:W+20+Math.max(0,(bt-now))/1000*sp,y:L[best],w,tw,sp,hue:Math.random()*360,t0:now});if(dms.length>40)dms.shift();
+}
+function drawDm(d,now,dt){
+  d.x-=d.sp*dt;if(d.x+d.w<-20)return false;
+  ctx.save();ctx.translate(d.x,d.y);
+  ctx.fillStyle='rgba(10,10,20,.45)';rr(0,-34,d.w,68,34);ctx.fill();
+  const g=ctx.createLinearGradient(0,0,d.w,0);for(let k=0;k<=6;k++)g.addColorStop(k/6,`hsl(${(d.hue+now/8+k*60)%360},95%,72%)`);
+  ctx.strokeStyle=g;ctx.lineWidth=4;rr(0,-34,d.w,68,34);ctx.stroke();
+  const im=imgOf(d.img);ctx.save();ctx.beginPath();ctx.arc(34,0,26,0,7);ctx.clip();if(ok(im))ctx.drawImage(im,8,-26,52,52);else{ctx.fillStyle='#c9748a';ctx.fillRect(8,-26,52,52);ctx.fillStyle='#fff';ctx.font='bold 26px '+FONT;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText((d.name||'?')[0],34,1);}ctx.restore();
+  ctx.font='bold 40px '+FONT;ctx.textAlign='left';ctx.textBaseline='middle';ctx.lineWidth=7;ctx.strokeStyle='rgba(0,0,0,.6)';ctx.strokeText(d.text,72,2);ctx.fillStyle=g;ctx.fillText(d.text,72,2);
+  if(Math.random()<dt*14)sparks.push({x:d.x+d.w-10,y:d.y+(Math.random()-.5)*50,vx:60+Math.random()*60,vy:(Math.random()-.5)*40,t0:now,c:`hsl(${Math.random()*360},95%,75%)`});
+  ctx.restore();return true;}
+/* ===== 愛心 ===== */
+function addHeart(name,img,n){n=n||1;const side=cfg.htSide;for(let i=0;i<n;i++){const left=side==='left'||(side==='both'&&Math.random()<.5);
+  hearts.push({name,img,x:left?90+Math.random()*60:W-90-Math.random()*60,y:H-120+Math.random()*30,vy:-(170+Math.random()*90),ph:Math.random()*7,amp:20+Math.random()*30,s:.8+Math.random()*.5,t0:performance.now()+i*180,c:['#ff4d7a','#ff7aa8','#ff9ec4','#ff5c5c','#ffb3d1'][Math.floor(Math.random()*5)]});}if(hearts.length>80)hearts.splice(0,hearts.length-80);}
+function heartPath(s){ctx.beginPath();ctx.moveTo(0,s*.35);ctx.bezierCurveTo(-s*1.1,-s*.35,-s*.55,-s*1.15,0,-s*.55);ctx.bezierCurveTo(s*.55,-s*1.15,s*1.1,-s*.35,0,s*.35);ctx.closePath();}
+function drawHeart(h,now,dt){
+  if(now<h.t0)return true;const age=(now-h.t0)/1000;if(age>4.2)return false;
+  const y=h.y+h.vy*age,x=h.x+Math.sin(age*2.4+h.ph)*h.amp,a=age<.25?age/.25:age>3.2?1-(age-3.2):1,sc=h.s*(age<.3?.4+age*2:1);
+  ctx.save();ctx.globalAlpha=Math.max(0,a);ctx.translate(x,y);ctx.scale(sc,sc);ctx.rotate(Math.sin(age*3+h.ph)*.15);
+  ctx.shadowColor=h.c;ctx.shadowBlur=20;ctx.fillStyle=h.c;heartPath(48);ctx.fill();ctx.shadowBlur=0;ctx.strokeStyle='#fff';ctx.lineWidth=4;ctx.stroke();
+  const im=imgOf(h.img);ctx.save();ctx.beginPath();ctx.arc(0,-14,20,0,7);ctx.clip();if(ok(im))ctx.drawImage(im,-20,-34,40,40);else{ctx.fillStyle='rgba(255,255,255,.9)';ctx.fill();ctx.fillStyle=h.c;ctx.font='bold 22px '+FONT;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText((h.name||'?')[0],0,-13);}ctx.restore();
+  ctx.restore();return true;}
+let last=performance.now();
+function frame(now){const dt=Math.min(.05,(now-last)/1000);last=now;ctx.clearRect(0,0,W,H);
+  for(let i=0;i<dms.length;i++)if(!drawDm(dms[i],now,dt)){dms.splice(i,1);i--;}
+  for(let i=0;i<hearts.length;i++)if(!drawHeart(hearts[i],now,dt)){hearts.splice(i,1);i--;}
+  for(let i=sparks.length-1;i>=0;i--){const p=sparks[i],k=(now-p.t0)/700;if(k>1){sparks.splice(i,1);continue;}p.x+=p.vx*dt;p.y+=p.vy*dt;ctx.globalAlpha=1-k;ctx.fillStyle=p.c;const z=5*(1-k)+1;ctx.fillRect(p.x-z,p.y-1,z*2,2);ctx.fillRect(p.x-1,p.y-z,2,z*2);ctx.globalAlpha=1;}
+  if(!OV&&!dms.length&&!hearts.length){ctx.fillStyle='rgba(255,255,255,.5)';ctx.font='bold 28px '+FONT;ctx.textAlign='center';ctx.fillText('按右邊「測試」看效果',W/2,H/2);}
+  requestAnimationFrame(frame);}
+requestAnimationFrame(frame);
+
+/* ===== 留言 ===== */
+const lastHeart=new Map();
+function onComment(name,raw,img){
+  name=(name||'').trim();if(!name)return;
+  const msg=String(raw||'').replace(/<img[^>]*alt="([^"]*)"[^>]*>/gi,'$1').replace(/<[^>]*>/g,'').replace(/️/g,'').trim();if(!msg)return;
+  if(cfg.htOn==='1'&&list(cfg.htKw).some(k=>msg.includes(k))){const now=Date.now();if(now-(lastHeart.get(name)||0)>800){lastHeart.set(name,now);const n=Math.min(5,(msg.match(/[❤♥💕💖💗💓😍🥰]/gu)||[1]).length);addHeart(name,img,n);}}
+  if(cfg.dmOn==='1'&&(cfg.dmMode==='all'||list(cfg.dmKw).some(k=>msg.includes(k))))addDm(name,msg,img);
+}
+/* ===== 連線 ===== */
+let ws=null,cmd=null;
+function send(o){if(cmd&&cmd.readyState===1){try{cmd.send(JSON.stringify(o));}catch(e){}}}
+function connect(){ws=new WebSocket(SERVER);ws.onopen=()=>ws.send(JSON.stringify({join:sid,in:4,out:5}));
+  ws.onmessage=e=>{let m;try{m=JSON.parse(e.data);}catch(x){return;}const d=m.overlayNinja||m;if(d&&(d.chatname||d.chatmessage))onComment(d.chatname,d.chatmessage,d.chatimg);};ws.onclose=()=>setTimeout(connect,3000);}
+function listen(){cmd=new WebSocket(SERVER);
+  cmd.onopen=()=>{cmd.send(JSON.stringify(OV?{join:sid,in:6,out:5}:{join:sid,in:5,out:6}));if(OV)send({vbCfgNow:cfg});else setTimeout(()=>send({vbCmd:'sync'}),300);};
+  cmd.onmessage=e=>{let m;try{m=JSON.parse(e.data);}catch(x){return;}const d=m.overlayNinja||m;
+    if(OV){if(d.vbCfg){Object.assign(cfg,d.vbCfg);SV('cfgR',cfg);send({vbCfgNow:cfg});}if(d.vbCmd==='sync')send({vbCfgNow:cfg});if(d.vbCmd==='t1')testDm();if(d.vbCmd==='t2')testHeart();}
+    else if(d.vbCfgNow){Object.assign(cfg,d.vbCfgNow);SV('cfg',cfg);paint();$('st').textContent='✅ 已連上手機（代碼 '+sid+'）';}};
+  cmd.onclose=()=>setTimeout(listen,4000);}
+const SAMPLE=['歐膩今天好漂亮💕','這件好好看！','安安好可愛','想要這件！必買','歐膩穿什麼都好看'];
+function testDm(){addDm('測試觀眾',SAMPLE[Math.floor(Math.random()*SAMPLE.length)],'');}
+function testHeart(){for(let i=0;i<10;i++)addHeart('測',' ',1);}
+
+/* ===== 介面 ===== */
+const K=['dmOn','dmMode','dmKw','dmArea','dmSpeed','htOn','htKw','htSide'];
+function paint(){K.forEach(k=>{const el=$(k);if(el!==document.activeElement)el.value=cfg[k];});}
+paint();K.forEach(k=>$(k).addEventListener('change',()=>{cfg[k]=k==='dmSpeed'?Math.max(1,Math.min(5,+$(k).value||3)):$(k).value.trim();SV('cfg',cfg);const o={};K.forEach(x=>o[x]=cfg[x]);send({vbCfg:o});laneNext=[];}));
+$('t1').onclick=()=>{testDm();send({vbCmd:'t1'});};$('t2').onclick=()=>{testHeart();send({vbCmd:'t2'});};
+if(OV){document.body.classList.add('ov');document.documentElement.style.background='transparent';connect();
+  window.__fit=function(){const vw=innerWidth,vh=innerHeight;const s=Math.min(vw/W,vh/H);const w=W*s,h=H*s;Object.assign(cv.style,{position:'fixed',left:((vw-w)/2)+'px',top:((vh-h)/2)+'px',width:w+'px',height:h+'px',maxWidth:'none',aspectRatio:'auto'});};addEventListener('resize',window.__fit);setInterval(window.__fit,1000);window.__fit();}
+listen();$('st').textContent=OV?'':'還沒偵測到手機（總台要先打開「彩虹彈幕＋愛心雨」）';
+</script>
+</body>
+</html>
