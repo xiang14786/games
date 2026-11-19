@@ -249,7 +249,7 @@ function drawSide(now,hint){
 requestAnimationFrame(frame);
 
 /* ===== 留言 ===== */
-function onComment(name,msg,img){
+function onComment(name,msg,img){try{if(window.parent!==window&&window.parent.__hubPaused)return;}catch(e){}
   name=(name||'').trim();msg=String(msg||'').replace(/<img[^>]*alt="([^"]*)"[^>]*>/gi,'$1').replace(/<[^>]*>/g,'').replace(/️/g,'');if(!name)return;
   const has=list=>String(list).replace(/\uFE0F/g,'').split(/[,，]/).map(s=>s.trim()).filter(Boolean).some(k=>k==='*'||msg.includes(k));
   if(phase==='lobby'&&has(cfg.kw))join(name,img);

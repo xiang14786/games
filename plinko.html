@@ -453,7 +453,7 @@ const lastBy=new Map();
 function hasName(msg,name){const m=msg.toLowerCase().replace(/\s+/g,''),n=name.toLowerCase().trim();if(!n)return false;if(m.includes(n.replace(/\s+/g,'')))return true;
   const parts=n.split(/[\s._\-]+/).filter(p=>p.length>=2);if(parts.some(p=>m.includes(p)))return true;const cj=n.replace(/[^\u4e00-\u9fff]/g,'');if(cj.length>=2&&m.includes(cj.slice(-2)))return true;return false;}
 const DBG={rx:0,bad:0,last:'',hit:0,frames:0,err:''};window.addEventListener('error',e=>{DBG.err=String(e.message).slice(0,80);});
-function onComment(name,msg,img){
+function onComment(name,msg,img){try{if(window.parent!==window&&window.parent.__hubPaused)return;}catch(e){}
   name=(name||'').trim();msg=String(msg||'').replace(/<img[^>]*alt="([^"]*)"[^>]*>/gi,'$1').replace(/<[^>]*>/g,'').replace(/\uFE0F/g,'');if(!name)return;
   const kws=net.kw.replace(/\uFE0F/g,'').split(/[,，]/).map(s=>s.trim()).filter(Boolean);
   if(!kws.some(k=>k==='*'||msg.includes(k)))return;

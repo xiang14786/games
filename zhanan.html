@@ -245,7 +245,7 @@ requestAnimationFrame(frame);
 /* ===== 留言 ===== */
 const lastBy=new Map();
 const list=s=>String(s||'').replace(/️/g,'').split(/[,，]/).map(x=>x.trim()).filter(Boolean);
-function onComment(name,msg,img){
+function onComment(name,msg,img){try{if(window.parent!==window&&window.parent.__hubPaused)return;}catch(e){}
   name=(name||'').trim();msg=String(msg||'').replace(/<img[^>]*alt="([^"]*)"[^>]*>/gi,'$1').replace(/<[^>]*>/g,'').replace(/️/g,'');if(!name||boss.ko)return;
   const crit=list(cfg.crit).some(k=>msg.includes(k));
   if(!crit&&!list(cfg.kw).some(k=>k==='*'||msg.includes(k)))return;

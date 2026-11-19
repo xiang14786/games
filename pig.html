@@ -225,7 +225,7 @@ const lastBy=new Map();
 // 留言裡有沒有自己的名字（寬鬆比對：全名、名字裡任一段 2 個字以上、或中文名後 2 字）
 function hasName(msg,name){const m=msg.toLowerCase().replace(/\s+/g,''),n=name.toLowerCase().trim();if(!n)return false;if(m.includes(n.replace(/\s+/g,'')))return true;
   const parts=n.split(/[\s._\-]+/).filter(p=>p.length>=2);if(parts.some(p=>m.includes(p)))return true;const cj=n.replace(/[^\u4e00-\u9fff]/g,'');if(cj.length>=2&&m.includes(cj.slice(-2)))return true;return false;}
-function onComment(name,msg,img){
+function onComment(name,msg,img){try{if(window.parent!==window&&window.parent.__hubPaused)return;}catch(e){}
   name=(name||'').trim();msg=String(msg||'').replace(/<img[^>]*alt="([^"]*)"[^>]*>/gi,'$1').replace(/<[^>]*>/g,'').replace(/\uFE0F/g,'');if(!name||pig.broken)return;
   const kws=cfg.kw.replace(/\uFE0F/g,'').split(/[,，]/).map(s=>s.trim()).filter(Boolean);if(!kws.some(k=>k==='*'||msg.includes(k)))return;
   // 不再需要打FB名字

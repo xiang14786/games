@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Shine欣 拯救浪浪大作戰</title>
+<style>
+:root{--bg:#14161b;--panel:#1c1f26;--line:#2c313b;--txt:#eceef2;--sub:#9aa3b2;--gold:#e2c28a}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--txt);font:18px/1.6 "Microsoft JhengHei","PingFang TC","Noto Sans TC",sans-serif}
+#wrap{display:flex;gap:18px;height:100%;padding:12px}
+#stage{flex:1 1 auto;min-width:0;height:100%;display:flex;align-items:center;justify-content:center}
+canvas{height:100%;max-width:100%;aspect-ratio:720/1280;display:block;border-radius:14px;background:repeating-conic-gradient(#3a3f4a 0 25%,#30343d 0 50%) 0 0/40px 40px}
+#panel{flex:0 0 400px;overflow:auto;background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:16px 18px}
+h2{margin:4px 0 10px;font-size:22px;color:var(--gold)}
+h3{margin:18px 0 8px;font-size:19px;color:var(--gold)}
+input,button,select{font:inherit}
+input[type=text],input[type=number]{width:100%;padding:10px 12px;border-radius:10px;border:1px solid #3a404c;background:#252a33;color:#fff}
+.btn{border:none;border-radius:12px;padding:10px 16px;font-weight:700;cursor:pointer}
+.go{width:100%;background:linear-gradient(180deg,#f0d29b,#c99a57);color:#1a1a1a;font-size:20px}
+.ghost{background:#2c313b;color:var(--txt);font-size:16px;padding:8px 14px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.tip{color:var(--sub);font-size:15px}
+label{display:block;margin-top:6px}
+#log div{padding:6px 0;border-bottom:1px solid var(--line);font-size:16px}
+body.ov,body.ov #wrap{background:transparent!important}
+body.ov #panel{display:none}
+body.ov #wrap{padding:0}
+body.ov canvas{background:transparent;border-radius:0}
+#ovState{display:none;position:fixed;left:6px;bottom:6px;font-size:13px;color:#fff;background:rgba(0,0,0,.4);padding:2px 8px;border-radius:8px;transition:opacity 1s}
+body.ov #ovState{display:block}
+@media (max-width:900px){#wrap{flex-direction:column;height:auto}#stage{height:80vh}#panel{flex:none}}
+</style>
+</head>
+<body>
+<div id="wrap">
+  <div id="stage"><canvas id="cv" width="720" height="1280"></canvas></div>
+  <div id="panel">
+    <h2>🐾 拯救浪浪大作戰</h2>
+    <div class="tip" id="state"></div>
+    <div class="row" style="margin-top:8px"><button class="btn go" id="startBtn">🐾 放浪浪出來！開始</button></div>
+    <div class="row" style="margin-top:8px"><button class="btn ghost" id="newBtn">🔄 開新的一場（排行榜歸零）</button></div>
+
+    <h3>⚙️ 遊戲設定</h3>
+    <div class="row"><label style="flex:1">總共幾隻浪浪<input type="number" id="total" min="1" max="200"></label><label style="flex:1">畫面上最多幾隻<input type="number" id="maxOn" min="1" max="10"></label></div>
+    <label>得獎（第1名, 第2名, 第3名…，逗號分開）<input type="text" id="prizes" placeholder="例：購物金50元,購物金20元,購物金20元"></label>
+    <label>浪浪走路速度（1 慢 ～ 5 快）<input type="number" id="speed" min="1" max="5"></label>
+    <div class="tip">改了總數要按「開新的一場」才會用新的數字。</div>
+
+    <h3>📡 自動接 FB 留言</h3>
+    <label>連線代碼（Session ID）<input type="text" id="sid"></label>
+    <div class="row" style="margin-top:8px"><button class="btn ghost" id="conn">開始接留言</button><span id="wsState" class="tip">未連線</span></div>
+    <div class="row" style="margin-top:8px"><button class="btn ghost" id="copyOv">複製手機直播用網址</button><button class="btn ghost" id="copyRec">複製電腦紀錄用網址</button><span class="tip" id="ovTip"></span></div>
+    <div class="row" style="margin-top:8px"><button class="btn ghost" id="fakeBtn">模擬有人救一隻</button><button class="btn ghost" id="fake5">模擬 5 人一起救</button></div>
+
+    <h3>🏆 得獎紀錄</h3>
+    <div class="row"><button class="btn ghost" id="copyWin">複製得獎名單</button><button class="btn ghost" id="clrWin">清空紀錄</button></div>
+    <div id="log"></div>
+  </div>
+</div>
+<div id="ovState"></div>
+<script>
+const cv=document.getElementById('cv'),ctx=cv.getContext('2d'),W=720,H=1280,$=id=>document.getElementById(id);
+const FONT='"Microsoft JhengHei","PingFang TC",sans-serif';
+const LS=(k,d)=>{try{const v=localStorage.getItem('rs_'+k);return v?JSON.parse(v):d}catch(e){return d}};
+const SV=(k,v)=>{try{localStorage.setItem('rs_'+k,JSON.stringify(v))}catch(e){}};
+const QS=new URLSearchParams(location.search),OV=QS.get('mode')==='overlay',REC=QS.get('mode')==='record';
+const SERVER=QS.get('server')||'wss://io.socialstream.ninja';
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function rr(x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();}
+const imgCache=new Map();function imgOf(s){if(!s)return null;if(!imgCache.has(s)){const im=new Image();im.referrerPolicy='no-referrer';im.src=s;imgCache.set(s,im);}return imgCache.get(s);}
+const ok=im=>im&&im.complete&&im.naturalWidth>0;
+const L=s=>{const i=new Image();i.src=s;return i;};
+/* 浪浪種類：流浪的樣子（往右走）＋被救後開心的樣子 */
+const KINDS=[{t:'dog',a:L('rs_d1.png'),h:L('rs_d1h.png')},{t:'dog',a:L('rs_d2.png'),h:L('rs_d2h.png')},{t:'cat',a:L('rs_c1.png'),h:L('rs_c1h.png')},{t:'cat',a:L('rs_c2.png'),h:L('rs_c2h.png')}];
+
+/* ===== 設定 ===== */
+const rid=()=>'shine'+Math.random().toString(36).slice(2,9);
+let cfg=Object.assign({total:20,maxOn:6,prizes:'購物金50元,購物金20元,購物金20元',speed:2},LS('cfg',{}));
+let sid=QS.get('session')||LS('sid','')||rid();SV('sid',sid);
+if(OV){const c=LS('cfgR',null);if(c)Object.assign(cfg,c);}
+let wins=LS('wins',[]);
+
+/* ===== 狀態 ===== */
+// phase: idle（還沒開始）→ play（進行中）→ end（全部救完）
+let phase='idle',pool=[],pets=[],saved=0,total=0,board={},boardImg={},endAt=0,result=null,remote=null;
+const fx=[],pops=[];let spawnAt=0;
+const LETTERS='ABCDEFGHJKMNPRSTUVWXYZ',DIGITS='23456789';
+function makeCodes(n){const all=[];for(const a of LETTERS)for(const d of DIGITS)all.push(a+d);for(let i=all.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[all[i],all[j]]=[all[j],all[i]];}return all.slice(0,n);}
+// 走路區域：上面一條、下面一條（中間留給主播）；右邊上半部是排行榜
+const BANDS=[{y0:330,y1:470,x0:20,x1:W-240},{y0:880,y1:1080,x0:20,x1:W-20}];
+function bandCount(b){return pets.filter(p=>!p.done&&p.band===b).length;}
+function spawn(now){
+  if(!pool.length)return;const code=pool.shift();const k=Math.floor(Math.random()*KINDS.length);
+  const b=bandCount(0)<=bandCount(1)?0:1,B=BANDS[b];const dir=Math.random()<.5?1:-1;
+  pets.push({code,k,band:b,dir,x:dir>0?B.x0-60:B.x1+60,y:B.y0+Math.random()*(B.y1-B.y0),vy:0,ph:Math.random()*7,pause:0,born:now,done:false});
+}
+function newGame(){phase='idle';pool=[];pets=[];saved=0;total=0;board={};boardImg={};result=null;fx.length=0;pops.length=0;clearFeed();sendUp({rsState:stateMsg()});renderUI();}
+function startGame(){if(phase==='play')return;if(phase==='end')newGame();
+  total=Math.max(1,Math.min(200,+cfg.total||20));pool=makeCodes(total);pets=[];saved=0;board={};boardImg={};phase='play';spawnAt=0;
+  pops.push({x:W/2,y:H/2,t:'🐾 浪浪出現了！',t0:performance.now(),c:'#ffe08a',big:1});sendUp({rsState:stateMsg()});renderUI();}
+function rescue(p,name,img,now){
+  p.done=now;p.by=name;p.img=img||'';saved++;board[name]=(board[name]||0)+1;if(img)boardImg[name]=img;
+  addFeed(name,img,`救了 ${p.code} ${KINDS[p.k].t==='dog'?'🐶':'🐱'}`,'#ffe08a');
+  for(let i=0;i<14;i++){const a=Math.random()*Math.PI*2,v=120+Math.random()*220;fx.push({x:p.x,y:p.y-40,vx:Math.cos(a)*v,vy:Math.sin(a)*v-120,t0:now});}
+  sendUp({rsSave:{code:p.code,n:name,s:img||'',saved,total},rsState:stateMsg()});
+  if(saved>=total)setTimeout(finish,2600);
+  renderUI();}
+function ranking(){return Object.keys(board).map(n=>({n,c:board[n],s:boardImg[n]||''})).sort((a,b)=>b.c-a.c);}
+function finish(){if(phase!=='play')return;phase='end';endAt=performance.now();
+  const pr=String(cfg.prizes||'').split(/[,，]/).map(s=>s.trim()).filter(Boolean),rk=ranking();
+  result={list:rk.slice(0,Math.max(1,pr.length)).map((r,i)=>({n:r.n,s:r.s,c:r.c,prize:pr[i]||''})).filter(r=>r.prize),total,people:rk.length,t:Date.now()};
+  if(!REC){wins.unshift(result);wins=wins.slice(0,200);SV('wins',wins);}
+  sendUp({rsWin:result,rsState:stateMsg()});renderUI();}
+function stateMsg(){return{phase,saved,total,onScreen:pets.filter(p=>!p.done).map(p=>p.code),board:ranking().slice(0,10),result};}
+
+/* ===== 畫面 ===== */
+function pill(t,x,y,size,bg,col){ctx.font=`bold ${size}px ${FONT}`;const w=ctx.measureText(t).width,h=size+18;ctx.fillStyle=bg;rr(x-w/2-16,y-h/2,w+32,h,h/2);ctx.fill();ctx.strokeStyle='#fff';ctx.lineWidth=3;ctx.stroke();ctx.fillStyle=col||'#fff';ctx.textAlign='left';ctx.textBaseline='middle';ctx.fillText(t,x-w/2,y+1);}
+function bannerT(t,y,size,col,bg){t=String(t).replace(/️/g,'');ctx.save();ctx.font=`bold ${size}px ${FONT}`;let w=ctx.measureText(t).width;const max=W-30;
+  if(w+40>max){size=Math.max(14,Math.floor(size*(max-40)/w));ctx.font=`bold ${size}px ${FONT}`;w=ctx.measureText(t).width;}
+  const h=size+22,tw=w+40;ctx.fillStyle=bg||'rgba(0,0,0,.7)';rr(W/2-tw/2,y-h/2,tw,h,h/2);ctx.fill();ctx.fillStyle=col||'#ffe08a';ctx.textAlign='left';ctx.textBaseline='middle';ctx.fillText(t,W/2-w/2,y+1);ctx.restore();}
+function drawAv(img,name,x,y,r){const im=imgOf(img);ctx.save();ctx.beginPath();ctx.arc(x,y,r,0,7);ctx.clip();if(ok(im))ctx.drawImage(im,x-r,y-r,r*2,r*2);else{ctx.fillStyle='#c9748a';ctx.fillRect(x-r,y-r,r*2,r*2);ctx.fillStyle='#fff';ctx.font=`bold ${r|0}px ${FONT}`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText((name||'?')[0],x,y+1);}ctx.restore();ctx.beginPath();ctx.arc(x,y,r,0,7);ctx.strokeStyle='#fff';ctx.lineWidth=3;ctx.stroke();}
+function drawPet(p,now,dt){
+  const K=KINDS[p.k],B=BANDS[p.band];
+  if(!p.done){
+    if(p.pause>0)p.pause-=dt;else{const sp=(18+cfg.speed*12)*(K.t==='cat'?1.1:1);p.x+=p.dir*sp*dt;if(Math.random()<dt*0.08)p.pause=1+Math.random()*2;}
+    if(p.x>B.x1-70&&p.dir>0&&now-p.born>4000)p.dir=-1;if(p.x<B.x0+70&&p.dir<0&&now-p.born>4000)p.dir=1;
+    if(Math.random()<dt*0.3)p.vy=(Math.random()-.5)*30;p.y=Math.max(B.y0,Math.min(B.y1,p.y+p.vy*dt));
+  }
+  const im=p.done?K.h:K.a;let w=170,h=ok(im)?w*im.naturalHeight/im.naturalWidth:110;if(p.done){h=170;w=ok(im)?h*im.naturalWidth/im.naturalHeight:110;}
+  let a=1,dy=0;if(p.done){const k=(now-p.done)/2600;if(k>1)return false;dy=-Math.min(1,k*1.5)*40;a=k<.75?1:1-(k-.75)/.25;}
+  const bob=p.done?0:(p.pause>0?0:Math.abs(Math.sin(now/180+p.ph))*-6);
+  ctx.save();ctx.globalAlpha=a;ctx.translate(p.x,p.y+dy+bob);
+  ctx.fillStyle='rgba(0,0,0,.18)';ctx.beginPath();ctx.ellipse(0,4,w*.38,10,0,0,7);ctx.fill();
+  if(ok(im)){ctx.save();if(!p.done&&p.dir<0)ctx.scale(-1,1);ctx.drawImage(im,-w/2,-h,w,h);ctx.restore();}
+  else{ctx.font='90px serif';ctx.textAlign='center';ctx.textBaseline='bottom';ctx.fillText(K.t==='dog'?'🐕':'🐈',0,0);}
+  if(!p.done){pill(p.code,0,-h-26,42,K.t==='dog'?'rgba(40,110,220,.95)':'rgba(220,70,130,.95)');}
+  else{drawAv(p.img,p.by,0,-h-40,30);ctx.font='38px serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('💖',34,-h-62);
+    const t=`被 ${p.by.length>6?p.by.slice(0,6)+'…':p.by} 帶回家了！`;ctx.font='bold 24px '+FONT;const tw=ctx.measureText(t).width+24;ctx.fillStyle='rgba(0,0,0,.65)';rr(-tw/2,-h-8-40+60,tw,36,18);ctx.fill();ctx.fillStyle='#ffe08a';ctx.fillText(t,0,-h+30);}
+  ctx.restore();return true;}
+function drawBoard(now){
+  // 右上：排行榜＋即時（半透明、不擋主播）
+  const X=W-226,Y=150,PW=218,rk=ranking().slice(0,5);
+  const PH=110+Math.max(1,rk.length)*58+14+46+Math.min(4,feed.length||1)*46;
+  ctx.save();ctx.fillStyle='rgba(10,14,24,.55)';rr(X,Y,PW,PH,18);ctx.fill();ctx.strokeStyle='rgba(243,217,166,.6)';ctx.lineWidth=2;ctx.stroke();
+  ctx.textAlign='left';ctx.textBaseline='middle';ctx.fillStyle='#f3d9a6';ctx.font='bold 28px '+FONT;ctx.fillText('🏆 拯救排行',X+12,Y+30);
+  ctx.font='bold 21px '+FONT;ctx.fillStyle='#cfd5df';ctx.fillText(`已救 ${saved}/${total||cfg.total} 隻`,X+12,Y+64);
+  ctx.fillStyle='rgba(255,255,255,.2)';ctx.fillRect(X+10,Y+86,PW-20,2);
+  let y=Y+120;if(!rk.length){ctx.fillStyle='rgba(255,255,255,.6)';ctx.font='20px '+FONT;ctx.fillText('還沒有人救到',X+12,y);y+=58;}
+  rk.forEach((r,i)=>{const medal=['🥇','🥈','🥉'][i]||`${i+1}`;ctx.font='bold 22px '+FONT;ctx.fillStyle='#fff';ctx.fillText(medal,X+8,y);drawAv(r.s,r.n,X+62,y,22);
+    ctx.fillStyle='#fff';ctx.font='bold 21px '+FONT;ctx.textAlign='left';ctx.textBaseline='middle';ctx.fillText(r.n.length>4?r.n.slice(0,4)+'…':r.n,X+92,y-10);ctx.fillStyle='#ffe08a';ctx.font='bold 20px '+FONT;ctx.fillText(`🐾 ${r.c} 隻`,X+92,y+14);y+=58;});
+  ctx.fillStyle='rgba(255,255,255,.2)';ctx.fillRect(X+10,y-14,PW-20,2);ctx.fillStyle='#f3d9a6';ctx.font='bold 22px '+FONT;ctx.fillText('💬 即時',X+12,y+12);y+=46;
+  if(!feed.length){ctx.fillStyle='rgba(255,255,255,.6)';ctx.font='19px '+FONT;ctx.fillText(REC?'（看手機畫面）':'打代號就能救！',X+12,y);}
+  feed.slice(0,4).forEach((e,i)=>{const age=now-e.t;ctx.globalAlpha=Math.min(1,age/250);if(age<1200){ctx.fillStyle=`rgba(255,224,138,${.25*(1-age/1200)})`;rr(X+6,y-20,PW-12,40,10);ctx.fill();}
+    ctx.fillStyle='#fff';ctx.font='bold 19px '+FONT;ctx.fillText(`${e.name.length>4?e.name.slice(0,4)+'…':e.name} ${e.txt}`,X+12,y);ctx.globalAlpha=1;y+=46;});
+  ctx.restore();}
+let last=performance.now();
+function frame(now){
+  const dt=Math.min(.05,(now-last)/1000);last=now;
+  ctx.clearRect(0,0,W,H);
+  if(phase==='play'&&!(REC&&overlaySeen)){const live=pets.filter(p=>!p.done).length;if(live<Math.max(1,Math.min(10,+cfg.maxOn||6))&&pool.length&&now>spawnAt){spawn(now);spawnAt=now+1200;}}
+  pets.sort((a,b)=>a.y-b.y);for(let i=0;i<pets.length;i++)if(!drawPet(pets[i],now,dt)){pets.splice(i,1);i--;}
+  for(let i=fx.length-1;i>=0;i--){const f=fx[i],k=(now-f.t0)/1200;if(k>1){fx.splice(i,1);continue;}f.x+=f.vx*dt;f.y+=f.vy*dt;f.vy+=300*dt;ctx.globalAlpha=1-k;ctx.font='26px serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('💗',f.x,f.y);ctx.globalAlpha=1;}
+  for(let i=pops.length-1;i>=0;i--){const p=pops[i],k=(now-p.t0)/1600;if(k>1){pops.splice(i,1);continue;}ctx.globalAlpha=1-k;ctx.font=`bold ${p.big?56:34}px ${FONT}`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.lineWidth=8;ctx.strokeStyle='rgba(0,0,0,.65)';ctx.strokeText(p.t,p.x,p.y-k*40);ctx.fillStyle=p.c;ctx.fillText(p.t,p.x,p.y-k*40);ctx.globalAlpha=1;}
+  if(phase!=='idle'||REC||!OV)drawBoard(now);
+  // 下方提示
+  if(phase==='play'){bannerT(`還有 ${Math.max(0,total-saved)} 隻浪浪等妳帶回家`,H-108,32,'#fff','rgba(0,0,0,.6)');bannerT('🐾 留言浪浪身上的代號，就能救牠！',H-46,36);}
+  else if(phase==='idle'&&(REC||!OV)){bannerT('按「放浪浪出來！開始」',H/2,34,'#fff');}
+  // 結束：得獎卡
+  if(phase==='end'&&result){const k=Math.min(1,(now-endAt)/500),Lw=result.list;ctx.save();ctx.globalAlpha=k;
+    const top=H/2-300;ctx.fillStyle='rgba(12,14,22,.9)';rr(40,top,W-80,600,30);ctx.fill();ctx.strokeStyle='#f3d9a6';ctx.lineWidth=5;ctx.stroke();
+    ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle='#f3d9a6';ctx.font='bold 44px '+FONT;ctx.fillText('🎉 浪浪全部回家了！',W/2,top+64);
+    ctx.fillStyle='#cfd5df';ctx.font='26px '+FONT;ctx.fillText(`${result.people} 位愛心姊妹救了 ${result.total} 隻浪浪`,W/2,top+116);
+    if(!Lw.length){ctx.fillStyle='#fff';ctx.font='bold 30px '+FONT;ctx.fillText('這場沒有人救到…',W/2,top+300);}
+    Lw.slice(0,4).forEach((w,i)=>{const y=top+190+i*96;drawAv(w.s,w.n,110,y,36);ctx.textAlign='left';ctx.textBaseline='middle';ctx.fillStyle='#fff';ctx.font='bold 30px '+FONT;ctx.fillText(`${['🥇','🥈','🥉','4'][i]} ${w.n.length>7?w.n.slice(0,7)+'…':w.n}`,160,y-16);
+      ctx.fillStyle='#cfd5df';ctx.font='22px '+FONT;ctx.fillText(`救了 ${w.c} 隻`,160,y+20);ctx.fillStyle='#ffe08a';ctx.font='bold 26px '+FONT;ctx.textAlign='right';ctx.fillText(w.prize,W-70,y);});
+    ctx.restore();}
+  if(REC&&overlaySeen&&remote){ctx.fillStyle='rgba(0,0,0,.6)';rr(30,H-180,W-60,46,23);ctx.fill();ctx.fillStyle='#fff';ctx.font='21px '+FONT;ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText(`手機上：${{idle:'還沒開始',play:'進行中',end:'已結束'}[remote.phase]||''}・已救 ${remote.saved}/${remote.total}・畫面上：${(remote.onScreen||[]).join(' ')}`,W/2,H-157);}
+  requestAnimationFrame(frame);
+}
+var feed=[],validN=0;function addFeed(name,img,txt,c){validN++;feed.unshift({name,img,txt,c,t:performance.now()});if(feed.length>30)feed.length=30;}function clearFeed(){feed=[];validN=0;}
+requestAnimationFrame(frame);
+
+/* ===== 留言：抓代號（全形、大小寫都可以） ===== */
+function norm(s){return String(s||'').replace(/[！-～]/g,c=>String.fromCharCode(c.charCodeAt(0)-0xFEE0)).toUpperCase();}
+function onComment(name,msg,img){try{if(window.parent!==window&&window.parent.__hubPaused)return;}catch(e){}
+  name=(name||'').trim();if(!name||phase!=='play')return;
+  msg=norm(String(msg||'').replace(/<img[^>]*alt="([^"]*)"[^>]*>/gi,'$1').replace(/<[^>]*>/g,''));
+  const now=performance.now();
+  for(const m of msg.matchAll(/([A-Z])\s*([0-9])/g)){const code=m[1]+m[2];const p=pets.find(q=>!q.done&&q.code===code);if(p){rescue(p,name,img,now);break;}}
+}
+/* ===== 連線 ===== */
+let ws=null,cmdWs=null,recWs=null,overlaySeen=false;
+function setState(t){$('wsState').textContent=t;$('ovState').textContent=t;}
+function sendUp(o){if(OV&&ws&&ws.readyState===1){try{ws.send(JSON.stringify(o));}catch(e){}}}
+function sendDown(o){if(recWs&&recWs.readyState===1){try{recWs.send(JSON.stringify(o));}catch(e){}}}
+function connect(){try{ws&&ws.close();}catch(e){}setState('連線中…');ws=new WebSocket(SERVER);
+  ws.onopen=()=>{ws.send(JSON.stringify({join:sid,in:4,out:5}));setState('✅ 已連線，等留言中（代碼 '+sid+'）');$('conn').textContent='已連線';};
+  ws.onmessage=e=>{let m;try{m=JSON.parse(e.data);}catch(x){return;}const d=m.overlayNinja||m;if(d&&(d.chatname||d.chatmessage))onComment(d.chatname,d.chatmessage,d.chatimg);};
+  ws.onclose=()=>{setState('⚠️ 斷線，3 秒後重連…');setTimeout(connect,3000);};}
+function fakeOne(){const live=pets.filter(p=>!p.done);if(!live.length)return;const p=live[Math.floor(Math.random()*live.length)];onComment('測試'+Math.floor(Math.random()*8),'我要救 '+p.code,'');}
+function listenCmd(){cmdWs=new WebSocket(SERVER);cmdWs.onopen=()=>cmdWs.send(JSON.stringify({join:sid,in:6,out:7}));
+  cmdWs.onmessage=e=>{let m;try{m=JSON.parse(e.data);}catch(x){return;}const d=m.overlayNinja||m;
+    if(d.rsCfg){Object.assign(cfg,d.rsCfg);SV('cfgR',cfg);renderUI();sendUp({rsCfgNow:cfg});}
+    if(d.rsCmd==='start')startGame();if(d.rsCmd==='new')newGame();if(d.rsCmd==='fake')fakeOne();if(d.rsCmd==='fake5')for(let i=0;i<5;i++)fakeOne();
+    if(d.rsCmd==='sync'){sendUp({rsCfgNow:cfg});sendUp({rsState:stateMsg()});}};
+  cmdWs.onclose=()=>setTimeout(listenCmd,4000);}
+var lastOv=0,_lastCfgJ='';
+function adoptCfg(c){const j=JSON.stringify(c);if(j===_lastCfgJ)return;_lastCfgJ=j;for(const k in c){if(!(k in cfg))continue;cfg[k]=c[k];const el=document.getElementById(k);if(!el||el===document.activeElement)continue;el.value=c[k];}SV('cfg',cfg);renderUI();}
+function listenRec(){recWs=new WebSocket(SERVER);recWs.onopen=()=>{recWs.send(JSON.stringify({join:sid,in:5,out:6}));setTimeout(()=>sendDown({rsCmd:'sync'}),300);};
+  recWs.onmessage=e=>{let m;try{m=JSON.parse(e.data);}catch(x){return;}const d=m.overlayNinja||m;
+    if(d.rsCfgNow)adoptCfg(d.rsCfgNow);
+    if(d.rsState||d.rsSave||d.rsWin){lastOv=Date.now();if(!overlaySeen){overlaySeen=true;setState('📋 紀錄模式：已連上手機（代碼 '+sid+'）');}}
+    if(d.rsState){remote=d.rsState;phase=remote.phase;saved=remote.saved;total=remote.total;board={};boardImg={};(remote.board||[]).forEach(r=>{board[r.n]=r.c;boardImg[r.n]=r.s;});if(remote.result){result=remote.result;}renderUI();}
+    if(d.rsSave)addFeed(d.rsSave.n,d.rsSave.s,`救了 ${d.rsSave.code}`,'#ffe08a');
+    if(d.rsWin){result=d.rsWin;phase='end';endAt=performance.now();if(!wins.some(w=>w.t===d.rsWin.t)){wins.unshift(d.rsWin);SV('wins',wins);}renderUI();}};
+  recWs.onclose=()=>setTimeout(listenRec,4000);}
+if(REC)setInterval(()=>{sendDown({rsCmd:'sync'});if(overlaySeen&&Date.now()-lastOv>15000){overlaySeen=false;setState('📋 紀錄模式：還沒偵測到手機（現在按按鈕會在這頁自己跑）');}},4000);
+const CFGK=['total','maxOn','prizes','speed'];
+function pushCfg(){const o={};CFGK.forEach(k=>o[k]=cfg[k]);sendDown({rsCfg:o});}
+setInterval(()=>{if(OV)sendUp({rsState:stateMsg()});},5000);
+
+/* ===== 介面 ===== */
+function renderUI(){
+  $('state').textContent=phase==='idle'?'還沒開始':phase==='end'?`已結束：${result&&result.list.length?result.list.map(w=>w.n).join('、'):'沒有得獎者'}`:`進行中：已救 ${saved} / ${total} 隻`;
+  $('log').innerHTML=wins.map(w=>`<div>${w.list.map(x=>`${esc(x.n)}（${x.c}隻）<b style="color:var(--gold)">${esc(x.prize)}</b>`).join('<br>')||'沒有得獎者'}<div class="tip">${w.people} 人參加・${w.total} 隻浪浪・${new Date(w.t).toLocaleString('zh-TW')}</div></div>`).join('')||'<div class="tip">還沒有紀錄</div>';
+}
+CFGK.forEach(k=>$(k).value=cfg[k]);$('sid').value=sid;
+CFGK.forEach(k=>$(k).addEventListener('change',()=>{const v=$(k).value;cfg[k]=k==='prizes'?v.trim():Math.max(1,+v||1);if(k==='maxOn')cfg.maxOn=Math.min(10,cfg.maxOn);if(k==='speed')cfg.speed=Math.min(5,cfg.speed);if(k==='total')cfg.total=Math.min(200,cfg.total);SV('cfg',cfg);pushCfg();renderUI();}));
+$('sid').onchange=()=>{sid=$('sid').value.trim()||rid();$('sid').value=sid;SV('sid',sid);};
+const ctl=(cmd,fn)=>()=>{if(REC&&overlaySeen)sendDown({rsCmd:cmd});else fn();};
+$('startBtn').onclick=ctl('start',startGame);
+$('newBtn').onclick=()=>{if(phase==='play'&&!confirm('開新的一場？目前的排行榜會清空。'))return;ctl('new',newGame)();};
+$('fakeBtn').onclick=ctl('fake',fakeOne);
+$('fake5').onclick=ctl('fake5',()=>{for(let i=0;i<5;i++)fakeOne();});
+$('conn').onclick=()=>{connect();if(!REC&&!recWs)listenRec();};
+const base=()=>location.href.split('?')[0];
+function copy(u){navigator.clipboard.writeText(u).then(()=>{$('ovTip').textContent='已複製 ✓';setTimeout(()=>$('ovTip').textContent='',2000);});}
+$('copyOv').onclick=()=>copy(`${base()}?mode=overlay&session=${encodeURIComponent(sid)}&v=1`);
+$('copyRec').onclick=()=>copy(`${base()}?mode=record&session=${encodeURIComponent(sid)}`);
+$('copyWin').onclick=()=>copy(wins.slice().reverse().map(w=>w.list.map(x=>`${x.n}　救了${x.c}隻　${x.prize}`).join('\n')).join('\n')||'目前沒有');
+$('clrWin').onclick=()=>{if(confirm('清空得獎紀錄？')){wins=[];SV('wins',wins);renderUI();}};
+
+/* ===== 啟動 ===== */
+renderUI();
+if(OV){document.body.classList.add('ov');document.documentElement.style.background='transparent';connect();listenCmd();setTimeout(()=>$('ovState').style.opacity=0,8000);}
+else if(REC){listenRec();$('conn').style.display='none';setState('📋 紀錄模式：還沒偵測到手機（現在按按鈕會在這頁自己跑）');}
+else if(QS.get('session')){connect();}
+
+/* 手機直播畫面：整個螢幕（保持比例、置中） */
+if(OV){window.__fill=false;window.__fit=function(){const vw=innerWidth,vh=innerHeight;const s=Math.min(vw/cv.width,vh/cv.height);const w=cv.width*s,h=cv.height*s;
+  Object.assign(cv.style,{position:'fixed',left:((vw-w)/2)+'px',top:((vh-h)/2)+'px',width:w+'px',height:h+'px',maxWidth:'none',aspectRatio:'auto',margin:'0'});};
+  addEventListener('resize',window.__fit);setInterval(window.__fit,1000);window.__fit();}
+</script>
+</body>
+</html>
