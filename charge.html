@@ -46,7 +46,7 @@ body.ov #ovState{display:block}
     <label>集氣關鍵字（逗號分開；* ＝任何留言）<input type="text" id="kw"></label>
     <div class="row"><label style="flex:1">要集幾次才滿<input type="number" id="goal" min="1"></label><label style="flex:1">同一人幾秒算一次<input type="number" id="cd" min="0"></label></div>
     <label>集滿時的大字（可以打你想說的話）<input type="text" id="msg" placeholder="例：歐膩今天好漂亮💕"></label>
-    <label>集滿的特效<select id="fx"><option value="both">城堡＋天馬</option><option value="castle">只有城堡</option><option value="pegasus">只有天馬</option></select></label>
+    <label>集滿的特效<select id="fx"><option value="rotate">每次輪流（城堡天馬→鳳凰→鑽石愛心）</option><option value="both">城堡＋天馬</option><option value="castle">只有城堡</option><option value="pegasus">只有天馬</option><option value="phoenix">粉紅鳳凰</option><option value="diamond">鑽石愛心</option></select></label>
     <label>集氣條放哪裡<select id="pos"><option value="left">左邊</option><option value="right">右邊</option><option value="top">上面</option></select></label>
     <div class="row"><label style="flex:1">抽幾個人<input type="number" id="winN" min="1" max="20"></label><label style="flex:1">集滿後自動抽<select id="autoDraw"><option value="1">是（特效一結束馬上抽）</option><option value="0">否（我按抽）</option></select></label></div>
     <label>獎品<input type="text" id="prize" placeholder="例：購物金50元"></label>
@@ -78,16 +78,17 @@ const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',
 function rr(x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();}
 const imgCache=new Map();function imgOf(s){if(!s)return null;if(!imgCache.has(s)){const im=new Image();im.referrerPolicy='no-referrer';im.src=s;imgCache.set(s,im);}return imgCache.get(s);}
 const ok=im=>im&&im.complete&&im.naturalWidth>0;
-const CASTLE=new Image();CASTLE.src='fx_castle.png';const PEG=new Image();PEG.src='fx_pegasus.png';
+const CASTLE=new Image();CASTLE.src='fx_castle.png';const PEG=new Image();PEG.src='fx_pegasus.png';const PHX=new Image();PHX.src='fx_phoenix.png';const DIA=new Image();DIA.src='fx_diamond.png';const FRAME=new Image();FRAME.src='fx_frame.png';
+let fxNow='both';const ROT=['both','phoenix','diamond'];
 const shim=document.createElement('canvas'),sctx=shim.getContext('2d');const trail=[];
 
 /* ===== 設定 ===== */
 const rid=()=>'shine'+Math.random().toString(36).slice(2,9);
 const HEARTS='❤,♥,💕,💖,💗,💓,💞,💘,😍,🥰,😘,愛心';
-const DEF={msg:'🎉 集氣成功！',fx:'both',kw:HEARTS,goal:150,cd:3,pos:'left',winN:3,autoDraw:'1',prize:'購物金20元',v:2};
-const _sv=LS('cfg',{});let cfg=Object.assign({},DEF,_sv);if(_sv.v!==2){Object.assign(cfg,{kw:HEARTS,goal:150,prize:'購物金20元',autoDraw:'1',v:2});SV('cfg',cfg);}
+const DEF={msg:'🎉 集氣成功！',fx:'rotate',kw:HEARTS,goal:150,cd:3,pos:'left',winN:3,autoDraw:'1',prize:'購物金20元',v:2};
+const _sv=LS('cfg',{});let cfg=Object.assign({},DEF,_sv);if(_sv.v!==2){Object.assign(cfg,{kw:HEARTS,goal:150,prize:'購物金20元',autoDraw:'1',v:2});SV('cfg',cfg);}if(!_sv.v3){cfg.fx='rotate';cfg.v3=1;SV('cfg',cfg);}
 let sid=QS.get('session')||LS('sid','')||rid();SV('sid',sid);
-if(OV){const c=LS('cfgR',null);if(c&&c.v===2)Object.assign(cfg,c);}
+if(OV){const c=LS('cfgR',null);if(c&&c.v===2&&c.v3)Object.assign(cfg,c);}
 let wins=LS('wins',[]);
 
 /* ===== 狀態 ===== */
@@ -99,7 +100,7 @@ function startGame(){if(phase!=='idle'){newGame();}phase='play';sendUp({chState:
 function addPoint(name,img){pts=Math.min(goal(),pts+1);who[name]=(who[name]||0)+1;if(img)whoImg[name]=img;
   pops.unshift({name,img,t:performance.now()});if(pops.length>6)pops.length=6;
   if(pts>=goal())goFull();sendUp({chAdd:{n:name,s:img||''},chState:stateMsg()});renderUI();}
-function goFull(){if(phase!=='play')return;phase='full';fullAt=performance.now();sendUp({chState:stateMsg()});
+function goFull(){if(phase!=='play')return;phase='full';fullAt=performance.now();if(cfg.fx==='rotate'){const n=(LS('rot',-1)+1)%ROT.length;SV('rot',n);fxNow=ROT[n];}else fxNow=cfg.fx||'both';sendUp({chState:stateMsg()});
   if(cfg.autoDraw==='1'&&!(REC&&overlaySeen))setTimeout(()=>{if(phase==='full')doDraw();},6500);renderUI();}
 function weight(c){return Math.min(3,1+0.55*Math.log(c));} // 1 則＝1，10 則≈2.3，40 則以上封頂 3
 function doDraw(){if(!(phase==='full'||phase==='play'))return;const names=Object.keys(who);const n=Math.max(1,Math.min(20,+cfg.winN||1));
@@ -159,8 +160,8 @@ function fullFX(now,dt){
   ctx.translate(W/2,H*0.45);ctx.rotate(now/3000);for(let i=0;i<16;i++){ctx.rotate(Math.PI/8);const g=ctx.createLinearGradient(0,0,0,-900);g.addColorStop(0,`rgba(255,230,150,${.35*k})`);g.addColorStop(1,'rgba(255,230,150,0)');ctx.fillStyle=g;ctx.beginPath();ctx.moveTo(-30,0);ctx.lineTo(-90,-900);ctx.lineTo(90,-900);ctx.lineTo(30,0);ctx.fill();}
   ctx.restore();
   // 城堡升起＋光澤掃過；天馬從左下飛進來、拍翅膀、留下金色星塵
-  const fx=cfg.fx||'both',both=fx==='both';
-  if(fx!=='pegasus'&&ok(CASTLE)){
+  const fx=fxNow,both=fx==='both';
+  if((fx==='both'||fx==='castle')&&ok(CASTLE)){
     const rise=Math.min(1,Math.max(0,(age-200)/1600)),e=1-Math.pow(1-rise,3);
     const h=both?820:1000,w=h*CASTLE.naturalWidth/CASTLE.naturalHeight,cx=W/2,base=(both?H*0.93:H*0.9)+(1-e)*260,breath=1+0.012*Math.sin(now/600);
     const dw=w*breath,dh=h*breath,x=cx-dw/2,y=base-dh;
@@ -172,7 +173,7 @@ function fullFX(now,dt){
     // 城堡周圍閃爍的星星
     if(e>0.5&&Math.random()<dt*25)parts.push({x:x+Math.random()*dw,y:y+Math.random()*dh*0.8,vx:0,vy:-10,t0:now,life:900,c:['#fff','#ffe6f3','#fff3b0'][Math.floor(Math.random()*3)],s:3,star:1});
   }
-  if(fx!=='castle'&&ok(PEG)){
+  if((fx==='both'||fx==='pegasus')&&ok(PEG)){
     const st=both?1100:300,dur=2400,k2=Math.min(1,Math.max(0,(age-st)/dur)),e=k2<1?1-Math.pow(1-k2,2):1;
     if(age>st){
       const tw=both?380:560,th=tw*PEG.naturalHeight/PEG.naturalWidth;
@@ -183,8 +184,22 @@ function fullFX(now,dt){
       ctx.save();ctx.globalAlpha=Math.min(1,(age-st)/400);ctx.translate(px,py);ctx.rotate(tilt);ctx.scale(sc,sc*flap);ctx.shadowColor='rgba(255,220,120,.9)';ctx.shadowBlur=45;ctx.drawImage(PEG,-tw/2,-th/2,tw,th);ctx.restore();
     }
   }
-  for(let i=trail.length-1;i>=0;i--){const t=trail[i],kk=(now-t.t0)/1400;if(kk>1){trail.splice(i,1);continue;}t.x+=t.vx*dt;t.y+=t.vy*dt;ctx.globalAlpha=1-kk;ctx.fillStyle=kk<.3?'#fff':'#ffd36b';ctx.beginPath();ctx.arc(t.x,t.y,3.5*(1-kk)+1,0,7);ctx.fill();}ctx.globalAlpha=1;
-  if(!ok(CASTLE)&&!ok(PEG)){ctx.save();ctx.globalAlpha=Math.min(1,age/1400);castle(W/2,H*0.72,1,now);ctx.restore();}
+  for(let i=trail.length-1;i>=0;i--){const t=trail[i],kk=(now-t.t0)/1400;if(kk>1){trail.splice(i,1);continue;}t.x+=t.vx*dt;t.y+=t.vy*dt;ctx.globalAlpha=1-kk;ctx.fillStyle=kk<.3?'#fff':(t.pink?'#ff7ab8':'#ffd36b');ctx.beginPath();ctx.arc(t.x,t.y,3.5*(1-kk)+1,0,7);ctx.fill();}ctx.globalAlpha=1;
+  if(fx==='phoenix'&&ok(PHX)){
+    // 鳳凰從下面往上飛，翅膀一拍一拍，身後掉落粉紅火花
+    const k2=Math.min(1,age/2200),e=1-Math.pow(1-k2,3),h=860,w=h*PHX.naturalWidth/PHX.naturalHeight;
+    const y=H*0.5+(1-e)*700+(k2>=1?Math.sin(now/600)*16:0),flap=1+0.07*Math.sin(now/140),sx=1-0.05*Math.sin(now/140);
+    if(Math.random()<dt*70)trail.push({x:W/2+(Math.random()-.5)*w*0.4,y:y+h*0.3,vx:(Math.random()-.5)*60,vy:60+Math.random()*80,t0:now,pink:1});
+    ctx.save();ctx.globalAlpha=Math.min(1,age/500);ctx.translate(W/2,y);ctx.scale(sx,flap);ctx.shadowColor='rgba(255,90,170,.95)';ctx.shadowBlur=55;ctx.drawImage(PHX,-w/2,-h/2,w,h);ctx.restore();
+  }
+  if(fx==='diamond'&&ok(DIA)){
+    // 鑽石愛心從小放大、轉一下定住，之後一直心跳；花瓣飄出來
+    const k2=Math.min(1,age/1300),e=k2<1?1-Math.pow(1-k2,3)*Math.cos(k2*6):1,beat=1+0.05*Math.max(0,Math.sin(now/220))**8;
+    const w=640*e*beat,h=w*DIA.naturalHeight/DIA.naturalWidth,rot=(1-k2)*-0.6;
+    if(age>600&&Math.random()<dt*18){const a=Math.random()*Math.PI*2;parts.push({x:W/2,y:H*0.48,vx:Math.cos(a)*(150+Math.random()*150),vy:Math.sin(a)*(150+Math.random()*150),t0:now,life:1800,c:['#ffb3d1','#ffd6e6','#ff8ab3'][Math.floor(Math.random()*3)],s:9,conf:1,rot:Math.random()*7});}
+    ctx.save();ctx.globalAlpha=Math.min(1,age/300);ctx.translate(W/2,H*0.48);ctx.rotate(rot);ctx.shadowColor='rgba(255,170,210,.95)';ctx.shadowBlur=60;ctx.drawImage(DIA,-w/2,-h/2,w,h);ctx.restore();
+  }
+  if(!ok(CASTLE)&&!ok(PEG)&&fx!=='phoenix'&&fx!=='diamond'){ctx.save();ctx.globalAlpha=Math.min(1,age/1400);castle(W/2,H*0.72,1,now);ctx.restore();}
   if(Math.random()<dt*3.5)spawnFirework(now);
   if(Math.random()<dt*40)parts.push({x:Math.random()*W,y:-20,vx:(Math.random()-.5)*60,vy:150+Math.random()*150,t0:now,life:5000,c:['#ffe08a','#ff8ab3','#9fe7ff','#c6a0ff'][Math.floor(Math.random()*4)],s:7,conf:1,rot:Math.random()*7});
   const tk=Math.min(1,Math.max(0,(age-900)/500));ctx.save();ctx.globalAlpha=tk;const sc=1+0.15*Math.sin(now/250);ctx.translate(W/2,H*0.13);ctx.scale(sc,sc);{const m=String(cfg.msg||'🎉 集氣成功！');ctx.font='bold 70px '+FONT;const mw=ctx.measureText(m).width,f=Math.min(70,Math.floor(70*(W-60)/Math.max(1,mw)));txt(m,0,0,f,'#fff3b0','center',10);}ctx.restore();
@@ -196,8 +211,12 @@ function drawCard(now){
   txt('🎁 集氣幸運兒',W/2,top+64,46,'#f3d9a6');
   if(age<2600&&names.length){const nm=names[Math.floor(now/70)%names.length];txt(nm,W/2,top+300,48,'#fff');txt('抽獎中…',W/2,top+380,28,'#ffe08a');}
   else{if(!L.length)txt('沒有人參加集氣…',W/2,top+300,30,'#fff');
-    L.slice(0,6).forEach((w,i)=>{const y=top+150+i*78;drawAv(w.s,w.n,110,y,30);txt(w.n.length>8?w.n.slice(0,8)+'…':w.n,156,y-12,30,'#fff','left');txt(`集氣 ${w.c} 次`,156,y+20,20,'#cfd5df','left');});
-    if(L.length>6)txt(`…還有 ${L.length-6} 位`,W/2,top+150+6*78,24,'#cfd5df');
+    // 金色寶石框包住得獎人頭像
+    const show=L.slice(0,6),per=show.length<=3?show.length:3,R=show.length===1?82:show.length<=3?56:44,gap=(W-80)/Math.max(1,per);
+    show.forEach((w,i)=>{const row=Math.floor(i/3),col=i%3,inRow=Math.min(3,show.length-row*3),x=40+(W-80)/2+(col-(inRow-1)/2)*gap,y=show.length<=3?top+290:top+215+row*240,pop=Math.min(1,Math.max(0,(age-2600-i*250)/400));
+      ctx.save();ctx.translate(x,y);ctx.scale(pop,pop);drawAv(w.s,w.n,0,0,R);if(ok(FRAME)){const fw=R*3.45,fh=fw*FRAME.naturalHeight/FRAME.naturalWidth;ctx.shadowColor='rgba(255,200,120,.8)';ctx.shadowBlur=25;ctx.drawImage(FRAME,-fw/2,-fh*0.498,fw,fh);}ctx.restore();
+      ctx.globalAlpha=pop;txt(w.n.length>6?w.n.slice(0,6)+'…':w.n,x,y+R*1.75+6,show.length<=3?30:24,'#fff');txt(`集氣 ${w.c} 次`,x,y+R*1.75+40,20,'#cfd5df');ctx.globalAlpha=1;});
+    if(L.length>6)txt(`…還有 ${L.length-6} 位`,W/2,top+590,24,'#cfd5df');
     txt(`各得【${result.prize||'神秘小禮'}】`,W/2,top+620,34,'#ffe08a');}
   ctx.restore();
 }
