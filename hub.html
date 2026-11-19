@@ -35,7 +35,7 @@ h1{font-size:24px;margin:0 10px 0 0;color:var(--gold)}
     <button class="g off" data-g="none">🙈 先關掉遊戲畫面</button>
     <div id="st">手機：<span id="phone">還沒連上</span></div>
   </header>
-  <div id="url"><span id="sess">連線代碼 <input id="sid"></span> 手機 PRISM 網址：<span id="ovUrl"></span><button id="cp">複製</button><span id="opBox" style="margin-left:18px;font-size:17px;color:var(--ink);display:none">🔆 <span id="opName"></span>透明度 <input type="range" id="op" min="20" max="100" step="5" style="width:180px;vertical-align:middle;accent-color:#e0a95a"> <b id="opV"></b> <span style="color:var(--sub);font-size:15px">（往左越透明）</span><label style="margin-left:16px;cursor:pointer"><input type="checkbox" id="fill" style="width:18px;height:18px;vertical-align:middle;accent-color:#e0a95a"> 📐 填滿小工具框（可自由拉長拉寬）</label></span></div>
+  <div id="url"><span id="sess">連線代碼 <input id="sid"></span> 手機 PRISM 網址：<span id="ovUrl"></span><button id="cp">複製</button><span id="opBox" style="margin-left:18px;font-size:17px;color:var(--ink);display:none">🔆 <span id="opName"></span>透明度 <input type="range" id="op" min="20" max="100" step="5" style="width:180px;vertical-align:middle;accent-color:#e0a95a"> <b id="opV"></b> <span style="color:var(--sub);font-size:15px">（往左越透明）</span><label style="margin-left:16px;cursor:pointer"><input type="checkbox" id="fill" style="width:18px;height:18px;vertical-align:middle;accent-color:#e0a95a"> 📐 填滿（可變形）</label><span style="margin-left:16px">↔️ 寬 <input type="range" id="sw" min="30" max="100" step="5" style="width:120px;vertical-align:middle;accent-color:#e0a95a"> <b id="swV"></b></span><span style="margin-left:12px">↕️ 高 <input type="range" id="sh" min="20" max="100" step="5" style="width:120px;vertical-align:middle;accent-color:#e0a95a"> <b id="shV"></b></span></span></div>
   <iframe id="recFrame" style="display:none"></iframe>
   <div id="empty">👆 按上面的遊戲，手機直播畫面就會換成那個遊戲</div>
 </div>
@@ -54,10 +54,11 @@ if(OV){
   document.documentElement.classList.add('ov');document.body.classList.add('ov');
   const fr=document.createElement('iframe');fr.id='ovFrame';fr.setAttribute('allowtransparency','true');document.body.appendChild(fr);
   let cur=null,ws=null,ops=LS('ops',{});
-  let fills=LS('fills',{});
+  let fills=LS('fills',{}),sizes=LS('sizes',{});
+  function applySize(){const z=sizes[cur]||{w:100,h:100};fr.style.width=z.w+'%';fr.style.height=z.h+'%';fr.style.left=((100-z.w)/2)+'%';fr.style.right='auto';fr.style.top='0';fr.style.bottom='auto';}
   const FILLCSS='html,body{height:100%!important;overflow:hidden!important}#wrap{padding:0!important;height:100vh!important}#stage{height:100vh!important;padding:0!important;align-items:stretch!important}canvas{width:100vw!important;height:100vh!important;max-height:none!important;aspect-ratio:auto!important;object-fit:fill!important;transform:none!important}';
   function applyFill(){try{const d=fr.contentDocument;if(!d||!d.head)return;let st=d.getElementById('hubFill');const on=!!fills[cur];if(on&&!st){st=d.createElement('style');st.id='hubFill';st.textContent=FILLCSS;d.head.appendChild(st);}if(!on&&st)st.remove();}catch(e){}}
-  const applyOp=()=>{fr.style.opacity=cur&&cur!=='none'?(ops[cur]!=null?ops[cur]:100)/100:0;applyFill();};
+  const applyOp=()=>{fr.style.opacity=cur&&cur!=='none'?(ops[cur]!=null?ops[cur]:100)/100:0;applyFill();applySize();};
   function show(g){if(!GAMES[g])return;if(g===cur)return;cur=g;SV('ovGame',g);
     fr.style.opacity=0;setTimeout(()=>{fr.src=g==='none'?'about:blank':gameUrl(g,'overlay');fr.onload=applyOp;},300);report();}
   function report(){if(ws&&ws.readyState===1){try{ws.send(JSON.stringify({hubState:{game:cur,t:Date.now()}}));}catch(e){}}}
@@ -66,6 +67,7 @@ if(OV){
     ws.onmessage=e=>{let m;try{m=JSON.parse(e.data);}catch(x){return;}const d=m.overlayNinja||m;
       if(d.hubOps){ops=Object.assign({},ops,d.hubOps);SV('ops',ops);applyOp();}
       if(d.hubFills){fills=Object.assign({},fills,d.hubFills);SV('fills',fills);applyFill();}
+      if(d.hubSizes){sizes=Object.assign({},sizes,d.hubSizes);SV('sizes',sizes);applySize();}
       if(d.hubGame)show(d.hubGame);if(d.hubCmd==='sync')report();};
     ws.onclose=()=>setTimeout(connect,3000);}
   show(QS.get('game')||LS('ovGame','none'));connect();
@@ -81,8 +83,10 @@ if(OV){
   $('sid').onchange=()=>{sid=$('sid').value.trim()||sid;$('sid').value=sid;SV('sid',sid);$('ovUrl').textContent=ovUrl();connect();if(curRec)openRec(curRec,true);};
   let ws=null,curRec=null,lastSeen=0,phoneGame=null,ops=LS('ops',{});
   const opOf=g=>ops[g]!=null?ops[g]:100;
-  function paintOp(){const g=curRec;if(!g||g==='none'){$('opBox').style.display='none';return;}$('opBox').style.display='inline';$('opName').textContent=GAMES[g]+' ';$('op').value=opOf(g);$('opV').textContent=opOf(g)+'%';$('fill').checked=!!fills[g];}
-  let fills=LS('fills',{});$('fill').addEventListener('change',()=>{if(!curRec||curRec==='none')return;fills[curRec]=$('fill').checked;SV('fills',fills);send({hubFills:{[curRec]:fills[curRec]}});});
+  function paintOp(){const g=curRec;if(!g||g==='none'){$('opBox').style.display='none';return;}$('opBox').style.display='inline';$('opName').textContent=GAMES[g]+' ';$('op').value=opOf(g);$('opV').textContent=opOf(g)+'%';$('fill').checked=!!fills[g];const z=sizes[g]||{w:100,h:100};$('sw').value=z.w;$('sh').value=z.h;$('swV').textContent=z.w+'%';$('shV').textContent=z.h+'%';}
+  let fills=LS('fills',{}),sizes=LS('sizes',{});let szT=0;
+  ['sw','sh'].forEach(id=>$(id).addEventListener('input',()=>{if(!curRec||curRec==='none')return;const z={w:+$('sw').value,h:+$('sh').value};sizes[curRec]=z;SV('sizes',sizes);$('swV').textContent=z.w+'%';$('shV').textContent=z.h+'%';clearTimeout(szT);szT=setTimeout(()=>send({hubSizes:{[curRec]:z}}),60);}));
+  $('fill').addEventListener('change',()=>{if(!curRec||curRec==='none')return;fills[curRec]=$('fill').checked;SV('fills',fills);send({hubFills:{[curRec]:fills[curRec]}});});
   let opT=0;$('op').addEventListener('input',()=>{if(!curRec||curRec==='none')return;ops[curRec]=+$('op').value;SV('ops',ops);$('opV').textContent=ops[curRec]+'%';$('recFrame').style.opacity=1;clearTimeout(opT);opT=setTimeout(()=>send({hubOps:{[curRec]:ops[curRec]}}),60);});
   function openRec(g,force){if(g===curRec&&!force)return;curRec=g;SV('recGame',g);
     document.querySelectorAll('.g').forEach(b=>b.classList.toggle('on',b.dataset.g===g));paintOp();
@@ -91,7 +95,7 @@ if(OV){
   function send(o){if(ws&&ws.readyState===1){try{ws.send(JSON.stringify(o));}catch(e){}}}
   document.querySelectorAll('.g').forEach(b=>b.onclick=()=>{const g=b.dataset.g;send({hubGame:g});openRec(g);});
   function connect(){try{ws&&ws.close();}catch(e){}ws=new WebSocket(SERVER);
-    ws.onopen=()=>{ws.send(JSON.stringify({join:sid,in:5,out:6}));setTimeout(()=>{send({hubOps:ops});send({hubFills:fills});send({hubCmd:'sync'});},300);};
+    ws.onopen=()=>{ws.send(JSON.stringify({join:sid,in:5,out:6}));setTimeout(()=>{send({hubOps:ops});send({hubFills:fills});send({hubSizes:sizes});send({hubCmd:'sync'});},300);};
     ws.onmessage=e=>{let m;try{m=JSON.parse(e.data);}catch(x){return;}const d=m.overlayNinja||m;
       if(d.hubState){lastSeen=Date.now();phoneGame=d.hubState.game;if(!curRec&&phoneGame)openRec(phoneGame);paint();}};
     ws.onclose=()=>setTimeout(connect,3000);}
