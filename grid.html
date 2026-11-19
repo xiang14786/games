@@ -45,11 +45,11 @@ body.ov #ovState{display:block}
 
     <h3>🔤 九宮格的字（每格一個字）</h3>
     <div id="cells"></div>
-    <div class="tip">觀眾留言「字＋1」，例如「超+1」就能佔領那一格。改字要按「清空重來」才會換。</div>
+    <div class="tip">觀眾留言「字＋1」，例如「超+1」就能佔領那一格。一則留言只算一格，同一人幾秒內只能動一次（下面可以調）。改字要按「清空重來」才會換。</div>
 
     <h3>⚙️ 遊戲設定</h3>
     <label>九宮格放在畫面哪裡<select id="pos"><option value="tr">右上角</option><option value="tl">左上角</option><option value="br">右下角</option><option value="bl">左下角</option></select></label>
-    <div class="row"><label style="flex:1">每格最多幾滴血<input type="number" id="maxHp" min="1" max="20"></label><label style="flex:1">同一人幾秒算一次<input type="number" id="cd" min="0"></label></div>
+    <div class="row"><label style="flex:1">每格最多幾滴血<input type="number" id="maxHp" min="1" max="20"></label><label style="flex:1">同一人幾秒只能動一次<input type="number" id="cd" min="0"></label></div>
     <label>遊戲時間（分鐘，0＝不限，按「結算」才結束）<input type="number" id="dur" min="0"></label>
     <label>佔領最多格的人得到<input type="text" id="prizeTop" placeholder="例：購物金50元（空白＝沒有）"></label>
     <label>結算時每一格的地主得到<input type="text" id="prizeCell" placeholder="例：購物金10元（空白＝沒有）"></label>
@@ -175,7 +175,9 @@ function norm(s){return String(s||'').replace(/[！-～]/g,c=>String.fromCharCod
 function onComment(name,msg,img){try{if(window.parent!==window&&window.parent.__hubPaused)return;}catch(e){}
   name=(name||'').trim();if(!name||phase!=='play')return;
   msg=norm(String(msg||'').replace(/<img[^>]*alt="([^"]*)"[^>]*>/gi,'$1').replace(/<[^>]*>/g,''));
-  const done=new Set();cells.forEach((c,i)=>{if(done.has(c.ch))return;if(msg.includes(c.ch+'+1')){done.add(c.ch);const key=name+'|'+i,now=Date.now();if(now-(lastBy.get(key)||0)<(+cfg.cd||0)*1000)return;lastBy.set(key,now);act(i,name,img);}});
+  // 一則留言只算一格（取最先出現的那個「字+1」）；同一人幾秒內只能動作一次（不分格子）
+  let best=-1,pos=1e9;cells.forEach((c,i)=>{const p=msg.indexOf(c.ch+'+1');if(p>=0&&p<pos){pos=p;best=i;}});
+  if(best<0)return;const now=Date.now();if(now-(lastBy.get(name)||0)<(+cfg.cd||0)*1000)return;lastBy.set(name,now);act(best,name,img);
 }
 /* ===== 連線 ===== */
 let ws=null,cmdWs=null,recWs=null,overlaySeen=false;
