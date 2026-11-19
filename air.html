@@ -206,6 +206,7 @@ const EVENTS = [
 ];
 const EV = EVENTS.map(e => ({ s: new Date(e[0]).getTime(), e: new Date(e[1]).getTime(), m: e[2], fuel: e[3], t: e[4], d: e[5] }));
 const RIVAL_NAMES = [['寰宇航空', '#e8402a'], ['長榮之翼', '#2fae5a'], ['東方快線', '#ff9a2e'], ['太平洋航空', '#a05aff'], ['北極星航空', '#19c0e0'], ['皇家航空', '#ffcf3a'], ['大西洋航空', '#3a7bff'], ['南十字星航空', '#ff5fa8'], ['絲路航空', '#c98a3a'], ['極光航空', '#7affd4'], ['獅城航空', '#ff4f6a'], ['富士航空', '#e8e8f0'], ['阿爾卑斯航空', '#9ad03a'], ['沙漠之鷹航空', '#d8b060'], ['楓葉航空', '#ff7040'], ['亞馬遜航空', '#3ad08a'], ['地中海航空', '#40c8ff'], ['草原航空', '#b8a0ff'], ['海洋之星航空', '#2fd0c0'], ['金字塔航空', '#f0a020'], ['長城航空', '#d04040'], ['維京航空', '#8090ff']];
+const shade = c => { const n = parseInt(c.slice(1), 16); return `rgb(${(n >> 16) * 0.45 | 0},${(n >> 8 & 255) * 0.45 | 0},${(n & 255) * 0.45 | 0})`; };
 const rivalName = () => { const used = new Set(S.airlines.map(a => a.name)); return RIVAL_NAMES.find(n => !used.has(n[0])) || [RIVAL_NAMES[S.airlines.length % RIVAL_NAMES.length][0] + ' ' + (S.airlines.length + 1), RIVAL_NAMES[S.airlines.length % RIVAL_NAMES.length][1]]; };
 const RIV_N = d => [10, 12, 14, 16][d] ?? 12;
 
@@ -559,7 +560,7 @@ function drawMap(t) {
   for (const al of S.airlines.slice(1)) if (al.alive) { ctx.strokeStyle = al.color + '55'; ctx.lineWidth = 1; for (const r of al.routes) { const pts = gc(APM[r.a], APM[r.b]); pathLine(pts); ctx.stroke(); rivP.push([al, r, pts]); } }
   // 對手飛機（每條航線最多畫 2 架，顏色＝該公司顏色）
   ctx.globalAlpha = 0.85;
-  for (const [al, r, pts] of rivP) { const n = Math.min(2, (r.planes || []).length || 1); for (let i = 0; i < n; i++) { const f = ((t / 1000 / (3 + dist(APM[r.a], APM[r.b]) / 2500)) + i / n + (r.a.charCodeAt(0) % 7) / 7) % 2; const u = f < 1 ? f : 2 - f; const k = Math.min(pts.length - 2, Math.floor(u * (pts.length - 1))); const p1 = proj(...pts[k]), p2 = proj(...pts[k + 1]); if (Math.abs(p1[0] - p2[0]) > W / 2 || p1[0] < -10 || p1[0] > W + 10 || p1[1] < -10 || p1[1] > H + 10) continue; let ang = Math.atan2(p2[1] - p1[1], p2[0] - p1[0]); if (f >= 1) ang += Math.PI; drawPlaneIcon(p1[0], p1[1], ang, al.color, al.color, 0.75); } }
+  for (const [al, r, pts] of rivP) { const n = Math.min(2, (r.planes || []).length || 1); for (let i = 0; i < n; i++) { const f = ((t / 1000 / (3 + dist(APM[r.a], APM[r.b]) / 2500)) + i / n + (r.a.charCodeAt(0) % 7) / 7) % 2; const u = f < 1 ? f : 2 - f; const k = Math.min(pts.length - 2, Math.floor(u * (pts.length - 1))); const p1 = proj(...pts[k]), p2 = proj(...pts[k + 1]); if (Math.abs(p1[0] - p2[0]) > W / 2 || p1[0] < -10 || p1[0] > W + 10 || p1[1] < -10 || p1[1] > H + 10) continue; let ang = Math.atan2(p2[1] - p1[1], p2[0] - p1[0]); if (f >= 1) ang += Math.PI; const fp = r.planes && al.fleet.find(z => z.id === r.planes[i]); drawPlaneIcon(p1[0], p1[1], ang, shade(al.color), al.color, 0.75, fp && fp.type, 1 + (parseInt(al.id.slice(1)) || 0) % 2); } }
   ctx.globalAlpha = 1;
   // 我的航線
   const m = me();
@@ -568,7 +569,7 @@ function drawMap(t) {
     ctx.strokeStyle = sel && sel.route === r ? '#fff' : lf > 0.8 ? '#5fe08a' : lf > 0.55 ? '#ffd34d' : '#ff7a7a'; ctx.lineWidth = sel && sel.route === r ? 3.5 : 2.2; ctx.shadowColor = ctx.strokeStyle; ctx.shadowBlur = 6;
     pathLine(pts); ctx.stroke(); ctx.shadowBlur = 0;
     // 飛機動畫
-    r.planes.forEach((pid, i) => { const f = ((t / 1000 / (3 + dist(APM[r.a], APM[r.b]) / 2500)) + i / r.planes.length) % 2; const u = f < 1 ? f : 2 - f; const k = Math.min(pts.length - 2, Math.floor(u * (pts.length - 1))); const p1 = proj(...pts[k]), p2 = proj(...pts[k + 1]); if (Math.abs(p1[0] - p2[0]) > W / 2) return; let ang = Math.atan2(p2[1] - p1[1], p2[0] - p1[0]); if (f >= 1) ang += Math.PI; drawPlaneIcon(p1[0], p1[1], ang, m.color); });
+    r.planes.forEach((pid, i) => { const f = ((t / 1000 / (3 + dist(APM[r.a], APM[r.b]) / 2500)) + i / r.planes.length) % 2; const u = f < 1 ? f : 2 - f; const k = Math.min(pts.length - 2, Math.floor(u * (pts.length - 1))); const p1 = proj(...pts[k]), p2 = proj(...pts[k + 1]); if (Math.abs(p1[0] - p2[0]) > W / 2) return; let ang = Math.atan2(p2[1] - p1[1], p2[0] - p1[0]); if (f >= 1) ang += Math.PI; const fp = m.fleet.find(z => z.id === pid); drawPlaneIcon(p1[0], p1[1], ang, m.color, '#fff', 1, fp && fp.type, 0); });
   }
   // 機場
   for (const a of AP) {
@@ -581,7 +582,32 @@ function drawMap(t) {
     if (cam.z >= 2.2 || s >= 8.5 || mine) { ctx.font = `${mine ? 800 : 600} ${cam.z >= 4 ? 12 : 10}px sans-serif`; ctx.fillStyle = mine ? '#fff' : 'rgba(190,210,240,.8)'; ctx.textAlign = 'center'; ctx.fillText(cam.z >= 4 ? a.n : a.c, x, yy - r - 4); }
   }
 }
-function drawPlaneIcon(x, y, ang, col, fill, sc) { ctx.save(); ctx.translate(x, y); ctx.rotate(ang); if (sc) ctx.scale(sc, sc); ctx.fillStyle = fill || '#fff'; ctx.strokeStyle = col; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.moveTo(7, 0); ctx.lineTo(-5, -1.6); ctx.lineTo(-7, -5); ctx.lineTo(-8, -5); ctx.lineTo(-6.5, 0); ctx.lineTo(-8, 5); ctx.lineTo(-7, 5); ctx.lineTo(-5, 1.6); ctx.closePath(); ctx.fill(); ctx.stroke(); ctx.fillRect(-2, -6, 2, 12); ctx.restore(); }
+// 地圖上的小飛機：依機型（螺旋槳／雙發／四發／尾翼發動機／協和）畫不同外形，依公司上不同顏色與塗裝
+function drawPlaneIcon(x, y, ang, col, fill, sc, pt, liv) {
+  const P = pt && PM[pt] || {}, e = P.eng || 'jet2', L = 0.75 + (P.len || 0.7) * 0.5, k = (sc || 1) * L;
+  ctx.save(); ctx.translate(x, y); ctx.rotate(ang); ctx.scale(k, k);
+  ctx.fillStyle = fill || '#fff'; ctx.strokeStyle = col; ctx.lineWidth = 1.2 / k;
+  const prop = e.startsWith('prop'), sst = e === 'sst', sw = prop ? 0 : sst ? 5 : 3;
+  ctx.beginPath();
+  if (sst) { ctx.moveTo(9, 0); ctx.lineTo(-2, -1.2); ctx.lineTo(-7, -5.5); ctx.lineTo(-8, -1); ctx.lineTo(-8, 1); ctx.lineTo(-7, 5.5); ctx.lineTo(-2, 1.2); }
+  else {
+    ctx.moveTo(8, 0); ctx.lineTo(6, -1.3); ctx.lineTo(1 - sw * 0.2, -1.3); ctx.lineTo(-sw, -7); ctx.lineTo(-sw - 1.6, -7); ctx.lineTo(-2, -1.3);
+    ctx.lineTo(-6, -1.1); ctx.lineTo(-7.5 - sw * 0.2, -3.4); ctx.lineTo(-8.5, -3.4); ctx.lineTo(-8, 0); ctx.lineTo(-8.5, 3.4); ctx.lineTo(-7.5 - sw * 0.2, 3.4); ctx.lineTo(-6, 1.1);
+    ctx.lineTo(-2, 1.3); ctx.lineTo(-sw - 1.6, 7); ctx.lineTo(-sw, 7); ctx.lineTo(1 - sw * 0.2, 1.3); ctx.lineTo(6, 1.3);
+  }
+  ctx.closePath(); ctx.fill(); ctx.stroke();
+  // 發動機
+  ctx.fillStyle = col; const eg = (ex, ey) => { ctx.beginPath(); ctx.arc(ex, ey, prop ? 1.3 : 1.1, 0, 7); ctx.fill(); };
+  if (e === 'prop2' || e === 'jet2') { eg(prop ? 1 : -0.5, -3.4); eg(prop ? 1 : -0.5, 3.4); }
+  else if (e === 'prop4' || e === 'jet4') { eg(prop ? 1 : 0, -2.6); eg(prop ? 1 : 0, 2.6); eg(prop ? 0.8 : -1.8, -5); eg(prop ? 0.8 : -1.8, 5); }
+  else if (e === 'tail2' || e === 'tail3' || e === 'tri') { eg(-5, -2); eg(-5, 2); if (e !== 'tail2') eg(-6.2, 0); }
+  // 塗裝：每家公司不同的機身條紋
+  ctx.strokeStyle = liv ? col : 'rgba(0,0,0,.25)'; ctx.lineWidth = 0.9;
+  const lv = liv || 0;
+  if (lv % 3 === 1) { ctx.beginPath(); ctx.moveTo(6, 0); ctx.lineTo(-7, 0); ctx.stroke(); }
+  else if (lv % 3 === 2) { ctx.fillStyle = '#fff'; ctx.fillRect(-8, -0.6, 3, 1.2); ctx.fillRect(4, -0.6, 2.5, 1.2); }
+  ctx.restore();
+}
 // 拖曳／縮放／點選
 let ptrs = new Map(), dragInfo = null, sel = null;
 cv.addEventListener('pointerdown', e => { cv.setPointerCapture(e.pointerId); ptrs.set(e.pointerId, [e.clientX, e.clientY]); dragInfo = { x: e.clientX, y: e.clientY, lon: cam.lon, my: merc(cam.lat), moved: false, z: cam.z, d0: ptrs.size === 2 ? pdist() : 0 }; });
