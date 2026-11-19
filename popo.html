@@ -52,7 +52,7 @@ body.ov #ovState{display:block}
     <h3>📡 留言關鍵字（逗號分開）</h3>
     <label>🛋️ 躲沙發<input type="text" id="kSofa"></label>
     <label>🚪 躲衣櫃<input type="text" id="kWard"></label>
-    <label>🪟 躲窗簾<input type="text" id="kCurt"></label>
+    <label>🎐 躲窗簾<input type="text" id="kCurt"></label>
     <label>連線代碼（Session ID）<input type="text" id="sid"></label>
     <div class="row" style="margin-top:8px"><button class="btn ghost" id="conn">開始接留言</button><span id="wsState" class="tip">未連線</span></div>
     <div class="row" style="margin-top:8px"><button class="btn ghost" id="copyOv">複製手機直播用網址</button><button class="btn ghost" id="copyRec">複製電腦紀錄用網址</button><span class="tip" id="ovTip"></span></div>
@@ -89,7 +89,7 @@ let wins=LS('wins',[]);
 const SPOTS={
   sofa:{n:'沙發',ic:'💺',x:40,y:335,w:360,h:120,stand:[240,555],k:'kSofa'},
   ward:{n:'衣櫃',ic:'🚪',x:620,y:120,w:165,h:300,stand:[700,520],k:'kWard'},
-  curt:{n:'窗簾',ic:'🪟',x:822,y:90,w:160,h:360,stand:[880,545],k:'kCurt'},
+  curt:{n:'窗簾',ic:'🎐',x:822,y:90,w:160,h:360,stand:[880,545],k:'kCurt'},
   none:{n:'沒躲好',ic:'😱',x:420,y:395,w:190,h:70,stand:[515,555]}
 };
 const DOOR={x:505,y:415};
@@ -197,7 +197,7 @@ function frame(now){
     bannerT(t,H-36,29,'#ffe08a',phase==='count'&&tEnd-now<10000?'rgba(160,20,30,.88)':'rgba(0,0,0,.7)');
     if(phase==='count'&&round>1)bannerT(`每輪都要重新留言躲！${kws}，沒躲的會被抓`,H-88,23,'#fff','rgba(0,0,0,.62)');
     ctx.textAlign='center';ctx.textBaseline='middle';
-    if(phase==='lobby'&&!ppl.length){ctx.fillStyle='rgba(20,10,20,.82)';rr(W/2-260,150,520,150,24);ctx.fill();ctx.strokeStyle='#ffb070';ctx.lineWidth=3;ctx.stroke();ctx.fillStyle='#fff';ctx.font='bold 28px '+FONT;ctx.fillText('婆婆要來家裡突襲檢查了！',W/2,195);ctx.fillStyle='#ffd39a';ctx.font='bold 24px '+FONT;ctx.fillText('快留言選地方躲，最後沒被抓到的有獎',W/2,240);ctx.fillStyle='#ffe08a';ctx.font='bold 22px '+FONT;ctx.fillText(`💺 ${f1(cfg.kSofa)}　🚪 ${f1(cfg.kWard)}　🪟 ${f1(cfg.kCurt)}`,W/2,278);}}
+    if(phase==='lobby'&&!ppl.length){ctx.fillStyle='rgba(20,10,20,.82)';rr(W/2-260,150,520,150,24);ctx.fill();ctx.strokeStyle='#ffb070';ctx.lineWidth=3;ctx.stroke();ctx.fillStyle='#fff';ctx.font='bold 28px '+FONT;ctx.fillText('婆婆要來家裡突襲檢查了！',W/2,195);ctx.fillStyle='#ffd39a';ctx.font='bold 24px '+FONT;ctx.fillText('快留言選地方躲，最後沒被抓到的有獎',W/2,240);ctx.fillStyle='#ffe08a';ctx.font='bold 22px '+FONT;ctx.fillText(`💺 ${f1(cfg.kSofa)}　🚪 ${f1(cfg.kWard)}　🎐 ${f1(cfg.kCurt)}`,W/2,278);}}
   // 得獎卡
   if(phase==='end'&&winners&&now-endAt>400){const k=Math.min(1,(now-endAt-400)/400),Lw=winners.list;ctx.globalAlpha=k;
     ctx.fillStyle='rgba(12,14,22,.92)';rr(170,70,660,420,30);ctx.fill();ctx.strokeStyle='#f3d9a6';ctx.lineWidth=5;ctx.stroke();
