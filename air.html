@@ -205,15 +205,17 @@ const EVENTS = [
   ['2023-01-01', '2023-12-31', { all: 1.08 }, 1, '報復性出遊', '壓抑三年的旅遊需求大爆發！'],
 ];
 const EV = EVENTS.map(e => ({ s: new Date(e[0]).getTime(), e: new Date(e[1]).getTime(), m: e[2], fuel: e[3], t: e[4], d: e[5] }));
-const RIVAL_NAMES = [['寰宇航空', '#e8402a'], ['長榮之翼', '#2fae5a'], ['東方快線', '#ff9a2e'], ['太平洋航空', '#a05aff'], ['北極星航空', '#19c0e0'], ['皇家航空', '#ffcf3a']];
+const RIVAL_NAMES = [['寰宇航空', '#e8402a'], ['長榮之翼', '#2fae5a'], ['東方快線', '#ff9a2e'], ['太平洋航空', '#a05aff'], ['北極星航空', '#19c0e0'], ['皇家航空', '#ffcf3a'], ['大西洋航空', '#3a7bff'], ['南十字星航空', '#ff5fa8'], ['絲路航空', '#c98a3a'], ['極光航空', '#7affd4'], ['獅城航空', '#ff4f6a'], ['富士航空', '#e8e8f0'], ['阿爾卑斯航空', '#9ad03a'], ['沙漠之鷹航空', '#d8b060'], ['楓葉航空', '#ff7040'], ['亞馬遜航空', '#3ad08a'], ['地中海航空', '#40c8ff'], ['草原航空', '#b8a0ff'], ['海洋之星航空', '#2fd0c0'], ['金字塔航空', '#f0a020'], ['長城航空', '#d04040'], ['維京航空', '#8090ff']];
+const rivalName = () => { const used = new Set(S.airlines.map(a => a.name)); return RIVAL_NAMES.find(n => !used.has(n[0])) || [RIVAL_NAMES[S.airlines.length % RIVAL_NAMES.length][0] + ' ' + (S.airlines.length + 1), RIVAL_NAMES[S.airlines.length % RIVAL_NAMES.length][1]]; };
+const RIV_N = d => [10, 12, 14, 16][d] ?? 12;
 
 // ===================== 狀態 =====================
 let S = null; // 整個世界
 const DIFF = [
-  { n: '輕鬆', d: '對手保守、成本低', cost: 0.85, ai: 0.7, riv: 3, ev: 0.6, adm: 0.6 },
-  { n: '普通', d: '標準挑戰', cost: 1, ai: 1, riv: 3, ev: 1, adm: 1 },
-  { n: '困難', d: '4 家對手、會打價格戰', cost: 1.05, ai: 1.4, riv: 4, ev: 1.25, adm: 1.25 },
-  { n: '地獄', d: '5 家兇猛對手、天災人禍不斷', cost: 1.12, ai: 1.8, riv: 5, ev: 1.6, adm: 1.5 },
+  { n: '輕鬆', d: '10 家對手、比較保守、成本低', cost: 0.85, ai: 0.7, riv: 10, ev: 0.6, adm: 0.6 },
+  { n: '普通', d: '12 家對手・標準挑戰', cost: 1, ai: 1, riv: 12, ev: 1, adm: 1 },
+  { n: '困難', d: '14 家對手、會打價格戰', cost: 1.05, ai: 1.4, riv: 14, ev: 1.25, adm: 1.25 },
+  { n: '地獄', d: '16 家兇猛對手、天災人禍不斷', cost: 1.12, ai: 1.8, riv: 16, ev: 1.6, adm: 1.5 },
 ];
 const D = () => DIFF[S && S.diff != null ? S.diff : 1];
 const SVC = [
@@ -238,9 +240,9 @@ function newWorld(era, home, name, color, diff = 1) {
   me.cash = 20e6; S.airlines.push(me);
   // 對手：挑三個不同地區的大機場當基地
   const regs = new Set([APM[home].reg]);
-  const big = AP.filter(a => apSize(a, y) >= 5 && a.c !== home).sort((a, b) => apSize(b, y) - apSize(a, y));
+  const big = AP.filter(a => apSize(a, y) >= 3.5 && a.c !== home).sort((a, b) => apSize(b, y) - apSize(a, y));
   const used = [];
-  for (const a of big) { if (S.airlines.length >= 1 + DIFF[diff].riv) break; if (regs.has(a.reg) && S.airlines.length < 4) continue; if (used.includes(a.c)) continue; regs.add(a.reg); const rn = RIVAL_NAMES[S.airlines.length - 1]; const r = mkAirline('r' + S.airlines.length, rn[0], rn[1], a.c, false); r.cash = 30e6 * rand(.9, 1.3) * (0.7 + 0.3 * DIFF[diff].ai); S.airlines.push(r); used.push(a.c); }
+  for (const a of big) { if (S.airlines.length >= 1 + DIFF[diff].riv) break; if (regs.has(a.reg) && S.airlines.length < 4) continue; if (used.includes(a.c)) continue; regs.add(a.reg); const rn = rivalName(); const r = mkAirline('r' + S.airlines.length, rn[0], rn[1], a.c, false); r.cash = 30e6 * rand(.9, 1.3) * (0.7 + 0.3 * DIFF[diff].ai); S.airlines.push(r); used.push(a.c); }
   // 開局送兩架便宜飛機
   const cheap = avail(y).sort((a, b) => a.price - b.price)[0];
   for (let i = 0; i < 2; i++) addPlane(me, cheap.id, true);
@@ -325,8 +327,8 @@ function bankrupt(al) {
 }
 function spawnRival() {
   const used = new Set(S.airlines.filter(a => a.alive).map(a => a.home)), y = yearOf(S.t);
-  const c = AP.filter(a => apSize(a, y) >= 5 && !used.has(a.c)).sort(() => Math.random() - 0.5)[0];
-  if (c) { const rn = RIVAL_NAMES[S.airlines.length % RIVAL_NAMES.length]; const r = mkAirline('r' + S.airlines.length, rn[0], rn[1], c.c, false); r.cash = 25e6; r.price = 2; S.airlines.push(r); for (let i = 0; i < 2; i++) aiExpand(r, true); news('air_office', `新航空公司 ${r.name} 在${c.n}成立`, '新的競爭對手出現了。'); }
+  const c = AP.filter(a => apSize(a, y) >= 3.5 && !used.has(a.c) && a.c !== me().home).sort(() => Math.random() - 0.5)[0];
+  if (c) { const rn = rivalName(); const r = mkAirline('r' + S.airlines.length, rn[0], rn[1], c.c, false); r.cash = 25e6; r.price = 2; S.airlines.push(r); for (let i = 0; i < 2; i++) aiExpand(r, true); news('air_office', `新航空公司 ${r.name} 在${c.n}成立`, '新的競爭對手出現了。'); }
 }
 function fleetValue(al) { return al.fleet.reduce((s, p) => s + (p.leased ? 0 : PM[p.type].price * 1e6 * Math.max(0.12, 1 - p.age * 0.05)), 0); }
 function companyValue(al) { const ann = al.profitHist.reduce((s, v) => s + v, 0) * 52 / Math.max(1, al.profitHist.length); return al.cash - al.debt + fleetValue(al) + Math.max(0, ann) * 5 + Math.min(0, ann) * 2; }
@@ -352,14 +354,14 @@ function aiExpand(al, free) {
   }
   cands.sort((p, q) => q.sc - p.sc);
   let best = null, pl = null;
-  let bestEst = 0;
+  let bestEst = free || al.routes.length < 2 ? -Infinity : 0;
   for (const c of cands.slice(0, 40)) {
     const want = c.dem * 0.75 / (1 + c.comp);
     const fit = types.filter(p => p.range >= c.d), ok = fit.filter(p => weeklyTrips(p, c.d) * 2 * p.seats <= want * 1.25);
     const cp = ok.length ? ok.sort((p, q) => seatCost(p, c.d) - seatCost(q, c.d))[0] : fit.sort((p, q) => weeklyTrips(p, c.d) * p.seats - weeklyTrips(q, c.d) * q.seats)[0];
     const legs = weeklyTrips(cp, c.d) * 2, pax = Math.min(legs * cp.seats * 0.85, want), est = pax * baseFare(c.d) - seatCost(cp, c.d) * cp.seats * legs;
     const v = est * (0.7 + Math.random() * 0.6) * (c.sc > 0 ? 1 : 0);
-    if (est > 0 && v > bestEst) { bestEst = v; best = c; pl = cp; }
+    if ((est > 0 || bestEst === -Infinity || free) && v > bestEst) { bestEst = v; best = c; pl = cp; }
   }
   if (!best) return;
   if (!free && al.cash < pl.price * 1e6 * 0.25) return;
@@ -457,35 +459,39 @@ function endDecade() {
 // ===================== 隨機事件 =====================
 function randomEvent() {
   const m = me(); if (!m.alive || m.routes.length < 3 || modalOpen) return;
+  S.evCd = S.evCd || {}; if ((S.evNext || 0) > S.week) return; // 兩次事件至少隔 2 個月
   if (Math.random() > 0.035 * D().ev) return;
+  const rich = m.profitHist.slice(-8).reduce((s, v) => s + v, 0) > 0 && m.cash > 1e6; // 還沒賺錢時不會被要錢
+  const cd = (k, w) => S.week >= (S.evCd[k] || 0) ? w : 0;
   const y = yearOf(S.t), owned = m.fleet.filter(p => p.route), avgAge = m.fleet.length ? m.fleet.reduce((s, p) => s + p.age, 0) / m.fleet.length : 0;
   const ev = [
-    [0.4 + avgAge * 0.3, () => { // 飛安事故
+    [cd('acc', 0.4 + avgAge * 0.3), () => { S.evCd.acc = S.week + 26; // 飛安事故
       const p = owned.sort((a, b) => b.age - a.age)[0]; if (!p) return false; const pl = PM[p.type], r = m.routes.find(x => x.id === p.route);
       if (r) r.planes = r.planes.filter(id => id !== p.id); m.fleet = m.fleet.filter(f => f !== p); m.rep = Math.max(5, (m.rep ?? 55) - 22);
       const fine = pl.price * 1e6 * 0.4; m.cash -= fine;
       choice('air_warn', '✈️💥 飛安事故', `一架 ${pl.n}（機齡 ${p.age.toFixed(0)} 年）發生重大事故，飛機全毀。媒體大幅報導，口碑大跌。<br>賠償與調查費用 ${fmtM(fine)}。<br><br><span class="muted">老飛機越多，出事機率越高。</span>`,
         [['公開道歉、全面安檢（再花 ' + fmtM(fine * 0.5) + '，口碑回升一些）', () => { m.cash -= fine * 0.5; m.rep += 10; }], ['低調處理', () => {}]]); return true; }],
-    [3, () => { // 罷工
+    [rich ? cd('strike', 3) : 0, () => { S.evCd.strike = S.week + 156; // 罷工（3 年內不會再來）
       const raise = 0.12; choice('air_hand', '🪧 機組人員罷工', `工會要求加薪 ${raise * 100}%，否則全面罷工。`,
         [['答應加薪（機組成本永久 +12%）', () => { m.crewUp = (m.crewUp || 0) + raise; m.rep += 3; }], ['拒絕（停飛兩週、口碑下降）', () => { m.cash -= m.weekRev * 1.6; m.rep = Math.max(5, m.rep - 12); toast('air_warn', '罷工兩週，損失大量收入'); }]]); return true; }],
-    [2.5, () => { // 旅遊熱潮
+    [cd('boom', 2.5), () => { S.evCd.boom = S.week + 26; // 旅遊熱潮
       const cs = [...new Set(m.routes.flatMap(r => [r.a, r.b]))], c = pick(cs); S.boom = { c, m: 1.45, until: S.t + 26 * WEEK };
       news('air_up', `${APM[c].n} 掀起旅遊熱潮！`, '未來半年，飛這個城市的需求大增 45%。'); return true; }],
-    [2, () => { // 起降費調漲
-      const c = pick([m.home, ...(m.bases || [])]); m.stationUp = m.stationUp || {}; choice('air_tower', `🏛️ ${APM[c].n} 機場調漲費用`, '機場當局要你一次付清擴建分攤費，不付就限制你的起降時段（口碑下降）。',
-        [['付 ' + fmtM(baseCost(c) * 1.5), () => { m.cash -= baseCost(c) * 1.5; }], ['不付', () => { m.rep = Math.max(5, m.rep - 10); }]]); return true; }],
-    [2, () => { // 好評
+    [rich ? cd('fee', 2) : 0, () => { S.evCd.fee = S.week + 104; // 起降費調漲（2 年內不會再來）
+      const c = pick([m.home, ...(m.bases || [])]), fee = Math.min(baseCost(c) * 1.5, Math.max(m.cash * 0.2, m.weekRev * 3)); m.stationUp = m.stationUp || {}; choice('air_tower', `🏛️ ${APM[c].n} 機場調漲費用`, '機場當局要你一次付清擴建分攤費，不付就限制你的起降時段（口碑下降）。',
+        [['付 ' + fmtM(fee), () => { m.cash -= fee; }], ['不付', () => { m.rep = Math.max(5, m.rep - 10); }]]); return true; }],
+    [cd('award', 2), () => { S.evCd.award = S.week + 52; // 好評
       m.rep = Math.min(98, (m.rep ?? 55) + 8); news('air_medal', `${m.name} 獲選年度最佳航空`, '口碑上升！'); return true; }],
-    [1.5 * D().ai, () => { // 對手挖角
+    [rich ? cd('poach', 1.5 * D().ai) : 0, () => { S.evCd.poach = S.week + 104; // 對手挖角
       const r = S.airlines.filter(a => !a.human && a.alive).sort((a, b) => b.cash - a.cash)[0]; if (!r) return false;
       choice('air_office', `🕵️ ${r.name} 來挖角`, `${r.name} 想挖走你的資深機師團隊。`,
         [['發留任獎金 ' + fmtM(m.weekRev * 0.8), () => { m.cash -= m.weekRev * 0.8; }], ['讓他們走（機組成本 +6%、對手變強）', () => { m.crewUp = (m.crewUp || 0) + 0.06; r.rep = Math.min(95, r.rep + 10); r.cash += 10e6; }]]); return true; }],
-    [y >= 1990 ? 1.5 : 0.5, () => { // 電腦當機
+    [rich ? cd('sys', y >= 1990 ? 1.5 : 0.5) : 0, () => { S.evCd.sys = S.week + 52; // 電腦當機
       m.cash -= m.weekRev * 0.5; m.rep = Math.max(5, m.rep - 6); news('air_warn', '訂位系統大當機', '一整天無法劃位，損失收入、旅客抱怨。'); return true; }],
   ];
   let tot = ev.reduce((s, e) => s + e[0], 0), r = Math.random() * tot;
-  for (const e of ev) { r -= e[0]; if (r <= 0) { e[1](); break; } }
+  if (tot <= 0) return;
+  for (const e of ev) { r -= e[0]; if (r <= 0) { if (e[1]() !== false) S.evNext = S.week + 8; break; } }
 }
 function choice(ic, title, body, opts) {
   S.speed && (S._sp = S.speed);
@@ -549,7 +555,12 @@ function drawMap(t) {
   ctx.fillStyle = '#1d3a5c'; ctx.strokeStyle = '#2c5280'; ctx.lineWidth = 0.7;
   for (const ring of WORLD) { ctx.beginPath(); let prev = null, ok = true; for (let i = 0; i < ring.length; i += 2) { const p = proj(ring[i], ring[i + 1]); if (prev && Math.abs(p[0] - prev[0]) > W * 0.5) { ok = false; break; } i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1]); prev = p; } if (ok) { ctx.closePath(); ctx.fill(); ctx.stroke(); } }
   // 對手航線
-  for (const al of S.airlines.slice(1)) if (al.alive) { ctx.strokeStyle = al.color + '55'; ctx.lineWidth = 1; for (const r of al.routes) { pathLine(gc(APM[r.a], APM[r.b])); ctx.stroke(); } }
+  const rivP = [];
+  for (const al of S.airlines.slice(1)) if (al.alive) { ctx.strokeStyle = al.color + '55'; ctx.lineWidth = 1; for (const r of al.routes) { const pts = gc(APM[r.a], APM[r.b]); pathLine(pts); ctx.stroke(); rivP.push([al, r, pts]); } }
+  // 對手飛機（每條航線最多畫 2 架，顏色＝該公司顏色）
+  ctx.globalAlpha = 0.85;
+  for (const [al, r, pts] of rivP) { const n = Math.min(2, (r.planes || []).length || 1); for (let i = 0; i < n; i++) { const f = ((t / 1000 / (3 + dist(APM[r.a], APM[r.b]) / 2500)) + i / n + (r.a.charCodeAt(0) % 7) / 7) % 2; const u = f < 1 ? f : 2 - f; const k = Math.min(pts.length - 2, Math.floor(u * (pts.length - 1))); const p1 = proj(...pts[k]), p2 = proj(...pts[k + 1]); if (Math.abs(p1[0] - p2[0]) > W / 2 || p1[0] < -10 || p1[0] > W + 10 || p1[1] < -10 || p1[1] > H + 10) continue; let ang = Math.atan2(p2[1] - p1[1], p2[0] - p1[0]); if (f >= 1) ang += Math.PI; drawPlaneIcon(p1[0], p1[1], ang, al.color, al.color, 0.75); } }
+  ctx.globalAlpha = 1;
   // 我的航線
   const m = me();
   for (const r of m.routes) {
@@ -570,7 +581,7 @@ function drawMap(t) {
     if (cam.z >= 2.2 || s >= 8.5 || mine) { ctx.font = `${mine ? 800 : 600} ${cam.z >= 4 ? 12 : 10}px sans-serif`; ctx.fillStyle = mine ? '#fff' : 'rgba(190,210,240,.8)'; ctx.textAlign = 'center'; ctx.fillText(cam.z >= 4 ? a.n : a.c, x, yy - r - 4); }
   }
 }
-function drawPlaneIcon(x, y, ang, col) { ctx.save(); ctx.translate(x, y); ctx.rotate(ang); ctx.fillStyle = '#fff'; ctx.strokeStyle = col; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.moveTo(7, 0); ctx.lineTo(-5, -1.6); ctx.lineTo(-7, -5); ctx.lineTo(-8, -5); ctx.lineTo(-6.5, 0); ctx.lineTo(-8, 5); ctx.lineTo(-7, 5); ctx.lineTo(-5, 1.6); ctx.closePath(); ctx.fill(); ctx.stroke(); ctx.fillRect(-2, -6, 2, 12); ctx.restore(); }
+function drawPlaneIcon(x, y, ang, col, fill, sc) { ctx.save(); ctx.translate(x, y); ctx.rotate(ang); if (sc) ctx.scale(sc, sc); ctx.fillStyle = fill || '#fff'; ctx.strokeStyle = col; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.moveTo(7, 0); ctx.lineTo(-5, -1.6); ctx.lineTo(-7, -5); ctx.lineTo(-8, -5); ctx.lineTo(-6.5, 0); ctx.lineTo(-8, 5); ctx.lineTo(-7, 5); ctx.lineTo(-5, 1.6); ctx.closePath(); ctx.fill(); ctx.stroke(); ctx.fillRect(-2, -6, 2, 12); ctx.restore(); }
 // 拖曳／縮放／點選
 let ptrs = new Map(), dragInfo = null, sel = null;
 cv.addEventListener('pointerdown', e => { cv.setPointerCapture(e.pointerId); ptrs.set(e.pointerId, [e.clientX, e.clientY]); dragInfo = { x: e.clientX, y: e.clientY, lon: cam.lon, my: merc(cam.lat), moved: false, z: cam.z, d0: ptrs.size === 2 ? pdist() : 0 }; });
@@ -836,7 +847,7 @@ function showStart() {
     document.querySelectorAll('[data-c]').forEach(b => b.onclick = () => { pickC = +b.dataset.c; draw(); });
     document.querySelectorAll('[data-df]').forEach(b => b.onclick = () => { pickD = +b.dataset.df; draw(); });
     $('bGo').onclick = () => { newWorld(ERAS[pickE].y, pickH, ($('iName').value.trim() || '星宇航空').slice(0, 8), COLORS[pickC], pickD); begin(); };
-    if ($('bCont')) $('bCont').onclick = () => { S = sv; S.ach = S.ach || {}; if (S.diff == null) S.diff = 1; begin(); };
+    if ($('bCont')) $('bCont').onclick = () => { S = sv; S.ach = S.ach || {}; if (S.diff == null) S.diff = 1; { let k = 0; while (S.airlines.filter(x => !x.human && x.alive).length < D().riv && k++ < 20) spawnRival(); } begin(); };
   };
   draw();
 }
