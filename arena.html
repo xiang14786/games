@@ -76,6 +76,10 @@ const cv=document.getElementById('cv'),ctx=cv.getContext('2d'),W=720,H=1280,$=id
 const FONT='"Microsoft JhengHei","PingFang TC",sans-serif';
 const LS=(k,d)=>{try{const v=localStorage.getItem('ar_'+k);return v?JSON.parse(v):d}catch(e){return d}};
 const SV=(k,v)=>{try{localStorage.setItem('ar_'+k,JSON.stringify(v))}catch(e){}};
+/* 一次性：獎品改成購物金10元、清空得獎紀錄（p10_done） */
+(function(){try{const P='ar_';if(localStorage.getItem(P+'p10_done'))return;
+  ['cfg','cfg2','cfgR'].forEach(k=>{const r=localStorage.getItem(P+k);if(!r)return;const o=JSON.parse(r);o['prize']='購物金10元';localStorage.setItem(P+k,JSON.stringify(o));});
+  localStorage.removeItem(P+'wins');localStorage.setItem(P+'p10_done','1');}catch(e){}})();
 const QS=new URLSearchParams(location.search),OV=QS.get('mode')==='overlay',REC=QS.get('mode')==='record';
 const SERVER=QS.get('server')||'wss://io.socialstream.ninja';
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -84,7 +88,7 @@ const imgCache=new Map();function imgOf(s){if(!s)return null;if(!imgCache.has(s)
 
 /* ===== 設定 ===== */
 const rid=()=>'shine'+Math.random().toString(36).slice(2,9);
-let cfg=Object.assign({kw:'+1',cd:3,prize:'購物金100元',dur:45,auto:0,minP:3,armor:'衣服,外套,上衣',weapon:'包包,包',helmet:'帽子,帽',level:'喜歡,愛心,❤,♥,💕,💖,😍,🥰,💗,💓'},LS('cfg2',{}));
+let cfg=Object.assign({kw:'+1',cd:3,prize:'購物金10元',dur:45,auto:0,minP:3,armor:'衣服,外套,上衣',weapon:'包包,包',helmet:'帽子,帽',level:'喜歡,愛心,❤,♥,💕,💖,😍,🥰,💗,💓'},LS('cfg2',{}));
 let sid=QS.get('session')||LS('sid','')||rid();SV('sid',sid);
 if(OV){const c=LS('cfgR',null);if(c)Object.assign(cfg,c);}
 let wins=LS('wins',[]);

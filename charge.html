@@ -72,6 +72,10 @@ const cv=document.getElementById('cv'),ctx=cv.getContext('2d'),W=720,H=1280,$=id
 const FONT='"Microsoft JhengHei","PingFang TC",sans-serif';
 const LS=(k,d)=>{try{const v=localStorage.getItem('ch_'+k);return v?JSON.parse(v):d}catch(e){return d}};
 const SV=(k,v)=>{try{localStorage.setItem('ch_'+k,JSON.stringify(v))}catch(e){}};
+/* 一次性：獎品改成購物金10元、清空得獎紀錄（p10_done） */
+(function(){try{const P='ch_';if(localStorage.getItem(P+'p10_done'))return;
+  ['cfg','cfg2','cfgR'].forEach(k=>{const r=localStorage.getItem(P+k);if(!r)return;const o=JSON.parse(r);o['prize']='購物金10元';localStorage.setItem(P+k,JSON.stringify(o));});
+  localStorage.removeItem(P+'wins');localStorage.setItem(P+'p10_done','1');}catch(e){}})();
 const QS=new URLSearchParams(location.search),OV=QS.get('mode')==='overlay',REC=QS.get('mode')==='record';
 const SERVER=QS.get('server')||'wss://io.socialstream.ninja';
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -85,8 +89,8 @@ const shim=document.createElement('canvas'),sctx=shim.getContext('2d');const tra
 /* ===== 設定 ===== */
 const rid=()=>'shine'+Math.random().toString(36).slice(2,9);
 const HEARTS='❤,♥,💕,💖,💗,💓,💞,💘,💝,💟,❣,💛,🧡,💚,💙,💜,🩷,🩵,🤍,🖤,🤎,😍,🥰,😘,😻,愛心';
-const DEF={msg:'🎉 集氣成功！',fx:'rotate',kw:HEARTS,goal:150,cd:3,pos:'left',winN:3,autoDraw:'1',prize:'購物金20元',v:2};
-const _sv=LS('cfg',{});let cfg=Object.assign({},DEF,_sv);if(_sv.v!==2){Object.assign(cfg,{kw:HEARTS,goal:150,prize:'購物金20元',autoDraw:'1',v:2});SV('cfg',cfg);}if(!_sv.v3){cfg.fx='rotate';cfg.v3=1;SV('cfg',cfg);}if(!_sv.v4){cfg.kw=HEARTS;cfg.v4=1;SV('cfg',cfg);}
+const DEF={msg:'🎉 集氣成功！',fx:'rotate',kw:HEARTS,goal:150,cd:3,pos:'left',winN:3,autoDraw:'1',prize:'購物金10元',v:2};
+const _sv=LS('cfg',{});let cfg=Object.assign({},DEF,_sv);if(_sv.v!==2){Object.assign(cfg,{kw:HEARTS,goal:150,prize:'購物金10元',autoDraw:'1',v:2});SV('cfg',cfg);}if(!_sv.v3){cfg.fx='rotate';cfg.v3=1;SV('cfg',cfg);}if(!_sv.v4){cfg.kw=HEARTS;cfg.v4=1;SV('cfg',cfg);}
 let sid=QS.get('session')||LS('sid','')||rid();SV('sid',sid);
 if(OV){const c=LS('cfgR',null);if(c&&c.v===2&&c.v3&&c.v4)Object.assign(cfg,c);}
 let wins=LS('wins',[]);

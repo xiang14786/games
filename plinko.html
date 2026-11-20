@@ -193,6 +193,10 @@ const ORDER=[1,2,0,6,13,5,20,9,16,19,3,12,18,17,15,4,8,14,10,11,7]; // 由難到
 const DEF=[[500,1,'贈品任選券'],[60,3,'免運券'],[20,6,''],[10,8,''],[0,3,'']];
 const LS=(k,d)=>{try{const v=localStorage.getItem('pb_'+k);return v?JSON.parse(v):d}catch(e){return d}};
 const SV=(k,v)=>{try{localStorage.setItem('pb_'+k,JSON.stringify(v))}catch(e){}};
+/* 一次性：獎品改成購物金10元、清空得獎紀錄（p10_done） */
+(function(){try{const P='pb_';if(localStorage.getItem(P+'p10_done'))return;
+  
+  localStorage.removeItem(P+'hist');localStorage.removeItem(P+'round');localStorage.setItem(P+'p10_done','1');}catch(e){}})();
 let tiers=LS('tiers4',DEF),hist=LS('hist',[]);
 let cupAmt=[];
 const labelOf=a=>{const t=tiers.find(t=>t[0]===a&&t[2]);return t?t[2]:'購物金 $'+a;};const shortOf=a=>{const t=tiers.find(t=>t[0]===a&&t[2]);return t?t[2].replace(/區|券/g,'').slice(-2):'$'+a;};
