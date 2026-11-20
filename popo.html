@@ -84,7 +84,9 @@ const BG=L('popo_bg_v.jpg'),PO=[L('popo1.png'),L('popo2.png')];
 
 /* ===== 設定 ===== */
 const rid=()=>'shine'+Math.random().toString(36).slice(2,9);
-let cfg=Object.assign({prize:'購物金10元',winN:3,sec:40,minP:3,kSofa:'沙發',kWard:'衣櫃',kCurt:'窗簾',cd:2},LS('cfg',{}));
+/* 一次性：留言間隔預設 5 秒 */
+(function(){try{const P='popo_';if(localStorage.getItem(P+'cd5_done'))return;['cfg','cfg2','cfgR'].forEach(k=>{const r=localStorage.getItem(P+k);if(!r)return;const o=JSON.parse(r);o.cd=5;localStorage.setItem(P+k,JSON.stringify(o));});localStorage.setItem(P+'cd5_done','1');}catch(e){}})();
+let cfg=Object.assign({prize:'購物金10元',winN:3,sec:40,minP:3,kSofa:'沙發',kWard:'衣櫃',kCurt:'窗簾',cd:5},LS('cfg',{}));
 let sid=QS.get('session')||LS('sid','')||rid();SV('sid',sid);
 if(OV){const c=LS('cfgR',null);if(c)Object.assign(cfg,c);}
 let wins=LS('wins',[]);

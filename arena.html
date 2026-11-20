@@ -88,7 +88,9 @@ const imgCache=new Map();function imgOf(s){if(!s)return null;if(!imgCache.has(s)
 
 /* ===== 設定 ===== */
 const rid=()=>'shine'+Math.random().toString(36).slice(2,9);
-let cfg=Object.assign({kw:'+1',cd:3,prize:'購物金10元',dur:45,auto:0,minP:3,armor:'衣服,外套,上衣',weapon:'包包,包',helmet:'帽子,帽',level:'喜歡,愛心,❤,♥,💕,💖,😍,🥰,💗,💓'},LS('cfg2',{}));
+/* 一次性：留言間隔預設 5 秒 */
+(function(){try{const P='ar_';if(localStorage.getItem(P+'cd5_done'))return;['cfg','cfg2','cfgR'].forEach(k=>{const r=localStorage.getItem(P+k);if(!r)return;const o=JSON.parse(r);o.cd=5;localStorage.setItem(P+k,JSON.stringify(o));});localStorage.setItem(P+'cd5_done','1');}catch(e){}})();
+let cfg=Object.assign({kw:'+1',cd:5,prize:'購物金10元',dur:45,auto:0,minP:3,armor:'衣服,外套,上衣',weapon:'包包,包',helmet:'帽子,帽',level:'喜歡,愛心,❤,♥,💕,💖,😍,🥰,💗,💓'},LS('cfg2',{}));
 let sid=QS.get('session')||LS('sid','')||rid();SV('sid',sid);
 if(OV){const c=LS('cfgR',null);if(c)Object.assign(cfg,c);}
 let wins=LS('wins',[]);

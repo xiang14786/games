@@ -84,7 +84,9 @@ const ok=im=>im&&im.complete&&im.naturalWidth>0;
 
 /* ===== 設定 ===== */
 const rid=()=>'shine'+Math.random().toString(36).slice(2,9);
-let cfg=Object.assign({chars:'我是超級奶爸無敵帥',pos:'tr',maxHp:5,cd:3,dur:0,prizeTop:'購物金10元',prizeCell:''},LS('cfg',{}));
+/* 一次性：留言間隔預設 5 秒 */
+(function(){try{const P='gd_';if(localStorage.getItem(P+'cd5_done'))return;['cfg','cfg2','cfgR'].forEach(k=>{const r=localStorage.getItem(P+k);if(!r)return;const o=JSON.parse(r);o.cd=5;localStorage.setItem(P+k,JSON.stringify(o));});localStorage.setItem(P+'cd5_done','1');}catch(e){}})();
+let cfg=Object.assign({chars:'我是超級奶爸無敵帥',pos:'tr',maxHp:5,cd:5,dur:0,prizeTop:'購物金10元',prizeCell:''},LS('cfg',{}));
 let sid=QS.get('session')||LS('sid','')||rid();SV('sid',sid);
 if(OV){const c=LS('cfgR',null);if(c)Object.assign(cfg,c);}
 let wins=LS('wins',[]);

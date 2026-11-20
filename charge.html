@@ -45,8 +45,13 @@ body.ov #ovState{display:block}
     <h3>⚙️ 遊戲設定</h3>
     <label>集氣關鍵字（逗號分開；* ＝任何留言）<input type="text" id="kw"></label>
     <div class="row"><label style="flex:1">要集幾次才滿<input type="number" id="goal" min="1"></label><label style="flex:1">同一人幾秒算一次<input type="number" id="cd" min="0"></label></div>
-    <label>集滿時的大字（可以打你想說的話）<input type="text" id="msg" placeholder="例：歐膩今天好漂亮💕"></label>
-    <label>集滿的特效<div style="font-size:15px;line-height:1.6;color:#cfd3e0;padding:6px 0">集滿時會全螢幕播放特效影片（每次輪流換一支），播完自動抽獎。<br>要輪播哪幾支、上面顯示哪些字，請到<b>總台的「🎬 特效影片」</b>設定。</div><select id="fx" style="display:none"><option value="rotate">影片</option></select></label>
+    <h3>🎬 集滿時的特效影片</h3>
+    <label>播哪一支<select id="fx"><option value="rotate">每次輪流（玫瑰城堡 → 天鵝湖 → 天使降臨）</option><option value="rose">🌹 玫瑰城堡</option><option value="swan">🦢 天鵝湖</option><option value="angel">👼 天使降臨</option><option value="xmas">🎄 聖誕雪球</option><option value="zerozero">💎 ZERO ZERO 專屬</option></select></label>
+    <label>影片上面的字（中韓一起出現）<select id="phr"><option value="rand">每次隨機挑一句</option><option value="0">歐膩今天好漂亮｜언니 오늘 너무 예뻐요</option><option value="1">歐膩穿什麼都好看｜언니는 뭘 입어도 예뻐요</option><option value="2">歐膩穿起來最好看｜언니 핏 최고예요</option><option value="3">歐膩比模特兒還漂亮｜언니가 모델보다 더 예뻐요</option><option value="4">歐膩今天的造型超讚｜언니 오늘 스타일 대박이에요</option><option value="5">歐膩今天辛苦了｜언니 오늘도 수고 많았어요</option><option value="6">謝謝歐膩今天也穿給我們看｜오늘도 옷 입어줘서 고마워요</option><option value="7">換這麼多套辛苦了，謝謝妳｜옷 많이 갈아입느라 힘들었죠? 고마워요</option><option value="8">因為歐膩，買衣服好開心｜언니 덕분에 쇼핑이 너무 즐거워요</option><option value="9">台灣粉絲都愛妳｜대만 팬들이 언니 사랑해요</option><option value="custom">用我自己打的（下面兩格）</option><option value="none">不要顯示字</option></select></label>
+    <div class="row"><label style="flex:1">自己打：中文<input type="text" id="czh" placeholder="例：歐膩今天好漂亮"></label><label style="flex:1">韓文<input type="text" id="cko" placeholder="例：언니 오늘 너무 예뻐요"></label></div>
+    <div class="row"><button class="btn ghost" id="fxTest">▶ 在手機試播這支特效</button><button class="btn ghost" id="fxStopBtn">⏹ 停止</button></div>
+    <div class="tip" id="fxTip">影片的透明度跟上面「全場集氣 透明度」一樣。ZERO ZERO 專屬的字已經做在影片裡，不受上面的字影響。</div>
+    <h3>⚙️ 其他設定</h3>
     <label>集氣條放哪裡<select id="pos"><option value="left">左邊</option><option value="right">右邊</option><option value="top">上面</option></select></label>
     <div class="row"><label style="flex:1">抽幾個人<input type="number" id="winN" min="1" max="20"></label><label style="flex:1">集滿後自動抽<select id="autoDraw"><option value="1">是（特效一結束馬上抽）</option><option value="0">否（我按抽）</option></select></label></div>
     <label>獎品<input type="text" id="prize" placeholder="例：購物金50元"></label>
@@ -89,8 +94,9 @@ const shim=document.createElement('canvas'),sctx=shim.getContext('2d');const tra
 /* ===== 設定 ===== */
 const rid=()=>'shine'+Math.random().toString(36).slice(2,9);
 const HEARTS='❤,♥,💕,💖,💗,💓,💞,💘,💝,💟,❣,💛,🧡,💚,💙,💜,🩷,🩵,🤍,🖤,🤎,😍,🥰,😘,😻,愛心';
-const DEF={msg:'🎉 集氣成功！',fx:'rotate',kw:HEARTS,goal:150,cd:3,pos:'left',winN:3,autoDraw:'1',prize:'購物金10元',v:2};
-const _sv=LS('cfg',{});let cfg=Object.assign({},DEF,_sv);if(_sv.v!==2){Object.assign(cfg,{kw:HEARTS,goal:150,prize:'購物金10元',autoDraw:'1',v:2});SV('cfg',cfg);}if(!_sv.v3){cfg.fx='rotate';cfg.v3=1;SV('cfg',cfg);}if(!_sv.v4){cfg.kw=HEARTS;cfg.v4=1;SV('cfg',cfg);}
+const PHR=[["歐膩今天好漂亮", "언니 오늘 너무 예뻐요"], ["歐膩穿什麼都好看", "언니는 뭘 입어도 예뻐요"], ["歐膩穿起來最好看", "언니 핏 최고예요"], ["歐膩比模特兒還漂亮", "언니가 모델보다 더 예뻐요"], ["歐膩今天的造型超讚", "언니 오늘 스타일 대박이에요"], ["歐膩今天辛苦了", "언니 오늘도 수고 많았어요"], ["謝謝歐膩今天也穿給我們看", "오늘도 옷 입어줘서 고마워요"], ["換這麼多套辛苦了，謝謝妳", "옷 많이 갈아입느라 힘들었죠? 고마워요"], ["因為歐膩，買衣服好開心", "언니 덕분에 쇼핑이 너무 즐거워요"], ["台灣粉絲都愛妳", "대만 팬들이 언니 사랑해요"]];
+const DEF={fx:'rotate',phr:'rand',czh:'',cko:'',kw:HEARTS,goal:150,cd:5,pos:'left',winN:2,autoDraw:'1',prize:'購物金10元',v:2};
+const _sv=LS('cfg',{});let cfg=Object.assign({},DEF,_sv);if(_sv.v!==2){Object.assign(cfg,{kw:HEARTS,goal:150,prize:'購物金10元',autoDraw:'1',v:2});SV('cfg',cfg);}if(!_sv.v3){cfg.fx='rotate';cfg.v3=1;SV('cfg',cfg);}if(!_sv.v4){cfg.kw=HEARTS;cfg.v4=1;SV('cfg',cfg);}if(!_sv.v5){cfg.fx='rotate';cfg.winN=2;cfg.cd=5;delete cfg.msg;cfg.v5=1;SV('cfg',cfg);}
 let sid=QS.get('session')||LS('sid','')||rid();SV('sid',sid);
 if(OV){const c=LS('cfgR',null);if(c&&c.v===2&&c.v3&&c.v4)Object.assign(cfg,c);}
 let wins=LS('wins',[]);
@@ -104,10 +110,16 @@ function startGame(){if(phase!=='idle'){newGame();}phase='play';sendUp({chState:
 function addPoint(name,img){pts=Math.min(goal(),pts+1);who[name]=(who[name]||0)+1;if(img)whoImg[name]=img;
   pops.unshift({name,img,t:performance.now()});if(pops.length>6)pops.length=6;
   if(pts>=goal())goFull();sendUp({chAdd:{n:name,s:img||''},chState:stateMsg()});renderUI();}
-let fxVideo=false;
+let fxVideo=false;const FXROT=['rose','swan','angel'];
+function fxId(){if(cfg.fx&&cfg.fx!=='rotate')return cfg.fx;const n=(LS('fxRotN',-1)+1)%FXROT.length;SV('fxRotN',n);return FXROT[n];}
+function fxPhrase(){const p=String(cfg.phr==null?'rand':cfg.phr);if(p==='none')return null;if(p==='custom'){const c=[String(cfg.czh||'').trim(),String(cfg.cko||'').trim()];return c[0]||c[1]?c:null;}
+  if(p==='rand'){let i=Math.floor(Math.random()*PHR.length);if(i===LS('phrLast',-1))i=(i+1)%PHR.length;SV('phrLast',i);return PHR[i];}return PHR[+p]||PHR[0];}
+// 在總台裡面時，交給總台全螢幕播特效影片；回傳影片長度（毫秒），不在總台裡回傳 0
+function playVideo(){try{const P=window.parent;if(P&&P!==window&&P.__playFx)return P.__playFx(fxId(),fxPhrase())||0;}catch(e){}return 0;}
+function stopVideo(){try{const P=window.parent;if(P&&P!==window&&P.__stopFx)P.__stopFx();}catch(e){}}
 function goFull(){if(phase!=='play')return;phase='full';fullAt=performance.now();fxNow='none';fxVideo=false;let wait=6500;
   // 在總台裡面時，交給總台全螢幕播特效影片，播完再抽獎
-  if(OV&&!REC){try{const P=window.parent;if(P&&P!==window&&P.__playFxAuto){const d=P.__playFxAuto();if(d>0){fxVideo=true;wait=d+400;}}}catch(e){}}
+  if(OV&&!REC){const d=playVideo();if(d>0){fxVideo=true;wait=d+400;}}
   sendUp({chState:stateMsg()});
   if(cfg.autoDraw==='1'&&!(REC&&overlaySeen))setTimeout(()=>{if(phase==='full')doDraw();},wait);renderUI();}
 function weight(c){return Math.min(3,1+0.55*Math.log(c));} // 1 則＝1，10 則≈2.3，40 則以上封頂 3
@@ -216,7 +228,7 @@ function fullFX(now,dt){
   }
   if(Math.random()<dt*3.5)spawnFirework(now);
   if(Math.random()<dt*40)parts.push({x:Math.random()*W,y:-20,vx:(Math.random()-.5)*60,vy:150+Math.random()*150,t0:now,life:5000,c:['#ffe08a','#ff8ab3','#9fe7ff','#c6a0ff'][Math.floor(Math.random()*4)],s:7,conf:1,rot:Math.random()*7});
-  const tk=Math.min(1,Math.max(0,(age-900)/500));ctx.save();ctx.globalAlpha=tk;const sc=1+0.15*Math.sin(now/250);ctx.translate(W/2,H*0.13);ctx.scale(sc,sc);{const m=String(cfg.msg||'🎉 集氣成功！');ctx.font='bold 70px '+FONT;const mw=ctx.measureText(m).width,f=Math.min(70,Math.floor(70*(W-60)/Math.max(1,mw)));txt(m,0,0,f,'#fff3b0','center',10);}ctx.restore();
+  const tk=Math.min(1,Math.max(0,(age-900)/500));
   ctx.globalAlpha=tk;txt(`感謝 ${Object.keys(who).length} 位姊妹一起集氣`,W/2,H*0.86,34,'#fff','center',true);if(cfg.autoDraw==='1')txt('馬上抽出幸運兒…',W/2,H*0.91,28,'#ffe08a','center',true);ctx.globalAlpha=1;
 }
 function drawCard(now){
@@ -270,7 +282,7 @@ function forceFull(){if(phase==='idle')startGame();if(phase==='play'){if(!Object
 function listenCmd(){cmdWs=new WebSocket(SERVER);cmdWs.onopen=()=>cmdWs.send(JSON.stringify({join:sid,in:6,out:7}));
   cmdWs.onmessage=e=>{let m;try{m=JSON.parse(e.data);}catch(x){return;}const d=m.overlayNinja||m;
     if(d.chCfg){Object.assign(cfg,d.chCfg);SV('cfgR',cfg);renderUI();sendUp({chCfgNow:cfg});}
-    if(d.chCmd==='start')startGame();if(d.chCmd==='draw')doDraw();if(d.chCmd==='new')newGame();if(d.chCmd==='fake')fake10();if(d.chCmd==='full')forceFull();
+    if(d.chCmd==='start')startGame();if(d.chCmd==='draw')doDraw();if(d.chCmd==='new')newGame();if(d.chCmd==='fake')fake10();if(d.chCmd==='full')forceFull();if(d.chCmd==='fxTest')playVideo();if(d.chCmd==='fxStop')stopVideo();
     if(d.chCmd==='sync'){sendUp({chCfgNow:cfg});sendUp({chState:stateMsg()});}};
   cmdWs.onclose=()=>setTimeout(listenCmd,4000);}
 var lastOv=0,_lastCfgJ='';
@@ -284,7 +296,7 @@ function listenRec(){recWs=new WebSocket(SERVER);recWs.onopen=()=>{recWs.send(JS
     if(d.chWin){result=d.chWin;phase='draw';drawAt=performance.now();if(!wins.some(w=>w.t===d.chWin.t)){wins.unshift(d.chWin);SV('wins',wins);}renderUI();}};
   recWs.onclose=()=>setTimeout(listenRec,4000);}
 if(REC)setInterval(()=>{sendDown({chCmd:'sync'});if(overlaySeen&&Date.now()-lastOv>15000){overlaySeen=false;setState('📋 紀錄模式：還沒偵測到手機（現在按按鈕會在這頁自己跑）');}},4000);
-const CFGK=['msg','fx','kw','goal','cd','pos','winN','autoDraw','prize'],TXT=['msg','fx','kw','pos','autoDraw','prize'];
+const CFGK=['fx','phr','czh','cko','kw','goal','cd','pos','winN','autoDraw','prize'],TXT=['fx','phr','czh','cko','kw','pos','autoDraw','prize'],EMPTYOK=['czh','cko'];
 function pushCfg(){const o={};CFGK.forEach(k=>o[k]=cfg[k]);sendDown({chCfg:o});}
 setInterval(()=>{if(OV)sendUp({chState:stateMsg()});},5000);
 
@@ -297,7 +309,7 @@ function renderUI(){
   $('log').innerHTML=wins.map(w=>`<div>${w.list.map(x=>esc(x.n)).join('、')||'沒有人'} <b style="color:var(--gold)">${esc(w.prize||'')}</b><div class="tip">${w.people} 人集氣・${new Date(w.t).toLocaleString('zh-TW')}</div></div>`).join('')||'<div class="tip">還沒有紀錄</div>';
 }
 CFGK.forEach(k=>$(k).value=cfg[k]);$('sid').value=sid;
-CFGK.forEach(k=>$(k).addEventListener('change',()=>{const v=$(k).value;cfg[k]=TXT.includes(k)?(v.trim()||cfg[k]):Math.max(0,+v||0);if(k==='goal')cfg.goal=Math.max(1,cfg.goal);if(k==='winN')cfg.winN=Math.max(1,Math.min(20,cfg.winN));SV('cfg',cfg);pushCfg();renderUI();}));
+CFGK.forEach(k=>$(k).addEventListener('change',()=>{const v=$(k).value;cfg[k]=EMPTYOK.includes(k)?v.trim():TXT.includes(k)?(v.trim()||cfg[k]):Math.max(0,+v||0);if(k==='goal')cfg.goal=Math.max(1,cfg.goal);if(k==='winN')cfg.winN=Math.max(1,Math.min(20,cfg.winN));SV('cfg',cfg);pushCfg();renderUI();}));
 $('sid').onchange=()=>{sid=$('sid').value.trim()||rid();$('sid').value=sid;SV('sid',sid);};
 const ctl=(cmd,fn)=>()=>{if(REC&&overlaySeen)sendDown({chCmd:cmd});else fn();};
 $('startBtn').onclick=()=>{if(phase==='play'&&pts>0&&!confirm('重新開始集氣？目前的集氣會清空。'))return;ctl('start',startGame)();};
@@ -305,6 +317,8 @@ $('drawBtn').onclick=()=>{if(!confirm('現在抽購物金？'))return;ctl('draw'
 $('fullBtn').onclick=ctl('full',forceFull);
 $('newBtn').onclick=()=>{if(phase==='play'&&pts>0&&!confirm('重來？目前的集氣會清空。'))return;ctl('new',newGame)();};
 $('fakeBtn').onclick=ctl('fake',fake10);
+$('fxTest').onclick=()=>{if(REC&&overlaySeen){sendDown({chCmd:'fxTest'});$('fxTip').textContent='已送出，手機畫面播放中（要先按上面的「顯示」才看得到）';}else $('fxTip').textContent='⚠️ 手機還沒連上，沒辦法試播';};
+$('fxStopBtn').onclick=()=>{if(REC&&overlaySeen)sendDown({chCmd:'fxStop'});};
 $('conn').onclick=()=>{connect();if(!REC&&!recWs)listenRec();};
 const base=()=>location.href.split('?')[0];
 function copy(u){navigator.clipboard.writeText(u).then(()=>{$('ovTip').textContent='已複製 ✓';setTimeout(()=>$('ovTip').textContent='',2000);});}
