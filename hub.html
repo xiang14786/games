@@ -83,7 +83,7 @@ h1{font-size:24px;margin:0 10px 0 0;color:var(--gold)}
     <span id="fxMsg" style="color:var(--sub);font-size:16px"></span>
   </div>
   <div id="fxSet">
-    <h3>全場集氣集滿時，輪流播哪幾支（ZERO ZERO 專屬不會自動播，只能手動按）</h3>
+    <h3>全場集氣集滿時，輪流播哪幾支（聖誕雪球和 ZERO ZERO 專屬不會自動播，只能手動按）</h3>
     <div id="fxRot"></div>
     <h3>影片上要顯示的字（每次從打勾的句子隨機挑一句，中韓一起出現）</h3>
     <div class="ph" id="fxPh"></div>
@@ -98,7 +98,7 @@ h1{font-size:24px;margin:0 10px 0 0;color:var(--gold)}
 <script>
 const SERVER=new URLSearchParams(location.search).get('server')||'wss://io.socialstream.ninja';
 const GAMES={plinko:'🎯 彈珠台',pig:'🔨 敲金豬',arena:'⚔️ 頭像大逃殺',fish:'🐟 撈金魚',zhanan:'👊 爆揍渣男',popo:'👵 婆婆來了',rescue:'🐾 拯救浪浪',grid:'👑 我的地盤我做主',charge:'⚡ 全場集氣',none:'🙈 沒有顯示遊戲'};
-const FX={rose:{n:'🌹 玫瑰城堡',f:'fx_rose.mp4',at:2.9,top:63,dur:6.6},swan:{n:'🦢 天鵝湖',f:'fx_swan.mp4',at:5.8,top:7,dur:9.4},angel:{n:'👼 天使降臨',f:'fx_angel.mp4',at:4.9,top:5,dur:8.7},xmas:{n:'🎄 聖誕雪球',f:'fx_xmas.mp4',at:4.6,top:68,dur:8.7},zerozero:{n:'💎 ZERO ZERO 專屬',f:'fx_zerozero.mp4',at:-1,dur:7.9,solo:1}};
+const FX={rose:{n:'🌹 玫瑰城堡',f:'fx_rose.mp4',at:2.9,top:63,dur:6.6},swan:{n:'🦢 天鵝湖',f:'fx_swan.mp4',at:5.8,top:7,dur:9.4},angel:{n:'👼 天使降臨',f:'fx_angel.mp4',at:4.9,top:5,dur:8.7},xmas:{n:'🎄 聖誕雪球',f:'fx_xmas.mp4',at:4.6,top:68,dur:8.7,solo:1},zerozero:{n:'💎 ZERO ZERO 專屬',f:'fx_zerozero.mp4',at:-1,dur:7.9,solo:1}};
 const FXV='1';
 const PHR=[['歐膩今天好漂亮','언니 오늘 너무 예뻐요'],['歐膩穿什麼都好看','언니는 뭘 입어도 예뻐요'],['歐膩穿起來最好看','언니 핏 최고예요'],['歐膩比模特兒還漂亮','언니가 모델보다 더 예뻐요'],['歐膩今天的造型超讚','언니 오늘 스타일 대박이에요'],['歐膩今天辛苦了','언니 오늘도 수고 많았어요'],['謝謝歐膩今天也穿給我們看','오늘도 옷 입어줘서 고마워요'],['換這麼多套辛苦了，謝謝妳','옷 많이 갈아입느라 힘들었죠? 고마워요'],['因為歐膩，買衣服好開心','언니 덕분에 쇼핑이 너무 즐거워요'],['台灣粉絲都愛妳','대만 팬들이 언니 사랑해요']];
 const FXDEF={rot:['rose','swan','angel'],on:PHR.map((_,i)=>i),czh:'',cko:'',only:false,notxt:false};
