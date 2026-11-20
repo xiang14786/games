@@ -40,7 +40,7 @@ body.ov canvas{background:transparent;border-radius:0}
     <label>要不要開<select id="dmOn"><option value="1">開</option><option value="0">關</option></select></label>
     <label>哪些留言會變彈幕<select id="dmMode"><option value="kw">有下面這些字的留言</option><option value="all">所有留言</option></select></label>
     <label>彈幕關鍵字（逗號分開）<input type="text" id="dmKw"></label>
-    <div class="row"><label style="flex:1">彈幕飄的區域<select id="dmArea"><option value="strip">最上面一條（建議）</option><option value="top">上半部</option><option value="mid">中間</option><option value="both">上面＋下面（中間留空）</option></select></label><label style="flex:1">速度（1慢～5快）<input type="number" id="dmSpeed" min="1" max="5"></label></div>
+    <div class="row"><label style="flex:1">彈幕飄的區域<select id="dmArea"><option value="bottom">最下面一條</option><option value="strip">最上面一條</option><option value="top">上半部</option><option value="mid">中間</option><option value="both">上面＋下面（中間留空）</option></select></label><label style="flex:1">速度（1慢～5快）<input type="number" id="dmSpeed" min="1" max="5"></label></div>
 
     <h3>💗 愛心雨</h3>
     <label>要不要開<select id="htOn"><option value="1">開</option><option value="0">關</option></select></label>
@@ -64,12 +64,12 @@ function rr(x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h
 const BAL=new Image();BAL.src='ht_balloon.png';
 const imgCache=new Map();function imgOf(s){if(!s)return null;if(!imgCache.has(s)){const im=new Image();im.referrerPolicy='no-referrer';im.src=s;imgCache.set(s,im);}return imgCache.get(s);}
 const ok=im=>im&&im.complete&&im.naturalWidth>0;
-let cfg0=Object.assign({dmOn:'1',dmMode:'kw',dmKw:'美,漂亮,好看,可愛,正,讚,歐膩,帥,喜歡,好穿,必買,想要',dmArea:'both',dmSpeed:3,htOn:'1',htKw:'❤,♥,💕,💖,💗,💓,💞,💘,💝,💟,❣,💛,🧡,💚,💙,💜,🩷,🩵,🤍,🖤,🤎,😍,🥰,😘,😻,愛心',htSide:'right'},LS(OV?'cfgR':'cfg',{}));if(!cfg0.v5){cfg0.dmArea='strip';cfg0.v5=1;}if(!cfg0.v4){cfg0.htKw='❤,♥,💕,💖,💗,💓,💞,💘,💝,💟,❣,💛,🧡,💚,💙,💜,🩷,🩵,🤍,🖤,🤎,😍,🥰,😘,😻,愛心';cfg0.v4=1;}let cfg=cfg0;
+let cfg0=Object.assign({dmOn:'1',dmMode:'kw',dmKw:'美,漂亮,好看,可愛,正,讚,歐膩,帥,喜歡,好穿,必買,想要',dmArea:'both',dmSpeed:3,htOn:'1',htKw:'❤,♥,💕,💖,💗,💓,💞,💘,💝,💟,❣,💛,🧡,💚,💙,💜,🩷,🩵,🤍,🖤,🤎,😍,🥰,😘,😻,愛心',htSide:'right'},LS(OV?'cfgR':'cfg',{}));if(!cfg0.v6){cfg0.dmArea='bottom';cfg0.v6=1;cfg0.v5=1;}if(!cfg0.v5){cfg0.dmArea='strip';cfg0.v5=1;}if(!cfg0.v4){cfg0.htKw='❤,♥,💕,💖,💗,💓,💞,💘,💝,💟,❣,💛,🧡,💚,💙,💜,🩷,🩵,🤍,🖤,🤎,😍,🥰,😘,😻,愛心';cfg0.v4=1;}let cfg=cfg0;
 const list=s=>String(s||'').replace(/️/g,'').split(/[,，]/).map(x=>x.trim()).filter(Boolean);
 
 /* ===== 彈幕 ===== */
 const dms=[],hearts=[],sparks=[];let laneNext=[];
-function lanes(){const a=cfg.dmArea;if(a==='strip')return [50,102,154,206];if(a==='top')return [150,240,330,420,510];if(a==='mid')return [470,560,650,740,830];return [150,240,330,950,1040,1130];}
+function lanes(){const a=cfg.dmArea;if(a==='strip')return [50,102,154,206];if(a==='bottom')return [1010,1062,1114,1166];if(a==='top')return [150,240,330,420,510];if(a==='mid')return [470,560,650,740,830];return [150,240,330,950,1040,1130];}
 function addDm(name,text,img){
   text=String(text).replace(/\s+/g,' ').trim();if(!text)return;if(text.length>22)text=text.slice(0,22)+'…';
   const L=lanes(),now=performance.now();let best=0,bt=Infinity;L.forEach((y,i)=>{const t=laneNext[i]||0;if(t<bt){bt=t;best=i;}});
