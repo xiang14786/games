@@ -1,5 +1,6 @@
 <!doctype html>
 <html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@700&family=Noto+Serif+KR:wght@700&display=swap" rel="stylesheet">
 <title>Shine欣 直播遊戲總台</title>
 <style>
 :root{--bg:#14161d;--card:#1f222c;--line:#323644;--ink:#eef0f5;--sub:#a9afbf;--gold:#f3d9a6;--on:#e0a95a}
@@ -27,6 +28,26 @@ h1{font-size:24px;margin:0 10px 0 0;color:var(--gold)}
 #url button{font-size:15px;margin-left:8px;padding:4px 10px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer}
 #recFrame{flex:1;width:100%;border:0;background:var(--bg)}
 #empty{flex:1;display:flex;align-items:center;justify-content:center;font-size:24px;color:var(--sub)}
+#fxWrap{position:fixed;inset:0;z-index:6;opacity:0;transition:opacity .5s;pointer-events:none;background:#000;overflow:hidden}
+#fxWrap video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+#fxTxt{position:absolute;left:5%;right:5%;top:9%;text-align:center;color:#fff;font-family:"Noto Serif TC","Noto Serif KR","Songti TC","PMingLiU",serif;font-weight:700;text-shadow:0 .4vw 2.4vw rgba(50,15,65,.95),0 0 1.2vw rgba(50,15,65,.8),0 0 3vw rgba(255,190,220,.35)}
+#fxTxt div{opacity:0;transform:translateY(1.6vw);filter:blur(1.2vw);transition:opacity 1.3s ease,transform 1.3s ease,filter 1.3s ease}
+#fxTxt.on div{opacity:1;transform:none;filter:none}
+#fxTxt .zh,#fxTxt .ko{white-space:nowrap}
+#fxTxt .zh{font-size:10vw;letter-spacing:.12em;line-height:1.35}
+#fxTxt .ln{height:.4vw;width:42%;margin:1.6vw auto 1.2vw;background:linear-gradient(90deg,transparent,#ffecd2,transparent)}
+#fxTxt .ko{font-size:8.2vw;letter-spacing:.04em;line-height:1.35;font-family:"Noto Serif KR","Noto Serif TC","Apple SD Gothic Neo",serif}
+#fxTxt.on .ln{transition-delay:.35s}#fxTxt.on .ko{transition-delay:.6s}
+#fxBar{padding:10px 18px;border-bottom:1px solid var(--line);background:#1a1c25;display:flex;flex-wrap:wrap;gap:10px;align-items:center;font-size:18px}
+#fxBar .f{font-size:19px;font-weight:700;padding:10px 16px;border-radius:12px;border:2px solid #6a4a8a;background:#2a2238;color:#f4e6ff;cursor:pointer}
+#fxBar .f.zz{border-color:#f3d9a6;background:#111;color:#f3d9a6}
+#fxBar .f.stop{border-color:var(--line);background:var(--card);color:var(--sub)}
+#fxSet{display:none;padding:14px 18px;border-bottom:1px solid var(--line);background:#16181f;font-size:17px;line-height:1.9}
+#fxSet label{display:inline-block;margin-right:18px;cursor:pointer}
+#fxSet .ph label{display:block;margin:0}
+#fxSet .ph small{color:var(--sub);margin-left:8px;font-size:15px}
+#fxSet input[type=text]{font-size:17px;padding:6px 10px;border-radius:8px;border:1px solid var(--line);background:#0f1116;color:var(--ink);width:300px}
+#fxSet h3{margin:6px 0 2px;font-size:18px;color:var(--gold)}
 </style></head>
 <body>
 <div id="ctl" style="display:none">
@@ -49,12 +70,38 @@ h1{font-size:24px;margin:0 10px 0 0;color:var(--gold)}
     <div id="st">手機：<span id="phone">還沒連上</span><br>FB 留言：<span id="cmt">檢查中…</span></div>
   </header>
   <div id="url"><span id="sess">連線代碼 <input id="sid"></span> 手機 PRISM 網址：<span id="ovUrl"></span><button id="cp">複製</button><span id="opBox" style="margin-left:18px;font-size:17px;color:var(--ink);display:none">🔆 <span id="opName"></span>透明度 <input type="range" id="op" min="20" max="100" step="5" style="width:180px;vertical-align:middle;accent-color:#e0a95a"> <b id="opV"></b> <span style="color:var(--sub);font-size:15px">（往左越透明）</span><span style="display:none"><input type="checkbox" id="fill"><input type="range" id="sw"><b id="swV"></b><input type="range" id="sh"><b id="shV"></b></span></span></div>
+  <div id="fxBar"><b style="color:var(--gold)">🎬 特效影片</b>
+    <button class="f" data-fx="rose">🌹 玫瑰城堡</button>
+    <button class="f" data-fx="swan">🦢 天鵝湖</button>
+    <button class="f" data-fx="angel">👼 天使降臨</button>
+    <button class="f" data-fx="xmas">🎄 聖誕雪球</button>
+    <span style="color:var(--line)">│</span>
+    <button class="f zz" data-fx="zerozero">💎 ZERO ZERO 專屬</button>
+    <span style="color:var(--line)">│</span>
+    <button class="f stop" id="fxStop">⏹ 停止播放</button>
+    <button class="f stop" id="fxSetBtn">✏️ 字幕與輪播設定</button>
+    <span id="fxMsg" style="color:var(--sub);font-size:16px"></span>
+  </div>
+  <div id="fxSet">
+    <h3>全場集氣集滿時，輪流播哪幾支（ZERO ZERO 專屬不會自動播，只能手動按）</h3>
+    <div id="fxRot"></div>
+    <h3>影片上要顯示的字（每次從打勾的句子隨機挑一句，中韓一起出現）</h3>
+    <div class="ph" id="fxPh"></div>
+    <h3>自己打一句（有填就會加進去一起輪）</h3>
+    中文 <input type="text" id="fxCzh" placeholder="例如：歐膩今天好漂亮"> 　韓文 <input type="text" id="fxCko" placeholder="例如：언니 오늘 너무 예뻐요">
+    <label style="margin-left:14px"><input type="checkbox" id="fxOnly"> 只用我自己打的這句</label>
+    <label><input type="checkbox" id="fxNoTxt"> 不要顯示字</label>
+  </div>
   <iframe id="recFrame" style="display:none"></iframe>
   <div id="empty">👆 按上面的遊戲，手機直播畫面就會換成那個遊戲</div>
 </div>
 <script>
 const SERVER=new URLSearchParams(location.search).get('server')||'wss://io.socialstream.ninja';
 const GAMES={plinko:'🎯 彈珠台',pig:'🔨 敲金豬',arena:'⚔️ 頭像大逃殺',fish:'🐟 撈金魚',zhanan:'👊 爆揍渣男',popo:'👵 婆婆來了',rescue:'🐾 拯救浪浪',grid:'👑 我的地盤我做主',charge:'⚡ 全場集氣',none:'🙈 沒有顯示遊戲'};
+const FX={rose:{n:'🌹 玫瑰城堡',f:'fx_rose.mp4',at:2.9,top:63,dur:6.6},swan:{n:'🦢 天鵝湖',f:'fx_swan.mp4',at:5.8,top:7,dur:9.4},angel:{n:'👼 天使降臨',f:'fx_angel.mp4',at:4.9,top:5,dur:8.7},xmas:{n:'🎄 聖誕雪球',f:'fx_xmas.mp4',at:4.6,top:68,dur:8.7},zerozero:{n:'💎 ZERO ZERO 專屬',f:'fx_zerozero.mp4',at:-1,dur:7.9,solo:1}};
+const FXV='1';
+const PHR=[['歐膩今天好漂亮','언니 오늘 너무 예뻐요'],['歐膩穿什麼都好看','언니는 뭘 입어도 예뻐요'],['歐膩穿起來最好看','언니 핏 최고예요'],['歐膩比模特兒還漂亮','언니가 모델보다 더 예뻐요'],['歐膩今天的造型超讚','언니 오늘 스타일 대박이에요'],['歐膩今天辛苦了','언니 오늘도 수고 많았어요'],['謝謝歐膩今天也穿給我們看','오늘도 옷 입어줘서 고마워요'],['換這麼多套辛苦了，謝謝妳','옷 많이 갈아입느라 힘들었죠? 고마워요'],['因為歐膩，買衣服好開心','언니 덕분에 쇼핑이 너무 즐거워요'],['台灣粉絲都愛妳','대만 팬들이 언니 사랑해요']];
+const FXDEF={rot:['rose','swan','angel'],on:PHR.map((_,i)=>i),czh:'',cko:'',only:false,notxt:false};
 const QS=new URLSearchParams(location.search),OV=QS.get('mode')==='overlay';
 const LS=(k,d)=>{try{const v=localStorage.getItem('hub_'+k);return v==null?d:JSON.parse(v);}catch(e){return d;}};
 const SV=(k,v)=>{try{localStorage.setItem('hub_'+k,JSON.stringify(v));}catch(e){}};
@@ -80,7 +127,28 @@ if(OV){
   const applyOp=()=>{fr.style.opacity=cur&&cur!=='none'?(ops[cur]!=null?ops[cur]:100)/100:0;applyFill();applySize();};
   function show(g){if(!GAMES[g])return;if(g===cur)return;cur=g;SV('ovGame',g);paused=true;SV('paused',true);applyPause();
     fr.style.opacity=0;setTimeout(()=>{fr.src=g==='none'?'about:blank':gameUrl(g,'overlay');fr.onload=applyOp;},300);report();}
-  function report(){if(ws&&ws.readyState===1){try{ws.send(JSON.stringify({hubState:{game:cur,t:Date.now(),ops,fills,sizes,paused,vibe,vop}}));}catch(e){}}}
+  function report(){if(ws&&ws.readyState===1){try{ws.send(JSON.stringify({hubState:{game:cur,t:Date.now(),ops,fills,sizes,paused,vibe,vop,fxcfg:fxCfg}}));}catch(e){}}}
+  /* ===== 特效影片：全螢幕播放，播完自動淡出 ===== */
+  let fxCfg=Object.assign({},FXDEF,LS('fxcfg',{}));const fxW=document.createElement('div');fxW.id='fxWrap';fxW.innerHTML='<div id="fxTxt"><div class="zh"></div><div class="ln"></div><div class="ko"></div></div>';document.body.appendChild(fxW);
+  const fxT=fxW.querySelector('#fxTxt');let fxV=null,fxTok=0,fxEndT=0;const fxBlob={};
+  const fxSrc=id=>fxBlob[id]||(base+FX[id].f+'?v='+FXV);
+  // 先把影片抓進來，按下去才不會等
+  (async()=>{await new Promise(r=>setTimeout(r,2500));for(const id of Object.keys(FX)){try{const r=await fetch(base+FX[id].f+'?v='+FXV);if(r.ok)fxBlob[id]=URL.createObjectURL(await r.blob());}catch(e){}}})();
+  function fxPick(){if(fxCfg.notxt)return null;let pool=[];if(!fxCfg.only)pool=(fxCfg.on||[]).map(i=>PHR[i]).filter(Boolean);if((fxCfg.czh||'').trim()||(fxCfg.cko||'').trim()){const c=[(fxCfg.czh||'').trim(),(fxCfg.cko||'').trim()];if(fxCfg.only)pool=[c];else pool.push(c);}
+    if(!pool.length)return null;let i=Math.floor(Math.random()*pool.length);if(pool.length>1&&i===LS('fxLast',-1))i=(i+1)%pool.length;SV('fxLast',i);return pool[i];}
+  function stopFx(){fxTok++;clearTimeout(fxEndT);fxW.style.opacity=0;fxT.classList.remove('on');const v=fxV;fxV=null;if(v)setTimeout(()=>{try{v.pause();v.remove();}catch(e){}},600);}
+  function playFx(id){const F=FX[id];if(!F)return 0;stopFx();const tok=++fxTok;const v=document.createElement('video');v.muted=true;v.defaultMuted=true;v.playsInline=true;v.setAttribute('playsinline','');v.setAttribute('webkit-playsinline','');v.setAttribute('muted','');v.preload='auto';v.src=fxSrc(id);fxW.insertBefore(v,fxT);fxV=v;
+    const ph=F.at>=0?fxPick():null;fxT.style.top=(F.top!=null?F.top:9)+'%';fxT.classList.remove('on');fxT.style.display=ph?'block':'none';
+    if(ph){fxT.querySelector('.zh').textContent=ph[0]||'';fxT.querySelector('.ko').textContent=ph[1]||'';fxT.querySelector('.zh').style.display=ph[0]?'block':'none';fxT.querySelector('.ko').style.display=ph[1]?'block':'none';fxT.querySelector('.ln').style.display=ph[0]&&ph[1]?'block':'none';
+      const z=fxT.querySelector('.zh'),k=fxT.querySelector('.ko');z.style.fontSize=Math.min(10,86/(Math.max(1,ph[0].length)*1.13))+'vw';k.style.fontSize=Math.min(8.2,86/(Math.max(1,ph[1].length)*0.9))+'vw';}
+    const end=()=>{if(tok!==fxTok)return;stopFx();};
+    v.addEventListener('playing',()=>{if(tok===fxTok)fxW.style.opacity=1;});
+    v.addEventListener('timeupdate',()=>{if(tok!==fxTok)return;if(ph&&v.currentTime>=F.at)fxT.classList.add('on');if(v.duration&&v.currentTime>=v.duration-0.45)end();});
+    v.addEventListener('ended',end);v.addEventListener('error',end);
+    const p=v.play();if(p&&p.catch)p.catch(()=>{});
+    clearTimeout(fxEndT);fxEndT=setTimeout(end,(F.dur+4)*1000);return F.dur*1000;}
+  // 給「全場集氣」用：集滿時輪流播一支
+  window.__playFxAuto=()=>{const list=(fxCfg.rot||[]).filter(id=>FX[id]&&!FX[id].solo);if(!list.length)return 0;const n=(LS('fxRotN',-1)+1)%list.length;SV('fxRotN',n);return playFx(list[n]);};
   function connect(){ws=new WebSocket(SERVER);
     ws.onopen=()=>{ws.send(JSON.stringify({join:sid,in:6,out:5}));setTimeout(report,300);};
     ws.onmessage=e=>{let m;try{m=JSON.parse(e.data);}catch(x){return;}const d=m.overlayNinja||m;
@@ -93,6 +161,8 @@ if(OV){
           const slim=a.map(w=>({t:w.t,n:w.n||w.name,p:w.prize||w.label,a:w.a,list:w.list&&w.list.map(x=>({n:x.n,c:x.c,prize:x.prize})),rank:w.rank&&w.rank.slice(0,5).map(r=>({n:r.n,c:r.c})),top:w.top,prizeCell:w.prizeCell,cells:w.cells&&w.cells.map(c=>({ch:c.ch,n:c.n}))}));
           for(let i=0;i<slim.length;i+=40){try{ws.send(JSON.stringify({hubWins:{key:k,part:i/40,total:slim.length,items:slim.slice(i,i+40)}}));}catch(e){}}});
         try{ws.send(JSON.stringify({hubWinsDone:keys.filter(k=>/(_wins|_hist)$/.test(k))}));}catch(e){}}
+      if(d.hubFxCfg){fxCfg=Object.assign({},FXDEF,d.hubFxCfg);SV('fxcfg',fxCfg);report();}
+      if(d.hubFx){if(d.hubFx==='stop')stopFx();else playFx(d.hubFx);}
       if(d.hubVop!==undefined){vop=+d.hubVop;SV('vop',vop);vf.style.opacity=vop/100;report();}
       if(d.hubVibe!==undefined){vibe=!!d.hubVibe;SV('vibe',vibe);applyVibe();report();}
       if(d.hubPause!==undefined){paused=!!d.hubPause;SV('paused',paused);applyPause();report();}
@@ -131,11 +201,25 @@ if(OV){
     b.className='g '+(pausedUI?'prep':'live');b.textContent=pausedUI?'▶️ 設定好了，開放留言':'⏸️ 切回準備中';}
   $('pauseBtn').onclick=()=>{pausedUI=!pausedUI;send({hubPause:pausedUI});paintPause();};
   document.querySelectorAll('.g[data-g]').forEach(b=>b.onclick=()=>{const g=b.dataset.g;send({hubGame:g});openRec(g);pausedUI=true;paintPause();});
+  /* ===== 特效影片 ===== */
+  let fxCfg=Object.assign({},FXDEF,LS('fxcfg',{}));const fxEsc=t=>String(t).replace(/</g,'&lt;');
+  $('fxRot').innerHTML=Object.keys(FX).filter(id=>!FX[id].solo).map(id=>`<label><input type="checkbox" data-rot="${id}"> ${FX[id].n}</label>`).join('');
+  $('fxPh').innerHTML=PHR.map((p,i)=>`<label><input type="checkbox" data-ph="${i}"> ${fxEsc(p[0])}<small>${fxEsc(p[1])}</small></label>`).join('');
+  function paintFx(){document.querySelectorAll('[data-rot]').forEach(c=>c.checked=(fxCfg.rot||[]).includes(c.dataset.rot));document.querySelectorAll('[data-ph]').forEach(c=>c.checked=(fxCfg.on||[]).includes(+c.dataset.ph));
+    if(document.activeElement!==$('fxCzh'))$('fxCzh').value=fxCfg.czh||'';if(document.activeElement!==$('fxCko'))$('fxCko').value=fxCfg.cko||'';$('fxOnly').checked=!!fxCfg.only;$('fxNoTxt').checked=!!fxCfg.notxt;}
+  let fxEdit=0;function saveFx(){fxCfg={rot:[...document.querySelectorAll('[data-rot]')].filter(c=>c.checked).map(c=>c.dataset.rot),on:[...document.querySelectorAll('[data-ph]')].filter(c=>c.checked).map(c=>+c.dataset.ph),czh:$('fxCzh').value.trim(),cko:$('fxCko').value.trim(),only:$('fxOnly').checked,notxt:$('fxNoTxt').checked};SV('fxcfg',fxCfg);fxEdit=Date.now();send({hubFxCfg:fxCfg});}
+  $('fxSet').addEventListener('change',saveFx);$('fxCzh').addEventListener('input',saveFx);$('fxCko').addEventListener('input',saveFx);
+  $('fxSetBtn').onclick=()=>{const s=$('fxSet');s.style.display=s.style.display==='block'?'none':'block';};
+  let fxMsgT=0;const fxSay=t=>{$('fxMsg').textContent=t;clearTimeout(fxMsgT);fxMsgT=setTimeout(()=>$('fxMsg').textContent='',6000);};
+  document.querySelectorAll('[data-fx]').forEach(b=>b.onclick=()=>{send({hubFx:b.dataset.fx});fxSay('已送出：'+FX[b.dataset.fx].n+'（手機畫面播放中）');});
+  $('fxStop').onclick=()=>{send({hubFx:'stop'});fxSay('已停止');};
+  paintFx();
   function connect(){try{ws&&ws.close();}catch(e){}ws=new WebSocket(SERVER);
     ws.onopen=()=>{ws.send(JSON.stringify({join:sid,in:5,out:6}));setTimeout(()=>{send({hubCmd:'sync'});},300);};
     ws.onmessage=e=>{let m;try{m=JSON.parse(e.data);}catch(x){return;}const d=m.overlayNinja||m;
       if(d.hubState&&d.hubState.vibe!==undefined&&vibeUI!==!!d.hubState.vibe){vibeUI=!!d.hubState.vibe;paintVibe();}
       if(d.hubState&&d.hubState.vop!==undefined&&document.activeElement!==$('vop')){vopUI=+d.hubState.vop;SV('vop',vopUI);paintVop();}
+      if(d.hubState&&d.hubState.fxcfg&&Date.now()-fxEdit>4000&&document.activeElement!==$('fxCzh')&&document.activeElement!==$('fxCko')){fxCfg=Object.assign({},FXDEF,d.hubState.fxcfg);SV('fxcfg',fxCfg);paintFx();}
       if(d.hubState){lastSeen=Date.now();phoneGame=d.hubState.game;if(d.hubState.paused!==undefined&&d.hubState.game===curRec){pausedUI=!!d.hubState.paused;paintPause();}if(d.hubState.ops){ops=d.hubState.ops;fills=d.hubState.fills||{};sizes=d.hubState.sizes||{};SV('ops',ops);SV('fills',fills);SV('sizes',sizes);if(document.activeElement!==$('op')&&document.activeElement!==$('sw')&&document.activeElement!==$('sh'))paintOp();}if(!curRec&&phoneGame)openRec(phoneGame);paint();}};
     ws.onclose=()=>setTimeout(connect,3000);}
   // 直接偵測外掛有沒有把 FB 留言送出來

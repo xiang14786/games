@@ -46,7 +46,7 @@ body.ov #ovState{display:block}
     <label>集氣關鍵字（逗號分開；* ＝任何留言）<input type="text" id="kw"></label>
     <div class="row"><label style="flex:1">要集幾次才滿<input type="number" id="goal" min="1"></label><label style="flex:1">同一人幾秒算一次<input type="number" id="cd" min="0"></label></div>
     <label>集滿時的大字（可以打你想說的話）<input type="text" id="msg" placeholder="例：歐膩今天好漂亮💕"></label>
-    <label>集滿的特效<select id="fx"><option value="rotate">每次輪流（城堡天馬→鳳凰→鑽石愛心）</option><option value="both">城堡＋天馬</option><option value="castle">只有城堡</option><option value="pegasus">只有天馬</option><option value="phoenix">粉紅鳳凰</option><option value="diamond">鑽石愛心</option></select></label>
+    <label>集滿的特效<div style="font-size:15px;line-height:1.6;color:#cfd3e0;padding:6px 0">集滿時會全螢幕播放特效影片（每次輪流換一支），播完自動抽獎。<br>要輪播哪幾支、上面顯示哪些字，請到<b>總台的「🎬 特效影片」</b>設定。</div><select id="fx" style="display:none"><option value="rotate">影片</option></select></label>
     <label>集氣條放哪裡<select id="pos"><option value="left">左邊</option><option value="right">右邊</option><option value="top">上面</option></select></label>
     <div class="row"><label style="flex:1">抽幾個人<input type="number" id="winN" min="1" max="20"></label><label style="flex:1">集滿後自動抽<select id="autoDraw"><option value="1">是（特效一結束馬上抽）</option><option value="0">否（我按抽）</option></select></label></div>
     <label>獎品<input type="text" id="prize" placeholder="例：購物金50元"></label>
@@ -82,7 +82,7 @@ const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',
 function rr(x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();}
 const imgCache=new Map();function imgOf(s){if(!s)return null;if(!imgCache.has(s)){const im=new Image();im.referrerPolicy='no-referrer';im.src=s;imgCache.set(s,im);}return imgCache.get(s);}
 const ok=im=>im&&im.complete&&im.naturalWidth>0;
-const CASTLE=new Image();CASTLE.src='fx_castle.png';const PEG=new Image();PEG.src='fx_pegasus.png';const PHX=new Image();PHX.src='fx_phoenix.png';const DIA=new Image();DIA.src='fx_diamond.png';const FRAME=new Image();FRAME.src='fx_frame.png';
+const CASTLE=new Image();const PEG=new Image();const PHX=new Image();const DIA=new Image();const FRAME=new Image();FRAME.src='fx_frame.png';
 let fxNow='both';const ROT=['both','phoenix','diamond'];
 const shim=document.createElement('canvas'),sctx=shim.getContext('2d');const trail=[];
 
@@ -104,8 +104,12 @@ function startGame(){if(phase!=='idle'){newGame();}phase='play';sendUp({chState:
 function addPoint(name,img){pts=Math.min(goal(),pts+1);who[name]=(who[name]||0)+1;if(img)whoImg[name]=img;
   pops.unshift({name,img,t:performance.now()});if(pops.length>6)pops.length=6;
   if(pts>=goal())goFull();sendUp({chAdd:{n:name,s:img||''},chState:stateMsg()});renderUI();}
-function goFull(){if(phase!=='play')return;phase='full';fullAt=performance.now();if(cfg.fx==='rotate'){const n=(LS('rot',-1)+1)%ROT.length;SV('rot',n);fxNow=ROT[n];}else fxNow=cfg.fx||'both';sendUp({chState:stateMsg()});
-  if(cfg.autoDraw==='1'&&!(REC&&overlaySeen))setTimeout(()=>{if(phase==='full')doDraw();},6500);renderUI();}
+let fxVideo=false;
+function goFull(){if(phase!=='play')return;phase='full';fullAt=performance.now();fxNow='none';fxVideo=false;let wait=6500;
+  // 在總台裡面時，交給總台全螢幕播特效影片，播完再抽獎
+  if(OV&&!REC){try{const P=window.parent;if(P&&P!==window&&P.__playFxAuto){const d=P.__playFxAuto();if(d>0){fxVideo=true;wait=d+400;}}}catch(e){}}
+  sendUp({chState:stateMsg()});
+  if(cfg.autoDraw==='1'&&!(REC&&overlaySeen))setTimeout(()=>{if(phase==='full')doDraw();},wait);renderUI();}
 function weight(c){return Math.min(3,1+0.55*Math.log(c));} // 1 則＝1，10 則≈2.3，40 則以上封頂 3
 function doDraw(){if(!(phase==='full'||phase==='play'))return;const names=Object.keys(who);const n=Math.max(1,Math.min(20,+cfg.winN||1));
   const pool=names.map(nm=>({n:nm,w:weight(who[nm])}));const picked=[];
@@ -158,6 +162,7 @@ function castle(cx,base,s,now){
 }
 function spawnFirework(now){const x=80+Math.random()*(W-160),y=180+Math.random()*500,col=['#ffe08a','#ff8ab3','#9fe7ff','#c6a0ff','#ffffff'][Math.floor(Math.random()*5)];for(let k=0;k<46;k++){const a=k/46*Math.PI*2,v=180+Math.random()*120;parts.push({x,y,vx:Math.cos(a)*v,vy:Math.sin(a)*v,t0:now,life:1300,c:col,s:4});}}
 function fullFX(now,dt){
+  if(fxVideo)return; // 影片播放中，畫面交給影片
   const age=now-fullAt;const k=Math.min(1,age/800);
   ctx.save();ctx.fillStyle=`rgba(20,8,40,${.55*k})`;ctx.fillRect(0,0,W,H);
   // 旋轉光芒
@@ -209,7 +214,6 @@ function fullFX(now,dt){
     if(age>600&&Math.random()<dt*18){const a=Math.random()*Math.PI*2;parts.push({x:W/2,y:H*0.48,vx:Math.cos(a)*(150+Math.random()*150),vy:Math.sin(a)*(150+Math.random()*150),t0:now,life:1800,c:['#ffb3d1','#ffd6e6','#ff8ab3'][Math.floor(Math.random()*3)],s:9,conf:1,rot:Math.random()*7});}
     ctx.save();ctx.globalAlpha=Math.min(1,age/300);ctx.translate(W/2,H*0.48);ctx.rotate(rot);ctx.shadowColor='rgba(255,170,210,.95)';ctx.shadowBlur=60;ctx.drawImage(DIA,-w/2,-h/2,w,h);ctx.restore();
   }
-  if(!ok(CASTLE)&&!ok(PEG)&&fx!=='phoenix'&&fx!=='diamond'){ctx.save();ctx.globalAlpha=Math.min(1,age/1400);castle(W/2,H*0.72,1,now);ctx.restore();}
   if(Math.random()<dt*3.5)spawnFirework(now);
   if(Math.random()<dt*40)parts.push({x:Math.random()*W,y:-20,vx:(Math.random()-.5)*60,vy:150+Math.random()*150,t0:now,life:5000,c:['#ffe08a','#ff8ab3','#9fe7ff','#c6a0ff'][Math.floor(Math.random()*4)],s:7,conf:1,rot:Math.random()*7});
   const tk=Math.min(1,Math.max(0,(age-900)/500));ctx.save();ctx.globalAlpha=tk;const sc=1+0.15*Math.sin(now/250);ctx.translate(W/2,H*0.13);ctx.scale(sc,sc);{const m=String(cfg.msg||'🎉 集氣成功！');ctx.font='bold 70px '+FONT;const mw=ctx.measureText(m).width,f=Math.min(70,Math.floor(70*(W-60)/Math.max(1,mw)));txt(m,0,0,f,'#fff3b0','center',10);}ctx.restore();
