@@ -87,6 +87,12 @@ if(OV){
       if(d.hubOps){ops=Object.assign({},ops,d.hubOps);SV('ops',ops);applyOp();}
       if(d.hubFills){fills=Object.assign({},fills,d.hubFills);SV('fills',fills);applyFill();}
       if(d.hubSizes){sizes=Object.assign({},sizes,d.hubSizes);SV('sizes',sizes);applySize();}
+      if(d.hubCmd==='dumpWins'){const since=+d.since||0;const keys=[];for(let i=0;i<localStorage.length;i++)keys.push(localStorage.key(i));
+        keys.filter(k=>/(_wins|_hist)$/.test(k)).forEach(k=>{let a=[];try{a=JSON.parse(localStorage.getItem(k))||[];}catch(e){}
+          if(!Array.isArray(a))return;a=a.filter(w=>!since||(w.t||0)>=since).slice(0,300);
+          const slim=a.map(w=>({t:w.t,n:w.n||w.name,p:w.prize||w.label,a:w.a,list:w.list&&w.list.map(x=>({n:x.n,c:x.c,prize:x.prize})),rank:w.rank&&w.rank.slice(0,5).map(r=>({n:r.n,c:r.c})),top:w.top,prizeCell:w.prizeCell,cells:w.cells&&w.cells.map(c=>({ch:c.ch,n:c.n}))}));
+          for(let i=0;i<slim.length;i+=40){try{ws.send(JSON.stringify({hubWins:{key:k,part:i/40,total:slim.length,items:slim.slice(i,i+40)}}));}catch(e){}}});
+        try{ws.send(JSON.stringify({hubWinsDone:keys.filter(k=>/(_wins|_hist)$/.test(k))}));}catch(e){}}
       if(d.hubVop!==undefined){vop=+d.hubVop;SV('vop',vop);vf.style.opacity=vop/100;report();}
       if(d.hubVibe!==undefined){vibe=!!d.hubVibe;SV('vibe',vibe);applyVibe();report();}
       if(d.hubPause!==undefined){paused=!!d.hubPause;SV('paused',paused);applyPause();report();}
