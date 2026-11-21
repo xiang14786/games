@@ -219,7 +219,7 @@ function frame(now){
     if(phase==='lobby'){const L=REC&&overlaySeen?recLob():lobbyLeft(now);if(L>0)bannerT(`⏱ 報名倒數 ${mmss(L)}`,H-226,L<=10?48:40,L<=10?'#ff9a9a':'#fff','rgba(0,0,0,.66)');else if(L===0)bannerT(`再 ${Math.max(0,Math.max(2,cfg.minP)-players.length)} 人報名就開戰！`,H-226,36,'#ffe08a','rgba(0,0,0,.66)');}
     if(phase==='battle'){const left=Math.max(0,Math.ceil(cfg.dur-(now-battleT0)/1000));bannerT(left>0?`⏱ 場地縮小中 ${mmss(left)}`:'最後決戰！',H-226,38,'#ffb0b0','rgba(0,0,0,.66)');}}
   // 冠軍卡
-  if(phase==='end'&&winner&&now-endAt>600){const k=Math.min(1,(now-endAt-600)/400),w=winner;ctx.save();ctx.translate(0,H/2-370);ctx.globalAlpha=k;
+  if(phase==='end'&&winner&&now-endAt>600&&!(OV&&now-endAt>6000)){const k=Math.min(1,(now-endAt-600)/400),w=winner;ctx.save();ctx.translate(0,H/2-370);ctx.globalAlpha=k;
     ctx.fillStyle='rgba(12,14,22,.9)';rr(W/2-330,170,660,390,30);ctx.fill();ctx.strokeStyle='#f3d9a6';ctx.lineWidth=5;ctx.stroke();
     ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle='#f3d9a6';ctx.font='bold 44px '+FONT;ctx.fillText('👑 大逃殺冠軍！',W/2,232);
     const im=imgOf(w.s);ctx.save();ctx.beginPath();ctx.arc(W/2,330,62,0,7);ctx.clip();if(im&&im.complete&&im.naturalWidth)ctx.drawImage(im,W/2-62,268,124,124);else{ctx.fillStyle='#c9748a';ctx.fillRect(W/2-62,268,124,124);ctx.fillStyle='#fff';ctx.font='bold 56px '+FONT;ctx.fillText(w.n[0],W/2,333);}ctx.restore();ctx.beginPath();ctx.arc(W/2,330,62,0,7);ctx.strokeStyle='#ffe08a';ctx.lineWidth=5;ctx.stroke();

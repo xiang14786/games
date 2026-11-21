@@ -165,7 +165,7 @@ function frame(now){
   for(let i=fxs.length-1;i>=0;i--){const f=fxs[i],k=(now-f.t0)/900;if(k>1){fxs.splice(i,1);continue;}f.x+=f.vx*dt;f.y+=f.vy*dt;ctx.globalAlpha=1-k;ctx.fillStyle=f.c;ctx.beginPath();ctx.arc(f.x,f.y,6*(1-k)+1,0,7);ctx.fill();ctx.globalAlpha=1;}
   ctx.restore();
   // 結算卡
-  if(phase==='end'&&result){const k=Math.min(1,(now-endAt)/500);ctx.save();ctx.globalAlpha=k;const top=H/2-260;
+  if(phase==='end'&&result&&!(OV&&now-endAt>5500)){const k=Math.min(1,(now-endAt)/500);ctx.save();ctx.globalAlpha=k;const top=H/2-260;
     ctx.fillStyle='rgba(12,14,22,.9)';rr(40,top,W-80,520,30);ctx.fill();ctx.strokeStyle='#f3d9a6';ctx.lineWidth=5;ctx.stroke();
     txt('👑 本場地主',W/2,top+60,44,'#f3d9a6');
     const rk=result.rank||[];if(!rk.length)txt('沒有人佔領…',W/2,top+260,30,'#fff');

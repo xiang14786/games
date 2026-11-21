@@ -95,8 +95,8 @@ const shim=document.createElement('canvas'),sctx=shim.getContext('2d');const tra
 const rid=()=>'shine'+Math.random().toString(36).slice(2,9);
 const HEARTS='❤,♥,💕,💖,💗,💓,💞,💘,💝,💟,❣,💛,🧡,💚,💙,💜,🩷,🩵,🤍,🖤,🤎,😍,🥰,😘,😻,愛心';
 const PHR=[["歐膩今天好漂亮", "언니 오늘 너무 예뻐요"], ["歐膩穿什麼都好看", "언니는 뭘 입어도 예뻐요"], ["歐膩穿起來最好看", "언니 핏 최고예요"], ["歐膩比模特兒還漂亮", "언니가 모델보다 더 예뻐요"], ["歐膩今天的造型超讚", "언니 오늘 스타일 대박이에요"], ["歐膩今天辛苦了", "언니 오늘도 수고 많았어요"], ["謝謝歐膩今天也穿給我們看", "오늘도 옷 입어줘서 고마워요"], ["換這麼多套辛苦了，謝謝妳", "옷 많이 갈아입느라 힘들었죠? 고마워요"], ["因為歐膩，買衣服好開心", "언니 덕분에 쇼핑이 너무 즐거워요"], ["台灣粉絲都愛妳", "대만 팬들이 언니 사랑해요"]];
-const DEF={fx:'rotate',phr:'rand',czh:'',cko:'',kw:HEARTS,goal:150,cd:5,pos:'left',winN:2,autoDraw:'1',prize:'購物金10元',v:2};
-const _sv=LS('cfg',{});let cfg=Object.assign({},DEF,_sv);if(_sv.v!==2){Object.assign(cfg,{kw:HEARTS,goal:150,prize:'購物金10元',autoDraw:'1',v:2});SV('cfg',cfg);}if(!_sv.v3){cfg.fx='rotate';cfg.v3=1;SV('cfg',cfg);}if(!_sv.v4){cfg.kw=HEARTS;cfg.v4=1;SV('cfg',cfg);}if(!_sv.v5){cfg.fx='rotate';cfg.winN=2;cfg.cd=5;delete cfg.msg;cfg.v5=1;SV('cfg',cfg);}
+const DEF={fx:'rotate',phr:'rand',czh:'',cko:'',kw:HEARTS,goal:150,cd:5,pos:'left',winN:2,autoDraw:'1',prize:'購物金20元',v:2};
+const _sv=LS('cfg',{});let cfg=Object.assign({},DEF,_sv);if(_sv.v!==2){Object.assign(cfg,{kw:HEARTS,goal:150,prize:'購物金10元',autoDraw:'1',v:2});SV('cfg',cfg);}if(!_sv.v3){cfg.fx='rotate';cfg.v3=1;SV('cfg',cfg);}if(!_sv.v4){cfg.kw=HEARTS;cfg.v4=1;SV('cfg',cfg);}if(!_sv.v6){cfg.prize='購物金20元';cfg.v6=1;SV('cfg',cfg);}if(!_sv.v5){cfg.fx='rotate';cfg.winN=2;cfg.cd=5;delete cfg.msg;cfg.v5=1;SV('cfg',cfg);}
 let sid=QS.get('session')||LS('sid','')||rid();SV('sid',sid);
 if(OV){const c=LS('cfgR',null);if(c&&c.v===2&&c.v3&&c.v4)Object.assign(cfg,c);}
 let wins=LS('wins',[]);
@@ -254,7 +254,7 @@ function frame(now){
     if(p.star){const z=6*Math.sin(k*Math.PI);ctx.fillRect(p.x-z,p.y-1,z*2,2);ctx.fillRect(p.x-1,p.y-z,2,z*2);}else if(p.conf){p.rot+=dt*6;ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.rot);ctx.fillRect(-6,-3,12,6);ctx.restore();}else{ctx.beginPath();ctx.arc(p.x,p.y,p.s*(1-k*.6),0,7);ctx.fill();}ctx.globalAlpha=1;}
   if(phase==='play'||phase==='idle'&&(REC||!OV)){const G=gauge(now);drawPops(G,now);
     ctx.save();ctx.font='bold 32px '+FONT;const t=`⚡ 留言「${kw1()}」一起集氣！集滿抽購物金`;let w=ctx.measureText(t).width;const s=Math.min(1,(W-60)/(w+40));ctx.translate(W/2,H-40);ctx.scale(s,s);ctx.fillStyle='rgba(0,0,0,.7)';rr(-(w+40)/2,-28,w+40,56,28);ctx.fill();txt(t,0,0,32,'#ffe08a');ctx.restore();}
-  if(phase==='draw'&&result)drawCard(now);
+  if(phase==='draw'&&result&&!(OV&&now-drawAt>8200))drawCard(now); // 名單出來 5 秒後自動收起
   if(phase==='idle'&&(REC||!OV))txt('按「開始集氣」',W/2,H/2,32,'#fff','center',true);
   requestAnimationFrame(frame);
 }

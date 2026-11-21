@@ -262,7 +262,7 @@ function frame(now){
     bannerT(t,H-36,30);
     if(phase==='lobby'){const L=REC&&overlaySeen?recLob():lobbyLeft(now);if(L>0)bannerT(`⏱ 報名倒數 ${mmss(L)}`,H-152,L<=10?46:38,L<=10?'#ff9a9a':'#fff','rgba(0,0,0,.66)');else if(L===0)bannerT(`再 ${Math.max(0,Math.max(2,cfg.minP)-fish.length)} 隻報名就開始撈！`,H-152,34,'#ffe08a','rgba(0,0,0,.66)');}
     if(phase==='battle'){const left=Math.max(0,Math.ceil(cfg.dur-(now-t0)/1000));bannerT(left>0?`⏱ 剩 ${mmss(left)}`:'最後衝刺！',H-152,38,'#ffb0b0','rgba(0,0,0,.66)');}}
-  if(phase==='end'&&winners&&now-endAt>500){const k=Math.min(1,(now-endAt-500)/400),L=winners.list;ctx.save();ctx.translate(0,H/2-300);ctx.globalAlpha=k;
+  if(phase==='end'&&winners&&now-endAt>500&&!(OV&&now-endAt>5900)){const k=Math.min(1,(now-endAt-500)/400),L=winners.list;ctx.save();ctx.translate(0,H/2-300);ctx.globalAlpha=k;
     ctx.fillStyle='rgba(12,14,22,.9)';rr(W/2-320,90,640,380,30);ctx.fill();ctx.strokeStyle='#f3d9a6';ctx.lineWidth=5;ctx.stroke();
     ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle='#f3d9a6';ctx.font='bold 40px '+FONT;ctx.fillText(L.length>1?'🐟 最後活下來的金魚！':'🐟 最後一隻金魚！',W/2,145);
     const n=L.length,gap=n===1?0:170;L.forEach((w,i)=>{const x=W/2+(i-(n-1)/2)*gap,y=255,r=n===1?60:48;const im=imgOf(w.s);ctx.save();ctx.beginPath();ctx.arc(x,y,r,0,7);ctx.clip();if(ok(im))ctx.drawImage(im,x-r,y-r,r*2,r*2);else{ctx.fillStyle='#c9748a';ctx.fillRect(x-r,y-r,r*2,r*2);ctx.fillStyle='#fff';ctx.font=`bold ${r}px ${FONT}`;ctx.fillText(w.n[0],x,y+3);}ctx.restore();ctx.beginPath();ctx.arc(x,y,r,0,7);ctx.strokeStyle='#ffe08a';ctx.lineWidth=5;ctx.stroke();ctx.fillStyle='#fff';ctx.font=`bold ${n===1?36:26}px ${FONT}`;ctx.fillText(w.n.length>7?w.n.slice(0,7)+'…':w.n,x,y+r+34);});

@@ -26,6 +26,16 @@ h1{font-size:17px;margin:0 4px 0 0;color:var(--gold);white-space:nowrap}
 #pauseBtn.hid{background:#1f5f35;border-color:#4fd07a;color:#eafff0}
 #pauseBtn.shown{background:#5a2020;border-color:#ff8a8a;color:#ffecec}
 .sec input[type=range]{width:110px;vertical-align:middle;accent-color:#e0a95a}
+#winBox{display:none;position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.6);align-items:center;justify-content:center}
+#winCard{width:min(1100px,94vw);max-height:90vh;display:flex;flex-direction:column;background:#1b1e27;border:2px solid var(--gold);border-radius:16px;padding:16px 18px}
+#winCard .wh{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:20px;color:var(--gold)}
+#winInfo{font-size:15px;color:var(--sub)}
+#winList{overflow:auto;margin:12px 0;font-size:18px;line-height:1.6;flex:1}
+#winList table{width:100%;border-collapse:collapse}
+#winList td,#winList th{padding:7px 10px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+#winList th{color:var(--sub);font-size:15px;position:sticky;top:0;background:#1b1e27}
+#winList .amt{color:#ffe08a;font-weight:700;white-space:nowrap}
+#winCard .wf{font-size:14px;color:var(--sub)}
 #vibeBtn.on{background:linear-gradient(90deg,#4a2a6a,#2a4a6a);border-color:#c6a0ff;color:#fff}
 #vibeFrame{position:fixed;inset:0;width:100%;height:100%;border:0;background:transparent;pointer-events:none;z-index:4}
 #sess{font-size:16px;color:var(--sub);display:flex;gap:8px;align-items:center}
@@ -70,6 +80,7 @@ h1{font-size:17px;margin:0 4px 0 0;color:var(--gold);white-space:nowrap}
       <button id="pauseBtn" style="display:none"></button>
       <span id="opBox" style="display:none">🔆 透明度 <input type="range" id="op" min="20" max="100" step="5"> <b id="opV"></b><span id="opName" style="display:none"></span><span style="display:none"><input type="checkbox" id="fill"><input type="range" id="sw"><b id="swV"></b><input type="range" id="sh"><b id="shV"></b></span></span>
       <span id="noGame" class="hint">👆 先選一個遊戲</span>
+      <button class="s" id="winBtn" style="border-color:#e0a95a;color:#ffe3b0">🏆 中獎名單</button>
       <span class="grow"></span>
       <button class="s" id="vibeBtn">🌈 彈幕＋愛心雨：關</button>
       <span>透明度 <input type="range" id="vop" min="20" max="100" step="5" style="accent-color:#c6a0ff"> <b id="vopV"></b></span>
@@ -77,6 +88,12 @@ h1{font-size:17px;margin:0 4px 0 0;color:var(--gold);white-space:nowrap}
     </div>
   </header>
   <details id="url"><summary>⚙️ 連線設定（平常不用動）</summary><div style="margin-top:8px"><span id="sess">連線代碼 <input id="sid"></span>　手機 PRISM 網址：<span id="ovUrl"></span><button id="cp">複製</button></div></details>
+  <div id="winBox"><div id="winCard">
+    <div class="wh"><b>🏆 這場直播的中獎名單</b><span id="winInfo"></span><span class="grow"></span>
+      <button class="s" id="winMode">改成依時間排列</button><button class="s" id="winCopy">📋 複製名單</button><button class="s" id="winClr" style="border-color:#ff8a8a;color:#ffd0d0">🗑 都處理完了，全部清除</button><button class="s off" id="winX">✖ 關閉</button></div>
+    <div id="winList"></div>
+    <div class="wf">名單是「上次清除之後」所有遊戲的得獎紀錄，存在這台電腦和直播手機裡。清除後就救不回來，請先複製或確認都發完了再清。</div>
+  </div></div>
   <iframe id="recFrame" style="display:none"></iframe>
   <div id="empty">👆 先選一個遊戲，設定好之後再按「顯示到直播」</div>
 </div>
@@ -96,11 +113,11 @@ if(OV){
   /* ===== 手機：只放這一個網址 ===== */
   document.documentElement.classList.add('ov');document.body.classList.add('ov');
   const fr=document.createElement('iframe');fr.id='ovFrame';fr.setAttribute('allowtransparency','true');document.body.appendChild(fr);
-  if(!LS('d70',0)){SV('ops',{});SV('vop',70);SV('vibe',true);SV('d70',1);} // 一次性：新預設
+  if(!LS('d70',0)){SV('ops',{});SV('vibe',true);SV('d70',1);}if(!LS('d55',0)){SV('vop',55);SV('vibe',true);SV('d55',1);} // 一次性：新預設
   let cur=null,ws=null,ops=LS('ops',{});
   let paused=LS('paused',true);window.__hubPaused=paused;
   const cover=document.createElement('div');cover.id='prep';document.body.appendChild(cover);
-  let vibe=LS('vibe',true),vop=LS('vop',70);const vf=document.createElement('iframe');vf.id='vibeFrame';vf.setAttribute('allowtransparency','true');document.body.appendChild(vf);
+  let vibe=LS('vibe',true),vop=LS('vop',55);const vf=document.createElement('iframe');vf.id='vibeFrame';vf.setAttribute('allowtransparency','true');document.body.appendChild(vf);
   function applyVibe(){const want=vibe?gameUrl('vibe','overlay'):'about:blank';if(vibe&&!/vibe\.html/.test(vf.src))vf.src=want;if(!vibe&&vf.src!=='about:blank')vf.src='about:blank';}
   applyVibe();vf.style.opacity=vop/100;
   function applyPause(){window.__hubPaused=paused;cover.style.display='none';applyOp();if(fxV)fxW.style.opacity=fxOp();}
@@ -141,9 +158,10 @@ if(OV){
       if(d.hubCmd==='dumpWins'){const since=+d.since||0;const keys=[];for(let i=0;i<localStorage.length;i++)keys.push(localStorage.key(i));
         keys.filter(k=>/(_wins|_hist)$/.test(k)).forEach(k=>{let a=[];try{a=JSON.parse(localStorage.getItem(k))||[];}catch(e){}
           if(!Array.isArray(a))return;a=a.filter(w=>!since||(w.t||0)>=since).slice(0,300);
-          const slim=a.map(w=>({t:w.t,n:w.n||w.name,p:w.prize||w.label,a:w.a,list:w.list&&w.list.map(x=>({n:x.n,c:x.c,prize:x.prize})),rank:w.rank&&w.rank.slice(0,5).map(r=>({n:r.n,c:r.c})),top:w.top,prizeCell:w.prizeCell,cells:w.cells&&w.cells.map(c=>({ch:c.ch,n:c.n}))}));
+          const slim=a.map(w=>({t:w.t,n:w.n||w.name,p:w.prize||w.label||w.l,a:w.a,list:w.list&&w.list.map(x=>({n:x.n,c:x.c,prize:x.prize})),rank:w.rank&&w.rank.slice(0,5).map(r=>({n:r.n,c:r.c})),top:w.top,prizeCell:w.prizeCell,cells:w.cells&&w.cells.map(c=>({ch:c.ch,n:c.n}))}));
           for(let i=0;i<slim.length;i+=40){try{ws.send(JSON.stringify({hubWins:{key:k,part:i/40,total:slim.length,items:slim.slice(i,i+40)}}));}catch(e){}}});
         try{ws.send(JSON.stringify({hubWinsDone:keys.filter(k=>/(_wins|_hist)$/.test(k))}));}catch(e){}}
+      if(d.hubCmd==='clearWins'){const ks=[];for(let i=0;i<localStorage.length;i++)ks.push(localStorage.key(i));ks.filter(k=>/(_wins|_hist|_round)$/.test(k)).forEach(k=>{try{localStorage.setItem(k,'[]');}catch(e){}});if(cur&&cur!=='none')fr.src=gameUrl(cur,'overlay');try{ws.send(JSON.stringify({hubWinsCleared:Date.now()}));}catch(e){}}
       if(d.hubVop!==undefined){vop=+d.hubVop;SV('vop',vop);vf.style.opacity=vop/100;report();}
       if(d.hubVibe!==undefined){vibe=!!d.hubVibe;SV('vibe',vibe);applyVibe();report();}
       if(d.hubPause!==undefined){paused=!!d.hubPause;SV('paused',paused);applyPause();report();}
@@ -160,7 +178,7 @@ if(OV){
   $('ovUrl').textContent=ovUrl();
   $('cp').onclick=()=>navigator.clipboard.writeText(ovUrl()).then(()=>{$('cp').textContent='已複製 ✓';setTimeout(()=>$('cp').textContent='複製',1500);});
   $('sid').onchange=()=>{sid=$('sid').value.trim()||sid;$('sid').value=sid;SV('sid',sid);$('ovUrl').textContent=ovUrl();connect();if(curRec)openRec(curRec,true);};
-  if(!LS('d70pc',0)){SV('ops',{});SV('vop',70);SV('d70pc',1);}
+  if(!LS('d70pc',0)){SV('ops',{});SV('d70pc',1);}if(!LS('d55pc',0)){SV('vop',55);SV('d55pc',1);}
   let ws=null,curRec=null,lastSeen=0,phoneGame=null,ops=LS('ops',{});
   const opOf=g=>ops[g]!=null?ops[g]:70;
   function paintOp(){const g=curRec;if(!g||g==='none'){$('opBox').style.display='none';$('noGame').style.display='inline';return;}$('opBox').style.display='inline';$('noGame').style.display='none';$('opName').textContent=GAMES[g]+' ';$('op').value=opOf(g);$('opV').textContent=opOf(g)+'%';$('fill').checked=!!fills[g];const z=sizes[g]||{w:100,h:100};$('sw').value=z.w;$('sh').value=z.h;$('swV').textContent=z.w+'%';$('shV').textContent=z.h+'%';}
@@ -177,18 +195,44 @@ if(OV){
   setTimeout(()=>paintVibe(),0);
   function paintVibe(){$('vibeBtn').classList.toggle('on',vibeUI);$('vibeBtn').textContent='🌈 彈幕＋愛心雨：'+(vibeUI?'開':'關');}
   $('vibeBtn').onclick=()=>{vibeUI=!vibeUI;send({hubVibe:vibeUI});paintVibe();};
-  let vopUI=LS('vop',70),vT=0;const paintVop=()=>{if(document.activeElement!==$('vop'))$('vop').value=vopUI;$('vopV').textContent=vopUI+'%';};paintVop();
+  let vopUI=LS('vop',55),vT=0;const paintVop=()=>{if(document.activeElement!==$('vop'))$('vop').value=vopUI;$('vopV').textContent=vopUI+'%';};paintVop();
   $('vop').addEventListener('input',()=>{vopUI=+$('vop').value;SV('vop',vopUI);paintVop();clearTimeout(vT);vT=setTimeout(()=>send({hubVop:vopUI}),60);});
   $('vibeSet').onclick=()=>window.open(gameUrl('vibe','record'),'_blank');
   function paintPause(){const b=$('pauseBtn');if(!curRec||curRec==='none'){b.style.display='none';return;}b.style.display='inline-block';
     b.className=pausedUI?'hid':'shown';b.textContent=pausedUI?'🙈 沒顯示｜▶ 按這裡顯示到直播':'👁 顯示中｜■ 按這裡隱藏';}
   $('pauseBtn').onclick=()=>{pausedUI=!pausedUI;send({hubPause:pausedUI});paintPause();};
   document.querySelectorAll('.g[data-g]').forEach(b=>b.onclick=()=>{const g=b.dataset.g;send({hubGame:g});openRec(g);pausedUI=true;paintPause();});
+  /* ===== 中獎名單：整理所有遊戲的得獎紀錄 ===== */
+  const WK={pb_hist:'🎯 彈珠台',pig_wins:'🔨 敲金豬',ar_wins:'⚔️ 大逃殺',fi_wins:'🐟 撈金魚',zh_wins:'👊 爆揍渣男',popo_wins:'👵 婆婆來了',rs_wins:'🐾 拯救浪浪',gd_wins:'👑 我的地盤',ch_wins:'⚡ 全場集氣'};
+  let phoneWins={},winByTime=false;const wEsc=t=>String(t==null?'':t).replace(/&/g,'&amp;').replace(/</g,'&lt;');
+  function winRows(key,arr){const out=[];(Array.isArray(arr)?arr:[]).forEach(w=>{if(!w)return;const t=w.t||0;
+    if(Array.isArray(w.list))w.list.forEach(x=>{const p=x.prize||w.prize||w.p||'';if(x&&x.n&&p)out.push({t,n:x.n,p,g:key});});
+    else if(w.top||w.cells){(w.top||[]).forEach(x=>{if(x&&x.n&&x.prize)out.push({t,n:x.n,p:x.prize,g:key});});if(w.prizeCell)(w.cells||[]).forEach(c=>{if(c&&c.n)out.push({t,n:c.n,p:w.prizeCell+'（'+c.ch+'格）',g:key});});}
+    else if(w.n){if(key==='pb_hist'&&!(w.a>0)&&!w.l&&!w.p)return;const p=w.prize||w.p||w.l||(w.a>0?'購物金'+w.a+'元':'');if(p)out.push({t,n:w.n,p,g:key});}});return out;}
+  function allWins(){const seen=new Set(),rows=[];const add=r=>{const k=r.g+'|'+r.t+'|'+r.n+'|'+r.p;if(seen.has(k))return;seen.add(k);rows.push(r);};
+    Object.keys(WK).forEach(k=>{let a=[];try{a=JSON.parse(localStorage.getItem(k)||'[]');}catch(e){}winRows(k,a).forEach(add);winRows(k,phoneWins[k]||[]).forEach(add);});
+    return rows.sort((a,b)=>a.t-b.t);}
+  const money=p=>{const m=String(p).match(/(\d+)\s*元/);return m?+m[1]:0;},hm=t=>t?new Date(t).toLocaleString('zh-TW',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit',hour12:false}):'';
+  function byPerson(rows){const m=new Map();rows.forEach(r=>{if(!m.has(r.n))m.set(r.n,[]);m.get(r.n).push(r);});return [...m.entries()].map(([n,l])=>({n,l,sum:l.reduce((a,r)=>a+money(r.p),0),other:l.filter(r=>!money(r.p)).map(r=>r.p)})).sort((a,b)=>b.sum-a.sum||a.n.localeCompare(b.n,'zh-Hant'));}
+  function winText(){const rows=allWins();if(!rows.length)return '目前沒有中獎紀錄';
+    return byPerson(rows).map(p=>`${p.n}　${p.sum?'購物金合計 '+p.sum+' 元':''}${p.other.length?(p.sum?'＋':'')+p.other.join('、'):''}（${p.l.map(r=>WK[r.g].replace(/^\S+\s/,'')+' '+r.p).join('、')}）`).join('\n');}
+  function paintWins(){const rows=allWins();$('winInfo').textContent=rows.length?`共 ${new Set(rows.map(r=>r.n)).size} 人、${rows.length} 筆・${hm(rows[0].t)} ～ ${hm(rows[rows.length-1].t)}`:'';
+    $('winMode').textContent=winByTime?'改成依人整理':'改成依時間排列';
+    if(!rows.length){$('winList').innerHTML='<div style="padding:30px;text-align:center;color:var(--sub)">目前沒有中獎紀錄</div>';return;}
+    $('winList').innerHTML=winByTime?'<table><tr><th>時間</th><th>遊戲</th><th>得獎人</th><th>獎品</th></tr>'+rows.map(r=>`<tr><td>${hm(r.t)}</td><td>${WK[r.g]}</td><td>${wEsc(r.n)}</td><td class="amt">${wEsc(r.p)}</td></tr>`).join('')+'</table>'
+      :'<table><tr><th>得獎人</th><th>合計</th><th>明細</th></tr>'+byPerson(rows).map(p=>`<tr><td><b>${wEsc(p.n)}</b></td><td class="amt">${p.sum?'購物金 '+p.sum+' 元':''}${p.other.length?(p.sum?'<br>':'')+wEsc(p.other.join('、')):''}</td><td>${p.l.map(r=>`${WK[r.g]} ${wEsc(r.p)}`).join('、')}</td></tr>`).join('')+'</table>';}
+  $('winBtn').onclick=()=>{phoneWins={};send({hubCmd:'dumpWins'});paintWins();$('winBox').style.display='flex';};
+  $('winX').onclick=()=>{$('winBox').style.display='none';};$('winBox').onclick=e=>{if(e.target===$('winBox'))$('winBox').style.display='none';};
+  $('winMode').onclick=()=>{winByTime=!winByTime;paintWins();};
+  $('winCopy').onclick=()=>navigator.clipboard.writeText(winText()).then(()=>{$('winCopy').textContent='已複製 ✓';setTimeout(()=>$('winCopy').textContent='📋 複製名單',1500);});
+  $('winClr').onclick=()=>{const n=allWins().length;if(!n){alert('目前沒有紀錄可以清');return;}if(!confirm(`確定全部清除？共 ${n} 筆中獎紀錄，清掉就救不回來。\n\n請確認購物金、贈品都已經處理完。`))return;
+    Object.keys(WK).concat(['pb_round']).forEach(k=>{try{localStorage.setItem(k,'[]');}catch(e){}});phoneWins={};send({hubCmd:'clearWins'});if(curRec&&curRec!=='none')openRec(curRec,true);paintWins();};
   function connect(){try{ws&&ws.close();}catch(e){}ws=new WebSocket(SERVER);
     ws.onopen=()=>{ws.send(JSON.stringify({join:sid,in:5,out:6}));setTimeout(()=>{send({hubCmd:'sync'});},300);};
     ws.onmessage=e=>{let m;try{m=JSON.parse(e.data);}catch(x){return;}const d=m.overlayNinja||m;
       if(d.hubState&&d.hubState.vibe!==undefined&&vibeUI!==!!d.hubState.vibe){vibeUI=!!d.hubState.vibe;paintVibe();}
       if(d.hubState&&d.hubState.vop!==undefined&&document.activeElement!==$('vop')){vopUI=+d.hubState.vop;SV('vop',vopUI);paintVop();}
+      if(d.hubWins&&d.hubWins.key){const k=d.hubWins.key;if(!d.hubWins.part)phoneWins[k]=[];phoneWins[k]=(phoneWins[k]||[]).concat(d.hubWins.items||[]);if($('winBox').style.display==='flex')paintWins();}
       if(d.hubState){lastSeen=Date.now();phoneGame=d.hubState.game;if(d.hubState.paused!==undefined&&d.hubState.game===curRec){pausedUI=!!d.hubState.paused;paintPause();}if(d.hubState.ops){ops=d.hubState.ops;fills=d.hubState.fills||{};sizes=d.hubState.sizes||{};SV('ops',ops);SV('fills',fills);SV('sizes',sizes);if(document.activeElement!==$('op')&&document.activeElement!==$('sw')&&document.activeElement!==$('sh'))paintOp();}if(!curRec&&phoneGame)openRec(phoneGame);paint();}};
     ws.onclose=()=>setTimeout(connect,3000);}
   // 直接偵測外掛有沒有把 FB 留言送出來

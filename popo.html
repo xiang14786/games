@@ -216,7 +216,7 @@ function frame(now){
       ctx.fillStyle='#ffd39a';ctx.font='bold 30px '+FONT;ctx.fillText('快留言選地方躲',W/2,583);ctx.fillText('最後沒被抓到的有獎！',W/2,625);
       ctx.fillStyle='#ffe08a';ctx.font='bold 30px '+FONT;ctx.fillText(`💺${f1(cfg.kSofa)}　🚪${f1(cfg.kWard)}　🎐${f1(cfg.kCurt)}`,W/2,672);}}
   // 得獎卡
-  if(phase==='end'&&winners&&now-endAt>400){const k=Math.min(1,(now-endAt-400)/400),Lw=winners.list;ctx.save();ctx.translate(0,H/2-300);ctx.globalAlpha=k;
+  if(phase==='end'&&winners&&now-endAt>400&&!(OV&&now-endAt>5800)){const k=Math.min(1,(now-endAt-400)/400),Lw=winners.list;ctx.save();ctx.translate(0,H/2-300);ctx.globalAlpha=k;
     ctx.fillStyle='rgba(12,14,22,.92)';rr(W/2-340,70,680,420,30);ctx.fill();ctx.strokeStyle='#f3d9a6';ctx.lineWidth=5;ctx.stroke();
     ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle='#f3d9a6';ctx.font='bold 40px '+FONT;ctx.fillText('🎉 成功躲過婆婆的姊妹！',W/2,125);
     ctx.fillStyle='#cfd5df';ctx.font='22px '+FONT;ctx.fillText(`${winners.count} 人參加，婆婆檢查了 ${winners.rounds} 輪`,W/2,168);

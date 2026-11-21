@@ -87,7 +87,9 @@ const imgCache=new Map();function imgOf(s){if(!s)return null;if(!imgCache.has(s)
 const rid=()=>'shine'+Math.random().toString(36).slice(2,9);
 /* 一次性：留言間隔預設 5 秒 */
 (function(){try{const P='pig_';if(localStorage.getItem(P+'cd5_done'))return;['cfg','cfg2','cfgR'].forEach(k=>{const r=localStorage.getItem(P+k);if(!r)return;const o=JSON.parse(r);o.cd=5;localStorage.setItem(P+k,JSON.stringify(o));});localStorage.setItem(P+'cd5_done','1');}catch(e){}})();
-let cfg=Object.assign({kw:'敲一棒',cd:5,tmin:50,tmax:120,prize:'購物金10元',showT:false,needName:true},LS('cfg2',{}));
+/* 一次性：新預設 */
+(function(){try{const P='pig_';if(localStorage.getItem(P+'d4_done'))return;['cfg','cfg2','cfgR'].forEach(k=>{const r=localStorage.getItem(P+k);if(!r)return;const o=JSON.parse(r);o.prize='購物金20元';o.tmin=70;o.tmax=150;localStorage.setItem(P+k,JSON.stringify(o));});localStorage.setItem(P+'d4_done','1');}catch(e){}})();
+let cfg=Object.assign({kw:'敲一棒',cd:5,tmin:70,tmax:150,prize:'購物金20元',showT:false,needName:true},LS('cfg2',{}));
 let sid=QS.get('session')||LS('sid','')||rid();SV('sid',sid);
 ['kw','cd'].forEach(k=>{if(QS.get(k)!=null)cfg[k]=k==='cd'?+QS.get(k):QS.get(k);});
 if(OV){const c=LS('cfgR',null);if(c)Object.assign(cfg,c);}
@@ -189,7 +191,7 @@ function frame(now){
     bannerT(t,H-46,54);
     if(queue.length)bannerT(`還有 ${queue.length} 支槌子排隊中`,H-118,32,'#fff','rgba(0,0,0,.5)');}
   // 得獎卡
-  if(pig.broken&&now-brokeAt>900||pig.broken&&!brokeAt){const k=brokeAt?Math.min(1,(now-brokeAt-900)/400):1,w=pig.winner;ctx.globalAlpha=k;
+  if((pig.broken&&now-brokeAt>900||pig.broken&&!brokeAt)&&!(OV&&(!brokeAt||now-brokeAt>6300))){const k=brokeAt?Math.min(1,(now-brokeAt-900)/400):1,w=pig.winner;ctx.globalAlpha=k;
     ctx.fillStyle='rgba(12,14,22,.9)';rr(170,150,660,400,30);ctx.fill();ctx.strokeStyle='#f3d9a6';ctx.lineWidth=5;ctx.stroke();
     ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle='#f3d9a6';ctx.font='bold 46px '+FONT;ctx.fillText('🎉 金豬被敲破了！',W/2,215);
     const im=imgOf(w.s);ctx.save();ctx.beginPath();ctx.arc(W/2,315,60,0,7);ctx.clip();if(im&&im.complete&&im.naturalWidth)ctx.drawImage(im,W/2-60,255,120,120);else{ctx.fillStyle='#c9748a';ctx.fillRect(W/2-60,255,120,120);ctx.fillStyle='#fff';ctx.font='bold 54px '+FONT;ctx.fillText(w.n[0],W/2,318);}ctx.restore();ctx.beginPath();ctx.arc(W/2,315,60,0,7);ctx.strokeStyle='#ffe08a';ctx.lineWidth=5;ctx.stroke();

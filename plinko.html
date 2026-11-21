@@ -205,6 +205,7 @@ const SV=(k,v)=>{try{localStorage.setItem('pb_'+k,JSON.stringify(v))}catch(e){}}
   localStorage.removeItem(P+'hist');localStorage.removeItem(P+'round');localStorage.setItem(P+'p10_done','1');}catch(e){}})();
 /* 一次性：新預設（中獎率10%、留言間隔5秒、新獎品表） */
 (function(){try{const P='pb_';if(localStorage.getItem(P+'d21_done'))return;localStorage.setItem(P+'tiers4',JSON.stringify(DEF));localStorage.setItem(P+'winRate','10');localStorage.setItem(P+'cd','5');localStorage.setItem(P+'d21_done','1');}catch(e){}})();
+(function(){try{const P='pb_';if(localStorage.getItem(P+'d4_done'))return;localStorage.setItem(P+'winRate','15');localStorage.setItem(P+'d4_done','1');}catch(e){}})();
 let tiers=LS('tiers4',DEF),hist=LS('hist',[]);
 let cupAmt=[];
 const labelOf=a=>{const t=tiers.find(t=>t[0]===a&&t[2]);return t?t[2]:'購物金 $'+a;};const shortOf=a=>{const t=tiers.find(t=>t[0]===a&&t[2]);return t?t[2].replace(/區|券/g,'').slice(-2):'$'+a;};
@@ -253,7 +254,7 @@ drop.ondrop=e=>{e.preventDefault();drop.classList.remove('on');const f=[...e.dat
 document.addEventListener('paste',e=>{const it=[...((e.clipboardData||{}).items||[])].find(i=>i.type.startsWith('image/'));if(it){e.preventDefault();setAvatar(it.getAsFile());}});
 
 /* --- 裝填 / 發射（同時多顆） --- */
-let budget=+LS('budget',0),winRate=+LS('winRate',10),stopped=false,bMin=+LS('bmin',5),bMax=+LS('bmax',20),batchN=0,volley=0,firstWait=0;
+let budget=+LS('budget',0),winRate=+LS('winRate',15),stopped=false,bMin=+LS('bmin',5),bMax=+LS('bmax',20),batchN=0,volley=0,firstWait=0;
 function newTarget(){const a=Math.max(1,Math.min(bMin,bMax)),b=Math.max(bMin,bMax,1);batchN=a+Math.floor(Math.random()*(b-a+1));}newTarget();
 const roundTotal=()=>round.reduce((s,r)=>s+r.a,0);
 let gsec=+LS('gsec',120),tEndP=0,timeUp=false;const hubHid=()=>{try{return window.parent!==window&&!!window.parent.__hubPaused;}catch(e){return false;}},mmss=t=>Math.floor(t/60)+':'+String(t%60).padStart(2,'0');
@@ -416,6 +417,7 @@ function frame(now){DBG.frames++;
   if(!reveal){const k0=(net.kw.split(/[,，]/)[0]||'抽').trim();const n=pending.length;const dots='.'.repeat(1+Math.floor(now/400)%3);
     // 放在最下面（彈珠台下方的空間），才不會被直播人數擋住
     const GL=gameLeft();if(GL===0)bannerT('⏱ 時間到！這輪結束囉',H+35,34,'#ff9a9a');else bannerT(`${GL>0?`⏱${mmss(GL)}　`:''}🎯 留言「${k0==='*'?'任何字':k0}」射彈珠！${n&&!volley&&batchN>1?`　⚡集氣中 ${n} 顆${dots}`:''}`,H+35,30,GL>0&&GL<=10?'#ff9a9a':undefined);}
+  if(reveal&&OV&&now-reveal.t0>5400)reveal=null; // 公布 5 秒後自動收起
   if(reveal)drawReveal(now);
   drawSide(now,`留言「${(net.kw.split(/[,，]/)[0]||'抽').trim()}」就會出現在這`);
   if(toast){const age=now-toast.at;if(age>1800)toast=null;else{ctx.globalAlpha=Math.min(1,(1800-age)/300);ctx.fillStyle='rgba(0,0,0,.75)';ctx.font='bold 28px '+FONT;const tw=ctx.measureText(toast.t).width+40;rr(W/2-tw/2,420,tw,56,28);ctx.fill();ctx.fillStyle='#fff';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(toast.t,W/2,448);ctx.globalAlpha=1;}}
