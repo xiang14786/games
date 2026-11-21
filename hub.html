@@ -100,8 +100,8 @@ h1{font-size:17px;margin:0 4px 0 0;color:var(--gold);white-space:nowrap}
 <script>
 const SERVER=new URLSearchParams(location.search).get('server')||'wss://io.socialstream.ninja';
 const GAMES={plinko:'🎯 彈珠台',pig:'🔨 敲金豬',arena:'⚔️ 頭像大逃殺',fish:'🐟 撈金魚',zhanan:'👊 爆揍渣男',popo:'👵 婆婆來了',rescue:'🐾 拯救浪浪',grid:'👑 我的地盤我做主',charge:'⚡ 全場集氣',none:'🙈 沒有顯示遊戲'};
-const FX={rose:{n:'🌹 玫瑰城堡',f:'fx_rose.mp4',at:2.9,top:63,dur:6.6},swan:{n:'🦢 天鵝湖',f:'fx_swan.mp4',at:5.8,top:7,dur:9.4},angel:{n:'👼 天使降臨',f:'fx_angel.mp4',at:4.9,top:5,dur:8.7},xmas:{n:'🎄 聖誕雪球',f:'fx_xmas.mp4',at:4.6,top:68,dur:8.7},zerozero:{n:'💎 ZERO ZERO 專屬',f:'fx_zerozero.mp4',at:-1,dur:7.9}};
-const FXV='1';
+const FX={rose:{n:'🌹 玫瑰城堡',f:'fx_rose.mp4',at:2.9,top:63,dur:6.6},swan:{n:'🦢 天鵝湖',f:'fx_swan.mp4',at:5.8,top:7,dur:9.4},angel:{n:'👼 天使降臨',f:'fx_angel.mp4',at:4.9,top:5,dur:8.7},xmas:{n:'🎄 聖誕雪球',f:'fx_xmas.mp4',at:4.6,top:68,dur:8.7},pegasus:{n:'🦄 天馬',f:'fx_pegasus.mp4',at:4.6,top:74,dur:8.7},boat:{n:'🌙 月亮船',f:'fx_boat.mp4',at:3.9,top:70,dur:8.7},balloon:{n:'🎈 熱氣球花海',f:'fx_balloon.mp4',at:4.1,top:64,dur:8.7},butterfly:{n:'🦋 蝴蝶花房',f:'fx_butterfly.mp4',at:4.1,top:72,dur:8.7},ballet:{n:'🩰 音樂盒芭蕾',f:'fx_ballet.mp4',at:3.1,top:74,dur:8.7},ferris:{n:'🎡 摩天輪煙火',f:'fx_ferris.mp4',at:3.7,top:68,dur:8.7},zerozero:{n:'💎 ZERO ZERO 專屬',f:'fx_zerozero.mp4',at:-1,dur:7.9}};
+const FXV='2';
 const QS=new URLSearchParams(location.search),OV=QS.get('mode')==='overlay';
 const LS=(k,d)=>{try{const v=localStorage.getItem('hub_'+k);return v==null?d:JSON.parse(v);}catch(e){return d;}};
 const SV=(k,v)=>{try{localStorage.setItem('hub_'+k,JSON.stringify(v));}catch(e){}};
@@ -134,7 +134,8 @@ if(OV){
   const fxT=fxW.querySelector('#fxTxt');let fxV=null,fxTok=0,fxEndT=0;const fxBlob={};
   const fxSrc=id=>fxBlob[id]||(base+FX[id].f+'?v='+FXV);
   // 先把影片抓進來，按下去才不會等
-  (async()=>{await new Promise(r=>setTimeout(r,2500));for(const id of Object.keys(FX)){try{const r=await fetch(base+FX[id].f+'?v='+FXV);if(r.ok)fxBlob[id]=URL.createObjectURL(await r.blob());}catch(e){}}})();
+  const fxWarm=async id=>{if(!FX[id]||fxBlob[id]||fxWarm.b[id])return;fxWarm.b[id]=1;try{const r=await fetch(base+FX[id].f+'?v='+FXV);if(r.ok)fxBlob[id]=URL.createObjectURL(await r.blob());}catch(e){}fxWarm.b[id]=0;};fxWarm.b={};window.__warmFx=fxWarm;
+  (async()=>{await new Promise(r=>setTimeout(r,2500));for(const id of ['rose','swan','angel'])await fxWarm(id);})(); // 輪播的三支先抓，其他選到才抓
   function stopFx(){fxTok++;clearTimeout(fxEndT);fxW.style.opacity=0;fxT.classList.remove('on');const v=fxV;fxV=null;if(v)setTimeout(()=>{try{v.pause();v.remove();}catch(e){}},600);}
   function playFx(id,ph0){const F=FX[id];if(!F)return 0;stopFx();const tok=++fxTok;const v=document.createElement('video');v.muted=true;v.defaultMuted=true;v.playsInline=true;v.setAttribute('playsinline','');v.setAttribute('webkit-playsinline','');v.setAttribute('muted','');v.preload='auto';v.src=fxSrc(id);fxW.insertBefore(v,fxT);fxV=v;
     const ph=F.at>=0&&ph0&&(ph0[0]||ph0[1])?[ph0[0]||'',ph0[1]||'']:null;fxT.style.top=(F.top!=null?F.top:9)+'%';fxT.classList.remove('on');fxT.style.display=ph?'block':'none';
