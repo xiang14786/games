@@ -46,7 +46,7 @@ body.ov #ovState{display:block}
     <label>集氣關鍵字（逗號分開；* ＝任何留言）<input type="text" id="kw"></label>
     <div class="row"><label style="flex:1">要集幾次才滿<input type="number" id="goal" min="1"></label><label style="flex:1">同一人幾秒算一次<input type="number" id="cd" min="0"></label></div>
     <h3>🎬 集滿時的特效影片</h3>
-    <label>播哪一支<select id="fx"><option value="rotate">每次輪流（玫瑰城堡 → 天鵝湖 → 天使降臨）</option><option value="rose">🌹 玫瑰城堡</option><option value="swan">🦢 天鵝湖</option><option value="angel">👼 天使降臨</option><option value="pegasus">🦄 天馬</option><option value="boat">🌙 月亮船</option><option value="balloon">🎈 熱氣球花海</option><option value="butterfly">🦋 蝴蝶花房</option><option value="ballet">🩰 音樂盒芭蕾</option><option value="ferris">🎡 摩天輪煙火</option><option value="xmas">🎄 聖誕雪球</option><option value="zerozero">💎 ZERO ZERO 專屬</option></select></label>
+    <label>播哪一支<select id="fx"><option value="rotate">每次輪流（9 支輪著播，聖誕和 ZERO ZERO 除外）</option><option value="rose">🌹 玫瑰城堡</option><option value="swan">🦢 天鵝湖</option><option value="angel">👼 天使降臨</option><option value="pegasus">🦄 天馬</option><option value="boat">🌙 月亮船</option><option value="balloon">🎈 熱氣球花海</option><option value="butterfly">🦋 蝴蝶花房</option><option value="ballet">🩰 音樂盒芭蕾</option><option value="ferris">🎡 摩天輪煙火</option><option value="xmas">🎄 聖誕雪球</option><option value="zerozero">💎 ZERO ZERO 專屬</option></select></label>
     <label>影片上面的字（中韓一起出現）<select id="phr"><option value="rand">每次隨機挑一句</option><option value="0">歐膩今天好漂亮｜언니 오늘 너무 예뻐요</option><option value="1">歐膩穿什麼都好看｜언니는 뭘 입어도 예뻐요</option><option value="2">歐膩穿起來最好看｜언니 핏 최고예요</option><option value="3">歐膩比模特兒還漂亮｜언니가 모델보다 더 예뻐요</option><option value="4">歐膩今天的造型超讚｜언니 오늘 스타일 대박이에요</option><option value="5">歐膩今天辛苦了｜언니 오늘도 수고 많았어요</option><option value="6">謝謝歐膩今天也穿給我們看｜오늘도 옷 입어줘서 고마워요</option><option value="7">換這麼多套辛苦了，謝謝妳｜옷 많이 갈아입느라 힘들었죠? 고마워요</option><option value="8">因為歐膩，買衣服好開心｜언니 덕분에 쇼핑이 너무 즐거워요</option><option value="9">台灣粉絲都愛妳｜대만 팬들이 언니 사랑해요</option><option value="custom">用我自己打的（下面兩格）</option><option value="none">不要顯示字</option></select></label>
     <div class="row"><label style="flex:1">自己打：中文<input type="text" id="czh" placeholder="例：歐膩今天好漂亮"></label><label style="flex:1">韓文<input type="text" id="cko" placeholder="例：언니 오늘 너무 예뻐요"></label></div>
     <div class="row"><button class="btn ghost" id="fxTest">▶ 在手機試播這支特效</button><button class="btn ghost" id="fxStopBtn">⏹ 停止</button></div>
@@ -110,13 +110,13 @@ function startGame(){if(phase!=='idle'){newGame();}phase='play';sendUp({chState:
 function addPoint(name,img){pts=Math.min(goal(),pts+1);who[name]=(who[name]||0)+1;if(img)whoImg[name]=img;
   pops.unshift({name,img,t:performance.now()});if(pops.length>6)pops.length=6;
   if(pts>=goal())goFull();sendUp({chAdd:{n:name,s:img||''},chState:stateMsg()});renderUI();}
-let fxVideo=false;const FXROT=['rose','swan','angel'];
+let fxVideo=false;const FXROT=['rose','swan','angel','pegasus','boat','balloon','butterfly','ballet','ferris'];
 function fxId(){if(cfg.fx&&cfg.fx!=='rotate')return cfg.fx;const n=(LS('fxRotN',-1)+1)%FXROT.length;SV('fxRotN',n);return FXROT[n];}
 function fxPhrase(){const p=String(cfg.phr==null?'rand':cfg.phr);if(p==='none')return null;if(p==='custom'){const c=[String(cfg.czh||'').trim(),String(cfg.cko||'').trim()];return c[0]||c[1]?c:null;}
   if(p==='rand'){let i=Math.floor(Math.random()*PHR.length);if(i===LS('phrLast',-1))i=(i+1)%PHR.length;SV('phrLast',i);return PHR[i];}return PHR[+p]||PHR[0];}
 // 在總台裡面時，交給總台全螢幕播特效影片；回傳影片長度（毫秒），不在總台裡回傳 0
-function playVideo(){try{const P=window.parent;if(P&&P!==window&&P.__playFx)return P.__playFx(fxId(),fxPhrase())||0;}catch(e){}return 0;}
-function warmVideo(){try{const P=window.parent;if(OV&&P&&P!==window&&P.__warmFx&&cfg.fx&&cfg.fx!=='rotate')P.__warmFx(cfg.fx);}catch(e){}}
+function playVideo(){try{const P=window.parent;if(P&&P!==window&&P.__playFx){const d=P.__playFx(fxId(),fxPhrase())||0;setTimeout(warmVideo,3000);return d;}}catch(e){}return 0;}
+function warmVideo(){try{const P=window.parent;if(OV&&P&&P!==window&&P.__warmFx)P.__warmFx(cfg.fx&&cfg.fx!=='rotate'?cfg.fx:FXROT[(LS('fxRotN',-1)+1)%FXROT.length]);}catch(e){}}
 setTimeout(warmVideo,3500);
 function stopVideo(){try{const P=window.parent;if(P&&P!==window&&P.__stopFx)P.__stopFx();}catch(e){}}
 function goFull(){if(phase!=='play')return;phase='full';fullAt=performance.now();fxNow='none';fxVideo=false;let wait=6500;
