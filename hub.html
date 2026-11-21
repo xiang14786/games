@@ -9,30 +9,28 @@ html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family
 body.ov,html.ov{background:transparent!important}
 #ovFrame{position:fixed;inset:0;width:100%;height:100%;border:0;background:transparent;transition:opacity .4s}
 #ctl{display:flex;flex-direction:column;height:100%}
-header{padding:12px 18px 14px;border-bottom:1px solid var(--line);background:#181a22;display:flex;flex-direction:column;gap:12px}
-.top{display:flex;align-items:center;gap:16px}
-h1{font-size:24px;margin:0;color:var(--gold)}
-#st{font-size:17px;color:var(--sub);margin-left:auto;text-align:right;line-height:1.5}
+header{padding:6px 12px;border-bottom:1px solid var(--line);background:#181a22;display:flex;flex-direction:column;gap:6px}
+h1{font-size:17px;margin:0 4px 0 0;color:var(--gold);white-space:nowrap}
+#st{font-size:13px;color:var(--sub);margin-left:auto;text-align:right;line-height:1.35}
 #st b{color:#9fe7a4}
-.sec{display:flex;align-items:center;gap:12px;flex-wrap:wrap;font-size:17px}
-.lab{font-size:17px;font-weight:700;color:var(--gold);white-space:nowrap;min-width:92px}
+.sec{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:14px}
+.grp{display:inline-flex;align-items:center;gap:5px;padding:3px 6px;border:1px solid var(--line);border-radius:10px;background:#1b1e27;flex-wrap:wrap}
+.lab{font-size:13px;font-weight:700;color:var(--gold);white-space:nowrap;margin-right:2px}
 .grow{flex:1}.hint{color:var(--sub)}
-.games{display:grid;grid-template-columns:repeat(9,minmax(0,1fr));gap:8px;flex:1}
-@media(max-width:1250px){.games{grid-template-columns:repeat(5,minmax(0,1fr))}}
-.g{font-size:19px;font-weight:700;padding:13px 6px;border-radius:12px;border:2px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer;white-space:nowrap}
+.g{font-size:15px;font-weight:700;padding:6px 9px;border-radius:8px;border:2px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer;white-space:nowrap}
 .g:hover{border-color:#5a6072}
-.g.on{border-color:var(--on);background:#3a2e1c;color:#ffe3b0;box-shadow:0 0 0 2px rgba(224,169,90,.25)}
-.s{font-size:17px;font-weight:700;padding:9px 14px;border-radius:10px;border:2px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer}
+.g.on{border-color:var(--on);background:#3a2e1c;color:#ffe3b0}
+.s{font-size:14px;font-weight:700;padding:5px 10px;border-radius:8px;border:2px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer}
 .s.off{color:var(--sub)}
-#pauseBtn{font-size:21px;font-weight:700;padding:13px 22px;border-radius:14px;border:2px solid;cursor:pointer;min-width:330px}
+#pauseBtn{font-size:16px;font-weight:700;padding:6px 14px;border-radius:9px;border:2px solid;cursor:pointer;min-width:250px}
 #pauseBtn.hid{background:#1f5f35;border-color:#4fd07a;color:#eafff0}
 #pauseBtn.shown{background:#5a2020;border-color:#ff8a8a;color:#ffecec}
-.sec input[type=range]{width:150px;vertical-align:middle;accent-color:#e0a95a}
+.sec input[type=range]{width:110px;vertical-align:middle;accent-color:#e0a95a}
 #vibeBtn.on{background:linear-gradient(90deg,#4a2a6a,#2a4a6a);border-color:#c6a0ff;color:#fff}
 #vibeFrame{position:fixed;inset:0;width:100%;height:100%;border:0;background:transparent;pointer-events:none;z-index:4}
 #sess{font-size:16px;color:var(--sub);display:flex;gap:8px;align-items:center}
 #sess input{font-size:16px;padding:6px 10px;border-radius:8px;border:1px solid var(--line);background:#0f1116;color:var(--ink);width:150px}
-#url{font-size:15px;color:var(--sub);padding:8px 18px;background:#16181f;border-bottom:1px solid var(--line);word-break:break-all}
+#url{font-size:12px;color:var(--sub);padding:3px 12px;background:#16181f;border-bottom:1px solid var(--line);word-break:break-all}
 #url summary{cursor:pointer}
 #url button{font-size:15px;margin-left:8px;padding:4px 10px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer}
 #recFrame{flex:1;width:100%;border:0;background:var(--bg)}
@@ -51,29 +49,31 @@ h1{font-size:24px;margin:0;color:var(--gold)}
 <body>
 <div id="ctl" style="display:none">
   <header>
-    <div class="top"><h1>🎮 直播遊戲總台</h1><div id="st">手機：<span id="phone">還沒連上</span><br>FB 留言：<span id="cmt">檢查中…</span></div></div>
-    <div class="sec"><span class="lab">① 選遊戲</span>
-      <div class="games">
+    <div class="sec">
+      <h1>🎮 總台</h1>
+      <span class="grp"><span class="lab">☕ 中場休息玩</span>
         <button class="g" data-g="plinko">🎯 彈珠台</button>
-        <button class="g" data-g="pig">🔨 敲金豬</button>
-        <button class="g" data-g="charge">⚡ 全場集氣</button>
         <button class="g" data-g="arena">⚔️ 大逃殺</button>
         <button class="g" data-g="fish">🐟 撈金魚</button>
-        <button class="g" data-g="zhanan">👊 爆揍渣男</button>
         <button class="g" data-g="popo">👵 婆婆來了</button>
+      </span>
+      <span class="grp"><span class="lab">🛍 邊播邊玩</span>
+        <button class="g" data-g="pig">🔨 敲金豬</button>
+        <button class="g" data-g="zhanan">👊 爆揍渣男</button>
         <button class="g" data-g="rescue">🐾 拯救浪浪</button>
         <button class="g" data-g="grid">👑 我的地盤</button>
-      </div>
+        <button class="g" data-g="charge">⚡ 全場集氣</button>
+      </span>
+      <div id="st">手機：<span id="phone">還沒連上</span><br>FB 留言：<span id="cmt">檢查中…</span></div>
     </div>
-    <div class="sec"><span class="lab">② 直播畫面</span>
+    <div class="sec">
       <button id="pauseBtn" style="display:none"></button>
       <span id="opBox" style="display:none">🔆 透明度 <input type="range" id="op" min="20" max="100" step="5"> <b id="opV"></b><span id="opName" style="display:none"></span><span style="display:none"><input type="checkbox" id="fill"><input type="range" id="sw"><b id="swV"></b><input type="range" id="sh"><b id="shV"></b></span></span>
-      <span id="noGame" class="hint">先在上面選一個遊戲</span>
+      <span id="noGame" class="hint">👆 先選一個遊戲</span>
       <span class="grow"></span>
-      <span class="lab">彈幕</span>
       <button class="s" id="vibeBtn">🌈 彈幕＋愛心雨：關</button>
       <span>透明度 <input type="range" id="vop" min="20" max="100" step="5" style="accent-color:#c6a0ff"> <b id="vopV"></b></span>
-      <button class="s off" id="vibeSet">⚙️ 設定</button>
+      <button class="s off" id="vibeSet">⚙️ 彈幕設定</button>
     </div>
   </header>
   <details id="url"><summary>⚙️ 連線設定（平常不用動）</summary><div style="margin-top:8px"><span id="sess">連線代碼 <input id="sid"></span>　手機 PRISM 網址：<span id="ovUrl"></span><button id="cp">複製</button></div></details>
@@ -96,10 +96,11 @@ if(OV){
   /* ===== 手機：只放這一個網址 ===== */
   document.documentElement.classList.add('ov');document.body.classList.add('ov');
   const fr=document.createElement('iframe');fr.id='ovFrame';fr.setAttribute('allowtransparency','true');document.body.appendChild(fr);
+  if(!LS('d70',0)){SV('ops',{});SV('vop',70);SV('vibe',true);SV('d70',1);} // 一次性：新預設
   let cur=null,ws=null,ops=LS('ops',{});
   let paused=LS('paused',true);window.__hubPaused=paused;
   const cover=document.createElement('div');cover.id='prep';document.body.appendChild(cover);
-  let vibe=LS('vibe',false),vop=LS('vop',100);const vf=document.createElement('iframe');vf.id='vibeFrame';vf.setAttribute('allowtransparency','true');document.body.appendChild(vf);
+  let vibe=LS('vibe',true),vop=LS('vop',70);const vf=document.createElement('iframe');vf.id='vibeFrame';vf.setAttribute('allowtransparency','true');document.body.appendChild(vf);
   function applyVibe(){const want=vibe?gameUrl('vibe','overlay'):'about:blank';if(vibe&&!/vibe\.html/.test(vf.src))vf.src=want;if(!vibe&&vf.src!=='about:blank')vf.src='about:blank';}
   applyVibe();vf.style.opacity=vop/100;
   function applyPause(){window.__hubPaused=paused;cover.style.display='none';applyOp();if(fxV)fxW.style.opacity=fxOp();}
@@ -107,7 +108,7 @@ if(OV){
   function applySize(){const z={w:100,h:100};fr.style.width=z.w+'%';fr.style.height=z.h+'%';fr.style.left=((100-z.w)/2)+'%';fr.style.right='auto';fr.style.top='0';fr.style.bottom='auto';}
   const FILLCSS='html,body{height:100%!important;overflow:hidden!important}#wrap{padding:0!important;height:100vh!important}#stage{height:100vh!important;padding:0!important;align-items:stretch!important}canvas{width:100vw!important;height:100vh!important;max-height:none!important;aspect-ratio:auto!important;object-fit:fill!important;transform:none!important}';
   function applyFill(){try{const w=fr.contentWindow;if(!w)return;w.__fill=false;if(w.__fit)w.__fit();}catch(e){}}
-  function applyOp(){fr.style.opacity=!paused&&cur&&cur!=='none'?(ops[cur]!=null?ops[cur]:100)/100:0;applyFill();applySize();}
+  function applyOp(){fr.style.opacity=!paused&&cur&&cur!=='none'?(ops[cur]!=null?ops[cur]:70)/100:0;applyFill();applySize();}
   function show(g){if(!GAMES[g])return;if(g===cur)return;cur=g;SV('ovGame',g);paused=true;SV('paused',true);applyPause();
     fr.style.opacity=0;setTimeout(()=>{fr.src=g==='none'?'about:blank':gameUrl(g,'overlay');fr.onload=applyOp;},300);report();}
   function report(){if(ws&&ws.readyState===1){try{ws.send(JSON.stringify({hubState:{game:cur,t:Date.now(),ops,fills,sizes,paused,vibe,vop}}));}catch(e){}}}
@@ -129,7 +130,7 @@ if(OV){
     const p=v.play();if(p&&p.catch)p.catch(()=>{});
     clearTimeout(fxEndT);fxEndT=setTimeout(end,(F.dur+4)*1000);return F.dur*1000;}
   // 給「全場集氣」用；透明度跟全場集氣同步，畫面隱藏時不播
-  const fxOp=()=>paused?0:(ops.charge!=null?ops.charge:100)/100;
+  const fxOp=()=>paused?0:(ops.charge!=null?ops.charge:70)/100;
   window.__playFx=(id,ph)=>playFx(id,ph);window.__stopFx=stopFx;
   function connect(){ws=new WebSocket(SERVER);
     ws.onopen=()=>{ws.send(JSON.stringify({join:sid,in:6,out:5}));setTimeout(report,300);};
@@ -159,8 +160,9 @@ if(OV){
   $('ovUrl').textContent=ovUrl();
   $('cp').onclick=()=>navigator.clipboard.writeText(ovUrl()).then(()=>{$('cp').textContent='已複製 ✓';setTimeout(()=>$('cp').textContent='複製',1500);});
   $('sid').onchange=()=>{sid=$('sid').value.trim()||sid;$('sid').value=sid;SV('sid',sid);$('ovUrl').textContent=ovUrl();connect();if(curRec)openRec(curRec,true);};
+  if(!LS('d70pc',0)){SV('ops',{});SV('vop',70);SV('d70pc',1);}
   let ws=null,curRec=null,lastSeen=0,phoneGame=null,ops=LS('ops',{});
-  const opOf=g=>ops[g]!=null?ops[g]:100;
+  const opOf=g=>ops[g]!=null?ops[g]:70;
   function paintOp(){const g=curRec;if(!g||g==='none'){$('opBox').style.display='none';$('noGame').style.display='inline';return;}$('opBox').style.display='inline';$('noGame').style.display='none';$('opName').textContent=GAMES[g]+' ';$('op').value=opOf(g);$('opV').textContent=opOf(g)+'%';$('fill').checked=!!fills[g];const z=sizes[g]||{w:100,h:100};$('sw').value=z.w;$('sh').value=z.h;$('swV').textContent=z.w+'%';$('shV').textContent=z.h+'%';}
   let fills=LS('fills',{}),sizes=LS('sizes',{});let szT=0;
   ['sw','sh'].forEach(id=>$(id).addEventListener('input',()=>{if(!curRec||curRec==='none')return;const z={w:+$('sw').value,h:+$('sh').value};sizes[curRec]=z;SV('sizes',sizes);$('swV').textContent=z.w+'%';$('shV').textContent=z.h+'%';clearTimeout(szT);szT=setTimeout(()=>send({hubSizes:{[curRec]:z}}),60);}));
@@ -171,14 +173,15 @@ if(OV){
     if(g==='none'){$('recFrame').style.display='none';$('empty').style.display='flex';$('empty').textContent='👆 先選一個遊戲，設定好之後再按「顯示到直播」';return;}
     $('empty').style.display='none';$('recFrame').style.display='block';$('recFrame').src=gameUrl(g,'record');paintPause();}
   function send(o){if(ws&&ws.readyState===1){try{ws.send(JSON.stringify(o));}catch(e){}}}
-  let pausedUI=true,vibeUI=false;
+  let pausedUI=true,vibeUI=true;
+  setTimeout(()=>paintVibe(),0);
   function paintVibe(){$('vibeBtn').classList.toggle('on',vibeUI);$('vibeBtn').textContent='🌈 彈幕＋愛心雨：'+(vibeUI?'開':'關');}
   $('vibeBtn').onclick=()=>{vibeUI=!vibeUI;send({hubVibe:vibeUI});paintVibe();};
-  let vopUI=LS('vop',100),vT=0;const paintVop=()=>{if(document.activeElement!==$('vop'))$('vop').value=vopUI;$('vopV').textContent=vopUI+'%';};paintVop();
+  let vopUI=LS('vop',70),vT=0;const paintVop=()=>{if(document.activeElement!==$('vop'))$('vop').value=vopUI;$('vopV').textContent=vopUI+'%';};paintVop();
   $('vop').addEventListener('input',()=>{vopUI=+$('vop').value;SV('vop',vopUI);paintVop();clearTimeout(vT);vT=setTimeout(()=>send({hubVop:vopUI}),60);});
   $('vibeSet').onclick=()=>window.open(gameUrl('vibe','record'),'_blank');
   function paintPause(){const b=$('pauseBtn');if(!curRec||curRec==='none'){b.style.display='none';return;}b.style.display='inline-block';
-    b.className=pausedUI?'hid':'shown';b.textContent=pausedUI?'🙈 目前沒顯示　▶ 按這裡顯示到直播':'👁 直播顯示中　■ 按這裡隱藏';}
+    b.className=pausedUI?'hid':'shown';b.textContent=pausedUI?'🙈 沒顯示｜▶ 按這裡顯示到直播':'👁 顯示中｜■ 按這裡隱藏';}
   $('pauseBtn').onclick=()=>{pausedUI=!pausedUI;send({hubPause:pausedUI});paintPause();};
   document.querySelectorAll('.g[data-g]').forEach(b=>b.onclick=()=>{const g=b.dataset.g;send({hubGame:g});openRec(g);pausedUI=true;paintPause();});
   function connect(){try{ws&&ws.close();}catch(e){}ws=new WebSocket(SERVER);

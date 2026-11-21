@@ -48,7 +48,7 @@ body.ov #ovState{display:block}
     <h3>⚙️ 遊戲設定</h3>
     <label>獎品名稱<input type="text" id="prize" placeholder="例：購物金100元"></label>
     <label>對戰時間（秒，場地會在這段時間縮到最小）<input type="number" id="dur" min="15" max="180"></label>
-    <label>報名後自動開戰（秒；0＝手動按開戰）<input type="number" id="auto" min="0" max="300"></label>
+    <label>報名倒數（秒；顯示到直播後開始算，時間到自動開戰；0＝手動按開戰）<input type="number" id="auto" min="0" max="900"></label>
     <label>最少幾人才能開戰<input type="number" id="minP" min="2" max="50"></label>
 
     <h3>📡 自動接 FB 留言</h3>
@@ -90,13 +90,19 @@ const imgCache=new Map();function imgOf(s){if(!s)return null;if(!imgCache.has(s)
 const rid=()=>'shine'+Math.random().toString(36).slice(2,9);
 /* 一次性：留言間隔預設 5 秒 */
 (function(){try{const P='ar_';if(localStorage.getItem(P+'cd5_done'))return;['cfg','cfg2','cfgR'].forEach(k=>{const r=localStorage.getItem(P+k);if(!r)return;const o=JSON.parse(r);o.cd=5;localStorage.setItem(P+k,JSON.stringify(o));});localStorage.setItem(P+'cd5_done','1');}catch(e){}})();
-let cfg=Object.assign({kw:'+1',cd:5,prize:'購物金10元',dur:45,auto:0,minP:3,armor:'衣服,外套,上衣',weapon:'包包,包',helmet:'帽子,帽',level:'喜歡,愛心,❤,♥,💕,💖,😍,🥰,💗,💓'},LS('cfg2',{}));
+/* 一次性：新預設 */
+(function(){try{const P='ar_';if(localStorage.getItem(P+'d3_done'))return;['cfg','cfg2','cfgR'].forEach(k=>{const r=localStorage.getItem(P+k);if(!r)return;const o=JSON.parse(r);o.kw='我是小戰士';o.auto=180;o.dur=60;localStorage.setItem(P+k,JSON.stringify(o));});localStorage.setItem(P+'d3_done','1');}catch(e){}})();
+let cfg=Object.assign({kw:'我是小戰士',cd:5,prize:'購物金10元',dur:60,auto:180,minP:3,armor:'衣服,外套,上衣',weapon:'包包,包',helmet:'帽子,帽',level:'喜歡,愛心,❤,♥,💕,💖,😍,🥰,💗,💓'},LS('cfg2',{}));
 let sid=QS.get('session')||LS('sid','')||rid();SV('sid',sid);
 if(OV){const c=LS('cfgR',null);if(c)Object.assign(cfg,c);}
 let wins=LS('wins',[]);
 
 /* ===== 場地與玩家 ===== */
 const CX=360,CY=640,R0=335,RMIN=34;
+/* 報名倒數：遊戲顯示在直播上才開始算；隱藏就重來 */
+let lobbyT0=0,_rl=-1,_rlT=0;const hubHid=()=>{try{return window.parent!==window&&!!window.parent.__hubPaused;}catch(e){return false;}};
+function lobbyLeft(now){if(!(cfg.auto>0))return -1;if(hubHid()){lobbyT0=0;return -1;}if(!lobbyT0)lobbyT0=now;return Math.max(0,Math.ceil(cfg.auto-(now-lobbyT0)/1000));}
+const recLob=()=>_rl<0?-1:Math.max(0,_rl-Math.floor((Date.now()-_rlT)/1000)),mmss=t=>Math.floor(t/60)+':'+String(t%60).padStart(2,'0');
 let phase='lobby',players=[],R=R0,battleT0=0,firstJoin=0,winner=null,endAt=0,lastShove=0;
 const pops=[],sparks=[];
 const BR=()=>Math.max(16,Math.min(30,Math.sqrt(R0*R0*0.42/Math.max(1,players.length))));
@@ -124,14 +130,14 @@ function startBattle(){
   phase='battle';battleT0=performance.now();players.forEach(p=>{p.drop=1;p.x=p.tx;p.y=p.ty;p.vx=(Math.random()-.5)*200;p.vy=(Math.random()-.5)*200;});
   pops.push({x:W/2,y:H/2,t:'⚔️ 開戰！',t0:performance.now(),c:'#ff8a8a',big:1});sendUp({arState:stateMsg()});renderUI();
 }
-function newRound(){clearFeed();phase='lobby';players=[];R=R0;winner=null;firstJoin=0;endAt=0;pops.length=0;sendUp({arState:stateMsg()});renderUI();}
+function newRound(){clearFeed();lobbyT0=0;phase='lobby';players=[];R=R0;winner=null;firstJoin=0;endAt=0;pops.length=0;sendUp({arState:stateMsg()});renderUI();}
 function alive(){return players.filter(p=>p.alive&&!p.fall);}
 function eliminate(p,now){p.fall=now;const left=alive().length;pops.push({x:p.x,y:p.y-30,t:`${p.name} 淘汰！`,t0:now,c:'#ff9a9a'});
   if(left<=1)finish(left===1?alive()[0]:p,now);sendUp({arState:stateMsg()});renderUI();}
 function finish(p,now){if(phase!=='battle')return;phase='end';winner={n:p.name,s:p.img,prize:cfg.prize,count:players.length,t:Date.now()};endAt=now;
   for(let i=0;i<60;i++)sparks.push({x:CX,y:CY,vx:(Math.random()-.5)*900,vy:(Math.random()-.5)*900-200,t0:now,c:['#ffe08a','#ff8a8a','#9fe7a4','#8ac7ff'][i%4]});
   if(!REC){wins.unshift(winner);wins=wins.slice(0,200);SV('wins',wins);}sendUp({arWin:winner});renderUI();}
-function stateMsg(){return{phase,joined:players.length,alive:alive().length,winner};}
+function stateMsg(){return{lobby:phase==='lobby'?lobbyLeft(performance.now()):-1,phase,joined:players.length,alive:alive().length,winner};}
 
 /* ===== 物理（上帝視角，沒有重力） ===== */
 function physics(dt,now){
@@ -187,7 +193,7 @@ let last=performance.now();
 function frame(now){
   const dt=Math.min(.033,(now-last)/1000);last=now;
   if(!REC||!overlaySeen){
-    if(phase==='lobby'&&cfg.auto>0&&firstJoin&&now-firstJoin>cfg.auto*1000&&players.length>=Math.max(2,cfg.minP))startBattle();
+    if(phase==='lobby'&&lobbyLeft(now)===0&&players.length>=Math.max(2,cfg.minP))startBattle();
     for(let s=0;s<2;s++)physics(dt/2,now);
   }
   ctx.clearRect(0,0,W,H);
@@ -210,8 +216,8 @@ function frame(now){
     bannerT(`強化：${f1(cfg.armor)}＝🥋鎧甲　${f1(cfg.weapon)}＝🔪武器`,H-160,30,'#fff','rgba(0,0,0,.62)');
     bannerT(`${f1(cfg.helmet)}＝🎩頭盔　${f1(cfg.level)}＝⭐升級`,H-102,30,'#fff','rgba(0,0,0,.62)');
     bannerT(t,H-40,34);
-    if(phase==='lobby'&&cfg.auto>0&&firstJoin){const left=Math.max(0,Math.ceil(cfg.auto-(now-firstJoin)/1000));bannerT(`${left} 秒後開戰`,H-218,26,'#fff','rgba(0,0,0,.5)');}
-    if(phase==='battle'){const left=Math.max(0,Math.ceil(cfg.dur-(now-battleT0)/1000));bannerT(left>0?`場地縮小中… ${left}`:'最後決戰！',H-218,26,'#ffb0b0','rgba(0,0,0,.5)');}}
+    if(phase==='lobby'){const L=REC&&overlaySeen?recLob():lobbyLeft(now);if(L>0)bannerT(`⏱ 報名倒數 ${mmss(L)}`,H-226,L<=10?48:40,L<=10?'#ff9a9a':'#fff','rgba(0,0,0,.66)');else if(L===0)bannerT(`再 ${Math.max(0,Math.max(2,cfg.minP)-players.length)} 人報名就開戰！`,H-226,36,'#ffe08a','rgba(0,0,0,.66)');}
+    if(phase==='battle'){const left=Math.max(0,Math.ceil(cfg.dur-(now-battleT0)/1000));bannerT(left>0?`⏱ 場地縮小中 ${mmss(left)}`:'最後決戰！',H-226,38,'#ffb0b0','rgba(0,0,0,.66)');}}
   // 冠軍卡
   if(phase==='end'&&winner&&now-endAt>600){const k=Math.min(1,(now-endAt-600)/400),w=winner;ctx.save();ctx.translate(0,H/2-370);ctx.globalAlpha=k;
     ctx.fillStyle='rgba(12,14,22,.9)';rr(W/2-330,170,660,390,30);ctx.fill();ctx.strokeStyle='#f3d9a6';ctx.lineWidth=5;ctx.stroke();
@@ -280,8 +286,8 @@ function listenCmd(){cmdWs=new WebSocket(SERVER);cmdWs.onopen=()=>cmdWs.send(JSO
   cmdWs.onclose=()=>setTimeout(listenCmd,4000);}
 function listenRec(){recWs=new WebSocket(SERVER);recWs.onopen=()=>{recWs.send(JSON.stringify({join:sid,in:5,out:6}));setTimeout(()=>{sendDown({arCmd:'sync'});},300);};
   recWs.onmessage=e=>{let m;try{m=JSON.parse(e.data);}catch(x){return;}const d=m.overlayNinja||m;if(d.arCfgNow)adoptCfg(d.arCfgNow);
-    if(d.arState||d.arWin){lastOv=Date.now();if(!overlaySeen){overlaySeen=true;setState('📋 紀錄模式：已連上手機（代碼 '+sid+'）');}}
-    if(d.arState){remote=d.arState;renderUI();}
+    if(d.arState||d.arWin){lastOv=Date.now();if(!overlaySeen){overlaySeen=true;try{if(typeof _pend!=='undefined'&&_pend&&Date.now()-_pend.t<10000&&d.arState&&d.arState.phase!=='battle')sendDown({arCmd:'start'});_pend=null;}catch(e){}setState('📋 紀錄模式：已連上手機（代碼 '+sid+'）');}}
+    if(d.arState){remote=d.arState;_rl=remote.lobby==null?-1:remote.lobby;_rlT=Date.now();renderUI();}
     if(d.arWin){if(!wins.some(w=>w.t===d.arWin.t)){wins.unshift(d.arWin);SV('wins',wins);}remote.phase='end';remote.winner=d.arWin;renderUI();}};
   recWs.onclose=()=>setTimeout(listenRec,4000);}
 function pushCfg(){sendDown({arCfg:{kw:cfg.kw,cd:cfg.cd,prize:cfg.prize,dur:cfg.dur,auto:cfg.auto,minP:cfg.minP,armor:cfg.armor,weapon:cfg.weapon,helmet:cfg.helmet,level:cfg.level}});}
@@ -296,7 +302,7 @@ function renderUI(){
 ['kw','cd','prize','dur','auto','minP','armor','weapon','helmet','level'].forEach(k=>$(k).addEventListener('change',()=>{const v=$(k).value;cfg[k]=['kw','prize','armor','weapon','helmet','level'].includes(k)?(v.trim()||(k==='kw'?'+1':'')):Math.max(0,+v||0);SV('cfg2',cfg);pushCfg();renderUI();}));
 $('sid').onchange=()=>{sid=$('sid').value.trim()||rid();$('sid').value=sid;SV('sid',sid);};
 const remoteMode=()=>REC&&overlaySeen;
-$('start').onclick=()=>{if(remoteMode())sendDown({arCmd:'start'});else startBattle();};
+$('start').onclick=()=>{if(REC){sendDown({arCmd:'start'});if(!overlaySeen)startBattle();}else startBattle();};
 $('newRound').onclick=()=>{if(remoteMode())sendDown({arCmd:'new'});else newRound();};
 $('fake10').onclick=()=>{if(remoteMode())sendDown({arCmd:'fake'});else for(let i=0;i<10;i++)join('測試'+Math.floor(Math.random()*1000),'');};
 $('fakeCheer').onclick=()=>{if(remoteMode())sendDown({arCmd:'cheer'});else for(let i=0;i<10;i++){const al=players.filter(p=>!p.fall);if(al.length){const q=al[Math.floor(Math.random()*al.length)];q.cdBy={};cheer(q.name);}}};
@@ -316,6 +322,7 @@ else if(QS.get('session')){connect();}
 
 /* 紀錄頁：一直確認手機有沒有在線（手機晚開、或總台切換遊戲也能接上） */
 var lastOv=0;
+if(REC){const _fs=setInterval(()=>{if(overlaySeen)clearInterval(_fs);else sendDown({arCmd:'sync'});},700);}
 if(REC)setInterval(()=>{sendDown({arCmd:'sync'});if(overlaySeen&&Date.now()-lastOv>15000){overlaySeen=false;setState('📋 紀錄模式：還沒偵測到手機（現在按按鈕會在這頁自己跑）');try{renderUI();}catch(e){}}},4000);
 
 /* 手機直播畫面：用程式算大小（iPhone 不會超出框、字不會被切掉）；總台可切換「填滿」 */

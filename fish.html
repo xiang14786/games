@@ -49,7 +49,7 @@ body.ov #ovState{display:block}
     <label>獎品名稱<input type="text" id="prize" placeholder="例：購物金100元"></label>
     <label>最後活下來幾隻得獎（1～3）<input type="number" id="winN" min="1" max="3"></label>
     <label>撈魚時間（秒，越到後面網子越多越強）<input type="number" id="dur" min="15" max="180"></label>
-    <label>報名後自動開始（秒；0＝手動）<input type="number" id="auto" min="0" max="300"></label>
+    <label>報名倒數（秒；顯示到直播後開始算，時間到自動開始；0＝手動）<input type="number" id="auto" min="0" max="900"></label>
     <label>最少幾隻才能開始<input type="number" id="minP" min="2" max="50"></label>
 
     <h3>📡 自動接 FB 留言</h3>
@@ -97,12 +97,18 @@ const WX0=108,WX1=658,WY0=262,WY1=1112;   // 水面範圍（魚可以游的地�
 const rid=()=>'shine'+Math.random().toString(36).slice(2,9);
 /* 一次性：留言間隔預設 5 秒 */
 (function(){try{const P='fi_';if(localStorage.getItem(P+'cd5_done'))return;['cfg','cfg2','cfgR'].forEach(k=>{const r=localStorage.getItem(P+k);if(!r)return;const o=JSON.parse(r);o.cd=5;localStorage.setItem(P+k,JSON.stringify(o));});localStorage.setItem(P+'cd5_done','1');}catch(e){}})();
-let cfg=Object.assign({kw:'+1',cd:5,prize:'購物金10元',winN:1,dur:50,auto:0,minP:3,big:'愛心,喜歡,大,❤,♥,💕,💖,😍,🥰,💗,💓',fast:'衝,快,游'},LS('cfg',{}));
+/* 一次性：新預設 */
+(function(){try{const P='fi_';if(localStorage.getItem(P+'d3_done'))return;['cfg','cfg2','cfgR'].forEach(k=>{const r=localStorage.getItem(P+k);if(!r)return;const o=JSON.parse(r);o.kw='我是小金魚';o.auto=180;o.dur=60;localStorage.setItem(P+k,JSON.stringify(o));});localStorage.setItem(P+'d3_done','1');}catch(e){}})();
+let cfg=Object.assign({kw:'我是小金魚',cd:5,prize:'購物金10元',winN:1,dur:60,auto:180,minP:3,big:'愛心,喜歡,大,❤,♥,💕,💖,😍,🥰,💗,💓',fast:'衝,快,游'},LS('cfg',{}));
 let sid=QS.get('session')||LS('sid','')||rid();SV('sid',sid);
 if(OV){const c=LS('cfgR',null);if(c)Object.assign(cfg,c);}
 let wins=LS('wins',[]);
 
 /* ===== 遊戲狀態 ===== */
+/* 報名倒數：遊戲顯示在直播上才開始算；隱藏就重來 */
+let lobbyT0=0,_rl=-1,_rlT=0;const hubHid=()=>{try{return window.parent!==window&&!!window.parent.__hubPaused;}catch(e){return false;}};
+function lobbyLeft(now){if(!(cfg.auto>0))return -1;if(hubHid()){lobbyT0=0;return -1;}if(!lobbyT0)lobbyT0=now;return Math.max(0,Math.ceil(cfg.auto-(now-lobbyT0)/1000));}
+const recLob=()=>_rl<0?-1:Math.max(0,_rl-Math.floor((Date.now()-_rlT)/1000)),mmss=t=>Math.floor(t/60)+':'+String(t%60).padStart(2,'0');
 let phase='lobby',fish=[],nets=[],t0=0,firstJoin=0,winners=null,endAt=0,lastSpawn=0;
 const pops=[],ripples=[];
 /* 置中文字條（自己算位置，iPhone 也不會跑掉；太長會自動縮小） */
@@ -136,9 +142,9 @@ function startGame(){
   phase='battle';t0=performance.now();lastSpawn=t0-2000;
   pops.push({x:W/2,y:H/2,t:'🎣 開始撈魚！',t0:performance.now(),c:'#ffb070',big:1});sendUp({fiState:stateMsg()});renderUI();
 }
-function newRound(){feed=[];validN=0;phase='lobby';fish=[];nets=[];winners=null;firstJoin=0;endAt=0;pops.length=0;sendUp({fiState:stateMsg()});renderUI();}
+function newRound(){feed=[];validN=0;lobbyT0=0;phase='lobby';fish=[];nets=[];winners=null;firstJoin=0;endAt=0;pops.length=0;sendUp({fiState:stateMsg()});renderUI();}
 const alive=()=>fish.filter(f=>f.st==='swim');
-function stateMsg(){return{phase,joined:fish.length,alive:alive().length,winners};}
+function stateMsg(){return{lobby:phase==='lobby'?lobbyLeft(performance.now()):-1,phase,joined:fish.length,alive:alive().length,winners};}
 function finish(now){if(phase!=='battle')return;phase='end';endAt=now;
   let w=alive();if(!w.length){w=fish.filter(f=>f.st!=='swim').sort((a,b)=>b.out-a.out).slice(0,1);}
   winners={list:w.map(f=>({n:f.name,s:f.img})),prize:cfg.prize,count:fish.length,t:Date.now()};
@@ -242,7 +248,7 @@ let last=performance.now();
 function frame(now){
   const dt=Math.min(.033,(now-last)/1000);last=now;
   if(!REC||!overlaySeen){
-    if(phase==='lobby'&&cfg.auto>0&&firstJoin&&now-firstJoin>cfg.auto*1000&&fish.length>=Math.max(2,cfg.minP))startGame();
+    if(phase==='lobby'&&lobbyLeft(now)===0&&fish.length>=Math.max(2,cfg.minP))startGame();
     step(dt,now);
   }
   ctx.setTransform(1,0,0,1,0,0);ctx.clearRect(0,0,cv.width,H);
@@ -254,7 +260,8 @@ function frame(now){
   if(phase!=='end'){const t=phase==='lobby'?`🎣 留言「${f1(cfg.kw)}」變成金魚！ 已有 ${fish.length} 隻`:`🎣 撈魚中！ 剩 ${alive().length} 隻・最後 ${cfg.winN} 隻得獎`;
     bannerT(`留言「${f1(cfg.big)}」變大隻更難撈　留言「${f1(cfg.fast)}」游更快`,H-90,26,'#fff','rgba(0,0,0,.62)');
     bannerT(t,H-36,30);
-    if(phase==='lobby'&&cfg.auto>0&&firstJoin)bannerT(`${Math.max(0,Math.ceil(cfg.auto-(now-firstJoin)/1000))} 秒後開始撈`,H-142,22,'#fff','rgba(0,0,0,.5)');}
+    if(phase==='lobby'){const L=REC&&overlaySeen?recLob():lobbyLeft(now);if(L>0)bannerT(`⏱ 報名倒數 ${mmss(L)}`,H-152,L<=10?46:38,L<=10?'#ff9a9a':'#fff','rgba(0,0,0,.66)');else if(L===0)bannerT(`再 ${Math.max(0,Math.max(2,cfg.minP)-fish.length)} 隻報名就開始撈！`,H-152,34,'#ffe08a','rgba(0,0,0,.66)');}
+    if(phase==='battle'){const left=Math.max(0,Math.ceil(cfg.dur-(now-t0)/1000));bannerT(left>0?`⏱ 剩 ${mmss(left)}`:'最後衝刺！',H-152,38,'#ffb0b0','rgba(0,0,0,.66)');}}
   if(phase==='end'&&winners&&now-endAt>500){const k=Math.min(1,(now-endAt-500)/400),L=winners.list;ctx.save();ctx.translate(0,H/2-300);ctx.globalAlpha=k;
     ctx.fillStyle='rgba(12,14,22,.9)';rr(W/2-320,90,640,380,30);ctx.fill();ctx.strokeStyle='#f3d9a6';ctx.lineWidth=5;ctx.stroke();
     ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle='#f3d9a6';ctx.font='bold 40px '+FONT;ctx.fillText(L.length>1?'🐟 最後活下來的金魚！':'🐟 最後一隻金魚！',W/2,145);
@@ -314,8 +321,8 @@ function listenCmd(){cmdWs=new WebSocket(SERVER);cmdWs.onopen=()=>cmdWs.send(JSO
   cmdWs.onclose=()=>setTimeout(listenCmd,4000);}
 function listenRec(){recWs=new WebSocket(SERVER);recWs.onopen=()=>{recWs.send(JSON.stringify({join:sid,in:5,out:6}));setTimeout(()=>{sendDown({fiCmd:'sync'});},300);};
   recWs.onmessage=e=>{let m;try{m=JSON.parse(e.data);}catch(x){return;}const d=m.overlayNinja||m;if(d.fiCfgNow)adoptCfg(d.fiCfgNow);
-    if(d.fiState||d.fiWin){lastOv=Date.now();if(!overlaySeen){overlaySeen=true;setState('📋 紀錄模式：已連上手機（代碼 '+sid+'）');}}
-    if(d.fiState){remote=d.fiState;renderUI();}
+    if(d.fiState||d.fiWin){lastOv=Date.now();if(!overlaySeen){overlaySeen=true;try{if(typeof _pend!=='undefined'&&_pend&&Date.now()-_pend.t<10000&&d.fiState&&d.fiState.phase!=='battle')sendDown({fiCmd:'start'});_pend=null;}catch(e){}setState('📋 紀錄模式：已連上手機（代碼 '+sid+'）');}}
+    if(d.fiState){remote=d.fiState;_rl=remote.lobby==null?-1:remote.lobby;_rlT=Date.now();renderUI();}
     if(d.fiWin){if(!wins.some(w=>w.t===d.fiWin.t)){wins.unshift(d.fiWin);SV('wins',wins);}remote.phase='end';remote.winners=d.fiWin;renderUI();}};
   recWs.onclose=()=>setTimeout(listenRec,4000);}
 const CFGK=['kw','cd','prize','winN','dur','auto','minP','big','fast'],TXT=['kw','prize','big','fast'];
@@ -331,7 +338,7 @@ CFGK.forEach(k=>$(k).value=cfg[k]);$('sid').value=sid;
 CFGK.forEach(k=>$(k).addEventListener('change',()=>{const v=$(k).value;cfg[k]=TXT.includes(k)?(v.trim()||(k==='kw'?'+1':'')):Math.max(0,+v||0);if(k==='winN')cfg.winN=Math.max(1,Math.min(3,cfg.winN||1));SV('cfg',cfg);pushCfg();renderUI();}));
 $('sid').onchange=()=>{sid=$('sid').value.trim()||rid();$('sid').value=sid;SV('sid',sid);};
 const remoteMode=()=>REC&&overlaySeen;
-$('start').onclick=()=>{if(remoteMode())sendDown({fiCmd:'start'});else startGame();};
+$('start').onclick=()=>{if(REC){sendDown({fiCmd:'start'});if(!overlaySeen)startGame();}else startGame();};
 $('newRound').onclick=()=>{if(remoteMode())sendDown({fiCmd:'new'});else newRound();};
 $('fake10').onclick=()=>{if(remoteMode())sendDown({fiCmd:'fake'});else fake10();};
 $('fakeUp').onclick=()=>{if(remoteMode())sendDown({fiCmd:'up'});else randUp();};
@@ -351,6 +358,7 @@ else if(QS.get('session')){connect();}
 
 /* 紀錄頁：一直確認手機有沒有在線（手機晚開、或總台切換遊戲也能接上） */
 var lastOv=0;
+if(REC){const _fs=setInterval(()=>{if(overlaySeen)clearInterval(_fs);else sendDown({fiCmd:'sync'});},700);}
 if(REC)setInterval(()=>{sendDown({fiCmd:'sync'});if(overlaySeen&&Date.now()-lastOv>15000){overlaySeen=false;setState('📋 紀錄模式：還沒偵測到手機（現在按按鈕會在這頁自己跑）');try{renderUI();}catch(e){}}},4000);
 
 /* 手機直播畫面：用程式算大小（iPhone 不會超出框、字不會被切掉）；總台可切換「填滿」 */

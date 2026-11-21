@@ -46,6 +46,7 @@ body.ov #ovState{display:block}
     <h3>⚙️ 遊戲設定</h3>
     <label>獎品名稱<input type="text" id="prize" placeholder="例：購物金20元"></label>
     <label>最後剩幾人得獎（1～3）<input type="number" id="winN" min="1" max="3"></label>
+    <label>報名倒數（秒；顯示到直播後開始算，時間到自動開始第一輪；0＝手動按）<input type="number" id="auto" min="0" max="900"></label>
     <label>每輪倒數幾秒（FB 有延遲，建議 40 秒以上）<input type="number" id="sec" min="15"></label>
     <label>最少幾人才能開始<input type="number" id="minP" min="1"></label>
 
@@ -86,7 +87,9 @@ const BG=L('popo_bg_v.jpg'),PO=[L('popo1.png'),L('popo2.png')];
 const rid=()=>'shine'+Math.random().toString(36).slice(2,9);
 /* 一次性：留言間隔預設 5 秒 */
 (function(){try{const P='popo_';if(localStorage.getItem(P+'cd5_done'))return;['cfg','cfg2','cfgR'].forEach(k=>{const r=localStorage.getItem(P+k);if(!r)return;const o=JSON.parse(r);o.cd=5;localStorage.setItem(P+k,JSON.stringify(o));});localStorage.setItem(P+'cd5_done','1');}catch(e){}})();
-let cfg=Object.assign({prize:'購物金10元',winN:3,sec:40,minP:3,kSofa:'沙發',kWard:'衣櫃',kCurt:'窗簾',cd:5},LS('cfg',{}));
+/* 一次性：新預設 */
+(function(){try{const P='popo_';if(localStorage.getItem(P+'d3_done'))return;['cfg','cfg2','cfgR'].forEach(k=>{const r=localStorage.getItem(P+k);if(!r)return;const o=JSON.parse(r);o.auto=180;localStorage.setItem(P+k,JSON.stringify(o));});localStorage.setItem(P+'d3_done','1');}catch(e){}})();
+let cfg=Object.assign({auto:180,prize:'購物金10元',winN:3,sec:40,minP:3,kSofa:'沙發',kWard:'衣櫃',kCurt:'窗簾',cd:5},LS('cfg',{}));
 let sid=QS.get('session')||LS('sid','')||rid();SV('sid',sid);
 if(OV){const c=LS('cfgR',null);if(c)Object.assign(cfg,c);}
 let wins=LS('wins',[]);
@@ -104,6 +107,10 @@ const EMPTY=['咦？沒人？','算妳們好運…','我明明聽到聲音…'];
 
 /* ===== 狀態 ===== */
 // phase: lobby（報名）→ count（倒數）→ enter（婆婆進門）→ search（翻找）→ result → count… → end
+/* 報名倒數：遊戲顯示在直播上才開始算；隱藏就重來 */
+let lobbyT0=0,_rl=-1,_rlT=0;const hubHid=()=>{try{return window.parent!==window&&!!window.parent.__hubPaused;}catch(e){return false;}};
+function lobbyLeft(now){if(!(cfg.auto>0))return -1;if(hubHid()){lobbyT0=0;return -1;}if(!lobbyT0)lobbyT0=now;return Math.max(0,Math.ceil(cfg.auto-(now-lobbyT0)/1000));}
+const recLob=()=>_rl<0?-1:Math.max(0,_rl-Math.floor((Date.now()-_rlT)/1000)),mmss=t=>Math.floor(t/60)+':'+String(t%60).padStart(2,'0');
 let phase='lobby',round=0,ppl=[],tEnd=0,po=null,winners=null,endAt=0,bubble=null,remote=null;
 const pops=[];
 const alive=()=>ppl.filter(p=>!p.out);
@@ -144,8 +151,8 @@ function finish(now){phase='end';endAt=now;const w=alive();
   winners={list:w.map(p=>({n:p.name,s:p.img})),prize:cfg.prize,count:ppl.length,rounds:round,t:Date.now()};
   if(!REC){wins.unshift(winners);wins=wins.slice(0,200);SV('wins',wins);}
   sendUp({popoWin:winners,popoState:stateMsg()});renderUI();}
-function newGame(){phase='lobby';round=0;ppl=[];po=null;winners=null;bubble=null;pops.length=0;clearFeed();sendUp({popoState:stateMsg()});renderUI();}
-function stateMsg(){return{phase,round,joined:ppl.length,alive:alive().length,winners,left:phase==='count'?Math.max(0,Math.ceil((tEnd-performance.now())/1000)):0};}
+function newGame(){lobbyT0=0;phase='lobby';round=0;ppl=[];po=null;winners=null;bubble=null;pops.length=0;clearFeed();sendUp({popoState:stateMsg()});renderUI();}
+function stateMsg(){return{lobby:phase==='lobby'?lobbyLeft(performance.now()):-1,phase,round,joined:ppl.length,alive:alive().length,winners,left:phase==='count'?Math.max(0,Math.ceil((tEnd-performance.now())/1000)):0};}
 
 /* ===== 婆婆動作 ===== */
 function stepPo(now,dt){
@@ -174,7 +181,7 @@ let toast=null;function flash(t){toast={t,at:performance.now()};}
 let last=performance.now();
 function frame(now){
   const dt=Math.min(.05,(now-last)/1000);last=now;
-  if(!(REC&&overlaySeen))stepPo(now,dt);
+  if(!(REC&&overlaySeen)){stepPo(now,dt);if(phase==='lobby'&&lobbyLeft(now)===0&&ppl.length>=Math.max(1,cfg.minP))startRound();}
   ctx.clearRect(0,0,W,H);
   if(ok(BG))ctx.drawImage(BG,0,0,W,H);else{ctx.fillStyle='#f3e6d2';ctx.fillRect(0,0,W,H);}
   // 地點標籤
@@ -197,7 +204,7 @@ function frame(now){
   // 下方標題（放下面，才不會被直播人數擋住）
   const kws=`「${f1(cfg.kSofa)}」「${f1(cfg.kWard)}」「${f1(cfg.kCurt)}」`;
   if(phase!=='end'){let t;
-    if(phase==='lobby')t=`👵 婆婆要來突襲了！`;
+    if(phase==='lobby'){const L=REC&&overlaySeen?recLob():lobbyLeft(now);t=L>0?`👵 婆婆要來了！⏱ 報名倒數 ${mmss(L)}`:L===0?`👵 再 ${Math.max(0,Math.max(1,cfg.minP)-ppl.length)} 人躲好就開始！`:`👵 婆婆要來突襲了！`;}
     else if(phase==='count'){const s=Math.max(0,Math.ceil((tEnd-now)/1000));t=`⏰ ${s} 秒後婆婆進來！第${round}輪・剩${alive().length}人`;}
     else t=`😱 婆婆進來了！第${round}輪・剩${alive().length}人`;
     bannerT(t,H-104,36,'#ffe08a',phase==='count'&&tEnd-now<10000?'rgba(160,20,30,.88)':'rgba(0,0,0,.7)');
@@ -280,11 +287,11 @@ function listenCmd(){cmdWs=new WebSocket(SERVER);cmdWs.onopen=()=>cmdWs.send(JSO
   cmdWs.onclose=()=>setTimeout(listenCmd,4000);}
 function listenRec(){recWs=new WebSocket(SERVER);recWs.onopen=()=>{recWs.send(JSON.stringify({join:sid,in:5,out:6}));setTimeout(()=>{sendDown({popoCmd:'sync'});},300);};
   recWs.onmessage=e=>{let m;try{m=JSON.parse(e.data);}catch(x){return;}const d=m.overlayNinja||m;if(d.popoCfgNow)adoptCfg(d.popoCfgNow);
-    if(d.popoState||d.popoWin){lastOv=Date.now();if(!overlaySeen){overlaySeen=true;setState('📋 紀錄模式：已連上手機（代碼 '+sid+'）');}}
-    if(d.popoState){remote=d.popoState;renderUI();}
+    if(d.popoState||d.popoWin){lastOv=Date.now();if(!overlaySeen){overlaySeen=true;try{if(typeof _pend!=='undefined'&&_pend&&Date.now()-_pend.t<10000&&d.popoState&&d.popoState.phase!=='count')sendDown({popoCmd:'start'});_pend=null;}catch(e){}setState('📋 紀錄模式：已連上手機（代碼 '+sid+'）');}}
+    if(d.popoState){remote=d.popoState;_rl=remote.lobby==null?-1:remote.lobby;_rlT=Date.now();renderUI();}
     if(d.popoWin){if(!wins.some(w=>w.t===d.popoWin.t)){wins.unshift(d.popoWin);SV('wins',wins);}renderUI();}};
   recWs.onclose=()=>setTimeout(listenRec,4000);}
-const CFGK=['prize','winN','sec','minP','kSofa','kWard','kCurt'],TXT=['prize','kSofa','kWard','kCurt'];
+const CFGK=['auto','prize','winN','sec','minP','kSofa','kWard','kCurt'],TXT=['prize','kSofa','kWard','kCurt'];
 function pushCfg(){const o={};CFGK.forEach(k=>o[k]=cfg[k]);sendDown({popoCfg:o});}
 setInterval(()=>{if(OV&&phase==='count')sendUp({popoState:stateMsg()});},5000);
 
@@ -295,9 +302,9 @@ function renderUI(){
   $('log').innerHTML=wins.map(w=>`<div>${w.list.map(x=>x.s?`<img src="${esc(x.s)}" referrerpolicy="no-referrer">`:'<span class="ph"></span>').join('')}<span>${esc(w.list.map(x=>x.n).join('、'))}</span><span class="tip">${w.count} 人中</span><span style="margin-left:auto;color:var(--gold);font-weight:700">${esc(w.prize||'')}</span></div>`).join('')||'<div class="tip">還沒有人得獎</div>';
 }
 CFGK.forEach(k=>$(k).value=cfg[k]);$('sid').value=sid;
-CFGK.forEach(k=>$(k).addEventListener('change',()=>{const v=$(k).value;cfg[k]=TXT.includes(k)?(v.trim()||cfg[k]):Math.max(1,+v||1);if(k==='winN')cfg.winN=Math.max(1,Math.min(3,cfg.winN));if(k==='sec')cfg.sec=Math.max(15,cfg.sec);SV('cfg',cfg);pushCfg();renderUI();}));
+CFGK.forEach(k=>$(k).addEventListener('change',()=>{const v=$(k).value;cfg[k]=TXT.includes(k)?(v.trim()||cfg[k]):k==='auto'?Math.max(0,+v||0):Math.max(1,+v||1);if(k==='winN')cfg.winN=Math.max(1,Math.min(3,cfg.winN));if(k==='sec')cfg.sec=Math.max(15,cfg.sec);SV('cfg',cfg);pushCfg();renderUI();}));
 $('sid').onchange=()=>{sid=$('sid').value.trim()||rid();$('sid').value=sid;SV('sid',sid);};
-const ctl=(cmd,fn)=>()=>{if(REC&&overlaySeen)sendDown({popoCmd:cmd});else fn();};
+let _pend=null;const ctl=(cmd,fn)=>()=>{if(REC){sendDown({popoCmd:cmd});if(!overlaySeen){fn();if(cmd==='start')_pend={t:Date.now()};}}else fn();};
 $('startBtn').onclick=ctl('start',startRound);
 $('newBtn').onclick=ctl('new',newGame);
 $('fakeBtn').onclick=ctl('fake',fake10);
@@ -317,6 +324,7 @@ else if(QS.get('session')){connect();}
 
 /* 紀錄頁：一直確認手機有沒有在線（手機晚開、或總台切換遊戲也能接上） */
 var lastOv=0;
+if(REC){const _fs=setInterval(()=>{if(overlaySeen)clearInterval(_fs);else sendDown({popoCmd:'sync'});},700);}
 if(REC)setInterval(()=>{sendDown({popoCmd:'sync'});if(overlaySeen&&Date.now()-lastOv>15000){overlaySeen=false;setState('📋 紀錄模式：還沒偵測到手機（現在按按鈕會在這頁自己跑）');try{renderUI();}catch(e){}}},4000);
 
 /* 手機直播畫面：用程式算大小（iPhone 不會超出框、字不會被切掉）；總台可切換「填滿」 */

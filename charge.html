@@ -290,11 +290,12 @@ function adoptCfg(c){const j=JSON.stringify(c);if(j===_lastCfgJ)return;_lastCfgJ
 function listenRec(){recWs=new WebSocket(SERVER);recWs.onopen=()=>{recWs.send(JSON.stringify({join:sid,in:5,out:6}));setTimeout(()=>sendDown({chCmd:'sync'}),300);};
   recWs.onmessage=e=>{let m;try{m=JSON.parse(e.data);}catch(x){return;}const d=m.overlayNinja||m;
     if(d.chCfgNow)adoptCfg(d.chCfgNow);
-    if(d.chState||d.chAdd||d.chWin){lastOv=Date.now();if(!overlaySeen){overlaySeen=true;setState('📋 紀錄模式：已連上手機（代碼 '+sid+'）');}}
+    if(d.chState||d.chAdd||d.chWin){lastOv=Date.now();if(!overlaySeen){overlaySeen=true;try{if(typeof _pend!=='undefined'&&_pend&&Date.now()-_pend.t<10000&&d.chState&&d.chState.phase!=='play')sendDown({chCmd:'start'});_pend=null;}catch(e){}setState('📋 紀錄模式：已連上手機（代碼 '+sid+'）');}}
     if(d.chAdd){pops.unshift({name:d.chAdd.n,img:d.chAdd.s,t:performance.now()});if(pops.length>6)pops.length=6;}
     if(d.chState){remote=d.chState;if(remote.phase==='full'&&phase!=='full')fullAt=performance.now();phase=remote.phase;pts=remote.pts;who={};(remote.who||[]).forEach(([n,c])=>who[n]=c);if(remote.result)result=remote.result;renderUI();}
     if(d.chWin){result=d.chWin;phase='draw';drawAt=performance.now();if(!wins.some(w=>w.t===d.chWin.t)){wins.unshift(d.chWin);SV('wins',wins);}renderUI();}};
   recWs.onclose=()=>setTimeout(listenRec,4000);}
+if(REC){const _fs=setInterval(()=>{if(overlaySeen)clearInterval(_fs);else sendDown({chCmd:'sync'});},700);}
 if(REC)setInterval(()=>{sendDown({chCmd:'sync'});if(overlaySeen&&Date.now()-lastOv>15000){overlaySeen=false;setState('📋 紀錄模式：還沒偵測到手機（現在按按鈕會在這頁自己跑）');}},4000);
 const CFGK=['fx','phr','czh','cko','kw','goal','cd','pos','winN','autoDraw','prize'],TXT=['fx','phr','czh','cko','kw','pos','autoDraw','prize'],EMPTYOK=['czh','cko'];
 function pushCfg(){const o={};CFGK.forEach(k=>o[k]=cfg[k]);sendDown({chCfg:o});}
@@ -311,7 +312,7 @@ function renderUI(){
 CFGK.forEach(k=>$(k).value=cfg[k]);$('sid').value=sid;
 CFGK.forEach(k=>$(k).addEventListener('change',()=>{const v=$(k).value;cfg[k]=EMPTYOK.includes(k)?v.trim():TXT.includes(k)?(v.trim()||cfg[k]):Math.max(0,+v||0);if(k==='goal')cfg.goal=Math.max(1,cfg.goal);if(k==='winN')cfg.winN=Math.max(1,Math.min(20,cfg.winN));SV('cfg',cfg);pushCfg();renderUI();}));
 $('sid').onchange=()=>{sid=$('sid').value.trim()||rid();$('sid').value=sid;SV('sid',sid);};
-const ctl=(cmd,fn)=>()=>{if(REC&&overlaySeen)sendDown({chCmd:cmd});else fn();};
+let _pend=null;const ctl=(cmd,fn)=>()=>{if(REC){sendDown({chCmd:cmd});if(!overlaySeen){fn();if(cmd==='start')_pend={t:Date.now()};}}else fn();};
 $('startBtn').onclick=()=>{if(phase==='play'&&pts>0&&!confirm('重新開始集氣？目前的集氣會清空。'))return;ctl('start',startGame)();};
 $('drawBtn').onclick=()=>{if(!confirm('現在抽購物金？'))return;ctl('draw',doDraw)();};
 $('fullBtn').onclick=ctl('full',forceFull);

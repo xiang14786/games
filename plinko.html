@@ -92,6 +92,7 @@ body.ov #stage{height:100vh;align-items:flex-end;padding-bottom:4vh}
     <h3>📣 公布中獎</h3>
     <div class="tip" id="roundCnt"></div>
     <label style="display:block;margin-top:6px">單場購物金上限（送到就自動停止；空白＝不限）<input type="number" id="budget" min="0" step="100" placeholder="例：1000"></label>
+    <label style="display:block;margin-top:6px">每輪遊戲時間（秒；顯示到直播後開始倒數，時間到就不再收彈珠；0＝不限）<input type="number" id="gsec" min="0" max="1800"></label>
     <div class="row" style="margin-top:6px"><button class="btn go" id="revealBtn" style="margin-top:0">📣 公布中獎名單</button></div>
     <div class="row" style="margin-top:8px"><button class="btn ghost" id="newRound">🔄 開始新的一輪</button><span class="tip">電腦按，手機直播畫面會同步顯示</span></div>
 
@@ -107,7 +108,7 @@ body.ov #stage{height:100vh;align-items:flex-end;padding-bottom:4vh}
     <div class="tip">盤面共有 <b id="nCups"></b> 個獎洞。設定每種獎要幾個洞（0＝「再接再厲」洞）。獎品名稱空白就是購物金；有填名稱（例：贈品區任選券）就顯示名稱，價值算進單場上限。金額越大的會自動放在越難進的位置。</div>
     <table><thead><tr><th>價值 $</th><th>幾個洞</th><th>獎品名稱</th><th></th></tr></thead><tbody id="tiers"></tbody></table>
     <div class="row" style="margin-top:6px"><button class="btn ghost" id="addTier">＋ 加一種金額</button><button class="btn ghost" id="reset">還原預設</button><span class="tip" id="tierSum"></span></div>
-    <label style="display:block;margin-top:10px">整體中獎率 <b id="wrv" style="color:var(--gold)"></b><input type="range" id="winRate" min="5" max="100" step="5"></label><div class="tip">球進有獎的洞時，只有這個比例會算數，其他會自然彈出來繼續滾。改完按下面「模擬」看每 100 人大約送多少。</div>
+    <label style="display:block;margin-top:10px">整體中獎率 <b id="wrv" style="color:var(--gold)"></b><input type="range" id="winRate" min="5" max="100" step="5"></label><div class="tip">每顆球發射時就決定能不能中獎：沒中的球靠近有獎的洞時會被輕輕帶開，看起來就是沒進洞，不會進洞又彈出來。實際中獎率比這個數字再低一些，按下面的模擬可以看。</div>
     <div class="row" style="margin-top:10px"><button class="btn ghost" id="sim">模擬 1000 顆，看實際中獎率</button></div>
     <div id="simOut"></div>
     <div class="row" style="margin-top:12px"><button class="btn ghost" id="show">只顯示彈珠台（直播畫面用）</button></div>
@@ -164,7 +165,7 @@ function flipHit(b,f){
 }
 function hit(b,px,py,rad,e,fr){if(fr===undefined)fr=0.04;const dx=b.x-px,dy=b.y-py,d=Math.hypot(dx,dy);if(d>=rad||d===0)return false;let nx=dx/d,ny=dy/d;b.x=px+nx*rad;b.y=py+ny*rad;const vn=b.vx*nx+b.vy*ny;if(vn<0){b.vx-=(1+e)*vn*nx;b.vy-=(1+e)*vn*ny;const tx=-ny,ty=nx,vt=b.vx*tx+b.vy*ty;b.vx-=vt*tx*fr;b.vy-=vt*ty*fr;}return true;}
 function seg(b,s,e){const [x1,y1,x2,y2]=s,dx=x2-x1,dy=y2-y1;let t=((b.x-x1)*dx+(b.y-y1)*dy)/(dx*dx+dy*dy);t=Math.max(0,Math.min(1,t));return hit(b,x1+dx*t,y1+dy*t,BR,e,0.002);}
-function newBall(){return{x:(IW+RX)/2,y:FLOOR-BR,vx:0,vy:0,state:'ready',out:false,still:0,t:0};}
+function newBall(){return{x:(IW+RX)/2,y:FLOOR-BR,vx:0,vy:0,state:'ready',out:false,still:0,t:0,blk:undefined};}
 function launch(b,p,rnd){b.vy=-(2150+p*700);b.vx=(rnd()-.5)*10;b.state='fly';}
 function step(b,dt,rnd,onPin){
   if(b.state!=='fly')return;
@@ -178,7 +179,12 @@ function step(b,dt,rnd,onPin){
   for(const f of flips)flipHit(b,f);
   const near=grid[Math.floor(b.x/GS)+','+Math.floor(b.y/GS)]||[];for(const p of near)if(hit(b,p.x,p.y,BR+PR,0.5)){if(onPin)onPin(p);b.vx+=(rnd()-.5)*12;}
   if(b.x>IW&&b.y>FLOOR-BR){b.y=FLOOR-BR;b.vx=0;b.vy=0;b.state='ready';b.out=false;b.t=0;return 'back';}
-  if(b.out){for(let i=0;i<cups.length;i++){const c=cups[i];if(Math.hypot(b.x-c.x,b.y-c.y)<capR[i]&&b.vy>0&&Math.hypot(b.vx,b.vy)<850&&!(b.noCap>b.t)){if(cupWin[i]&&b.luck!==undefined&&rnd()>b.luck){b.vy=-140-rnd()*120;b.vx=(rnd()<.5?-1:1)*(320+rnd()*260);b.noCap=b.t+0.45;if(b.onPop)b.onPop(i);continue;}b.state='in';b.cup=i;return 'cup';}}}
+  if(b.luck!==undefined&&b.blk===undefined)b.blk=rnd()>b.luck; // 每顆球發射後決定一次：這顆能不能進有獎的洞
+  // 沒中獎的球：有獎的洞口上方多一根看不見的釘子（跟旁邊兩根釘子排成一排），球會被擋在洞外彈開、滾走
+  if(b.out&&b.blk){for(let i=0;i<cups.length;i++){if(!cupWin[i])continue;const c=cups[i],dx=b.x-c.x,dy=b.y-c.y;
+      if(Math.abs(dx)<48&&dy<-6&&dy>-84){if(b.sideCup!==i){b.side=Math.abs(dx)>2?(dx>0?1:-1):(b.vx>=0?1:-1);b.sideCup=i;}b.vx+=b.side*1100*dt;}
+      hit(b,c.x,c.y-30,BR+PR,0.5);}}
+  if(b.out){for(let i=0;i<cups.length;i++){const c=cups[i];if(b.blk&&cupWin[i])continue;if(Math.hypot(b.x-c.x,b.y-c.y)<capR[i]&&b.vy>0&&Math.hypot(b.vx,b.vy)<850&&!(b.noCap>b.t)){b.state='in';b.cup=i;return 'cup';}}}
   if(b.y>FLOOR+30){b.state='miss';return 'miss';}
   const sp=Math.hypot(b.vx,b.vy);if(sp<50)b.still+=dt;else b.still=0;
   if(b.still>0.5){b.kick=(b.kick||0)+1;b.still=0;if(b.kick>=3){const dir=b.x>CX?-1:1;let best=null;for(let r=44;r<130&&!best;r+=8)for(const a of [0,.5,-.5,1,-1,1.4,-1.4]){const nx=b.x+Math.sin(a)*r+dir*r*.3,ny=b.y+Math.cos(a)*r;if(nx<LX+BR||nx>IW-BR||ny>FLOOR)continue;if(pins.every(p=>Math.hypot(p.x-nx,p.y-ny)>BR+PR+1)){best=[nx,ny];break;}}if(best){b.x=best[0];b.y=best[1];}b.vx=0;b.vy=150;b.kick=0;}else{b.vx=(rnd()<.5?-1:1)*(250+rnd()*250);b.vy=-180;}}else if(sp>250)b.kick=0;
@@ -250,8 +256,11 @@ document.addEventListener('paste',e=>{const it=[...((e.clipboardData||{}).items|
 let budget=+LS('budget',0),winRate=+LS('winRate',10),stopped=false,bMin=+LS('bmin',5),bMax=+LS('bmax',20),batchN=0,volley=0,firstWait=0;
 function newTarget(){const a=Math.max(1,Math.min(bMin,bMax)),b=Math.max(bMin,bMax,1);batchN=a+Math.floor(Math.random()*(b-a+1));}newTarget();
 const roundTotal=()=>round.reduce((s,r)=>s+r.a,0);
+let gsec=+LS('gsec',120),tEndP=0,timeUp=false;const hubHid=()=>{try{return window.parent!==window&&!!window.parent.__hubPaused;}catch(e){return false;}},mmss=t=>Math.floor(t/60)+':'+String(t%60).padStart(2,'0');
+// 顯示到直播後開始倒數；時間到就不再收新的彈珠（場上的球會滾完）。隱藏再顯示＝重新倒數
+function gameLeft(){if(REC||!(gsec>0))return -1;if(hubHid()){tEndP=0;timeUp=false;return -1;}if(timeUp)return 0;if(!tEndP)tEndP=Date.now()+gsec*1000;const L=Math.max(0,Math.ceil((tEndP-Date.now())/1000));if(L===0){timeUp=true;pending.length=0;renderQueue();}return L;}
 const pending=[];let balls=[],pull=0,lastLaunch=0,reveal=null,floaters=[],round=LS('round',[]);const MAXFLY=25;
-function addBall(name,img,src){if(stopped)return;if(pending.length<80){if(!pending.length)firstWait=performance.now();pending.push({name,img,src});}renderQueue();}
+function addBall(name,img,src){if(stopped||timeUp)return;if(pending.length<80){if(!pending.length)firstWait=performance.now();pending.push({name,img,src});}renderQueue();}
 function urlImg(u){const im=new Image();im.referrerPolicy='no-referrer';im.src=u;return im;}
 function loadBall(){
   const n=document.getElementById('nm').value.trim();if(!n&&!curImg){document.getElementById('nm').focus();return;}
@@ -283,7 +292,7 @@ function checkBudget(){if(!budget){stopped=false;return;}const minWin=Math.min(.
 /* --- 公布 / 新一輪 --- */
 const imgCache=new Map();function imgOf(s){if(!s)return null;if(!imgCache.has(s))imgCache.set(s,urlImg(s));return imgCache.get(s);}
 function doReveal(on){if(on){const list=round.slice().sort((x,y)=>y.a-x.a);reveal={list,t0:performance.now()};}else reveal=null;document.getElementById('revealBtn').textContent=reveal?'🙈 收起中獎名單':'📣 公布中獎名單';}
-function doNewRound(){if(typeof clearFeed==='function')clearFeed();stopped=false;round=[];SV('round',round);reveal=null;document.getElementById('revealBtn').textContent='📣 公布中獎名單';renderQueue();}
+function doNewRound(){if(typeof clearFeed==='function')clearFeed();stopped=false;timeUp=false;tEndP=0;round=[];SV('round',round);reveal=null;document.getElementById('revealBtn').textContent='📣 公布中獎名單';renderQueue();}
 let sendCmd=null;
 document.getElementById('revealBtn').onclick=()=>{const on=!reveal;doReveal(on);if(sendCmd)sendCmd(on?'reveal':'hide');};
 document.getElementById('newRound').onclick=()=>{if(!confirm('開始新的一輪？本輪中獎名單會清空（中獎紀錄還會保留）。'))return;doNewRound();if(sendCmd)sendCmd('reset');};
@@ -406,7 +415,7 @@ function frame(now){DBG.frames++;
   }
   if(!reveal){const k0=(net.kw.split(/[,，]/)[0]||'抽').trim();const n=pending.length;const dots='.'.repeat(1+Math.floor(now/400)%3);
     // 放在最下面（彈珠台下方的空間），才不會被直播人數擋住
-    bannerT(`🎯 留言「${k0==='*'?'任何字':k0}」就能射彈珠！${n&&!volley&&batchN>1?`　⚡集氣中 ${n} 顆${dots}`:''}`,H+35,30);}
+    const GL=gameLeft();if(GL===0)bannerT('⏱ 時間到！這輪結束囉',H+35,34,'#ff9a9a');else bannerT(`${GL>0?`⏱${mmss(GL)}　`:''}🎯 留言「${k0==='*'?'任何字':k0}」射彈珠！${n&&!volley&&batchN>1?`　⚡集氣中 ${n} 顆${dots}`:''}`,H+35,30,GL>0&&GL<=10?'#ff9a9a':undefined);}
   if(reveal)drawReveal(now);
   drawSide(now,`留言「${(net.kw.split(/[,，]/)[0]||'抽').trim()}」就會出現在這`);
   if(toast){const age=now-toast.at;if(age>1800)toast=null;else{ctx.globalAlpha=Math.min(1,(1800-age)/300);ctx.fillStyle='rgba(0,0,0,.75)';ctx.font='bold 28px '+FONT;const tw=ctx.measureText(toast.t).width+40;rr(W/2-tw/2,420,tw,56,28);ctx.fill();ctx.fillStyle='#fff';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(toast.t,W/2,448);ctx.globalAlpha=1;}}
@@ -445,7 +454,9 @@ renderQueue();requestAnimationFrame(frame);
 const QS=new URLSearchParams(location.search);
 const OV=QS.get('mode')==='overlay';
 const rid=()=>'shine'+Math.random().toString(36).slice(2,9);
-let net={kw:LS('kw','抽'),cd:LS('cd',5),sid:LS('sid','')||rid(),needName:LS('needName',true)};SV('sid',net.sid);
+/* 一次性：關鍵字預設、每輪 2 分鐘 */
+(function(){try{const P='pb_';if(localStorage.getItem(P+'d3_done'))return;localStorage.setItem(P+'kw',JSON.stringify('我是小彈珠'));localStorage.setItem(P+'gsec','120');localStorage.setItem(P+'d3_done','1');}catch(e){}})();
+let net={kw:LS('kw','我是小彈珠'),cd:LS('cd',5),sid:LS('sid','')||rid(),needName:LS('needName',true)};SV('sid',net.sid);
 if(QS.get('session'))net.sid=QS.get('session');if(QS.get('kw'))net.kw=QS.get('kw');if(QS.get('cd'))net.cd=+QS.get('cd');
 if(QS.get('t')){try{tiers=QS.get('t').split('_').map(x=>{const p=x.split('x');return[+p[0],+p[1],p.slice(2).join('x')||''];}).filter(x=>!isNaN(x[0])&&!isNaN(x[1]));assign();renderTiers();}catch(e){}}
 const $=id=>document.getElementById(id);
@@ -508,7 +519,7 @@ const TDEF={rx:0,ry:0,rz:0,sc:100,op:85};
 var tilt=Object.assign({},TDEF,LS('tilt',{}));
 ['rx','ry','rz','sc','op'].forEach(k=>{if(QS.get(k)!=null)tilt[k]=+QS.get(k);});
 if(OV){const r=LS('tiltR',null);if(r)tilt=Object.assign({},TDEF,r);}
-function pushCfg(){if(OV||!resWs||resWs.readyState!==1)return;try{resWs.send(JSON.stringify({plinkoCfg:{needName:net.needName,kw:net.kw,cd:net.cd,bg:budget,tiers,bmin:bMin,bmax:bMax,wr:winRate}}));}catch(e){}}
+function pushCfg(){if(OV||!resWs||resWs.readyState!==1)return;try{resWs.send(JSON.stringify({plinkoCfg:{needName:net.needName,kw:net.kw,cd:net.cd,bg:budget,tiers,bmin:bMin,bmax:bMax,wr:winRate,gs:gsec}}));}catch(e){}}
 let tiltT=0;function pushTilt(){if(!resWs||resWs.readyState!==1)return;clearTimeout(tiltT);tiltT=setTimeout(()=>{try{resWs.send(JSON.stringify({plinkoTilt:tilt}));}catch(e){}},80);}
 function applyTilt(){tilt=Object.assign({},TDEF,{op:100});cv.style.transform=`rotateX(${tilt.rx}deg) rotateY(${tilt.ry}deg) rotateZ(${tilt.rz}deg) scale(${tilt.sc/100})`;cv.style.opacity=tilt.op/100;
   ['rx','ry','rz','sc','op'].forEach(k=>{$(k).value=tilt[k];$('v_'+k).textContent=tilt[k]+(k==='sc'||k==='op'?'%':'°');});}
@@ -521,10 +532,11 @@ if(OV){setTimeout(()=>{$('ovState').style.transition='opacity 1s';$('ovState').s
 /* ===== 單場上限 ===== */
 if(QS.get('bg')!=null)budget=+QS.get('bg')||0;
 $('budget').value=budget||'';
+$('gsec').value=gsec;$('gsec').onchange=()=>{gsec=Math.max(0,+$('gsec').value||0);SV('gsec',gsec);pushCfg();};
 $('budget').onchange=()=>{budget=Math.max(0,+$('budget').value||0);SV('budget',budget);stopped=false;checkBudget();renderQueue();pushCfg();};
 renderQueue();
 
-function applyCfg(c){if(!c)return;if(c.wr!=null){winRate=+c.wr;$('winRate').value=winRate;$('wrv').textContent=winRate+'%';}if(c.needName!=null){net.needName=!!c.needName;$('needName').checked=net.needName;}if(c.kw){net.kw=c.kw;$('kw').value=c.kw;}if(c.cd!=null){net.cd=+c.cd;$('cd').value=c.cd;}if(c.bg!=null){budget=+c.bg||0;$('budget').value=budget||'';stopped=false;}if(Array.isArray(c.tiers)&&c.tiers.length){tiers=c.tiers;assign();renderTiers();}if(c.bmin!=null){bMin=+c.bmin||1;bMax=+c.bmax||bMin;$('bmin').value=bMin;$('bmax').value=bMax;newTarget();}checkBudget();renderQueue();}
+function applyCfg(c){if(!c)return;if(c.gs!=null){gsec=+c.gs||0;$('gsec').value=gsec;}if(c.wr!=null){winRate=+c.wr;$('winRate').value=winRate;$('wrv').textContent=winRate+'%';}if(c.needName!=null){net.needName=!!c.needName;$('needName').checked=net.needName;}if(c.kw){net.kw=c.kw;$('kw').value=c.kw;}if(c.cd!=null){net.cd=+c.cd;$('cd').value=c.cd;}if(c.bg!=null){budget=+c.bg||0;$('budget').value=budget||'';stopped=false;}if(Array.isArray(c.tiers)&&c.tiers.length){tiers=c.tiers;assign();renderTiers();}if(c.bmin!=null){bMin=+c.bmin||1;bMax=+c.bmax||bMin;$('bmin').value=bMin;$('bmax').value=bMax;newTarget();}checkBudget();renderQueue();}
 if(OV){const c=LS('cfgR',null);if(c)applyCfg(c);}
 
 /* ===== 累積幾顆一起發射 ===== */
@@ -544,10 +556,10 @@ if(OV){window.__fill=window.__fill||false;window.__fit=function(){const c=docume
   addEventListener('resize',window.__fit);setInterval(window.__fit,1000);window.__fit();}
 
 /* 兩台電腦同步：以手機上的設定為準 */
-function curCfg(){return{needName:net.needName,kw:net.kw,cd:net.cd,bg:budget,tiers,bmin:bMin,bmax:bMax,wr:winRate};}
+function curCfg(){return{needName:net.needName,kw:net.kw,cd:net.cd,bg:budget,tiers,bmin:bMin,bmax:bMax,wr:winRate,gs:gsec};}
 var _lastCfgJ='';
 function adoptCfgP(c){const j=JSON.stringify(c);if(j===_lastCfgJ)return;_lastCfgJ=j;if(JSON.stringify(curCfg())===j)return;
   const keepStop=stopped;applyCfg(c);stopped=keepStop;
-  try{SV('kw',net.kw);SV('cd',net.cd);SV('needName',net.needName);SV('budget',budget);SV('tiers4',tiers);SV('bmin',bMin);SV('bmax',bMax);SV('winRate',winRate);}catch(e){}}
+  try{SV('kw',net.kw);SV('cd',net.cd);SV('needName',net.needName);SV('budget',budget);SV('tiers4',tiers);SV('bmin',bMin);SV('bmax',bMax);SV('winRate',winRate);SV('gsec',gsec);}catch(e){}}
 if(REC)setInterval(()=>{if(sendCmd)sendCmd('sync');},4000);
 </script></body></html>

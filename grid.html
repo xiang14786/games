@@ -86,7 +86,9 @@ const ok=im=>im&&im.complete&&im.naturalWidth>0;
 const rid=()=>'shine'+Math.random().toString(36).slice(2,9);
 /* 一次性：留言間隔預設 5 秒 */
 (function(){try{const P='gd_';if(localStorage.getItem(P+'cd5_done'))return;['cfg','cfg2','cfgR'].forEach(k=>{const r=localStorage.getItem(P+k);if(!r)return;const o=JSON.parse(r);o.cd=5;localStorage.setItem(P+k,JSON.stringify(o));});localStorage.setItem(P+'cd5_done','1');}catch(e){}})();
-let cfg=Object.assign({chars:'我是超級奶爸無敵帥',pos:'tr',maxHp:5,cd:5,dur:0,prizeTop:'購物金10元',prizeCell:''},LS('cfg',{}));
+/* 一次性：新預設 */
+(function(){try{const P='gd_';if(localStorage.getItem(P+'d3_done'))return;['cfg','cfg2','cfgR'].forEach(k=>{const r=localStorage.getItem(P+k);if(!r)return;const o=JSON.parse(r);o.chars='我愛看SHINE欣';o.dur=2;localStorage.setItem(P+k,JSON.stringify(o));});localStorage.removeItem(P+'cells');localStorage.removeItem(P+'phase');localStorage.setItem(P+'d3_done','1');}catch(e){}})();
+let cfg=Object.assign({chars:'我愛看SHINE欣',pos:'tr',maxHp:5,cd:5,dur:2,prizeTop:'購物金10元',prizeCell:''},LS('cfg',{}));
 let sid=QS.get('session')||LS('sid','')||rid();SV('sid',sid);
 if(OV){const c=LS('cfgR',null);if(c)Object.assign(cfg,c);}
 let wins=LS('wins',[]);
@@ -119,7 +121,8 @@ function boom(i,col){const r=cellRect(i);for(let k=0;k<16;k++){const a=Math.rand
 
 /* ===== 畫面 ===== */
 const CS=128,GAP=8,GS=CS*3+GAP*2;
-function gridXY(){const p=cfg.pos||'tr';return{x:p[1]==='r'?W-GS-16:16,y:p[0]==='t'?190:H-GS-150};}
+const SC=0.68; // 整組縮小，才不會擋到直播畫面
+function gridXY(){const p=cfg.pos||'tr';return{x:p[1]==='r'?W/SC-GS-14:14,y:p[0]==='t'?76:H/SC-GS-190};}
 function cellRect(i){const g=gridXY();return{x:g.x+(i%3)*(CS+GAP),y:g.y+Math.floor(i/3)*(CS+GAP),s:CS};}
 function drawAv(img,name,x,y,r){const im=imgOf(img);ctx.save();ctx.beginPath();ctx.arc(x,y,r,0,7);ctx.clip();if(ok(im))ctx.drawImage(im,x-r,y-r,r*2,r*2);else{ctx.fillStyle='#c9748a';ctx.fillRect(x-r,y-r,r*2,r*2);ctx.fillStyle='#fff';ctx.font=`bold ${r|0}px ${FONT}`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText((name||'?')[0],x,y+2);}ctx.restore();}
 function txt(t,x,y,size,col,align,stroke){ctx.font=`bold ${size}px ${FONT}`;ctx.textAlign=align||'center';ctx.textBaseline='middle';if(stroke){ctx.lineWidth=6;ctx.strokeStyle='rgba(0,0,0,.75)';ctx.strokeText(t,x,y);}ctx.fillStyle=col||'#fff';ctx.fillText(t,x,y);}
@@ -149,7 +152,7 @@ let last=performance.now();
 function frame(now){
   const dt=Math.min(.05,(now-last)/1000);last=now;ctx.clearRect(0,0,W,H);
   if(phase==='play'&&cfg.dur>0&&!(REC&&overlaySeen)&&Date.now()-t0>cfg.dur*60000)finish();
-  const g=gridXY();
+  const g=gridXY();ctx.save();ctx.scale(SC,SC);
   // 標題（九宮格上方）
   const left=cfg.dur>0&&phase==='play'?Math.max(0,cfg.dur*60-Math.floor((Date.now()-t0)/1000)):-1;
   ctx.fillStyle='rgba(10,14,24,.6)';rr(g.x,g.y-62,GS,52,26);ctx.fill();
@@ -160,6 +163,7 @@ function frame(now){
   y+=40;feed.slice(0,3).forEach((e,i)=>{const age=now-e.t;ctx.globalAlpha=Math.min(1,age/250)*(1-i*.22);ctx.fillStyle='rgba(10,14,24,.55)';rr(g.x,y-19,GS,38,19);ctx.fill();
     drawAv(e.img,e.name,g.x+22,y,15);txt(`${e.name.length>5?e.name.slice(0,5)+'…':e.name} ${e.txt}`,g.x+44,y,20,e.c,'left');ctx.globalAlpha=1;y+=44;});
   for(let i=fxs.length-1;i>=0;i--){const f=fxs[i],k=(now-f.t0)/900;if(k>1){fxs.splice(i,1);continue;}f.x+=f.vx*dt;f.y+=f.vy*dt;ctx.globalAlpha=1-k;ctx.fillStyle=f.c;ctx.beginPath();ctx.arc(f.x,f.y,6*(1-k)+1,0,7);ctx.fill();ctx.globalAlpha=1;}
+  ctx.restore();
   // 結算卡
   if(phase==='end'&&result){const k=Math.min(1,(now-endAt)/500);ctx.save();ctx.globalAlpha=k;const top=H/2-260;
     ctx.fillStyle='rgba(12,14,22,.9)';rr(40,top,W-80,520,30);ctx.fill();ctx.strokeStyle='#f3d9a6';ctx.lineWidth=5;ctx.stroke();
@@ -182,7 +186,7 @@ function onComment(name,msg,img){try{if(window.parent!==window&&window.parent.__
   name=(name||'').trim();if(!name||phase!=='play')return;
   msg=norm(String(msg||'').replace(/<img[^>]*alt="([^"]*)"[^>]*>/gi,'$1').replace(/<[^>]*>/g,''));
   // 一則留言只算一格（取最先出現的那個「字+1」）；同一人幾秒內只能動作一次（不分格子）
-  let best=-1,pos=1e9;cells.forEach((c,i)=>{const p=msg.indexOf(c.ch+'+1');if(p>=0&&p<pos){pos=p;best=i;}});
+  let best=-1,pos=1e9;const MU=msg.replace(/[！-～]/g,c=>String.fromCharCode(c.charCodeAt(0)-0xFEE0)).toUpperCase().replace(/\s+/g,'');cells.forEach((c,i)=>{const p=MU.indexOf(String(c.ch).toUpperCase()+'+1');if(p>=0&&p<pos){pos=p;best=i;}});
   if(best<0)return;const now=Date.now();if(now-(lastBy.get(name)||0)<(+cfg.cd||0)*1000)return;lastBy.set(name,now);act(best,name,img);
 }
 /* ===== 連線 ===== */
@@ -206,10 +210,11 @@ function adoptCfg(c){const j=JSON.stringify(c);if(j===_lastCfgJ)return;_lastCfgJ
 function listenRec(){recWs=new WebSocket(SERVER);recWs.onopen=()=>{recWs.send(JSON.stringify({join:sid,in:5,out:6}));setTimeout(()=>sendDown({gdCmd:'sync'}),300);};
   recWs.onmessage=e=>{let m;try{m=JSON.parse(e.data);}catch(x){return;}const d=m.overlayNinja||m;
     if(d.gdCfgNow)adoptCfg(d.gdCfgNow);
-    if(d.gdState||d.gdWin){lastOv=Date.now();if(!overlaySeen){overlaySeen=true;setState('📋 紀錄模式：已連上手機（代碼 '+sid+'）');}}
+    if(d.gdState||d.gdWin){lastOv=Date.now();if(!overlaySeen){overlaySeen=true;try{if(typeof _pend!=='undefined'&&_pend&&Date.now()-_pend.t<10000&&d.gdState&&d.gdState.phase!=='play')sendDown({gdCmd:'start'});_pend=null;}catch(e){}setState('📋 紀錄模式：已連上手機（代碼 '+sid+'）');}}
     if(d.gdState){remote=d.gdState;const now=performance.now();const old=cells;phase=remote.phase;cells=remote.cells.map((c,i)=>{const o=old[i]||{};const n={...c,hit:o.hit||0,take:o.take||0,heal:o.heal||0};if(o.n&&o.n===c.n&&c.hp<o.hp)n.hit=now;if(c.n&&o.n!==c.n){n.take=now;if(c.n)addFeed(c.n,c.s,`佔領「${c.ch}」`,'#9fe7a4');}else if(c.n&&c.hp>(o.hp||0))n.heal=now;return n;});if(remote.result)result=remote.result;renderUI();}
     if(d.gdWin){result=d.gdWin;phase='end';endAt=performance.now();if(!wins.some(w=>w.t===d.gdWin.t)){wins.unshift(d.gdWin);SV('wins',wins);}renderUI();}};
   recWs.onclose=()=>setTimeout(listenRec,4000);}
+if(REC){const _fs=setInterval(()=>{if(overlaySeen)clearInterval(_fs);else sendDown({gdCmd:'sync'});},700);}
 if(REC)setInterval(()=>{sendDown({gdCmd:'sync'});if(overlaySeen&&Date.now()-lastOv>15000){overlaySeen=false;setState('📋 紀錄模式：還沒偵測到手機（現在按按鈕會在這頁自己跑）');}},4000);
 const CFGK=['pos','maxHp','cd','dur','prizeTop','prizeCell'];
 function pushCfg(){const o={chars:cfg.chars};CFGK.forEach(k=>o[k]=cfg[k]);sendDown({gdCfg:o});}
@@ -226,7 +231,7 @@ function paintChars(){const ch=charsOf();$('cells').innerHTML=ch.map((c,i)=>`<in
 paintChars();CFGK.forEach(k=>$(k).value=cfg[k]);$('sid').value=sid;
 CFGK.forEach(k=>$(k).addEventListener('change',()=>{const v=$(k).value;cfg[k]=(k==='pos'||k.startsWith('prize'))?v.trim():Math.max(0,+v||0);if(k==='maxHp')cfg.maxHp=Math.max(1,Math.min(20,cfg.maxHp));SV('cfg',cfg);pushCfg();renderUI();}));
 $('sid').onchange=()=>{sid=$('sid').value.trim()||rid();$('sid').value=sid;SV('sid',sid);};
-const ctl=(cmd,fn)=>()=>{if(REC&&overlaySeen)sendDown({gdCmd:cmd});else fn();};
+let _pend=null;const ctl=(cmd,fn)=>()=>{if(REC){sendDown({gdCmd:cmd});if(!overlaySeen){fn();if(cmd==='start')_pend={t:Date.now()};}}else fn();};
 $('startBtn').onclick=ctl('start',startGame);
 $('endBtn').onclick=()=>{if(!confirm('現在結算、公布地主？'))return;ctl('end',finish)();};
 $('newBtn').onclick=()=>{if(phase==='play'&&!confirm('清空重來？目前的佔領會全部清掉。'))return;ctl('new',newGame)();};

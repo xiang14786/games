@@ -86,7 +86,9 @@ const ZIMG=[1,2,3,4].map(i=>{const im=new Image();im.src=`zh${i}.png`;return im;
 const rid=()=>'shine'+Math.random().toString(36).slice(2,9);
 /* 一次性：留言間隔預設 5 秒 */
 (function(){try{const P='zh_';if(localStorage.getItem(P+'cd5_done'))return;['cfg','cfg2','cfgR'].forEach(k=>{const r=localStorage.getItem(P+k);if(!r)return;const o=JSON.parse(r);o.cd=5;localStorage.setItem(P+k,JSON.stringify(o));});localStorage.setItem(P+'cd5_done','1');}catch(e){}})();
-let cfg=Object.assign({kw:'揍,打',cd:5,hp:500,winMode:'last',prize:'購物金10元',crit:'喜歡,愛心,❤,♥,💕,💖,😍,🥰,💗,💓'},LS('cfg',{}));
+/* 一次性：新預設 */
+(function(){try{const P='zh_';if(localStorage.getItem(P+'d3_done'))return;['cfg','cfg2','cfgR'].forEach(k=>{const r=localStorage.getItem(P+k);if(!r)return;const o=JSON.parse(r);o.kw='❤,♥,💕,💖,💗,💓,💞,💘,💝,💟,❣,💛,🧡,💚,💙,💜,🩷,🩵,🤍,🖤,🤎,😍,🥰,😘,😻,愛心';o.crit='揍,打,喜歡';localStorage.setItem(P+k,JSON.stringify(o));});localStorage.setItem(P+'d3_done','1');}catch(e){}})();
+let cfg=Object.assign({kw:'❤,♥,💕,💖,💗,💓,💞,💘,💝,💟,❣,💛,🧡,💚,💙,💜,🩷,🩵,🤍,🖤,🤎,😍,🥰,😘,😻,愛心',cd:5,hp:500,winMode:'last',prize:'購物金10元',crit:'揍,打,喜歡'},LS('cfg',{}));
 let sid=QS.get('session')||LS('sid','')||rid();SV('sid',sid);
 if(OV){const c=LS('cfgR',null);if(c)Object.assign(cfg,c);}
 let boss=LS('boss',null),wins=LS('wins',[]);
@@ -208,7 +210,7 @@ function frame(now){
     const bw=640,bx=W/2-bw/2,by=H-112,r=boss.hp/boss.max;ctx.fillStyle='rgba(0,0,0,.6)';rr(bx-6,by-6,bw+12,44,22);ctx.fill();
     ctx.fillStyle='#3a1a22';rr(bx,by,bw,32,16);ctx.fill();if(r>0){const g=ctx.createLinearGradient(bx,0,bx+bw,0);g.addColorStop(0,'#ff4d6d');g.addColorStop(1,'#ff9a5a');ctx.fillStyle=g;rr(bx,by,Math.max(32,bw*r),32,16);ctx.fill();}
     ctx.fillStyle='#fff';ctx.font='bold 22px '+FONT;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(`渣男血量 ${boss.hp>0?Math.max(1,Math.ceil(boss.hp/boss.max*100)):0}%`,W/2,by+17);
-    bannerT(`👊 留言「${kw==='*'?'任何字':kw}」爆揍渣男！${cr?`　「${cr}」＝💥暴擊×3`:''}`,H-38,30);}
+    bannerT(`👊 留言「${kw==='*'?'任何字':kw}」爆揍渣男！${cr?`　「${cr}」＝💥暴擊×3`:''}`,H-46,54);}
   // KO 得獎卡
   if(boss.ko&&boss.winner&&(!koAt||now-koAt>1100)){const k=koAt?Math.min(1,(now-koAt-1100)/400):1,w=boss.winner;ctx.globalAlpha=k;
     ctx.fillStyle='rgba(12,14,22,.92)';rr(170,120,660,440,30);ctx.fill();ctx.strokeStyle='#f3d9a6';ctx.lineWidth=5;ctx.stroke();
@@ -271,12 +273,12 @@ function listenCmd(){cmdWs=new WebSocket(SERVER);cmdWs.onopen=()=>cmdWs.send(JSO
   cmdWs.onmessage=e=>{let m;try{m=JSON.parse(e.data);}catch(x){return;}const d=m.overlayNinja||m;
     if(d.zhCfg){Object.assign(cfg,d.zhCfg);SV('cfgR',cfg);renderUI();sendUp({zhCfgNow:cfg});}
     if(d.zhCmd==='new'){if(d.cfg)Object.assign(cfg,d.cfg);newBoss(d.hp);}
-    if(d.zhCmd==='hit')onComment(d.n||'測試',d.crit?'喜歡':'揍',d.s||'');
+    if(d.zhCmd==='hit')onComment(d.n||'測試',(cfg.kw.split(/[,，]/)[0]||'揍')+(d.crit?(cfg.crit.split(/[,，]/)[0]||''):''),d.s||'');
     if(d.zhCmd==='sync')sendUp({zhCfgNow:cfg});if(d.zhCmd==='sync'||d.zhCmd==='new')sendUp({zhState:boss});};
   cmdWs.onclose=()=>setTimeout(listenCmd,4000);}
 function listenRec(){recWs=new WebSocket(SERVER);recWs.onopen=()=>{recWs.send(JSON.stringify({join:sid,in:5,out:6}));setTimeout(()=>{sendDown({zhCmd:'sync'});},300);};
   recWs.onmessage=e=>{let m;try{m=JSON.parse(e.data);}catch(x){return;}const d=m.overlayNinja||m;if(d.zhCfgNow)adoptCfg(d.zhCfgNow);
-    if(d.zhState||d.zhHit||d.zhWin){lastOv=Date.now();if(!overlaySeen){overlaySeen=true;setState('📋 紀錄模式：已連上手機（代碼 '+sid+'）');}}
+    if(d.zhState||d.zhHit||d.zhWin){lastOv=Date.now();if(!overlaySeen){overlaySeen=true;try{if(typeof _pend!=='undefined'&&_pend&&Date.now()-_pend.t<10000&&d.zhState&&d.zhState.phase!=='battle')sendDown({zhCmd:'start'});_pend=null;}catch(e){}setState('📋 紀錄模式：已連上手機（代碼 '+sid+'）');}}
     if(d.zhState){boss=d.zhState;SV('boss',boss);if(!boss.ko)koAt=0;renderUI();}
     if(d.zhHit&&!boss.ko){boss.hp=d.zhHit.hp;boss.max=d.zhHit.max;boss.hits++;fire(d.zhHit.n,d.zhHit.s,d.zhHit.crit);renderUI();}
     if(d.zhWin){boss.ko=true;boss.hp=0;boss.winner=d.zhWin;koAt=performance.now();if(!wins.some(w=>w.t===d.zhWin.t)){wins.unshift(d.zhWin);SV('wins',wins);}renderUI();}};
@@ -295,7 +297,7 @@ function saveCfg(){cfg.kw=$('kw').value.trim()||'揍';cfg.cd=Math.max(0,+$('cd')
 $('sid').onchange=()=>{sid=$('sid').value.trim()||rid();$('sid').value=sid;SV('sid',sid);};
 $('newBtn').onclick=()=>{if(!boss.ko&&boss.hits&&!confirm('換一個新渣男？目前的進度會清空。'))return;newBoss(cfg.hp);sendDown({zhCmd:'new',hp:cfg.hp,cfg:{kw:cfg.kw,cd:cfg.cd,crit:cfg.crit,winMode:cfg.winMode,prize:cfg.prize,hp:cfg.hp}});};
 $('conn').onclick=()=>{connect();if(!REC&&!recWs)listenRec();};
-function fakeHit(n,crit){if(REC&&overlaySeen)sendDown({zhCmd:'hit',n,crit});else onComment(n,crit?'喜歡':'揍','');}
+function fakeHit(n,crit){if(REC&&overlaySeen)sendDown({zhCmd:'hit',n,crit});else onComment(n,(cfg.kw.split(/[,，]/)[0]||'揍')+(crit?(cfg.crit.split(/[,，]/)[0]||''):''),'');}
 $('fakeGo').onclick=()=>fakeHit($('fakeN').value.trim()||'測試觀眾',false);
 $('fake10').onclick=()=>{for(let i=0;i<10;i++)fakeHit('測試'+Math.floor(Math.random()*1000),Math.random()<.25);};
 const base=()=>location.href.split('?')[0];
@@ -313,12 +315,13 @@ else if(QS.get('session')){connect();}
 
 /* 紀錄頁：一直確認手機有沒有在線（手機晚開、或總台切換遊戲也能接上） */
 var lastOv=0;
+if(REC){const _fs=setInterval(()=>{if(overlaySeen)clearInterval(_fs);else sendDown({zhCmd:'sync'});},700);}
 if(REC)setInterval(()=>{sendDown({zhCmd:'sync'});if(overlaySeen&&Date.now()-lastOv>15000){overlaySeen=false;setState('📋 紀錄模式：還沒偵測到手機（現在按按鈕會在這頁自己跑）');try{renderUI();}catch(e){}}},4000);
 
 /* 手機直播畫面：用程式算大小（iPhone 不會超出框、字不會被切掉）；總台可切換「填滿」 */
 if(OV){window.__fill=window.__fill||false;window.__fit=function(){const c=document.getElementById('cv');if(!c)return;const vw=innerWidth,vh=innerHeight;let w,h;
   if(window.__fill){w=vw;h=vh;}else{const s=Math.min(vw/c.width,vh/c.height)*0.9;w=c.width*s;h=c.height*s;}
-  Object.assign(c.style,{position:'fixed',left:((vw-w)/2)+'px',top:Math.round(vh*0.02)+'px',width:w+'px',height:h+'px',maxHeight:'none',aspectRatio:'auto',objectFit:'fill',transform:'none',margin:'0'});};
+  Object.assign(c.style,{position:'fixed',left:((vw-w)/2)+'px',top:Math.round(-h*0.10)+'px',width:w+'px',height:h+'px',maxHeight:'none',aspectRatio:'auto',objectFit:'fill',transform:'none',margin:'0'});};
   addEventListener('resize',window.__fit);setInterval(window.__fit,1000);window.__fit();}
 
 /* 兩台電腦同步：以手機上的設定為準，大家都跟著手機 */
