@@ -46,7 +46,8 @@ h1{font-size:17px;margin:0 4px 0 0;color:var(--gold);white-space:nowrap}
 #recFrame{flex:1;width:100%;border:0;background:var(--bg)}
 #empty{flex:1;display:flex;align-items:center;justify-content:center;font-size:24px;color:var(--sub)}
 #fxWrap{position:fixed;inset:0;z-index:6;opacity:0;transition:opacity .5s;pointer-events:none;background:transparent;overflow:hidden}
-#fxWrap video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+#fxWrap video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0.01}
+#fxWrap canvas{position:absolute;inset:0;width:100%;height:100%}
 #fxTxt{position:absolute;left:5%;right:5%;top:9%;text-align:center;color:#fff;font-family:"Noto Serif TC","Noto Serif KR","Songti TC","PMingLiU",serif;font-weight:700;text-shadow:0 .4vw 2.4vw rgba(50,15,65,.95),0 0 1.2vw rgba(50,15,65,.8),0 0 3vw rgba(255,190,220,.35)}
 #fxTxt div{opacity:0;transform:translateY(1.6vw);filter:blur(1.2vw);transition:opacity 1.3s ease,transform 1.3s ease,filter 1.3s ease}
 #fxTxt.on div{opacity:1;transform:none;filter:none}
@@ -132,20 +133,27 @@ if(OV){
   /* ===== 特效影片：全螢幕播放，播完自動淡出 ===== */
   const fxW=document.createElement('div');fxW.id='fxWrap';fxW.innerHTML='<div id="fxTxt"><div class="zh"></div><div class="ln"></div><div class="ko"></div></div>';document.body.appendChild(fxW);
   const fxT=fxW.querySelector('#fxTxt');let fxV=null,fxTok=0,fxEndT=0;const fxBlob={};
+  // PRISM 擷取網頁畫面時抓不到 <video> 圖層，所以把影片每一格畫到 canvas 上
+  const fxC=document.createElement('canvas');fxW.insertBefore(fxC,fxT);const fxX=fxC.getContext('2d');
+  function fxDraw(v,tok){if(tok!==fxTok)return;const dpr=Math.min(2,window.devicePixelRatio||1),cw=Math.round(innerWidth*dpr),ch=Math.round(innerHeight*dpr);if(fxC.width!==cw||fxC.height!==ch){fxC.width=cw;fxC.height=ch;}
+    if(v.readyState>=2&&v.videoWidth){const s=Math.max(cw/v.videoWidth,ch/v.videoHeight),w=v.videoWidth*s,h=v.videoHeight*s;try{fxX.drawImage(v,(cw-w)/2,(ch-h)/2,w,h);}catch(e){}}
+    requestAnimationFrame(()=>fxDraw(v,tok));}
+  const fxLog=o=>{try{ws&&ws.readyState===1&&ws.send(JSON.stringify({hubFxLog:Object.assign({t:Date.now(),ua:navigator.userAgent.slice(0,90)},o)}));}catch(e){}};
   const fxSrc=id=>fxBlob[id]||(base+FX[id].f+'?v='+FXV);
   // 先把影片抓進來，按下去才不會等
   const fxWarm=async id=>{if(!FX[id]||fxBlob[id]||fxWarm.b[id])return;fxWarm.b[id]=1;try{const r=await fetch(base+FX[id].f+'?v='+FXV);if(r.ok)fxBlob[id]=URL.createObjectURL(await r.blob());}catch(e){}fxWarm.b[id]=0;};fxWarm.b={};window.__warmFx=fxWarm;
   (async()=>{await new Promise(r=>setTimeout(r,2500));for(const id of ['rose','swan','angel'])await fxWarm(id);})(); // 輪播的三支先抓，其他選到才抓
-  function stopFx(){fxTok++;clearTimeout(fxEndT);fxW.style.opacity=0;fxT.classList.remove('on');const v=fxV;fxV=null;if(v)setTimeout(()=>{try{v.pause();v.remove();}catch(e){}},600);}
+  function stopFx(){fxTok++;clearTimeout(fxEndT);fxW.style.opacity=0;setTimeout(()=>{if(!fxV)fxX.clearRect(0,0,fxC.width,fxC.height);},600);fxT.classList.remove('on');const v=fxV;fxV=null;if(v)setTimeout(()=>{try{v.pause();v.remove();}catch(e){}},600);}
   function playFx(id,ph0){const F=FX[id];if(!F)return 0;stopFx();const tok=++fxTok;const v=document.createElement('video');v.muted=true;v.defaultMuted=true;v.playsInline=true;v.setAttribute('playsinline','');v.setAttribute('webkit-playsinline','');v.setAttribute('muted','');v.preload='auto';v.src=fxSrc(id);fxW.insertBefore(v,fxT);fxV=v;
     const ph=F.at>=0&&ph0&&(ph0[0]||ph0[1])?[ph0[0]||'',ph0[1]||'']:null;fxT.style.top=(F.top!=null?F.top:9)+'%';fxT.classList.remove('on');fxT.style.display=ph?'block':'none';
     if(ph){fxT.querySelector('.zh').textContent=ph[0]||'';fxT.querySelector('.ko').textContent=ph[1]||'';fxT.querySelector('.zh').style.display=ph[0]?'block':'none';fxT.querySelector('.ko').style.display=ph[1]?'block':'none';fxT.querySelector('.ln').style.display=ph[0]&&ph[1]?'block':'none';
       const z=fxT.querySelector('.zh'),k=fxT.querySelector('.ko');z.style.fontSize=Math.min(10,86/(Math.max(1,ph[0].length)*1.13))+'vw';k.style.fontSize=Math.min(8.2,86/(Math.max(1,ph[1].length)*0.9))+'vw';}
     const end=()=>{if(tok!==fxTok)return;stopFx();};
-    v.addEventListener('playing',()=>{if(tok===fxTok)fxW.style.opacity=fxOp();});
+    v.addEventListener('playing',()=>{if(tok===fxTok){fxW.style.opacity=fxOp();fxLog({ev:'playing',id,vw:v.videoWidth,rs:v.readyState});}});fxDraw(v,tok);
+    setTimeout(()=>{if(tok===fxTok)fxLog({ev:'check',id,ct:+v.currentTime.toFixed(2),rs:v.readyState,vw:v.videoWidth,paused:v.paused,op:fxW.style.opacity,blob:!!fxBlob[id]});},3000);
     v.addEventListener('timeupdate',()=>{if(tok!==fxTok)return;if(ph&&v.currentTime>=F.at)fxT.classList.add('on');if(v.duration&&v.currentTime>=v.duration-0.45)end();});
-    v.addEventListener('ended',end);v.addEventListener('error',end);
-    const p=v.play();if(p&&p.catch)p.catch(()=>{});
+    v.addEventListener('ended',end);v.addEventListener('error',()=>{fxLog({ev:'error',id,code:v.error&&v.error.code});end();});
+    const p=v.play();if(p&&p.catch)p.catch(e=>fxLog({ev:'playfail',id,msg:String(e&&e.message||e).slice(0,80)}));
     clearTimeout(fxEndT);fxEndT=setTimeout(end,(F.dur+4)*1000);return F.dur*1000;}
   // 給「全場集氣」用；透明度跟全場集氣同步，畫面隱藏時不播
   const fxOp=()=>paused?0:(ops.charge!=null?ops.charge:70)/100;
