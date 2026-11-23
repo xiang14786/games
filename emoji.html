@@ -171,7 +171,7 @@ const EMO=/\p{Extended_Pictographic}/u;
 function onComment(name,msg,img){try{if(window.parent!==window&&window.parent.__hubPaused)return;}catch(e){}
   name=(name||'').trim();if(!name||!AUTH())return;if(phase==='idle'||phase==='end'||phase==='draw')return;
   const m=norm(msg);
-  if(phase==='vote'){const t=m.replace(/\s/g,'');const v=/衝|冲/.test(t)?'go':/領|领/.test(t)?'take':null;if(v){votes[name]=v;if(!ppl[name])ppl[name]={s:img||'',c:0,hit:false};push();renderUI();}}
+  if(phase==='vote'){const t=m.replace(/\s/g,'');const v=/^[1１]+$/.test(t)?'take':/^[2２]+$/.test(t)?'go':/衝|冲/.test(t)?'go':/領|领/.test(t)?'take':null;if(v){votes[name]=v;if(!ppl[name])ppl[name]={s:img||'',c:0,hit:false};push();renderUI();}}
   if(!EMO.test(m))return;
   const p=ppl[name]||(ppl[name]={s:img||'',c:0,hit:false});p.c++;if(img)p.s=img;
   if(phase!=='play'){push();renderUI();return;}
@@ -228,8 +228,8 @@ function frame(now){ctx.clearRect(0,0,W,H);
     const v=voteCount(),nx=cfg.lv[lvl+1],tot=Math.max(1,v.take+v.go),fr=v.take/tot;
     const bw=(BW-60)/2;
     ctx.fillStyle='#2f8a55';rr(BX+20,BY+200,bw,110,20);ctx.fill();ctx.fillStyle='#c0405a';rr(BX+40+bw,BY+200,bw,110,20);ctx.fill();
-    txt('🎁 留言「領」',BX+20+bw/2,BY+232,28,'#fff');fitTxt(`領 ${prizeTxt(l.amt)}`,BX+20+bw/2,BY+268,26,bw-20,'#eaffef');txt(`${v.take} 票`,BX+20+bw/2,BY+298,22,'#eaffef');
-    txt('🔥 留言「衝」',BX+40+bw*1.5,BY+232,28,'#fff');fitTxt(`衝 ${nx.amt}元${nx.win>1?'×'+nx.win:''}`,BX+40+bw*1.5,BY+268,26,bw-20,'#ffe6ea');txt(`${v.go} 票`,BX+40+bw*1.5,BY+298,22,'#ffe6ea');
+    txt('🎁 留言「1」',BX+20+bw/2,BY+232,28,'#fff');fitTxt(`領獎 ${l.amt}元`,BX+20+bw/2,BY+268,26,bw-20,'#eaffef');txt(`${v.take} 票`,BX+20+bw/2,BY+298,22,'#eaffef');
+    txt('🔥 留言「2」',BX+40+bw*1.5,BY+232,28,'#fff');fitTxt(`挑戰 ${nx.amt}元${nx.win>1?'×'+nx.win:''}`,BX+40+bw*1.5,BY+268,26,bw-20,'#ffe6ea');txt(`${v.go} 票`,BX+40+bw*1.5,BY+298,22,'#ffe6ea');
     // 拔河條
     ctx.fillStyle='#c0405a';rr(BX+20,BY+326,BW-40,14,7);ctx.fill();ctx.fillStyle='#2f8a55';rr(BX+20,BY+326,(BW-40)*(v.take+v.go?fr:0.5),14,7);ctx.fill();
     const risk=(lvl+2)<=(+cfg.safeLv||0)?'失敗會歸零':`失敗也會抽 1 位送 ${cfg.cons} 元`;
@@ -292,7 +292,7 @@ setInterval(()=>{if(OV)push();},1000);
 const FAKE=['小美','阿花','Mia Lin','Yuki','陳小姐','Grace','可可','Amy Wu','小安','Tina','Joy','Hana'];
 function fake(){for(let i=0;i<8;i++){const n=FAKE[Math.floor(Math.random()*FAKE.length)];const pool=SPL(CATS[Object.keys(CATS)[i%7]].e);onComment(n,pool[i%pool.length]+'好可愛','');}}
 function fakeHit(){if(phase!=='play')return;const n='測試'+Math.floor(Math.random()*99);onComment(n,shuffle(targets.slice()).join(''),'');}
-function fakeVote(){if(phase!=='vote')return;for(let i=0;i<7;i++)onComment(FAKE[i],Math.random()<0.5?'衝':'領','');}
+function fakeVote(){if(phase!=='vote')return;for(let i=0;i<7;i++)onComment(FAKE[i],Math.random()<0.5?'1':'2','');}
 
 /* ===== 介面 ===== */
 const KEYS=['voteSec','hintSec','safeLv','cons','mult','acc','order'];
@@ -304,7 +304,7 @@ function pushCfg(){const o={lv:cfg.lv};KEYS.forEach(k=>o[k]=cfg[k]);sendDown({em
 KEYS.forEach(k=>$(k).addEventListener('change',()=>{const v=$(k).value;cfg[k]=(k==='acc'||k==='order')?v:Math.max(0,+v||0);SV('cfg',cfg);pushCfg();renderUI();}));
 function renderUI(){
   const l=L(),v=voteCount();
-  $('state').textContent={idle:'還沒開始',hint:`第 ${lvl+1} 關：提示中`,play:`第 ${lvl+1} 關進行中：打對 ${achieved.length}/${l.need}・剩 ${remSec()} 秒`,pass:`第 ${lvl+1} 關過關！`,vote:`投票中：領 ${v.take} 票／衝 ${v.go} 票`,fail:`第 ${lvl+1} 關失敗`,draw:'已抽出得獎者',end:'這一輪結束'}[phase]||'';
+  $('state').textContent={idle:'還沒開始',hint:`第 ${lvl+1} 關：提示中`,play:`第 ${lvl+1} 關進行中：打對 ${achieved.length}/${l.need}・剩 ${remSec()} 秒`,pass:`第 ${lvl+1} 關過關！`,vote:`投票中：1 領獎 ${v.take} 票／2 繼續 ${v.go} 票`,fail:`第 ${lvl+1} 關失敗`,draw:'已抽出得獎者',end:'這一輪結束'}[phase]||'';
   $('voteBox').style.display=phase==='vote'?'block':'none';
   if(phase==='vote'){const nx=cfg.lv[lvl+1];$('voteTxt').textContent=`第 ${lvl+1} 關過關！領 ${l.amt} 元，或衝第 ${lvl+2} 關 ${nx.amt} 元${nx.win>1?'×'+nx.win:''}`;}
   const arr=Object.entries(ppl).sort((a,b)=>(b[1].hit-a[1].hit)||(b[1].c-a[1].c));
