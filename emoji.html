@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Shine欣 Emoji 大挑戰</title>
+<style>
+:root{--bg:#14161b;--panel:#1c1f26;--line:#2c313b;--txt:#eceef2;--sub:#9aa3b2;--gold:#e2c28a}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--txt);font:18px/1.6 "Microsoft JhengHei","PingFang TC","Noto Sans TC",sans-serif}
+#wrap{display:flex;gap:18px;height:100%;padding:12px}
+#stage{flex:1 1 auto;min-width:0;height:100%;display:flex;align-items:center;justify-content:center}
+canvas{height:100%;max-width:100%;aspect-ratio:720/1280;display:block;border-radius:14px;background:repeating-conic-gradient(#3a3f4a 0 25%,#30343d 0 50%) 0 0/40px 40px}
+#panel{flex:0 0 430px;overflow:auto;background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:16px 18px}
+h2{margin:4px 0 10px;font-size:22px;color:var(--gold)}
+h3{margin:18px 0 8px;font-size:19px;color:var(--gold)}
+input,button,select{font:inherit}
+input[type=text],input[type=number],select{width:100%;padding:8px 10px;border-radius:10px;border:1px solid #3a404c;background:#252a33;color:#fff}
+.btn{border:none;border-radius:12px;padding:10px 16px;font-weight:700;cursor:pointer}
+.go{width:100%;background:linear-gradient(180deg,#f0d29b,#c99a57);color:#1a1a1a;font-size:20px}
+.ghost{background:#2c313b;color:var(--txt);font-size:16px;padding:8px 14px}
+.take{background:#2f6b45;color:#fff}.push{background:#8a3a3a;color:#fff}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.tip{color:var(--sub);font-size:15px}
+label{display:block;margin-top:6px}
+table.lv{width:100%;border-collapse:collapse;font-size:15px}
+table.lv th{color:var(--sub);font-weight:400;padding:2px}
+table.lv td{padding:2px}
+table.lv input{padding:5px 4px;text-align:center;font-size:15px}
+#log div{padding:6px 0;border-bottom:1px solid var(--line);font-size:16px}
+#who div{display:flex;justify-content:space-between;font-size:15px;border-bottom:1px solid var(--line);padding:3px 0}
+#voteBox{display:none;margin-top:8px;padding:10px;border:1px solid #6a4a8a;border-radius:12px;background:#231d2c}
+body.ov,body.ov #wrap{background:transparent!important}
+body.ov #panel{display:none}
+body.ov #wrap{padding:0}
+body.ov canvas{background:transparent;border-radius:0}
+#ovState{display:none;position:fixed;left:6px;bottom:6px;font-size:13px;color:#fff;background:rgba(0,0,0,.4);padding:2px 8px;border-radius:8px;transition:opacity 1s}
+body.ov #ovState{display:block}
+@media (max-width:900px){#wrap{flex-direction:column;height:auto}#stage{height:80vh}#panel{flex:none}}
+</style>
+</head>
+<body>
+<div id="wrap">
+  <div id="stage"><canvas id="cv" width="720" height="1280"></canvas></div>
+  <div id="panel">
+    <h2>😆 Emoji 大挑戰</h2>
+    <div class="tip" id="state"></div>
+    <div class="row" style="margin-top:8px"><button class="btn go" id="startBtn">😆 開始挑戰（從第 1 關）</button></div>
+    <div id="voteBox">
+      <div id="voteTxt" style="font-weight:700"></div>
+      <div class="tip">觀眾正在投票。要直接決定的話按下面：</div>
+      <div class="row" style="margin-top:6px"><button class="btn take" id="takeBtn">🎁 直接領獎</button><button class="btn push" id="goBtn">🔥 直接繼續挑戰</button></div>
+    </div>
+    <div class="row" style="margin-top:8px"><button class="btn ghost" id="newBtn">🔄 重來</button></div>
+
+    <h3>⚙️ 關卡設定</h3>
+    <table class="lv"><thead><tr><th>關</th><th>秒數</th><th>emoji數</th><th>提示類別</th><th>要幾人</th><th>獎金(元)</th><th>名額</th></tr></thead><tbody id="lvT"></tbody></table>
+    <div class="tip">提示類別＝這關的 emoji 從幾類裡面挑（1～3）。最後一關名額 2：第一個打對的人必中，另一位從參加的人抽。</div>
+    <div class="row">
+      <label style="flex:1">投票秒數<input type="number" id="voteSec" min="5"></label>
+      <label style="flex:1">提示秒數<input type="number" id="hintSec" min="2"></label>
+    </div>
+    <div class="row">
+      <label style="flex:1">第幾關以前失敗＝歸零<input type="number" id="safeLv" min="0" max="5"></label>
+      <label style="flex:1">之後失敗安慰獎(元)<input type="number" id="cons" min="0"></label>
+    </div>
+    <div class="row">
+      <label style="flex:1">打對的人中獎機率幾倍<input type="number" id="mult" min="1" step="0.5"></label>
+      <label style="flex:1">可以分幾則留言湊齊<select id="acc"><option value="1">可以（比較好玩）</option><option value="0">不行，要一則打完</option></select></label>
+    </div>
+    <label>emoji 順序<select id="order"><option value="0">不限順序</option><option value="4">第 4 關以後要照順序</option><option value="1">全部都要照順序</option></select></label>
+
+    <h3>👥 參加的人</h3>
+    <div id="who" class="tip"></div>
+
+    <h3>📡 連線</h3>
+    <label>連線代碼（Session ID）<input type="text" id="sid"></label>
+    <div class="row" style="margin-top:8px"><button class="btn ghost" id="conn">開始接留言</button><span id="wsState" class="tip">未連線</span></div>
+    <div class="row" style="margin-top:8px"><button class="btn ghost" id="fakeBtn">模擬 8 人留 emoji</button><button class="btn ghost" id="hitBtn">模擬 1 人打對</button><button class="btn ghost" id="voteFake">模擬投票</button></div>
+
+    <h3>🏆 得獎紀錄</h3>
+    <div class="row"><button class="btn ghost" id="copyWin">複製得獎名單</button><button class="btn ghost" id="clrWin">清空紀錄</button><span class="tip" id="ovTip"></span></div>
+    <div id="log"></div>
+  </div>
+</div>
+<div id="ovState"></div>
+<script>
+const cv=document.getElementById('cv'),ctx=cv.getContext('2d'),W=720,H=1280,$=id=>document.getElementById(id);
+const FONT='"Microsoft JhengHei","PingFang TC",sans-serif',EFONT='"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif';
+const LS=(k,d)=>{try{const v=localStorage.getItem('em_'+k);return v?JSON.parse(v):d}catch(e){return d}};
+const SV=(k,v)=>{try{localStorage.setItem('em_'+k,JSON.stringify(v))}catch(e){}};
+const QS=new URLSearchParams(location.search),OV=QS.get('mode')==='overlay',REC=QS.get('mode')==='record';
+const SERVER=QS.get('server')||'wss://io.socialstream.ninja';
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function rr(x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();}
+const imgCache=new Map();function imgOf(s){if(!s)return null;if(!imgCache.has(s)){const im=new Image();im.referrerPolicy='no-referrer';im.src=s;imgCache.set(s,im);}return imgCache.get(s);}
+const okI=im=>im&&im.complete&&im.naturalWidth>0;
+
+/* ===== emoji 題庫：只用各家手機長得一樣、不用選膚色的 ===== */
+const CATS={
+  '水果':{i:'🍓',e:'🍓🍎🍌🍇🍉🍑🍒🍍🥝🍋🍊🍐🥭🥥'},
+  '動物':{i:'🐶',e:'🐶🐱🐰🐻🐼🐨🐯🦁🐷🐸🐵🐔🐧🦊🐹🦄'},
+  '甜點':{i:'🍰',e:'🍰🧁🍩🍪🍫🍬🍭🍦🍮🎂🍯🥧'},
+  '花草':{i:'🌸',e:'🌸🌹🌻🌷🌺🍀🌵🌼🍄🌴🍁'},
+  '天空':{i:'🌈',e:'🌈🌙⭐⚡🔥💧🌊⛄☔🌞🌝'},
+  '表情':{i:'😆',e:'😀😂🥰😍😎🤩😭😡🥺😴🤔😱🤪😇'},
+  '穿搭':{i:'👗',e:'👗👠👜👒👑💄💍👓🧣👙🎀👛👟'}
+};
+const SPL=s=>Array.from(s);
+
+/* ===== 設定 ===== */
+const rid=()=>'shine'+Math.random().toString(36).slice(2,9);
+const LV0=[{sec:90,n:5,cats:1,need:3,amt:10,win:1},{sec:75,n:6,cats:1,need:2,amt:20,win:1},{sec:60,n:6,cats:2,need:1,amt:40,win:1},{sec:45,n:7,cats:2,need:1,amt:80,win:1},{sec:30,n:8,cats:3,need:1,amt:80,win:2}];
+const DEF={lv:LV0,voteSec:20,hintSec:5,safeLv:2,cons:10,mult:2,acc:'1',order:'0',v:1};
+let cfg=Object.assign({},DEF,LS('cfg',{}));cfg.lv=(cfg.lv&&cfg.lv.length===5)?cfg.lv:JSON.parse(JSON.stringify(LV0));
+if(OV){const c=LS('cfgR',null);if(c&&c.lv)Object.assign(cfg,c);}
+let sid=QS.get('session')||LS('sid','')||rid();SV('sid',sid);
+let wins=LS('wins',[]);
+const prizeTxt=a=>'購物金'+a+'元';
+
+/* ===== 狀態 =====
+   idle → hint（提示卡）→ play（倒數找 emoji）→ pass（過關）→ vote（領／衝）→ hint 下一關 …
+   play 時間到 → fail →（安慰獎）draw / end；領獎 → draw；第 5 關過關 → draw */
+let phase='idle',lvl=0,targets=[],catsNow=[],tEnd=0,achieved=[],prog={},ppl={},votes={},result=null,failInfo=null,drawAt=0,passAt=0,remote=null;
+const pops=[];
+const L=()=>cfg.lv[lvl]||cfg.lv[0];
+const AUTH=()=>!(REC&&overlaySeen); // 這一頁是不是遊戲的主控（手機畫面，或手機沒連上時的電腦頁）
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+let usedCats=[];
+function pickLevel(){const l=L();const nc=Math.max(1,Math.min(3,+l.cats||1));
+  let pool=shuffle(Object.keys(CATS).filter(c=>!usedCats.slice(-2).includes(c)));if(pool.length<nc)pool=shuffle(Object.keys(CATS));
+  catsNow=pool.slice(0,nc);usedCats=usedCats.concat(catsNow);
+  const n=Math.max(2,Math.min(10,+l.n||5));const per=catsNow.map((c,i)=>Math.floor(n/nc)+(i<n%nc?1:0));
+  targets=[];catsNow.forEach((c,i)=>{targets=targets.concat(shuffle(SPL(CATS[c].e)).slice(0,per[i]));});
+  if(nc>1)targets=shuffle(targets);}
+function newGame(){phase='idle';lvl=0;targets=[];catsNow=[];achieved=[];prog={};ppl={};votes={};result=null;failInfo=null;usedCats=[];pops.length=0;push();renderUI();}
+function startGame(){newGame();beginLevel();}
+function beginLevel(){pickLevel();achieved=[];prog={};votes={};phase='hint';tEnd=Date.now()+Math.max(2,+cfg.hintSec||5)*1000;push();renderUI();}
+function startPlay(){phase='play';tEnd=Date.now()+Math.max(5,+L().sec||60)*1000;push();renderUI();}
+function passLevel(){phase='pass';passAt=performance.now();tEnd=Date.now()+2800;push();renderUI();}
+function startVote(){phase='vote';votes={};tEnd=Date.now()+Math.max(5,+cfg.voteSec||20)*1000;push();renderUI();}
+function voteCount(){let a=0,b=0;for(const k in votes){if(votes[k]==='go')b++;else a++;}return{take:a,go:b};}
+function decide(force){const v=voteCount();const go=force?force==='go':v.go>v.take; // 同票（或沒人投）＝領獎
+  if(go&&lvl<4){lvl++;beginLevel();}else doDraw('take');}
+function failLevel(){failInfo={lvl,zero:lvl+1<=(+cfg.safeLv||0)};phase='fail';tEnd=Date.now()+3500;push();renderUI();}
+function tick(){if(!AUTH())return;const now=Date.now();
+  if(phase==='hint'&&now>=tEnd)startPlay();
+  else if(phase==='play'&&now>=tEnd)failLevel();
+  else if(phase==='pass'&&now>=tEnd){if(lvl>=4)doDraw('final');else startVote();}
+  else if(phase==='vote'&&now>=tEnd)decide();
+  else if(phase==='fail'&&now>=tEnd){if(failInfo&&!failInfo.zero&&(+cfg.cons||0)>0)doDraw('cons');else{phase='end';push();renderUI();}}}
+setInterval(tick,200);
+
+/* ===== 抽獎：參加的人機率 1，有打對過的人 ×mult ===== */
+function pickW(pool,n){const out=[];pool=pool.slice();while(out.length<n&&pool.length){const tot=pool.reduce((a,b)=>a+b.w,0);let r=Math.random()*tot,k=0;for(;k<pool.length;k++){r-=pool[k].w;if(r<=0)break;}k=Math.min(k,pool.length-1);out.push(pool.splice(k,1)[0]);}return out;}
+function doDraw(kind){const names=Object.keys(ppl);const mult=Math.max(1,+cfg.mult||1);
+  const pool=names.map(n=>({n,w:ppl[n].hit?mult:1}));let list=[],amt;
+  if(kind==='cons'){amt=+cfg.cons||10;list=pickW(pool,1).map(x=>({n:x.n,prize:prizeTxt(amt)}));}
+  else{const l=L();amt=+l.amt||10;const nWin=Math.max(1,+l.win||1);
+    if(kind==='final'&&achieved.length){const first=achieved[0].n;list.push({n:first,prize:prizeTxt(amt),first:true});list=list.concat(pickW(pool.filter(x=>x.n!==first),nWin-1).map(x=>({n:x.n,prize:prizeTxt(amt)})));}
+    else list=pickW(pool,nWin).map(x=>({n:x.n,prize:prizeTxt(amt)}));}
+  list.forEach(x=>x.s=(ppl[x.n]||{}).s||'');
+  result={kind,lvl:lvl+1,amt,list,prize:prizeTxt(amt),people:names.length,t:Date.now()};
+  phase='draw';drawAt=performance.now();
+  if(!REC||!overlaySeen){if(list.length){wins.unshift(result);wins=wins.slice(0,100);SV('wins',wins);}}
+  push({emWin:result});renderUI();}
+
+/* ===== 留言 ===== */
+const norm=s=>String(s||'').replace(/<img[^>]*alt="([^"]*)"[^>]*>/gi,'$1').replace(/<[^>]*>/g,'').replace(/[︎️‍]|\uD83C[\uDFFB-\uDFFF]/g,'');
+const EMO=/\p{Extended_Pictographic}/u;
+function onComment(name,msg,img){try{if(window.parent!==window&&window.parent.__hubPaused)return;}catch(e){}
+  name=(name||'').trim();if(!name||!AUTH())return;if(phase==='idle'||phase==='end'||phase==='draw')return;
+  const m=norm(msg);
+  if(phase==='vote'){const t=m.replace(/\s/g,'');const v=/衝|冲/.test(t)?'go':/領|领/.test(t)?'take':null;if(v){votes[name]=v;if(!ppl[name])ppl[name]={s:img||'',c:0,hit:false};push();renderUI();}}
+  if(!EMO.test(m))return;
+  const p=ppl[name]||(ppl[name]={s:img||'',c:0,hit:false});p.c++;if(img)p.s=img;
+  if(phase!=='play'){push();renderUI();return;}
+  if(achieved.some(a=>a.n===name)){push();return;}
+  const ordered=cfg.order==='1'||(cfg.order==='4'&&lvl>=3);
+  let ok=false;
+  if(ordered){const seq=SPL(m).filter(c=>targets.includes(c));const want=targets;let i=0;for(const c of seq){if(c===want[i])i++;if(i===want.length)break;}ok=i===want.length;}
+  else{const have=cfg.acc==='1'?(prog[name]||(prog[name]=new Set())):new Set();SPL(m).forEach(c=>{if(targets.includes(c))have.add(c);});ok=targets.every(c=>have.has(c));}
+  if(ok){p.hit=true;achieved.push({n:name,s:p.s,t:Date.now()});pops.unshift({n:name,s:p.s,t:performance.now()});
+    if(achieved.length>=Math.max(1,+L().need||1))passLevel();else{push();renderUI();}}
+  else push();}
+
+/* ===== 畫面（只用畫面上方，不擋商品） ===== */
+function txt(t,x,y,size,col,align,stroke){ctx.font=`bold ${size}px ${FONT}`;ctx.textAlign=align||'center';ctx.textBaseline='middle';if(stroke){ctx.lineWidth=stroke===true?7:stroke;ctx.lineJoin='round';ctx.strokeStyle='rgba(0,0,0,.75)';ctx.strokeText(t,x,y);}ctx.fillStyle=col||'#fff';ctx.fillText(t,x,y);}
+function fitTxt(t,x,y,size,maxW,col,stroke){ctx.font=`bold ${size}px ${FONT}`;const w=ctx.measureText(t).width;if(w>maxW)size=Math.max(14,size*maxW/w);txt(t,x,y,size,col,'center',stroke);}
+function emo(c,x,y,size){ctx.font=`${size}px ${EFONT}`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(c,x,y+size*0.06);}
+function drawAv(img,name,x,y,r){const im=imgOf(img);ctx.save();ctx.beginPath();ctx.arc(x,y,r,0,7);ctx.clip();if(okI(im))ctx.drawImage(im,x-r,y-r,r*2,r*2);else{ctx.fillStyle='#c9748a';ctx.fillRect(x-r,y-r,r*2,r*2);ctx.fillStyle='#fff';ctx.font=`bold ${r|0}px ${FONT}`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText((name||'?')[0],x,y+2);}ctx.restore();ctx.beginPath();ctx.arc(x,y,r,0,7);ctx.strokeStyle='#fff';ctx.lineWidth=3;ctx.stroke();}
+const mmss=s=>Math.floor(s/60)+':'+String(s%60).padStart(2,'0');
+const BX=22,BY=150,BW=W-44;
+function panel(h){ctx.save();ctx.shadowColor='rgba(0,0,0,.35)';ctx.shadowBlur=18;ctx.fillStyle='rgba(28,18,40,.78)';rr(BX,BY,BW,h,26);ctx.fill();ctx.restore();ctx.lineWidth=3;ctx.strokeStyle='rgba(255,170,210,.75)';rr(BX,BY,BW,h,26);ctx.stroke();}
+function ladder(y){const n=5,gap=8,w=(BW-40-gap*(n-1))/n;for(let i=0;i<n;i++){const x=BX+20+i*(w+gap),l=cfg.lv[i],cur=i===lvl&&phase!=='idle',done=i<lvl||(i===lvl&&(phase==='pass'||phase==='vote'||(phase==='draw'&&result&&result.kind!=='cons')));
+  ctx.fillStyle=cur?'#ff8fbd':done?'rgba(120,200,150,.55)':'rgba(255,255,255,.12)';rr(x,y,w,46,14);ctx.fill();
+  if(cur){ctx.lineWidth=3;ctx.strokeStyle='#fff';rr(x,y,w,46,14);ctx.stroke();}
+  const t=(done&&!cur?'✓ ':'')+l.amt+(l.win>1?'×'+l.win:'')+'元';fitTxt(t,x+w/2,y+24,22,w-10,cur?'#3a0d22':'#fff');}}
+function remSec(){return Math.max(0,Math.ceil((tEnd-Date.now())/1000));}
+function frame(now){ctx.clearRect(0,0,W,H);
+  if(phase==='idle'){if(REC||!OV){panel(180);txt('😆 Emoji 大挑戰',W/2,BY+60,40,'#ffd0e4');txt('按「開始挑戰」',W/2,BY+120,28,'#fff');}requestAnimationFrame(frame);return;}
+  if(phase==='end'&&OV){requestAnimationFrame(frame);return;}
+  if(phase==='draw'&&OV&&now-drawAt>7000){requestAnimationFrame(frame);return;} // 公布 5 秒後收起
+  const l=L(),rs=remSec();
+  if(phase==='hint'){panel(400);txt('😆 Emoji 大挑戰',W/2,BY+40,30,'#ffd0e4');ladder(BY+70);
+    txt(`第 ${lvl+1} 關`,W/2,BY+165,54,'#fff','center',6);
+    const ct=catsNow.map(c=>CATS[c].i+' '+c).join(' ＋ ');fitTxt('提示：'+ct,W/2,BY+235,40,BW-60,'#ffe08a');
+    fitTxt(`共 ${targets.length} 個 emoji・順序不限・要 ${l.need} 人打對`,W/2,BY+292,26,BW-60,'#fff');
+    const k=1+0.12*Math.sin(now/120);ctx.save();ctx.translate(W/2,BY+352);ctx.scale(k,k);txt(String(rs),0,0,44,'#ff8fbd','center',5);ctx.restore();}
+  else if(phase==='play'||phase==='pass'){const hasAv=achieved.length>0;const ph=hasAv?430:360;panel(ph);
+    txt(`😆 第 ${lvl+1} 關｜${prizeTxt(l.amt)}${l.win>1?' ×'+l.win+' 人':''}`,W/2,BY+38,30,'#ffd0e4');
+    // 倒數條
+    const tot=Math.max(5,+l.sec||60),fr=phase==='pass'?1:Math.max(0,(tEnd-Date.now())/(tot*1000));
+    ctx.fillStyle='rgba(255,255,255,.15)';rr(BX+24,BY+70,BW-48,18,9);ctx.fill();
+    ctx.fillStyle=fr<0.2?'#ff6b6b':fr<0.5?'#ffcc66':'#7ee0a8';rr(BX+24,BY+70,Math.max(18,(BW-48)*fr),18,9);ctx.fill();
+    // emoji 排
+    const n=targets.length,sz=n<=6?76:n<=7?68:62,gap=(BW-40)/n;
+    targets.forEach((c,i)=>{const x=BX+20+gap*(i+.5),bob=phase==='play'?Math.sin(now/260+i)*4:0;ctx.fillStyle='rgba(255,255,255,.14)';ctx.beginPath();ctx.arc(x,BY+160+bob,sz*0.62,0,7);ctx.fill();emo(c,x,BY+160+bob,sz);});
+    if(phase==='play'){txt(`⏱ ${mmss(rs)}`,BX+40,BY+252,34,rs<=10?'#ff8a8a':'#fff','left',5);
+      txt(`打對 ${achieved.length} / ${l.need}`,BX+BW-40,BY+252,34,'#7ee0a8','right',5);
+      fitTxt('把上面的 emoji 全部打出來就過關！（順序不限）',W/2,BY+312,26,BW-50,'#ffe08a');}
+    else{const k=Math.min(1,(now-passAt)/350);ctx.save();ctx.translate(W/2,BY+282);ctx.scale(0.6+0.4*k,0.6+0.4*k);txt(`🎉 第 ${lvl+1} 關過關！`,0,0,50,'#7ee0a8','center',7);ctx.restore();}
+    if(hasAv){const r=26,maxN=Math.min(achieved.length,9);for(let i=0;i<maxN;i++){const a=achieved[i],x=W/2+(i-(maxN-1)/2)*62;drawAv(a.s,a.n,x,BY+378,r);}
+}
+  }
+  else if(phase==='vote'){panel(420);txt('😆 Emoji 大挑戰',W/2,BY+40,30,'#ffd0e4');ladder(BY+70);
+    txt('要領獎，還是繼續挑戰？',W/2,BY+160,38,'#fff','center',5);
+    const v=voteCount(),nx=cfg.lv[lvl+1],tot=Math.max(1,v.take+v.go),fr=v.take/tot;
+    const bw=(BW-60)/2;
+    ctx.fillStyle='#2f8a55';rr(BX+20,BY+200,bw,110,20);ctx.fill();ctx.fillStyle='#c0405a';rr(BX+40+bw,BY+200,bw,110,20);ctx.fill();
+    txt('🎁 留言「領」',BX+20+bw/2,BY+232,28,'#fff');fitTxt(`領 ${prizeTxt(l.amt)}`,BX+20+bw/2,BY+268,26,bw-20,'#eaffef');txt(`${v.take} 票`,BX+20+bw/2,BY+298,22,'#eaffef');
+    txt('🔥 留言「衝」',BX+40+bw*1.5,BY+232,28,'#fff');fitTxt(`衝 ${nx.amt}元${nx.win>1?'×'+nx.win:''}`,BX+40+bw*1.5,BY+268,26,bw-20,'#ffe6ea');txt(`${v.go} 票`,BX+40+bw*1.5,BY+298,22,'#ffe6ea');
+    // 拔河條
+    ctx.fillStyle='#c0405a';rr(BX+20,BY+326,BW-40,14,7);ctx.fill();ctx.fillStyle='#2f8a55';rr(BX+20,BY+326,(BW-40)*(v.take+v.go?fr:0.5),14,7);ctx.fill();
+    const risk=(lvl+2)<=(+cfg.safeLv||0)?'失敗會歸零':`失敗也會抽 1 位送 ${cfg.cons} 元`;
+    fitTxt(`⏱ ${rs} 秒後開票・下一關${risk}`,W/2,BY+380,26,BW-50,rs<=5?'#ff8a8a':'#ffe08a');}
+  else if(phase==='fail'){panel(300);txt('😆 Emoji 大挑戰',W/2,BY+40,30,'#ffd0e4');ladder(BY+70);
+    const sh=Math.sin(now/40)*Math.max(0,1-(Date.now()-(tEnd-3500))/800)*8;
+    txt('💥 時間到！挑戰失敗',W/2+sh,BY+170,50,'#ff8a8a','center',7);
+    fitTxt(failInfo&&failInfo.zero?'購物金歸零…下次再挑戰！':`安慰獎：抽 1 位送 ${prizeTxt(cfg.cons)}`,W/2,BY+240,32,BW-50,'#fff');}
+  else if(phase==='draw'&&result){drawCard(now);}
+  else if(phase==='end'&&(REC||!OV)){panel(160);txt('這一輪結束了',W/2,BY+60,34,'#fff');txt('按「開始挑戰」再玩一次',W/2,BY+110,24,'#ffe08a');}
+  requestAnimationFrame(frame);}
+function drawCard(now){const age=now-drawAt,list=result.list,roll=age<1600&&list.length;const h=list.length?200+list.length*96:260;panel(h);
+  const head=result.kind==='final'?'🏆 五關全破！':result.kind==='cons'?'🍀 安慰獎':`🎁 第 ${result.lvl} 關領獎`;
+  txt(head,W/2,BY+50,40,'#ffd0e4','center',5);
+  if(!list.length){txt('沒有人參加，沒有得獎者',W/2,BY+140,30,'#fff');return;}
+  const names=Object.keys(ppl).length?Object.keys(ppl):list.map(x=>x.n);
+  list.forEach((x,i)=>{const y=BY+140+i*96;
+    if(roll){const nm=names[Math.floor(now/70+i*3)%names.length];ctx.fillStyle='rgba(255,255,255,.1)';rr(BX+30,y-40,BW-60,80,18);ctx.fill();fitTxt('🎲 '+nm,W/2,y,36,BW-90,'#fff');return;}
+    ctx.fillStyle='rgba(255,210,230,.16)';rr(BX+30,y-40,BW-60,80,18);ctx.fill();drawAv(x.s,x.n,BX+80,y,30);
+    ctx.font=`bold 32px ${FONT}`;const nm=x.n.length>10?x.n.slice(0,10)+'…':x.n;txt(nm,BX+126,y-12,32,'#fff','left');
+    txt((x.first?'⚡ 第一個打對・':'🎲 抽中・')+x.prize,BX+126,y+22,22,'#ffe08a','left');});
+  if(!roll)fitTxt(`恭喜！${result.people} 人參加`,W/2,BY+120+list.length*96+30,24,BW-60,'#ffd0e4');}
+requestAnimationFrame(frame);
+
+/* ===== 連線 =====
+   手機（overlay）：留言 in4/out5，指令 in6/out7；電腦（record）：in5/out6 */
+let ws=null,cmdWs=null,recWs=null,overlaySeen=false,lastOv=0;
+function setState(t){$('wsState').textContent=t;$('ovState').textContent=t;}
+function stateMsg(){return{phase,lvl,targets,catsNow,rem:Math.max(0,tEnd-Date.now()),achieved:achieved.map(a=>({n:a.n,s:a.s})),ppl:Object.entries(ppl).slice(0,200).map(([n,p])=>[n,p.c,p.hit?1:0,p.s||'']),votes:voteCount(),result,failInfo};}
+function push(extra){if(OV&&ws&&ws.readyState===1){try{ws.send(JSON.stringify(Object.assign({emState:stateMsg()},extra||{})));}catch(e){}}}
+function sendDown(o){if(recWs&&recWs.readyState===1){try{recWs.send(JSON.stringify(o));}catch(e){}}}
+function connect(){try{ws&&ws.close();}catch(e){}setState('連線中…');ws=new WebSocket(SERVER);
+  ws.onopen=()=>{ws.send(JSON.stringify({join:sid,in:4,out:5}));setState('✅ 已連線，等留言中（代碼 '+sid+'）');$('conn').textContent='已連線';push();};
+  ws.onmessage=e=>{let m;try{m=JSON.parse(e.data);}catch(x){return;}const d=m.overlayNinja||m;if(d&&(d.chatname||d.chatmessage))onComment(d.chatname,d.chatmessage,d.chatimg);};
+  ws.onclose=()=>{setState('⚠️ 斷線，3 秒後重連…');setTimeout(connect,3000);};}
+function cmd(c){if(c==='start')startGame();else if(c==='new')newGame();else if(c==='take'&&phase==='vote')decide('take');else if(c==='go'&&phase==='vote')decide('go');
+  else if(c==='fake')fake();else if(c==='hit')fakeHit();else if(c==='vote')fakeVote();}
+function listenCmd(){cmdWs=new WebSocket(SERVER);cmdWs.onopen=()=>cmdWs.send(JSON.stringify({join:sid,in:6,out:7}));
+  cmdWs.onmessage=e=>{let m;try{m=JSON.parse(e.data);}catch(x){return;}const d=m.overlayNinja||m;
+    if(d.emCfg){Object.assign(cfg,d.emCfg);SV('cfgR',cfg);renderUI();push({emCfgNow:cfg});}
+    if(d.emCmd==='sync')push({emCfgNow:cfg});else if(d.emCmd)cmd(d.emCmd);};
+  cmdWs.onclose=()=>setTimeout(listenCmd,4000);}
+let _lastCfgJ='';
+function adoptCfg(c){const j=JSON.stringify(c);if(j===_lastCfgJ)return;_lastCfgJ=j;Object.assign(cfg,c);SV('cfg',cfg);paintCfg();renderUI();}
+function listenRec(){recWs=new WebSocket(SERVER);recWs.onopen=()=>{recWs.send(JSON.stringify({join:sid,in:5,out:6}));setTimeout(()=>sendDown({emCmd:'sync'}),300);};
+  recWs.onmessage=e=>{let m;try{m=JSON.parse(e.data);}catch(x){return;}const d=m.overlayNinja||m;
+    if(d.emCfgNow)adoptCfg(d.emCfgNow);
+    if(d.emState){lastOv=Date.now();if(!overlaySeen){overlaySeen=true;setState('📋 已連上手機（代碼 '+sid+'）');}
+      const s=d.emState;if(s.phase==='pass'&&phase!=='pass')passAt=performance.now();if(s.phase==='draw'&&phase!=='draw')drawAt=performance.now();
+      phase=s.phase;lvl=s.lvl;targets=s.targets||[];catsNow=s.catsNow||[];tEnd=Date.now()+(s.rem||0);
+      const before=achieved.length;achieved=s.achieved||[];if(achieved.length>before)achieved.slice(before).forEach(a=>pops.unshift({n:a.n,s:a.s,t:performance.now()}));
+      ppl={};(s.ppl||[]).forEach(([n,c,h,im])=>ppl[n]={c,hit:!!h,s:im});remote=s;result=s.result||result;failInfo=s.failInfo;votes={};for(let i=0;i<(s.votes||{}).take;i++)votes['t'+i]='take';for(let i=0;i<(s.votes||{}).go;i++)votes['g'+i]='go';renderUI();}
+    if(d.emWin){result=d.emWin;if(!wins.some(w=>w.t===d.emWin.t)&&d.emWin.list.length){wins.unshift(d.emWin);wins=wins.slice(0,100);SV('wins',wins);}renderUI();}};
+  recWs.onclose=()=>setTimeout(listenRec,4000);}
+if(REC){const _fs=setInterval(()=>{if(overlaySeen)clearInterval(_fs);else sendDown({emCmd:'sync'});},700);
+  setInterval(()=>{sendDown({emCmd:'sync'});if(overlaySeen&&Date.now()-lastOv>15000){overlaySeen=false;setState('📋 還沒偵測到手機（現在按按鈕會在這頁自己跑）');}},4000);}
+setInterval(()=>{if(OV)push();},1000);
+
+/* ===== 測試 ===== */
+const FAKE=['小美','阿花','Mia Lin','Yuki','陳小姐','Grace','可可','Amy Wu','小安','Tina','Joy','Hana'];
+function fake(){for(let i=0;i<8;i++){const n=FAKE[Math.floor(Math.random()*FAKE.length)];const pool=SPL(CATS[Object.keys(CATS)[i%7]].e);onComment(n,pool[i%pool.length]+'好可愛','');}}
+function fakeHit(){if(phase!=='play')return;const n='測試'+Math.floor(Math.random()*99);onComment(n,shuffle(targets.slice()).join(''),'');}
+function fakeVote(){if(phase!=='vote')return;for(let i=0;i<7;i++)onComment(FAKE[i],Math.random()<0.5?'衝':'領','');}
+
+/* ===== 介面 ===== */
+const KEYS=['voteSec','hintSec','safeLv','cons','mult','acc','order'];
+function paintCfg(){const T=$('lvT');if(!T.children.length){T.innerHTML=cfg.lv.map((l,i)=>`<tr><td>${i+1}</td>${['sec','n','cats','need','amt','win'].map(k=>`<td><input type="number" data-i="${i}" data-k="${k}"></td>`).join('')}</tr>`).join('');
+    T.querySelectorAll('input').forEach(inp=>inp.addEventListener('change',()=>{const i=+inp.dataset.i,k=inp.dataset.k;let v=Math.max(0,+inp.value||0);if(k==='cats')v=Math.max(1,Math.min(3,v));if(k==='n')v=Math.max(2,Math.min(10,v));if(k==='need'||k==='win')v=Math.max(1,v);if(k==='sec')v=Math.max(10,v);cfg.lv[i][k]=v;inp.value=v;SV('cfg',cfg);pushCfg();}));}
+  T.querySelectorAll('input').forEach(inp=>{if(inp!==document.activeElement)inp.value=cfg.lv[+inp.dataset.i][inp.dataset.k];});
+  KEYS.forEach(k=>{if($(k)!==document.activeElement)$(k).value=cfg[k];});}
+function pushCfg(){const o={lv:cfg.lv};KEYS.forEach(k=>o[k]=cfg[k]);sendDown({emCfg:o});}
+KEYS.forEach(k=>$(k).addEventListener('change',()=>{const v=$(k).value;cfg[k]=(k==='acc'||k==='order')?v:Math.max(0,+v||0);SV('cfg',cfg);pushCfg();renderUI();}));
+function renderUI(){
+  const l=L(),v=voteCount();
+  $('state').textContent={idle:'還沒開始',hint:`第 ${lvl+1} 關：提示中`,play:`第 ${lvl+1} 關進行中：打對 ${achieved.length}/${l.need}・剩 ${remSec()} 秒`,pass:`第 ${lvl+1} 關過關！`,vote:`投票中：領 ${v.take} 票／衝 ${v.go} 票`,fail:`第 ${lvl+1} 關失敗`,draw:'已抽出得獎者',end:'這一輪結束'}[phase]||'';
+  $('voteBox').style.display=phase==='vote'?'block':'none';
+  if(phase==='vote'){const nx=cfg.lv[lvl+1];$('voteTxt').textContent=`第 ${lvl+1} 關過關！領 ${l.amt} 元，或衝第 ${lvl+2} 關 ${nx.amt} 元${nx.win>1?'×'+nx.win:''}`;}
+  const arr=Object.entries(ppl).sort((a,b)=>(b[1].hit-a[1].hit)||(b[1].c-a[1].c));
+  $('who').innerHTML=(phase==='play'||phase==='pass'?`<div><span>這關的 emoji</span><span style="font-size:22px">${targets.join(' ')}</span></div>`:'')+(arr.slice(0,40).map(([n,p])=>`<div><span>${esc(n)}${p.hit?' ⭐打對過':''}</span><span>${p.c} 則</span></div>`).join('')||'還沒有人')+(arr.length?`<div class="tip">共 ${arr.length} 人參加</div>`:'');
+  $('log').innerHTML=wins.map(w=>`<div>${w.list.map(x=>esc(x.n)+(x.first?'（第一個打對）':'')).join('、')} <b style="color:var(--gold)">${esc(w.prize)}</b><div class="tip">${w.kind==='cons'?'安慰獎':w.kind==='final'?'五關全破':'第 '+w.lvl+' 關領獎'}・${w.people} 人參加・${new Date(w.t).toLocaleString('zh-TW')}</div></div>`).join('')||'<div class="tip">還沒有紀錄</div>';
+}
+$('sid').value=sid;$('sid').onchange=()=>{sid=$('sid').value.trim()||rid();$('sid').value=sid;SV('sid',sid);};
+const ctl=c=>()=>{if(REC){sendDown({emCmd:c});if(!overlaySeen)cmd(c);}else cmd(c);};
+$('startBtn').onclick=()=>{if(phase!=='idle'&&phase!=='end'&&phase!=='draw'&&!confirm('從第 1 關重新開始？現在這一輪會作廢。'))return;ctl('start')();};
+$('newBtn').onclick=()=>{if(phase!=='idle'&&phase!=='end'&&phase!=='draw'&&!confirm('重來？現在這一輪會作廢。'))return;ctl('new')();};
+$('takeBtn').onclick=ctl('take');$('goBtn').onclick=ctl('go');
+$('fakeBtn').onclick=ctl('fake');$('hitBtn').onclick=ctl('hit');$('voteFake').onclick=ctl('vote');
+$('conn').onclick=()=>{connect();};
+function copyT(u){navigator.clipboard.writeText(u).then(()=>{$('ovTip').textContent='已複製 ✓';setTimeout(()=>$('ovTip').textContent='',2000);});}
+$('copyWin').onclick=()=>copyT(wins.slice().reverse().map(w=>w.list.map(x=>`${x.n}　${x.prize}`).join('\n')).join('\n')||'目前沒有');
+$('clrWin').onclick=()=>{if(confirm('清空得獎紀錄？')){wins=[];SV('wins',wins);renderUI();}};
+setInterval(()=>{if(phase==='play'||phase==='hint'||phase==='vote')renderUI();},1000);
+
+/* ===== 啟動 ===== */
+paintCfg();renderUI();
+if(OV){document.body.classList.add('ov');document.documentElement.style.background='transparent';connect();listenCmd();setTimeout(()=>$('ovState').style.opacity=0,8000);}
+else if(REC){listenRec();$('conn').style.display='none';setState('📋 還沒偵測到手機（現在按按鈕會在這頁自己跑）');}
+else if(QS.get('session')){connect();}
+if(OV){window.__fill=false;window.__fit=function(){const vw=innerWidth,vh=innerHeight;const s=Math.min(vw/cv.width,vh/cv.height);const w=cv.width*s,h=cv.height*s;
+  Object.assign(cv.style,{position:'fixed',left:((vw-w)/2)+'px',top:'0px',width:w+'px',height:h+'px',maxWidth:'none',aspectRatio:'auto',margin:'0'});};
+  addEventListener('resize',window.__fit);setInterval(window.__fit,1000);window.__fit();}
+</script>
+</body>
+</html>

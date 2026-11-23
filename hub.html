@@ -74,6 +74,7 @@ h1{font-size:17px;margin:0 4px 0 0;color:var(--gold);white-space:nowrap}
         <button class="g" data-g="rescue">🐾 拯救浪浪</button>
         <button class="g" data-g="grid">👑 我的地盤</button>
         <button class="g" data-g="charge">⚡ 全場集氣</button>
+        <button class="g" data-g="emoji">😆 Emoji挑戰</button>
       </span>
       <div id="st">手機：<span id="phone">還沒連上</span><br>FB 留言：<span id="cmt">檢查中…</span></div>
     </div>
@@ -100,7 +101,7 @@ h1{font-size:17px;margin:0 4px 0 0;color:var(--gold);white-space:nowrap}
 </div>
 <script>
 const SERVER=new URLSearchParams(location.search).get('server')||'wss://io.socialstream.ninja';
-const GAMES={plinko:'🎯 彈珠台',pig:'🔨 敲金豬',arena:'⚔️ 頭像大逃殺',fish:'🐟 撈金魚',zhanan:'👊 爆揍渣男',popo:'👵 婆婆來了',rescue:'🐾 拯救浪浪',grid:'👑 我的地盤我做主',charge:'⚡ 全場集氣',none:'🙈 沒有顯示遊戲'};
+const GAMES={plinko:'🎯 彈珠台',pig:'🔨 敲金豬',arena:'⚔️ 頭像大逃殺',fish:'🐟 撈金魚',zhanan:'👊 爆揍渣男',popo:'👵 婆婆來了',rescue:'🐾 拯救浪浪',grid:'👑 我的地盤我做主',charge:'⚡ 全場集氣',emoji:'😆 Emoji 大挑戰',none:'🙈 沒有顯示遊戲'};
 const FX={rose:{n:'🌹 玫瑰城堡',f:'fx_rose.mp4',at:2.9,top:63,dur:6.6},swan:{n:'🦢 天鵝湖',f:'fx_swan.mp4',at:5.8,top:7,dur:9.4},angel:{n:'👼 天使降臨',f:'fx_angel.mp4',at:4.9,top:5,dur:8.7},xmas:{n:'🎄 聖誕雪球',f:'fx_xmas.mp4',at:4.6,top:68,dur:8.7},pegasus:{n:'🦄 天馬',f:'fx_pegasus.mp4',at:4.6,top:74,dur:8.7},boat:{n:'🌙 月亮船',f:'fx_boat.mp4',at:3.9,top:70,dur:8.7},balloon:{n:'🎈 熱氣球花海',f:'fx_balloon.mp4',at:4.1,top:64,dur:8.7},butterfly:{n:'🦋 蝴蝶花房',f:'fx_butterfly.mp4',at:4.1,top:72,dur:8.7},ballet:{n:'🩰 音樂盒芭蕾',f:'fx_ballet.mp4',at:3.1,top:74,dur:8.7},ferris:{n:'🎡 摩天輪煙火',f:'fx_ferris.mp4',at:3.7,top:68,dur:8.7},zerozero:{n:'💎 ZERO ZERO 專屬',f:'fx_zerozero.mp4',at:-1,dur:7.9}};
 const FXV='2';
 const QS=new URLSearchParams(location.search),OV=QS.get('mode')==='overlay';
@@ -126,7 +127,7 @@ if(OV){
   function applySize(){const z={w:100,h:100};fr.style.width=z.w+'%';fr.style.height=z.h+'%';fr.style.left=((100-z.w)/2)+'%';fr.style.right='auto';fr.style.top='0';fr.style.bottom='auto';}
   const FILLCSS='html,body{height:100%!important;overflow:hidden!important}#wrap{padding:0!important;height:100vh!important}#stage{height:100vh!important;padding:0!important;align-items:stretch!important}canvas{width:100vw!important;height:100vh!important;max-height:none!important;aspect-ratio:auto!important;object-fit:fill!important;transform:none!important}';
   function applyFill(){try{const w=fr.contentWindow;if(!w)return;w.__fill=false;if(w.__fit)w.__fit();}catch(e){}}
-  function applyOp(){fr.style.opacity=!paused&&cur&&cur!=='none'?(ops[cur]!=null?ops[cur]:70)/100:0;applyFill();applySize();}
+  function applyOp(){fr.style.opacity=!paused&&cur&&cur!=='none'?(ops[cur]!=null?ops[cur]:(cur==='emoji'?100:70))/100:0;applyFill();applySize();}
   function show(g){if(!GAMES[g])return;if(g===cur)return;cur=g;SV('ovGame',g);paused=true;SV('paused',true);applyPause();
     fr.style.opacity=0;setTimeout(()=>{fr.src=g==='none'?'about:blank':gameUrl(g,'overlay');fr.onload=applyOp;},300);report();}
   function report(){if(ws&&ws.readyState===1){try{ws.send(JSON.stringify({hubState:{game:cur,t:Date.now(),ops,fills,sizes,paused,vibe,vop}}));}catch(e){}}}
@@ -189,7 +190,7 @@ if(OV){
   $('sid').onchange=()=>{sid=$('sid').value.trim()||sid;$('sid').value=sid;SV('sid',sid);$('ovUrl').textContent=ovUrl();connect();if(curRec)openRec(curRec,true);};
   if(!LS('d70pc',0)){SV('ops',{});SV('d70pc',1);}if(!LS('d55pc',0)){SV('vop',55);SV('d55pc',1);}
   let ws=null,curRec=null,lastSeen=0,phoneGame=null,ops=LS('ops',{});
-  const opOf=g=>ops[g]!=null?ops[g]:70;
+  const opOf=g=>ops[g]!=null?ops[g]:(g==='emoji'?100:70); // Emoji 挑戰本身是半透明底，預設不再調淡，emoji 才看得清楚
   function paintOp(){const g=curRec;if(!g||g==='none'){$('opBox').style.display='none';$('noGame').style.display='inline';return;}$('opBox').style.display='inline';$('noGame').style.display='none';$('opName').textContent=GAMES[g]+' ';$('op').value=opOf(g);$('opV').textContent=opOf(g)+'%';$('fill').checked=!!fills[g];const z=sizes[g]||{w:100,h:100};$('sw').value=z.w;$('sh').value=z.h;$('swV').textContent=z.w+'%';$('shV').textContent=z.h+'%';}
   let fills=LS('fills',{}),sizes=LS('sizes',{});let szT=0;
   ['sw','sh'].forEach(id=>$(id).addEventListener('input',()=>{if(!curRec||curRec==='none')return;const z={w:+$('sw').value,h:+$('sh').value};sizes[curRec]=z;SV('sizes',sizes);$('swV').textContent=z.w+'%';$('shV').textContent=z.h+'%';clearTimeout(szT);szT=setTimeout(()=>send({hubSizes:{[curRec]:z}}),60);}));
@@ -212,7 +213,7 @@ if(OV){
   $('pauseBtn').onclick=()=>{pausedUI=!pausedUI;send({hubPause:pausedUI});paintPause();};
   document.querySelectorAll('.g[data-g]').forEach(b=>b.onclick=()=>{const g=b.dataset.g;send({hubGame:g});openRec(g);pausedUI=true;paintPause();});
   /* ===== 中獎名單：整理所有遊戲的得獎紀錄 ===== */
-  const WK={pb_hist:'🎯 彈珠台',pig_wins:'🔨 敲金豬',ar_wins:'⚔️ 大逃殺',fi_wins:'🐟 撈金魚',zh_wins:'👊 爆揍渣男',popo_wins:'👵 婆婆來了',rs_wins:'🐾 拯救浪浪',gd_wins:'👑 我的地盤',ch_wins:'⚡ 全場集氣'};
+  const WK={pb_hist:'🎯 彈珠台',pig_wins:'🔨 敲金豬',ar_wins:'⚔️ 大逃殺',fi_wins:'🐟 撈金魚',zh_wins:'👊 爆揍渣男',popo_wins:'👵 婆婆來了',rs_wins:'🐾 拯救浪浪',gd_wins:'👑 我的地盤',ch_wins:'⚡ 全場集氣',em_wins:'😆 Emoji挑戰'};
   let phoneWins={},winByTime=false;const wEsc=t=>String(t==null?'':t).replace(/&/g,'&amp;').replace(/</g,'&lt;');
   function winRows(key,arr){const out=[];(Array.isArray(arr)?arr:[]).forEach(w=>{if(!w)return;const t=w.t||0;
     if(Array.isArray(w.list))w.list.forEach(x=>{const p=x.prize||w.prize||w.p||'';if(x&&x.n&&p)out.push({t,n:x.n,p,g:key});});
