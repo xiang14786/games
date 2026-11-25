@@ -191,7 +191,7 @@ if(OV){
   $('sid').onchange=()=>{sid=$('sid').value.trim()||sid;$('sid').value=sid;SV('sid',sid);$('ovUrl').textContent=ovUrl();connect();if(curRec)openRec(curRec,true);};
   if(!LS('d70pc',0)){SV('ops',{});SV('d70pc',1);}if(!LS('d55pc',0)){SV('vop',55);SV('d55pc',1);}
   if(!LS('emo70',0)){const o=LS('ops',{});delete o.emoji;SV('ops',o);SV('emo70',1);} 
-  let ws=null,curRec=null,lastSeen=0,phoneGame=null,ops=LS('ops',{});
+  let ws=null,curRec=null,lastSeen=0,phoneGame=null,fixAt=0,ops=LS('ops',{});
   const opOf=g=>ops[g]!=null?ops[g]:70;
   function paintOp(){const g=curRec;if(!g||g==='none'){$('opBox').style.display='none';$('noGame').style.display='inline';return;}$('opBox').style.display='inline';$('noGame').style.display='none';$('opName').textContent=GAMES[g]+' ';$('op').value=opOf(g);$('opV').textContent=opOf(g)+'%';$('fill').checked=!!fills[g];const z=sizes[g]||{w:100,h:100};$('sw').value=z.w;$('sh').value=z.h;$('swV').textContent=z.w+'%';$('shV').textContent=z.h+'%';}
   let fills=LS('fills',{}),sizes=LS('sizes',{});let szT=0;
@@ -212,7 +212,7 @@ if(OV){
   $('vibeSet').onclick=()=>window.open(gameUrl('vibe','record'),'_blank');
   function paintPause(){const b=$('pauseBtn');if(!curRec||curRec==='none'){b.style.display='none';return;}b.style.display='inline-block';
     b.className=pausedUI?'hid':'shown';b.textContent=pausedUI?'🙈 沒顯示｜▶ 按這裡顯示到直播':'👁 顯示中｜■ 按這裡隱藏';}
-  $('pauseBtn').onclick=()=>{pausedUI=!pausedUI;send({hubPause:pausedUI});paintPause();};
+  $('pauseBtn').onclick=()=>{pausedUI=!pausedUI;if(!pausedUI&&curRec&&phoneGame!==curRec){send({hubGame:curRec});setTimeout(()=>send({hubPause:false}),700);}else send({hubPause:pausedUI});paintPause();};
   document.querySelectorAll('.g[data-g]').forEach(b=>b.onclick=()=>{const g=b.dataset.g;send({hubGame:g});openRec(g);pausedUI=true;paintPause();});
   /* ===== 中獎名單：整理所有遊戲的得獎紀錄 ===== */
   const WK={pb_hist:'🎯 彈珠台',pig_wins:'🔨 敲金豬',ar_wins:'⚔️ 大逃殺',fi_wins:'🐟 撈金魚',zh_wins:'👊 爆揍渣男',popo_wins:'👵 婆婆來了',rs_wins:'🐾 拯救浪浪',gd_wins:'👑 我的地盤',ch_wins:'⚡ 全場集氣',em_wins:'😆 Emoji挑戰'};
@@ -245,7 +245,7 @@ if(OV){
       if(d.hubState&&d.hubState.vibe!==undefined&&vibeUI!==!!d.hubState.vibe){vibeUI=!!d.hubState.vibe;paintVibe();}
       if(d.hubState&&d.hubState.vop!==undefined&&document.activeElement!==$('vop')){vopUI=+d.hubState.vop;SV('vop',vopUI);paintVop();}
       if(d.hubWins&&d.hubWins.key){const k=d.hubWins.key;if(!d.hubWins.part)phoneWins[k]=[];phoneWins[k]=(phoneWins[k]||[]).concat(d.hubWins.items||[]);if($('winBox').style.display==='flex')paintWins();}
-      if(d.hubState){lastSeen=Date.now();phoneGame=d.hubState.game;if(d.hubState.paused!==undefined&&d.hubState.game===curRec){pausedUI=!!d.hubState.paused;paintPause();}if(d.hubState.ops){ops=d.hubState.ops;fills=d.hubState.fills||{};sizes=d.hubState.sizes||{};SV('ops',ops);SV('fills',fills);SV('sizes',sizes);if(document.activeElement!==$('op')&&document.activeElement!==$('sw')&&document.activeElement!==$('sh'))paintOp();}if(!curRec&&phoneGame)openRec(phoneGame);paint();}};
+      if(d.hubState){lastSeen=Date.now();phoneGame=d.hubState.game;if(d.hubState.paused!==undefined&&d.hubState.game===curRec){pausedUI=!!d.hubState.paused;paintPause();}if(d.hubState.ops){ops=d.hubState.ops;fills=d.hubState.fills||{};sizes=d.hubState.sizes||{};SV('ops',ops);SV('fills',fills);SV('sizes',sizes);if(document.activeElement!==$('op')&&document.activeElement!==$('sw')&&document.activeElement!==$('sh'))paintOp();}if(!curRec&&phoneGame&&phoneGame!=='none')openRec(phoneGame);else if(curRec&&curRec!=='none'&&phoneGame!==curRec&&Date.now()-fixAt>8000){fixAt=Date.now();send({hubGame:curRec});pausedUI=true;paintPause();}paint();}};
     ws.onclose=()=>setTimeout(connect,3000);}
   // 直接偵測外掛有沒有把 FB 留言送出來
   let lastCmt=0,lastTxt='';function listenCmt(){const c=new WebSocket(SERVER);c.onopen=()=>c.send(JSON.stringify({join:sid,in:4,out:99}));
