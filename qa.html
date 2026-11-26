@@ -35,12 +35,11 @@ input[type=range]{width:100%}
 #st{font-size:15px}
 /* ===== 直播畫面上的提問 ===== */
 .qa{position:absolute;inset:0;pointer-events:none;--side:1}
-.qa .who{position:absolute;bottom:calc(var(--by,4)*1cqh - 75cqw);width:44cqw;height:50.6cqw;transition:bottom .6s cubic-bezier(.2,1.3,.4,1)}
+.qa .who{position:absolute;bottom:calc(var(--by,4)*1cqh - 75cqw);width:44cqw;height:47cqw;transition:bottom .6s cubic-bezier(.2,1.3,.4,1)}
 .qa.on .who{bottom:calc(var(--by,4)*1cqh - 7cqw)}
-.qa .who svg{width:100%;height:100%;overflow:visible}
-.qa .arm{transform-origin:70% 60%;animation:wave 1.1s ease-in-out infinite}
-@keyframes wave{0%,100%{transform:rotate(0)}50%{transform:rotate(-9deg)}}
-.qa .bb{position:absolute;bottom:calc(var(--by,4)*1cqh + 47cqw);max-width:74cqw;min-width:34cqw;background:#fff;color:#1a1a1a;border:1cqw solid #1a1a1a;border-radius:6cqw;
+.qa .who img{width:100%;height:100%;display:block;transform-origin:50% 100%;animation:sway 2.4s ease-in-out infinite;filter:drop-shadow(0 1cqw 2cqw rgba(0,0,0,.25))}
+@keyframes sway{0%,100%{transform:rotate(0) translateY(0)}50%{transform:rotate(-2deg) translateY(-.8cqw)}}
+.qa .bb{position:absolute;bottom:calc(var(--by,4)*1cqh + 43cqw);max-width:74cqw;min-width:34cqw;background:#fff;color:#1a1a1a;border:1cqw solid #1a1a1a;border-radius:6cqw;
   padding:3cqw 4.4cqw 3.4cqw;box-shadow:1.4cqw 1.6cqw 0 rgba(0,0,0,.35);transform:scale(0);transition:transform .45s cubic-bezier(.2,1.5,.4,1) .25s}
 .qa.on .bb{transform:scale(1)}
 .qa .bb .n{font-weight:900;font-size:3.4cqw;color:#c2410c;margin-bottom:.6cqw}
@@ -50,8 +49,8 @@ input[type=range]{width:100%}
 .qa .bb::after,.qa .bb::before{content:'';position:absolute;border-style:solid}
 .qa .bb::before{bottom:-6.2cqw;border-width:6cqw 3.4cqw 0 3.4cqw;border-color:#1a1a1a transparent transparent transparent}
 .qa .bb::after{bottom:-4.2cqw;border-width:4.4cqw 2.2cqw 0 2.2cqw;border-color:#fff transparent transparent transparent}
-.qa.l .who{left:2cqw}.qa.l .bb{left:6cqw;transform-origin:15% 100%}.qa.l .bb::before{left:12cqw}.qa.l .bb::after{left:13.2cqw}
-.qa.r .who{right:2cqw}.qa.r .who svg{transform:scaleX(-1)}.qa.r .bb{right:6cqw;transform-origin:85% 100%}.qa.r .bb::before{right:12cqw}.qa.r .bb::after{right:13.2cqw}
+.qa.l .who{left:2cqw}.qa.l .bb{left:6cqw;transform-origin:15% 100%}.qa.l .bb::before{left:15cqw}.qa.l .bb::after{left:16.2cqw}
+.qa.r .who{right:2cqw}.qa.r .who{transform:scaleX(-1)}.qa.r .bb{right:6cqw;transform-origin:85% 100%}.qa.r .bb::before{right:15cqw}.qa.r .bb::after{right:16.2cqw}
 body.ov,html.ov{background:transparent!important}
 body.ov #wrap{display:none}
 #ovStage{position:fixed;inset:0;container-type:size;pointer-events:none}
@@ -92,19 +91,9 @@ const DEFCFG={side:'l',b:4,dur:30,name:true};
 const esc=t=>String(t==null?'':t).replace(/&/g,'&amp;').replace(/</g,'&lt;');
 const HAIR=['#3a2618','#6b4226','#1d1a1a','#8a5a32','#b9875a'],TOP=['#e8cfc0','#c9d8e8','#f3e3b5','#d8c8e8','#cfe3cf'];
 /* 背對鏡頭、舉手的觀眾 */
-function person(seed){const h=HAIR[seed%HAIR.length],t=TOP[(seed>>3)%TOP.length],long=seed%2===0;
-  return `<svg viewBox="0 0 200 230">
-  <g class="arm"><path d="M138 165 C150 120 160 80 166 40" stroke="${t}" stroke-width="34" stroke-linecap="round" fill="none"/><path d="M138 165 C150 120 160 80 166 40" stroke="rgba(0,0,0,.07)" stroke-width="10" stroke-linecap="round" fill="none" transform="translate(-9,0)"/>
-    <ellipse cx="167" cy="24" rx="17" ry="19" fill="#f1c9a8"/><rect x="155" y="0" width="7.5" height="22" rx="3.7" fill="#f1c9a8"/><rect x="163.5" y="-4" width="7.5" height="25" rx="3.7" fill="#f1c9a8"/><rect x="172" y="0" width="7.5" height="22" rx="3.7" fill="#f1c9a8"/><rect x="180" y="18" width="7" height="17" rx="3.5" fill="#f1c9a8" transform="rotate(-30 183 26)"/></g>
-  <path d="M28 230 C30 175 55 150 100 148 C145 150 170 175 172 230 Z" fill="${t}"/>
-  <path d="M28 230 C30 175 55 150 100 148 C145 150 170 175 172 230 Z" fill="rgba(0,0,0,.06)"/>
-  <rect x="88" y="128" width="24" height="26" rx="8" fill="#e9bc98"/>
-  ${long?`<path d="M58 95 C55 150 62 185 70 200 L130 200 C138 185 145 150 142 95 Z" fill="${h}"/>`:''}
-  <ellipse cx="100" cy="96" rx="44" ry="48" fill="${h}"/>
-  <path d="M70 70 C85 58 115 58 130 70" stroke="rgba(255,255,255,.18)" stroke-width="5" fill="none" stroke-linecap="round"/>
-  ${long?'':`<ellipse cx="100" cy="56" rx="13" ry="11" fill="${h}"/>`}
-  <ellipse cx="56" cy="102" rx="7" ry="11" fill="#e9bc98"/><ellipse cx="144" cy="102" rx="7" ry="11" fill="#e9bc98"/>
-  </svg>`;}
+const PEOPLE=[1,2,3,4,5].map(n=>`qa_p${n}.webp?v=1`);
+PEOPLE.forEach(u=>{const im=new Image();im.src=u;});
+function person(seed){return `<img src="${PEOPLE[seed%PEOPLE.length]}" alt="">`;}
 function renderQA(host,q,cfg,on){cfg=Object.assign({},DEFCFG,cfg||{});
   let w=host.querySelector('.qa');if(!w){w=document.createElement('div');w.className='qa';host.appendChild(w);}
   if(!q){w.classList.remove('on');return;}
