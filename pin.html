@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Shine欣 置頂框</title>
+<style>
+:root{--bg:#14161b;--panel:#1c1f26;--line:#2c313b;--txt:#eceef2;--sub:#9aa3b2;--gold:#e2c28a}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--txt);font:18px/1.6 "Microsoft JhengHei","PingFang TC","Noto Sans TC",sans-serif}
+#wrap{display:flex;gap:18px;height:100%;padding:12px}
+#stageBox{flex:0 0 auto;height:100%;display:flex;flex-direction:column;align-items:center;gap:8px}
+#stage{position:relative;height:calc(100% - 40px);aspect-ratio:9/16;border-radius:14px;overflow:hidden;background:repeating-conic-gradient(#3a3f4a 0 25%,#30343d 0 50%) 0 0/40px 40px;container-type:size}
+#panel{flex:1 1 auto;min-width:0;overflow:auto;background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:16px 18px}
+h2{margin:4px 0 6px;font-size:24px;color:var(--gold)}
+h3{margin:18px 0 8px;font-size:19px;color:var(--gold)}
+input,button,select,textarea{font:inherit}
+textarea,input[type=text],select{width:100%;padding:10px 12px;border-radius:10px;border:1px solid #3a404c;background:#252a33;color:#fff}
+textarea{min-height:120px;font-size:16px}
+.btn{border:none;border-radius:12px;padding:10px 16px;font-weight:700;cursor:pointer;font-size:17px}
+.gold{background:linear-gradient(180deg,#f0d49c,#d2a85e);color:#2a1d08}
+.ghost{background:#2c313b;color:var(--txt)}
+.red{background:#5a2328;color:#ffd6d6}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.tip{color:var(--sub);font-size:15px}
+label{display:block;margin-top:6px}
+input[type=range]{width:100%}
+#ctlBar{position:sticky;top:-16px;z-index:3;background:var(--panel);padding:8px 0 10px;border-bottom:1px solid var(--line);margin-bottom:6px}
+#ctlBar .btn{font-size:19px;padding:12px 18px}
+#list{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px}
+.it{display:flex;gap:10px;background:#232832;border:2px solid transparent;border-radius:14px;padding:8px;cursor:pointer;align-items:center}
+.it.sel{border-color:#6a7488}
+.it.live{border-color:var(--gold);background:#2e2a20}
+.it .th{flex:0 0 64px;height:80px;border-radius:8px;background:#151820 center/contain no-repeat;display:flex;align-items:center;justify-content:center;color:#666;font-size:13px;text-align:center}
+.it .c{font-weight:800;color:var(--gold);font-size:19px}
+.it .n{font-size:15px;color:#cfd3da;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:150px}
+.it .lv{font-size:13px;color:#2a1d08;background:var(--gold);border-radius:6px;padding:0 6px;display:inline-block}
+#st{font-size:15px}
+/* ===== 置頂卡片（直播畫面上） ===== */
+.pc{position:absolute;display:flex;gap:2.4cqw;align-items:stretch;padding:2cqw;border-radius:3.2cqw;
+  background:rgba(20,17,14,var(--bgA,.78));border:.45cqw solid rgba(226,194,138,.95);box-shadow:0 1.4cqw 4cqw rgba(0,0,0,.45);
+  transform-origin:left top;opacity:0;transition:opacity .45s, transform .45s;max-width:92cqw}
+.pc.on{opacity:1}
+.pc .im{flex:0 0 auto;width:calc(24cqw*var(--s,1));aspect-ratio:3/4;border-radius:2cqw;background:#0d0d0d center/contain no-repeat;border:.3cqw solid rgba(226,194,138,.5)}
+.pc .tx{display:flex;flex-direction:column;justify-content:center;min-width:0;max-width:calc(52cqw*var(--s,1))}
+.pc .cd{font:700 calc(7.4cqw*var(--s,1))/1.05 "Noto Serif TC","Songti TC","PMingLiU",serif;color:#f0d49c;letter-spacing:.04em;text-shadow:0 .3cqw 1cqw rgba(0,0,0,.6)}
+.pc .cd small{font-size:.55em;margin-left:.1em}
+.pc .nm{font-weight:800;font-size:calc(3.9cqw*var(--s,1));color:#fff;line-height:1.3;margin-top:.6cqw}
+.pc .ln{font-weight:700;font-size:calc(3.6cqw*var(--s,1));color:#f3ede2;line-height:1.32}
+.pc .pr{font-weight:900;font-size:calc(4.6cqw*var(--s,1));color:#ffe08a;margin-top:.6cqw}
+/* 手機圖層 */
+body.ov,html.ov{background:transparent!important}
+body.ov #wrap{display:none}
+#ovStage{position:fixed;inset:0;container-type:size;pointer-events:none}
+@media (max-width:900px){#wrap{flex-direction:column;height:auto}#stage{height:70vh}}
+</style>
+</head>
+<body>
+<div id="ovStage" style="display:none"></div>
+<div id="wrap">
+  <div id="stageBox"><div id="stage"></div><div class="tip">↑ 直播畫面預覽（手機上看起來的位置）</div></div>
+  <div id="panel">
+    <div id="ctlBar">
+      <h2>📌 置頂框</h2>
+      <div id="st" class="tip">連線中…</div>
+      <div class="row" style="margin-top:8px">
+        <button class="btn ghost" id="prev">◀ 上一標</button>
+        <button class="btn gold" id="show">📌 置頂這一標</button>
+        <button class="btn ghost" id="next">下一標 ▶</button>
+        <button class="btn red" id="hide">🙈 收起來</button>
+      </div>
+      <div class="tip" style="margin-top:4px">快捷鍵：← → 換標（會直接置頂）、Enter 置頂、Esc 收起來。選好一標後按 Ctrl+V 可以直接貼圖。</div>
+    </div>
+
+    <h3>① 貼上記事本</h3>
+    <div class="tip">把跟播記事本整段貼進來（例如「2096標[派對家]背心 / $950 / 白 黑 / 胸39-77長52 / /28000」），會自動拆成一標一標。韓幣那行不會顯示。</div>
+    <textarea id="note" placeholder="2096標[派對家]背心&#10;$950&#10;白 黑&#10;胸39-77長52&#10;&#10;/28000"></textarea>
+    <div class="row" style="margin-top:8px"><button class="btn gold" id="parse">讀取記事本</button><button class="btn ghost" id="clearAll">全部清空</button></div>
+
+    <h3>② 放衣服照片</h3>
+    <div class="tip">照片檔名有標號就會自動對上（2096.jpg、2096-1.jpg、2096標背心.jpg 都可以）。也可以先點一標，再按 Ctrl+V 貼圖，或把照片拖到那一標上。</div>
+    <div class="row" style="margin-top:8px">
+      <button class="btn ghost" id="pickF">🖼 選照片（可多選）</button>
+      <button class="btn ghost" id="pickD">📁 選整個資料夾</button>
+      <input type="file" id="fF" accept="image/*" multiple hidden>
+      <input type="file" id="fD" webkitdirectory multiple hidden>
+    </div>
+    <div class="tip" id="imgMsg"></div>
+
+    <h3>③ 這一場的標</h3>
+    <div id="list"></div>
+
+    <h3>④ 目前選的這一標（可以直接改）</h3>
+    <div class="row"><input type="text" id="eCode" placeholder="標號" style="flex:0 0 130px"><input type="text" id="eName" placeholder="[店家]品名" style="flex:1 1 200px"><input type="text" id="ePrice" placeholder="$價錢" style="flex:0 0 140px"></div>
+    <label>規格（一行一行，會照這樣顯示）<textarea id="eLines" style="min-height:90px"></textarea></label>
+    <div class="row" style="margin-top:6px"><button class="btn ghost" id="eImg">換照片</button><button class="btn ghost" id="eNoImg">拿掉照片</button><button class="btn ghost" id="eNew">＋ 自己新增一標</button><button class="btn ghost" id="eDel">刪掉這一標</button><input type="file" id="fOne" accept="image/*" hidden></div>
+
+    <h3>⑤ 樣子和位置</h3>
+    <label><input type="checkbox" id="cPrice"> 顯示價錢</label>
+    <label><input type="checkbox" id="cName"> 顯示[店家]品名</label>
+    <label>放在哪裡<select id="cSide"><option value="l">靠左</option><option value="r">靠右</option></select></label>
+    <label>上下位置 <span id="vY"></span><input type="range" id="cY" min="2" max="88"></label>
+    <label>大小 <span id="vS"></span><input type="range" id="cS" min="60" max="150"></label>
+    <label>底色深淺 <span id="vA"></span><input type="range" id="cA" min="30" max="95"></label>
+    <div class="tip">調完會馬上同步到直播（正在置頂的話）。</div>
+  </div>
+</div>
+<script>
+const QS=new URLSearchParams(location.search),OV=QS.get('mode')==='overlay';
+const SERVER=QS.get('server')||'wss://io.socialstream.ninja';
+const LS=(k,d)=>{try{const v=localStorage.getItem('pn_'+k);return v==null?d:JSON.parse(v);}catch(e){return d;}};
+const SV=(k,v)=>{try{localStorage.setItem('pn_'+k,JSON.stringify(v));return true;}catch(e){return false;}};
+let sid=QS.get('session')||'JUVRjNBuLH';
+const DEFCFG={price:true,name:true,side:'l',y:14,s:100,a:78};
+const esc=t=>String(t==null?'':t).replace(/&/g,'&amp;').replace(/</g,'&lt;');
+
+/* 卡片畫法：手機和預覽共用 */
+function renderCard(host,pin,cfg,on,anim=true){
+  let c=host.querySelector('.pc');if(!c){c=document.createElement('div');c.className='pc';host.appendChild(c);}
+  if(!pin){c.classList.remove('on');return;}
+  cfg=Object.assign({},DEFCFG,cfg||{});
+  c.style.setProperty('--s',cfg.s/100);c.style.setProperty('--bgA',cfg.a/100);
+  c.style.top=cfg.y+'cqh';c.style.left=cfg.side==='l'?'3cqw':'auto';c.style.right=cfg.side==='r'?'3cqw':'auto';
+  const lines=(pin.lines||[]).filter(Boolean).slice(0,6);
+  c.innerHTML=(pin.img?`<div class="im" style="background-image:url('${pin.img}')"></div>`:'')+
+    `<div class="tx"><div class="cd">${esc(pin.code)}<small>標</small></div>`+
+    (cfg.name&&pin.name?`<div class="nm">${esc(pin.name)}</div>`:'')+
+    lines.map(l=>`<div class="ln">${esc(l)}</div>`).join('')+
+    (cfg.price&&pin.price?`<div class="pr">${esc(pin.price)}</div>`:'')+`</div>`;
+  if(on&&anim){c.classList.remove('on');void c.offsetWidth;requestAnimationFrame(()=>c.classList.add('on'));}else c.classList.toggle('on',!!on);
+}
+
+if(OV){
+  /* ===== 手機圖層：只負責顯示 ===== */
+  document.documentElement.classList.add('ov');document.body.classList.add('ov');
+  const host=document.getElementById('ovStage');host.style.display='block';
+  let pin=LS('ovPin',null),cfg=LS('ovCfg',DEFCFG),on=LS('ovOn',false);
+  renderCard(host,pin,cfg,on);
+  let ws;function send(o){try{ws&&ws.readyState===1&&ws.send(JSON.stringify(o));}catch(e){}}
+  const pong=()=>send({pinPong:{code:on&&pin?pin.code:'',t:Date.now()}});
+  function connect(){ws=new WebSocket(SERVER);ws.onopen=()=>{ws.send(JSON.stringify({join:sid,in:6,out:5}));setTimeout(pong,300);};
+    ws.onmessage=e=>{let m;try{m=JSON.parse(e.data);}catch(x){return;}const d=m.overlayNinja||m;
+      if(d.pinShow){pin=d.pinShow.pin;cfg=d.pinShow.cfg||cfg;on=true;SV('ovPin',pin);SV('ovCfg',cfg);SV('ovOn',true);renderCard(host,pin,cfg,true);pong();}
+      if(d.pinCfg&&on&&pin){cfg=d.pinCfg;SV('ovCfg',cfg);renderCard(host,pin,cfg,true,false);}
+      if(d.pinHide){on=false;SV('ovOn',false);renderCard(host,pin,cfg,false);pong();}
+      if(d.pinPing)pong();};
+    ws.onclose=()=>setTimeout(connect,3000);}
+  connect();setInterval(pong,20000);
+}else{
+  /* ===== 電腦：控制台 ===== */
+  const $=id=>document.getElementById(id);
+  let items=LS('items',[]),cfg=Object.assign({},DEFCFG,LS('cfg',{})),selI=LS('sel',0),liveCode=null,phoneSeen=0,phoneCode='';
+  let ws;function send(o){if(ws&&ws.readyState===1){try{ws.send(JSON.stringify(o));return true;}catch(e){}}return false;}
+  function connect(){ws=new WebSocket(SERVER);ws.onopen=()=>{ws.send(JSON.stringify({join:sid,in:5,out:6}));setTimeout(()=>send({pinPing:1}),300);paintSt();};
+    ws.onmessage=e=>{let m;try{m=JSON.parse(e.data);}catch(x){return;}const d=m.overlayNinja||m;if(d.pinPong){phoneSeen=Date.now();phoneCode=d.pinPong.code||'';liveCode=phoneCode||null;paintList();paintSt();}};
+    ws.onclose=()=>{paintSt();setTimeout(connect,3000);};}
+  function paintSt(){const ok=Date.now()-phoneSeen<45000;
+    $('st').innerHTML=(ok?'<b style="color:#8fe39a">✅ 手機已連上</b>':'<span style="color:#ffb070">⚠️ 手機還沒連上（手機 PRISM 要開總台網址，而且要重新整理過一次）</span>')+
+      '　・　直播上：'+(phoneCode?`<b style="color:var(--gold)">📌 ${esc(phoneCode)}標</b>`:'沒有置頂');}
+  setInterval(()=>{send({pinPing:1});paintSt();},10000);
+  const save=()=>{if(!SV('items',items))$('imgMsg').textContent='⚠️ 照片太多，瀏覽器存不下了；重新整理後照片可能不見（目前畫面還是可以用）。';SV('sel',selI);};
+  const cur=()=>items[selI];
+  /* 讀記事本 */
+  function parseNote(t){const out=[];let c=null;
+    String(t).replace(/\r/g,'').split('\n').forEach(raw=>{const l=raw.trim();
+      const h=l.match(/^([A-Za-z]*\d+)\s*標\s*(.*)$/);
+      if(h){c={code:h[1],name:h[2].replace(/\s*\/\s*0*\s*$/,'').replace(/\s*\$\s*[\d,]+.*$/,'').trim(),price:'',lines:[],img:''};
+        const pIn=h[2].match(/\$\s*[\d,]+/);if(pIn)c.price=pIn[0].replace(/\s/g,'');out.push(c);return;}
+      if(!c||!l)return;
+      if(/^\/\s*[\d,]+/.test(l))return;                 // 韓幣
+      const p=l.match(/^\$\s*([\d,]+)/);if(p&&!c.price){c.price='$'+p[1];return;}
+      if(/^\$/.test(l))return;
+      c.lines.push(l);});
+    return out.filter(x=>x.lines.length||x.price);}
+  $('parse').onclick=()=>{const got=parseNote($('note').value);if(!got.length){alert('讀不到標號。每一標的第一行要像「2096標[派對家]背心」。');return;}
+    let add=0,upd=0;got.forEach(g=>{const i=items.findIndex(x=>x.code===g.code);if(i>=0){items[i]=Object.assign(items[i],{name:g.name,price:g.price,lines:g.lines});upd++;}else{items.push(g);add++;}});
+    items.sort((a,b)=>(parseInt(a.code.replace(/\D/g,''))||0)-(parseInt(b.code.replace(/\D/g,''))||0));save();paintList();paintEdit();
+    $('imgMsg').textContent=`讀到 ${got.length} 標（新增 ${add}、更新 ${upd}）。`;};
+  $('clearAll').onclick=()=>{if(!items.length)return;if(!confirm('清空這一場所有的標和照片？'))return;items=[];selI=0;save();paintList();paintEdit();};
+  /* 照片：縮小後存起來 */
+  function shrink(file){return new Promise(res=>{const u=URL.createObjectURL(file);const im=new Image();im.onload=()=>{const k=Math.min(1,420/Math.max(im.width,im.height));
+    const cv=document.createElement('canvas');cv.width=Math.round(im.width*k);cv.height=Math.round(im.height*k);const g=cv.getContext('2d');g.fillStyle='#111';g.fillRect(0,0,cv.width,cv.height);g.drawImage(im,0,0,cv.width,cv.height);
+    URL.revokeObjectURL(u);res(cv.toDataURL('image/jpeg',.78));};im.onerror=()=>{URL.revokeObjectURL(u);res('');};im.src=u;});}
+  async function takeFiles(files){files=[...files].filter(f=>/^image\//.test(f.type)||/\.(jpe?g|png|webp|heic)$/i.test(f.name));let n=0,miss=[];
+    files.sort((a,b)=>a.name.localeCompare(b.name,'zh-Hant',{numeric:true}));
+    for(const f of files){const base=f.name.replace(/\.[^.]+$/,'');const m=base.match(/^([A-Za-z]*\d+)/);if(!m){miss.push(f.name);continue;}
+      const it=items.find(x=>x.code.toUpperCase()===m[1].toUpperCase());if(!it){miss.push(f.name);continue;}
+      if(it.img&&/-\d+$|_\d+$|\(\d+\)$/.test(base))continue;   // 同一標多張：用第一張
+      const d=await shrink(f);if(d){it.img=d;n++;}}
+    save();paintList();paintEdit();$('imgMsg').textContent=`對上 ${n} 張照片。`+(miss.length?` 對不上的 ${miss.length} 張：${miss.slice(0,6).join('、')}${miss.length>6?'…':''}`:'');}
+  $('pickF').onclick=()=>$('fF').click();$('pickD').onclick=()=>$('fD').click();
+  $('fF').onchange=e=>{takeFiles(e.target.files);e.target.value='';};$('fD').onchange=e=>{takeFiles(e.target.files);e.target.value='';};
+  $('eImg').onclick=()=>{if(cur())$('fOne').click();};
+  $('fOne').onchange=async e=>{const f=e.target.files[0];e.target.value='';if(f&&cur()){cur().img=await shrink(f);save();paintList();paintEdit();resendIfLive();}};
+  $('eNoImg').onclick=()=>{if(cur()){cur().img='';save();paintList();paintEdit();resendIfLive();}};
+  document.addEventListener('paste',async e=>{if(!cur())return;const f=[...(e.clipboardData||{}).items||[]].find(x=>/^image\//.test(x.type));if(!f)return;e.preventDefault();
+    cur().img=await shrink(f.getAsFile());save();paintList();paintEdit();resendIfLive();$('imgMsg').textContent=`已把貼上的圖放到 ${cur().code}標。`;});
+  /* 清單 */
+  function paintList(){$('list').innerHTML=items.length?items.map((x,i)=>`<div class="it${i===selI?' sel':''}${liveCode===x.code?' live':''}" data-i="${i}">
+      <div class="th" style="${x.img?`background-image:url('${x.img}')`:''}">${x.img?'':'沒有照片'}</div>
+      <div><div class="c">${esc(x.code)}標 ${liveCode===x.code?'<span class="lv">直播中</span>':''}</div><div class="n">${esc(x.name||'')}</div><div class="n">${esc((x.lines||[]).join(' / '))}</div></div></div>`).join('')
+      :'<div class="tip">還沒有任何一標。先在 ① 貼上記事本，或按 ④ 的「＋ 自己新增一標」。</div>';
+    $('list').querySelectorAll('.it').forEach(el=>{const i=+el.dataset.i;el.onclick=()=>{selI=i;SV('sel',selI);paintList();paintEdit();};
+      el.ondblclick=()=>{selI=i;showCur();};
+      el.ondragover=ev=>ev.preventDefault();el.ondrop=async ev=>{ev.preventDefault();const f=ev.dataTransfer.files[0];if(f){items[i].img=await shrink(f);save();paintList();paintEdit();if(i===selI)resendIfLive();}};});
+    preview();}
+  function paintEdit(){const x=cur();['eCode','eName','ePrice','eLines'].forEach(id=>$(id).disabled=!x);
+    $('eCode').value=x?x.code:'';$('eName').value=x?x.name||'':'';$('ePrice').value=x?x.price||'':'';$('eLines').value=x?(x.lines||[]).join('\n'):'';preview();}
+  let edT=0;['eCode','eName','ePrice','eLines'].forEach(id=>$(id).addEventListener('input',()=>{const x=cur();if(!x)return;
+    x.code=$('eCode').value.trim();x.name=$('eName').value.trim();x.price=$('ePrice').value.trim();x.lines=$('eLines').value.split('\n').map(s=>s.trim()).filter(Boolean);
+    save();clearTimeout(edT);edT=setTimeout(()=>{paintList();resendIfLive();},400);preview();}));
+  $('eNew').onclick=()=>{const last=items[items.length-1];const n=last?String((parseInt(last.code.replace(/\D/g,''))||0)+1):'1';items.push({code:n,name:'',price:'',lines:[],img:''});selI=items.length-1;save();paintList();paintEdit();$('eCode').focus();};
+  $('eDel').onclick=()=>{if(!cur())return;if(!confirm(`刪掉 ${cur().code}標？`))return;items.splice(selI,1);selI=Math.max(0,Math.min(selI,items.length-1));save();paintList();paintEdit();};
+  /* 置頂 */
+  const pinOf=x=>({code:x.code,name:x.name,price:x.price,lines:x.lines,img:x.img});
+  function showCur(){const x=cur();if(!x)return;if(!send({pinShow:{pin:pinOf(x),cfg}})){alert('還沒連上，等幾秒再按一次。');return;}liveCode=x.code;phoneCode=x.code;SV('sel',selI);paintList();paintSt();}
+  function resendIfLive(){const x=cur();if(x&&liveCode&&(liveCode===x.code||liveCode===$('eCode').value.trim()))send({pinShow:{pin:pinOf(x),cfg}});}
+  $('show').onclick=showCur;
+  $('hide').onclick=()=>{send({pinHide:1});liveCode=null;phoneCode='';paintList();paintSt();};
+  $('prev').onclick=()=>{if(selI>0){selI--;showCur();paintEdit();}};
+  $('next').onclick=()=>{if(selI<items.length-1){selI++;showCur();paintEdit();}};
+  document.addEventListener('keydown',e=>{if(/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName))return;
+    if(e.key==='ArrowRight'){e.preventDefault();$('next').click();}else if(e.key==='ArrowLeft'){e.preventDefault();$('prev').click();}
+    else if(e.key==='Enter'){e.preventDefault();showCur();}else if(e.key==='Escape'){$('hide').click();}});
+  /* 樣子 */
+  function paintCfg(){$('cPrice').checked=cfg.price;$('cName').checked=cfg.name;$('cSide').value=cfg.side;$('cY').value=cfg.y;$('cS').value=cfg.s;$('cA').value=cfg.a;
+    $('vY').textContent=cfg.y+'%';$('vS').textContent=cfg.s+'%';$('vA').textContent=cfg.a+'%';}
+  let cfT=0;function cfgChanged(){cfg={price:$('cPrice').checked,name:$('cName').checked,side:$('cSide').value,y:+$('cY').value,s:+$('cS').value,a:+$('cA').value};SV('cfg',cfg);paintCfg();preview();
+    clearTimeout(cfT);cfT=setTimeout(()=>{if(liveCode)send({pinCfg:cfg});},120);}
+  ['cPrice','cName','cSide','cY','cS','cA'].forEach(id=>$(id).addEventListener('input',cfgChanged));
+  function preview(){const x=cur();renderCard($('stage'),x?pinOf(x):null,cfg,!!x,false);}
+  paintCfg();paintList();paintEdit();connect();paintSt();
+}
+</script>
+</body>
+</html>
