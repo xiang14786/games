@@ -39,6 +39,7 @@ h1{font-size:17px;margin:0 4px 0 0;color:var(--gold);white-space:nowrap}
 #vibeBtn.on{background:linear-gradient(90deg,#4a2a6a,#2a4a6a);border-color:#c6a0ff;color:#fff}
 #vibeFrame{position:fixed;inset:0;width:100%;height:100%;border:0;background:transparent;pointer-events:none;z-index:4}
 #pinFrame{position:fixed;inset:0;width:100%;height:100%;border:0;background:transparent;pointer-events:none;z-index:5}
+#qaFrame{position:fixed;inset:0;width:100%;height:100%;border:0;background:transparent;pointer-events:none;z-index:5}
 #sess{font-size:16px;color:var(--sub);display:flex;gap:8px;align-items:center}
 #sess input{font-size:16px;padding:6px 10px;border-radius:8px;border:1px solid var(--line);background:#0f1116;color:var(--ink);width:150px}
 #url{font-size:12px;color:var(--sub);padding:3px 12px;background:#16181f;border-bottom:1px solid var(--line);word-break:break-all}
@@ -89,6 +90,7 @@ h1{font-size:17px;margin:0 4px 0 0;color:var(--gold);white-space:nowrap}
       <span>透明度 <input type="range" id="vop" min="20" max="100" step="5" style="accent-color:#c6a0ff"> <b id="vopV"></b></span>
       <button class="s off" id="vibeSet">⚙️ 彈幕設定</button>
       <button class="s off" id="pinSet" style="border-color:#e2c28a;color:#f0d49c">📌 置頂框</button>
+      <button class="s off" id="qaSet" style="border-color:#e2c28a;color:#f0d49c">💬 觀眾提問</button>
     </div>
   </header>
   <details id="url"><summary>⚙️ 連線設定（平常不用動）</summary><div style="margin-top:8px"><span id="sess">連線代碼 <input id="sid"></span>　手機 PRISM 網址：<span id="ovUrl"></span><button id="cp">複製</button></div></details>
@@ -127,6 +129,7 @@ if(OV){
   applyVibe();vf.style.opacity=vop/100;
   /* 置頂框：跟遊戲分開，一直掛著（沒置頂時是透明的） */
   const pf=document.createElement('iframe');pf.id='pinFrame';pf.setAttribute('allowtransparency','true');document.body.appendChild(pf);pf.src=gameUrl('pin','overlay');
+  const qf=document.createElement('iframe');qf.id='qaFrame';qf.setAttribute('allowtransparency','true');document.body.appendChild(qf);qf.src=gameUrl('qa','overlay');
   function applyPause(){window.__hubPaused=paused;cover.style.display='none';applyOp();if(fxV)fxW.style.opacity=fxOp();}
   let fills=LS('fills',{}),sizes=LS('sizes',{});
   function applySize(){const z={w:100,h:100};fr.style.width=z.w+'%';fr.style.height=z.h+'%';fr.style.left=((100-z.w)/2)+'%';fr.style.right='auto';fr.style.top='0';fr.style.bottom='auto';}
@@ -215,6 +218,7 @@ if(OV){
   $('vop').addEventListener('input',()=>{vopUI=+$('vop').value;SV('vop',vopUI);paintVop();clearTimeout(vT);vT=setTimeout(()=>send({hubVop:vopUI}),60);});
   $('vibeSet').onclick=()=>window.open(gameUrl('vibe','record'),'_blank');
   $('pinSet').onclick=()=>window.open(gameUrl('pin','record'),'pinCtl');
+  $('qaSet').onclick=()=>window.open(gameUrl('qa','record'),'qaCtl');
   function paintPause(){const b=$('pauseBtn');if(!curRec||curRec==='none'){b.style.display='none';return;}b.style.display='inline-block';
     b.className=pausedUI?'hid':'shown';b.textContent=pausedUI?'🙈 沒顯示｜▶ 按這裡顯示到直播':'👁 顯示中｜■ 按這裡隱藏';}
   $('pauseBtn').onclick=()=>{pausedUI=!pausedUI;if(!pausedUI&&curRec&&phoneGame!==curRec){send({hubGame:curRec});setTimeout(()=>send({hubPause:false}),700);}else send({hubPause:pausedUI});paintPause();};

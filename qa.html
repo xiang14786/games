@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Shine欣 觀眾提問</title>
+<style>
+:root{--bg:#14161b;--panel:#1c1f26;--line:#2c313b;--txt:#eceef2;--sub:#9aa3b2;--gold:#e2c28a}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--txt);font:18px/1.6 "Microsoft JhengHei","PingFang TC","Noto Sans TC",sans-serif}
+#wrap{display:flex;gap:18px;height:100%;padding:12px}
+#stageBox{flex:0 0 auto;height:100%;display:flex;flex-direction:column;align-items:center;gap:8px}
+#stage{position:relative;height:calc(100% - 40px);aspect-ratio:9/16;border-radius:14px;overflow:hidden;background:repeating-conic-gradient(#3a3f4a 0 25%,#30343d 0 50%) 0 0/40px 40px;container-type:size}
+#panel{flex:1 1 auto;min-width:0;overflow:auto;background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:16px 18px}
+h2{margin:4px 0 6px;font-size:24px;color:var(--gold)}
+h3{margin:16px 0 8px;font-size:19px;color:var(--gold)}
+input,button,select,textarea{font:inherit}
+textarea,input[type=text],select{width:100%;padding:10px 12px;border-radius:10px;border:1px solid #3a404c;background:#252a33;color:#fff}
+.btn{border:none;border-radius:12px;padding:10px 16px;font-weight:700;cursor:pointer;font-size:17px}
+.gold{background:linear-gradient(180deg,#f0d49c,#d2a85e);color:#2a1d08}
+.ghost{background:#2c313b;color:var(--txt)}
+.red{background:#5a2328;color:#ffd6d6}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.tip{color:var(--sub);font-size:15px}
+label{display:block;margin-top:6px}
+input[type=range]{width:100%}
+#cm{display:flex;flex-direction:column;gap:6px;max-height:48vh;overflow:auto;padding-right:4px}
+.c{display:flex;gap:10px;align-items:flex-start;background:#232832;border:2px solid transparent;border-radius:12px;padding:8px 10px;cursor:pointer}
+.c:hover{border-color:#6a7488}
+.c.q{background:#2b2a22}
+.c.live{border-color:var(--gold)}
+.c .nm{flex:0 0 auto;color:var(--gold);font-weight:700;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.c .tx{flex:1 1 auto;word-break:break-all}
+.c .tg{flex:0 0 auto;font-size:13px;background:#e2c28a;color:#2a1d08;border-radius:6px;padding:0 6px}
+#st{font-size:15px}
+/* ===== 直播畫面上的提問 ===== */
+.qa{position:absolute;inset:0;pointer-events:none;--side:1}
+.qa .who{position:absolute;bottom:calc(var(--by,4)*1cqh - 75cqw);width:44cqw;height:50.6cqw;transition:bottom .6s cubic-bezier(.2,1.3,.4,1)}
+.qa.on .who{bottom:calc(var(--by,4)*1cqh - 7cqw)}
+.qa .who svg{width:100%;height:100%;overflow:visible}
+.qa .arm{transform-origin:70% 60%;animation:wave 1.1s ease-in-out infinite}
+@keyframes wave{0%,100%{transform:rotate(0)}50%{transform:rotate(-9deg)}}
+.qa .bb{position:absolute;bottom:calc(var(--by,4)*1cqh + 47cqw);max-width:74cqw;min-width:34cqw;background:#fff;color:#1a1a1a;border:1cqw solid #1a1a1a;border-radius:6cqw;
+  padding:3cqw 4.4cqw 3.4cqw;box-shadow:1.4cqw 1.6cqw 0 rgba(0,0,0,.35);transform:scale(0);transition:transform .45s cubic-bezier(.2,1.5,.4,1) .25s}
+.qa.on .bb{transform:scale(1)}
+.qa .bb .n{font-weight:900;font-size:3.4cqw;color:#c2410c;margin-bottom:.6cqw}
+.qa .bb .t{font-weight:900;font-size:var(--fs,5.6cqw);line-height:1.32;word-break:break-all}
+.qa .bb .bar{position:absolute;left:5cqw;right:5cqw;bottom:1.2cqw;height:.7cqw;border-radius:1cqw;background:#e9e2d4;overflow:hidden}
+.qa .bb .bar i{display:block;height:100%;width:100%;background:#e2a33b;transform-origin:left}
+.qa .bb::after,.qa .bb::before{content:'';position:absolute;border-style:solid}
+.qa .bb::before{bottom:-6.2cqw;border-width:6cqw 3.4cqw 0 3.4cqw;border-color:#1a1a1a transparent transparent transparent}
+.qa .bb::after{bottom:-4.2cqw;border-width:4.4cqw 2.2cqw 0 2.2cqw;border-color:#fff transparent transparent transparent}
+.qa.l .who{left:2cqw}.qa.l .bb{left:6cqw;transform-origin:15% 100%}.qa.l .bb::before{left:12cqw}.qa.l .bb::after{left:13.2cqw}
+.qa.r .who{right:2cqw}.qa.r .who svg{transform:scaleX(-1)}.qa.r .bb{right:6cqw;transform-origin:85% 100%}.qa.r .bb::before{right:12cqw}.qa.r .bb::after{right:13.2cqw}
+body.ov,html.ov{background:transparent!important}
+body.ov #wrap{display:none}
+#ovStage{position:fixed;inset:0;container-type:size;pointer-events:none}
+@media (max-width:900px){#wrap{flex-direction:column;height:auto}#stage{height:70vh}}
+</style>
+</head>
+<body>
+<div id="ovStage" style="display:none"></div>
+<div id="wrap">
+  <div id="stageBox"><div id="stage"></div><div class="tip">↑ 直播畫面預覽</div></div>
+  <div id="panel">
+    <h2>💬 觀眾提問</h2>
+    <div id="st" class="tip">連線中…</div>
+    <div class="row" style="margin-top:8px"><button class="btn red" id="hide">🙈 馬上收起來</button><span class="tip">點一下留言就會顯示到直播，<span id="durTxt">30</span> 秒後自動收起來。</span></div>
+
+    <h3>① 直播留言（最新的在最上面）</h3>
+    <div class="row"><label style="margin:0"><input type="checkbox" id="onlyQ" checked> 只看像問題的留言（有「?」「嗎」「請問」「多少」「有沒有」…）</label></div>
+    <div id="cm" style="margin-top:8px"></div>
+
+    <h3>② 自己打一個問題</h3>
+    <div class="row"><input type="text" id="mName" placeholder="名字（可以空白）" style="flex:0 0 180px"><input type="text" id="mQ" placeholder="問題，例如：這件 M 腰圍多少？" style="flex:1 1 260px"><button class="btn gold" id="mGo">顯示</button></div>
+
+    <h3>③ 樣子和位置</h3>
+    <label>放在哪一邊<select id="cSide"><option value="l">左下</option><option value="r">右下</option></select></label>
+    <label>離底部的高度 <span id="vB"></span><input type="range" id="cB" min="0" max="40"></label>
+    <label>顯示幾秒<select id="cDur"><option>15</option><option>20</option><option selected>30</option><option>45</option><option>60</option></select></label>
+    <label><input type="checkbox" id="cName" checked> 顯示提問的人的名字</label>
+    <div class="tip">提醒：FB 手機版的留言會蓋在畫面下方，觀眾看直播時下面那一塊比較容易被擋，可以把高度往上調。</div>
+  </div>
+</div>
+<script>
+const QS=new URLSearchParams(location.search),OV=QS.get('mode')==='overlay';
+const SERVER=QS.get('server')||'wss://io.socialstream.ninja';
+const LS=(k,d)=>{try{const v=localStorage.getItem('qa_'+k);return v==null?d:JSON.parse(v);}catch(e){return d;}};
+const SV=(k,v)=>{try{localStorage.setItem('qa_'+k,JSON.stringify(v));}catch(e){}};
+let sid=QS.get('session')||'JUVRjNBuLH';
+const DEFCFG={side:'l',b:4,dur:30,name:true};
+const esc=t=>String(t==null?'':t).replace(/&/g,'&amp;').replace(/</g,'&lt;');
+const HAIR=['#3a2618','#6b4226','#1d1a1a','#8a5a32','#b9875a'],TOP=['#e8cfc0','#c9d8e8','#f3e3b5','#d8c8e8','#cfe3cf'];
+/* 背對鏡頭、舉手的觀眾 */
+function person(seed){const h=HAIR[seed%HAIR.length],t=TOP[(seed>>3)%TOP.length],long=seed%2===0;
+  return `<svg viewBox="0 0 200 230">
+  <g class="arm"><path d="M138 165 C150 120 160 80 166 40" stroke="${t}" stroke-width="34" stroke-linecap="round" fill="none"/><path d="M138 165 C150 120 160 80 166 40" stroke="rgba(0,0,0,.07)" stroke-width="10" stroke-linecap="round" fill="none" transform="translate(-9,0)"/>
+    <ellipse cx="167" cy="24" rx="17" ry="19" fill="#f1c9a8"/><rect x="155" y="0" width="7.5" height="22" rx="3.7" fill="#f1c9a8"/><rect x="163.5" y="-4" width="7.5" height="25" rx="3.7" fill="#f1c9a8"/><rect x="172" y="0" width="7.5" height="22" rx="3.7" fill="#f1c9a8"/><rect x="180" y="18" width="7" height="17" rx="3.5" fill="#f1c9a8" transform="rotate(-30 183 26)"/></g>
+  <path d="M28 230 C30 175 55 150 100 148 C145 150 170 175 172 230 Z" fill="${t}"/>
+  <path d="M28 230 C30 175 55 150 100 148 C145 150 170 175 172 230 Z" fill="rgba(0,0,0,.06)"/>
+  <rect x="88" y="128" width="24" height="26" rx="8" fill="#e9bc98"/>
+  ${long?`<path d="M58 95 C55 150 62 185 70 200 L130 200 C138 185 145 150 142 95 Z" fill="${h}"/>`:''}
+  <ellipse cx="100" cy="96" rx="44" ry="48" fill="${h}"/>
+  <path d="M70 70 C85 58 115 58 130 70" stroke="rgba(255,255,255,.18)" stroke-width="5" fill="none" stroke-linecap="round"/>
+  ${long?'':`<ellipse cx="100" cy="56" rx="13" ry="11" fill="${h}"/>`}
+  <ellipse cx="56" cy="102" rx="7" ry="11" fill="#e9bc98"/><ellipse cx="144" cy="102" rx="7" ry="11" fill="#e9bc98"/>
+  </svg>`;}
+function renderQA(host,q,cfg,on){cfg=Object.assign({},DEFCFG,cfg||{});
+  let w=host.querySelector('.qa');if(!w){w=document.createElement('div');w.className='qa';host.appendChild(w);}
+  if(!q){w.classList.remove('on');return;}
+  const txt=String(q.q||'').trim(),len=[...txt].length;const fs=len<=10?6.6:len<=22?5.6:len<=40?4.7:len<=70?4:3.4;
+  w.className='qa '+(cfg.side==='r'?'r':'l');w.style.setProperty('--by',cfg.b);
+  w.innerHTML=`<div class="who">${person(q.seed||0)}</div><div class="bb" style="--fs:${fs}cqw">${cfg.name&&q.n?`<div class="n">${esc(q.n)} 問：</div>`:''}<div class="t">${esc(txt)}</div><div class="bar"><i></i></div></div>`;
+  if(on){void w.offsetWidth;requestAnimationFrame(()=>w.classList.add('on'));const bar=w.querySelector('.bar i');bar.animate([{transform:'scaleX(1)'},{transform:'scaleX(0)'}],{duration:Math.max(1,q.left||cfg.dur)*1000,easing:'linear',fill:'forwards'});}}
+
+if(OV){
+  document.documentElement.classList.add('ov');document.body.classList.add('ov');
+  const host=document.getElementById('ovStage');host.style.display='block';
+  let q=null,cfg=DEFCFG,hideT=0,until=0;
+  let ws;function send(o){try{ws&&ws.readyState===1&&ws.send(JSON.stringify(o));}catch(e){}}
+  const pong=()=>send({qaPong:{on:Date.now()<until,t:Date.now()}});
+  function hide(){until=0;clearTimeout(hideT);const w=host.querySelector('.qa');if(w)w.classList.remove('on');pong();}
+  function show(d){q=d.q;cfg=d.cfg||cfg;const dur=+cfg.dur||30;until=Date.now()+dur*1000;q.left=dur;
+    const w=host.querySelector('.qa');if(w&&w.classList.contains('on')){w.classList.remove('on');setTimeout(()=>renderQA(host,q,cfg,true),450);}else renderQA(host,q,cfg,true);
+    clearTimeout(hideT);hideT=setTimeout(hide,dur*1000);pong();}
+  function connect(){ws=new WebSocket(SERVER);ws.onopen=()=>{ws.send(JSON.stringify({join:sid,in:6,out:5}));setTimeout(pong,300);};
+    ws.onmessage=e=>{let m;try{m=JSON.parse(e.data);}catch(x){return;}const d=m.overlayNinja||m;
+      if(d.qaShow)show(d.qaShow);if(d.qaHide)hide();if(d.qaPing)pong();};
+    ws.onclose=()=>setTimeout(connect,3000);}
+  connect();setInterval(pong,20000);
+}else{
+  const $=id=>document.getElementById(id);
+  let cfg=Object.assign({},DEFCFG,LS('cfg',{})),cms=[],liveKey='',seen=0,phoneOn=false,liveUntil=0;
+  let ws;function send(o){if(ws&&ws.readyState===1){try{ws.send(JSON.stringify(o));return true;}catch(e){}}return false;}
+  function connect(){ws=new WebSocket(SERVER);ws.onopen=()=>{ws.send(JSON.stringify({join:sid,in:5,out:6}));setTimeout(()=>send({qaPing:1}),300);};
+    ws.onmessage=e=>{let m;try{m=JSON.parse(e.data);}catch(x){return;}const d=m.overlayNinja||m;if(d.qaPong){seen=Date.now();phoneOn=!!d.qaPong.on;paintSt();}};
+    ws.onclose=()=>setTimeout(connect,3000);}
+  /* 直播留言（外掛送出來的） */
+  const isQ=t=>/[?？]|嗎|請問|多少|有沒有|有無|幾|哪|怎麼|會不會|是不是|能不能|可不可以|尺寸|身高|體重|公斤|kg/i.test(t);
+  function listen(){const c=new WebSocket(SERVER);c.onopen=()=>c.send(JSON.stringify({join:sid,in:4,out:99}));
+    c.onmessage=e=>{let m;try{m=JSON.parse(e.data);}catch(x){return;}const d=m.overlayNinja||m;if(!d||!d.chatmessage)return;
+      const t=String(d.chatmessage).replace(/<img[^>]*alt="([^"]*)"[^>]*>/gi,'$1').replace(/<[^>]*>/g,'').replace(/&nbsp;/g,' ').replace(/&amp;/g,'&').trim();if(!t)return;
+      cms.unshift({n:String(d.chatname||'').trim(),q:t,k:Date.now()+Math.random(),isq:isQ(t)});cms=cms.slice(0,150);paintCm();};
+    c.onclose=()=>setTimeout(listen,3000);}
+  function paintCm(){const only=$('onlyQ').checked;const list=cms.filter(x=>!only||x.isq);
+    $('cm').innerHTML=list.length?list.slice(0,80).map(x=>`<div class="c${x.isq?' q':''}${x.k===liveKey?' live':''}" data-k="${x.k}"><span class="nm">${esc(x.n)}</span><span class="tx">${esc(x.q)}</span>${x.k===liveKey?'<span class="tg">直播中</span>':''}</div>`).join('')
+      :`<div class="tip">${cms.length?'目前沒有像問題的留言（可以把上面的勾拿掉看全部）':'還沒收到留言。直播開始、外掛有在跑，留言就會出現在這裡。'}</div>`;
+    $('cm').querySelectorAll('.c').forEach(el=>el.onclick=()=>{const x=cms.find(y=>String(y.k)===el.dataset.k);if(x)go(x);});}
+  $('onlyQ').onchange=paintCm;
+  function seedOf(n){let h=0;for(const ch of String(n))h=(h*31+ch.charCodeAt(0))>>>0;return h;}
+  function go(x){const q={n:x.n,q:x.q,seed:seedOf(x.n||x.q)};if(!send({qaShow:{q,cfg}})){alert('還沒連上，等幾秒再按一次。');return;}
+    liveKey=x.k;liveUntil=Date.now()+cfg.dur*1000;paintCm();renderQA($('stage'),Object.assign({left:cfg.dur},q),cfg,true);
+    clearTimeout(go.t);go.t=setTimeout(()=>{liveKey='';paintCm();renderQA($('stage'),null,cfg,false);},cfg.dur*1000);paintSt();}
+  $('mGo').onclick=()=>{const t=$('mQ').value.trim();if(!t){$('mQ').focus();return;}go({n:$('mName').value.trim(),q:t,k:'m'+Date.now()});$('mQ').value='';};
+  $('mQ').addEventListener('keydown',e=>{if(e.key==='Enter')$('mGo').click();});
+  $('hide').onclick=()=>{send({qaHide:1});liveKey='';liveUntil=0;clearTimeout(go.t);paintCm();renderQA($('stage'),null,cfg,false);paintSt();};
+  function paintSt(){const ok=Date.now()-seen<45000,left=Math.max(0,Math.ceil((liveUntil-Date.now())/1000));
+    $('st').innerHTML=(ok?'<b style="color:#8fe39a">✅ 手機已連上</b>':'<span style="color:#ffb070">⚠️ 手機還沒連上（手機 PRISM 的總台圖層要重新整理過一次）</span>')+'　・　'+(left?`<b style="color:var(--gold)">💬 直播上顯示中，還有 ${left} 秒</b>`:'直播上沒有顯示提問');}
+  setInterval(()=>{paintSt();},1000);setInterval(()=>send({qaPing:1}),10000);
+  function paintCfg(){$('cSide').value=cfg.side;$('cB').value=cfg.b;$('vB').textContent=cfg.b+'%';$('cDur').value=String(cfg.dur);$('cName').checked=cfg.name;$('durTxt').textContent=cfg.dur;}
+  function cfgChanged(){cfg={side:$('cSide').value,b:+$('cB').value,dur:+$('cDur').value,name:$('cName').checked};SV('cfg',cfg);paintCfg();demo();}
+  ['cSide','cB','cDur','cName'].forEach(id=>$(id).addEventListener('input',cfgChanged));
+  function demo(){if(liveKey)return;renderQA($('stage'),{n:'王小美',q:'請問這件 M 腰圍多少？我 160 公分 52 公斤穿得下嗎？',seed:7,left:cfg.dur},cfg,true);}
+  paintCfg();paintCm();connect();listen();paintSt();demo();
+}
+</script>
+</body>
+</html>
