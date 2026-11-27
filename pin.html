@@ -213,10 +213,10 @@ if(OV){
   $('eDel').onclick=()=>{if(!cur())return;if(!confirm(`刪掉 ${cur().code}標？`))return;items.splice(selI,1);selI=Math.max(0,Math.min(selI,items.length-1));save();paintList();paintEdit();};
   /* 置頂 */
   const pinOf=x=>({code:x.code,name:x.name,price:x.price,lines:x.lines,img:x.img});
-  function showCur(){const x=cur();if(!x)return;if(!send({pinShow:{pin:pinOf(x),cfg}})){alert('還沒連上，等幾秒再按一次。');return;}liveCode=x.code;phoneCode=x.code;SV('sel',selI);paintList();paintSt();}
+  function showCur(){const x=cur();if(!x)return;if(!send({pinShow:{pin:pinOf(x),cfg}})){alert('還沒連上，等幾秒再按一次。');return;}liveCode=x.code;phoneCode=x.code;SV('sel',selI);SV('live',{code:x.code,name:x.name||'',img:x.img||'',t:Date.now()});paintList();paintSt();}
   function resendIfLive(){const x=cur();if(x&&liveCode&&(liveCode===x.code||liveCode===$('eCode').value.trim()))send({pinShow:{pin:pinOf(x),cfg}});}
   $('show').onclick=showCur;
-  $('hide').onclick=()=>{send({pinHide:1});liveCode=null;phoneCode='';paintList();paintSt();};
+  $('hide').onclick=()=>{send({pinHide:1});liveCode=null;phoneCode='';SV('live',null);paintList();paintSt();};
   $('prev').onclick=()=>{if(selI>0){selI--;showCur();paintEdit();}};
   $('next').onclick=()=>{if(selI<items.length-1){selI++;showCur();paintEdit();}};
   document.addEventListener('keydown',e=>{if(/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName))return;

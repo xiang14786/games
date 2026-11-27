@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Shine欣 甜甜價</title>
+<style>
+:root{--bg:#14161b;--panel:#1c1f26;--line:#2c313b;--txt:#eceef2;--sub:#9aa3b2;--gold:#e2c28a;--pink:#ff8fb3}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--txt);font:18px/1.6 "Microsoft JhengHei","PingFang TC","Noto Sans TC",sans-serif}
+#wrap{display:flex;gap:18px;height:100%;padding:12px}
+#stageBox{flex:0 0 auto;height:100%;display:flex;flex-direction:column;align-items:center;gap:8px}
+#stage{position:relative;height:calc(100% - 40px);aspect-ratio:9/16;border-radius:14px;overflow:hidden;background:repeating-conic-gradient(#3a3f4a 0 25%,#30343d 0 50%) 0 0/40px 40px;container-type:size}
+#panel{flex:1 1 auto;min-width:0;overflow:auto;background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:16px 18px}
+h2{margin:4px 0 6px;font-size:24px;color:var(--pink)}
+h3{margin:16px 0 8px;font-size:19px;color:var(--gold)}
+input,button,select{font:inherit}
+input[type=text],input[type=number],select{width:100%;padding:10px 12px;border-radius:10px;border:1px solid #3a404c;background:#252a33;color:#fff}
+.btn{border:none;border-radius:12px;padding:12px 18px;font-weight:800;cursor:pointer;font-size:19px}
+.btn:disabled{opacity:.35;cursor:default}
+.pink{background:linear-gradient(180deg,#ffb3cb,#ff7aa5);color:#3a0a1a}
+.gold{background:linear-gradient(180deg,#f0d49c,#d2a85e);color:#2a1d08}
+.ghost{background:#2c313b;color:var(--txt)}
+.red{background:#5a2328;color:#ffd6d6}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.tip{color:var(--sub);font-size:15px}
+label{display:block;margin-top:6px}
+input[type=range]{width:100%}
+#big{font-size:30px;font-weight:900;margin:6px 0}
+#names{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+#names span{background:#3a2430;color:#ffd3e1;border-radius:8px;padding:2px 10px;font-size:15px}
+.price{display:flex;gap:8px;align-items:center}
+.price input{font-size:24px;font-weight:800}
+#hist div{font-size:15px;color:#cfd3da}
+/* ===== 直播畫面 ===== */
+.sw{position:absolute;width:calc(56cqw*var(--s,1));padding:3cqw 3.4cqw 3.2cqw;border-radius:4.4cqw;
+  background:linear-gradient(160deg,rgba(255,240,246,.97),rgba(255,214,228,.95));border:.6cqw solid #ff8fb3;
+  box-shadow:0 1.6cqw 5cqw rgba(160,20,70,.35);color:#5a1230;text-align:center;
+  transform:scale(.2);opacity:0;transition:transform .45s cubic-bezier(.2,1.5,.4,1),opacity .3s;font-family:"Microsoft JhengHei","PingFang TC","Noto Sans TC",sans-serif}
+.sw.on{transform:scale(1);opacity:1}
+.sw .t1{font-weight:900;font-size:calc(5.2cqw*var(--s,1));letter-spacing:.06em}
+.sw .cd{font-weight:800;font-size:calc(3.4cqw*var(--s,1));color:#a0335e}
+.sw .hs{display:flex;justify-content:center;gap:1.2cqw;margin:1.6cqw 0 1cqw;font-size:calc(6.4cqw*var(--s,1));line-height:1}
+.sw .hs i{font-style:normal;filter:grayscale(1) opacity(.35);transition:filter .3s,transform .3s}
+.sw .hs i.f{filter:none;animation:pop .45s}
+@keyframes pop{0%{transform:scale(.3)}60%{transform:scale(1.35)}100%{transform:scale(1)}}
+.sw .num{font-weight:900;font-size:calc(4.4cqw*var(--s,1))}
+.sw .num b{font-size:1.5em;color:#e0306f}
+.sw .bar{height:1.4cqw;border-radius:1cqw;background:rgba(160,40,90,.15);overflow:hidden;margin-top:1.6cqw}
+.sw .bar i{display:block;height:100%;background:linear-gradient(90deg,#ff7aa5,#ffb36b);transform-origin:left}
+.sw .who{min-height:calc(4.6cqw*var(--s,1));font-size:calc(3.2cqw*var(--s,1));font-weight:800;color:#b0306a;margin-top:1cqw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sw .kw{display:inline-block;margin-top:1cqw;background:#e0306f;color:#fff;border-radius:2cqw;padding:.4cqw 2.4cqw;font-weight:900;font-size:calc(3.6cqw*var(--s,1))}
+.sw .big{font-weight:900;font-size:calc(7cqw*var(--s,1));line-height:1.2;color:#e0306f;text-shadow:0 .4cqw 0 #fff}
+.sw .sub{font-weight:800;font-size:calc(3.8cqw*var(--s,1));margin-top:1cqw}
+.sw .dots i{display:inline-block;animation:dt 1.2s infinite;font-style:normal}
+.sw .dots i:nth-child(2){animation-delay:.2s}.sw .dots i:nth-child(3){animation-delay:.4s}
+@keyframes dt{0%,100%{opacity:.2}50%{opacity:1}}
+.sw .pr1{font-weight:900;font-size:calc(4.2cqw*var(--s,1));color:#a0335e;margin-top:1cqw}
+.sw .pr1 b{display:block;font-size:2.4em;line-height:1.1;color:#e0306f;text-shadow:0 .5cqw 0 #fff}
+.sw .pr2{font-weight:800;font-size:calc(3.8cqw*var(--s,1));color:#6a2a45;margin-top:.6cqw}
+.sw .code{font:700 calc(3.6cqw*var(--s,1)) "Noto Serif TC","PMingLiU",serif;color:#a0335e}
+.burst{position:absolute;pointer-events:none;font-size:7cqw;animation:fly 1.4s ease-out forwards}
+@keyframes fly{0%{transform:translate(0,0) scale(.4);opacity:1}100%{transform:translate(var(--dx),var(--dy)) scale(1.2);opacity:0}}
+body.ov,html.ov{background:transparent!important}
+body.ov #wrap{display:none}
+#ovStage{position:fixed;inset:0;container-type:size;pointer-events:none}
+@media (max-width:900px){#wrap{flex-direction:column;height:auto}#stage{height:70vh}}
+</style>
+</head>
+<body>
+<div id="ovStage" style="display:none"></div>
+<div id="wrap">
+  <div id="stageBox"><div id="stage"></div><div class="tip">↑ 直播畫面預覽</div></div>
+  <div id="panel">
+    <h2>💗 甜甜價</h2>
+    <div id="st" class="tip">連線中…</div>
+
+    <h3>① 這一標</h3>
+    <div class="row"><input type="text" id="code" placeholder="標號" style="flex:0 0 160px"><span class="tip" id="codeTip"></span></div>
+    <div class="row" style="margin-top:10px">
+      <button class="btn pink" id="go">💗 開始甜甜價</button>
+      <button class="btn ghost" id="force">直接解鎖</button>
+      <button class="btn ghost" id="stop">結束（不解鎖）</button>
+      <button class="btn red" id="hide">🙈 收起來</button>
+    </div>
+    <div id="big">還沒開始</div>
+    <div id="names"></div>
+
+    <h3>② 解鎖後：打上價錢再公布</h3>
+    <div class="row">
+      <div class="price" style="flex:1 1 200px"><span>線上發瘋價 $</span><input type="number" id="p1" placeholder="788"></div>
+      <div class="price" style="flex:1 1 200px"><span>直播價 $</span><input type="number" id="p2" placeholder="820"></div>
+      <button class="btn gold" id="pub">📣 公布價錢</button>
+    </div>
+    <div class="tip">直播價可以空白（只顯示發瘋價）。公布後，後台改價、開標一樣照你們平常的做法。</div>
+
+    <h3>③ 設定</h3>
+    <div class="row">
+      <label style="flex:1 1 140px">幾個人才解鎖<input type="number" id="cGoal" min="1" max="200"></label>
+      <label style="flex:1 1 140px">給大家幾秒<input type="number" id="cSec" min="10" max="300"></label>
+      <label style="flex:1 1 140px">價錢顯示幾秒<input type="number" id="cShow" min="5" max="600"></label>
+    </div>
+    <label>關鍵字（逗號分開，留言裡有其中一個就算）<input type="text" id="cKw"></label>
+    <label>放在哪裡<select id="cSide"><option value="r">靠右</option><option value="l">靠左</option><option value="c">中間</option></select></label>
+    <label>上下位置 <span id="vY"></span><input type="range" id="cY" min="2" max="80"></label>
+    <label>大小 <span id="vS"></span><input type="range" id="cS" min="60" max="140"></label>
+    <div class="tip">同一個人只算一次，留很多次也一樣，所以不會洗版。</div>
+
+    <h3>這一場的紀錄</h3>
+    <div id="hist" class="tip">還沒有</div>
+    <div class="row" style="margin-top:6px"><button class="btn ghost" id="clrHist" style="font-size:15px;padding:6px 12px">清除紀錄</button></div>
+  </div>
+</div>
+<script>
+const QS=new URLSearchParams(location.search),OV=QS.get('mode')==='overlay';
+const SERVER=QS.get('server')||'wss://io.socialstream.ninja';
+const LS=(k,d,p='sw_')=>{try{const v=localStorage.getItem(p+k);return v==null?d:JSON.parse(v);}catch(e){return d;}};
+const SV=(k,v)=>{try{localStorage.setItem('sw_'+k,JSON.stringify(v));}catch(e){}};
+let sid=QS.get('session')||'JUVRjNBuLH';
+const DEFCFG={goal:5,sec:40,show:30,kw:'甜甜價,甜甜',side:'r',y:30,s:100};
+const esc=t=>String(t==null?'':t).replace(/&/g,'&amp;').replace(/</g,'&lt;');
+
+/* 畫面：S = {ph:'idle|run|unlock|price|fail', code, n, goal, left(秒), last, p1, p2, cfg} */
+function render(host,S,anim){
+  let c=host.querySelector('.sw');if(!c){c=document.createElement('div');c.className='sw';host.appendChild(c);}
+  const cfg=Object.assign({},DEFCFG,S&&S.cfg||{});
+  if(!S||S.ph==='idle'){c.classList.remove('on');return;}
+  c.style.setProperty('--s',cfg.s/100);c.style.top=cfg.y+'cqh';
+  c.style.left=cfg.side==='l'?'3cqw':cfg.side==='c'?`calc(50cqw - ${28*cfg.s/100}cqw)`:'auto';c.style.right=cfg.side==='r'?'3cqw':'auto';
+  const code=S.code?`<div class="code">${esc(S.code)}標</div>`:'';
+  let h='';
+  if(S.ph==='run'){const g=S.goal||cfg.goal,n=Math.min(S.n||0,g);
+    const hearts=g<=10?`<div class="hs">${Array.from({length:g},(_,i)=>`<i class="${i<n?'f':''}">💗</i>`).join('')}</div>`:'';
+    h=`${code}<div class="t1">💗 甜甜價集氣中</div><div class="cd">留言「<b>甜甜價</b>」滿 ${g} 人解鎖線上發瘋價</div>${hearts}
+      <div class="num"><b>${S.n||0}</b> / ${g} 人</div><div class="bar"><i></i></div><div class="who">${S.last?esc(S.last)+' 喊了甜甜價 💗':''}</div>`;}
+  else if(S.ph==='unlock'){h=`${code}<div class="big">🎉 解鎖成功！</div><div class="sub">線上發瘋價<br>幕後計算中<span class="dots"><i>.</i><i>.</i><i>.</i></span></div>`;}
+  else if(S.ph==='price'){h=`${code}<div class="t1">💗 線上發瘋價</div><div class="pr1"><b>$${esc(S.p1)}</b></div>${S.p2?`<div class="pr2">直播價 $${esc(S.p2)}</div>`:''}<div class="kw">快 +1 ！</div>`;}
+  else if(S.ph==='fail'){h=`${code}<div class="t1">差一點點～</div><div class="sub">這一標維持原價 🥹<br>下次一起喊甜甜價！</div>`;}
+  const was=c.dataset.ph;c.innerHTML=h;c.dataset.ph=S.ph;
+  if(S.ph==='run'){const b=c.querySelector('.bar i');const tot=(S.tot||cfg.sec)*1000,left=Math.max(0,(S.left||0)*1000);
+    b.animate([{transform:`scaleX(${left/tot})`},{transform:'scaleX(0)'}],{duration:left,easing:'linear',fill:'forwards'});}
+  if(!c.classList.contains('on')||(anim&&was!==S.ph)){c.classList.remove('on');void c.offsetWidth;requestAnimationFrame(()=>c.classList.add('on'));}
+  if(anim&&was!==S.ph&&(S.ph==='unlock'||S.ph==='price'))burst(host,c);
+}
+function burst(host,c){const r=c.getBoundingClientRect(),hr=host.getBoundingClientRect();const cx=r.left-hr.left+r.width/2,cy=r.top-hr.top+r.height/2;
+  for(let i=0;i<16;i++){const e=document.createElement('div');e.className='burst';e.textContent=['💗','💖','✨','💕'][i%4];
+    const a=Math.PI*2*i/16,d=hr.width*(.25+Math.random()*.15);e.style.left=cx+'px';e.style.top=cy+'px';e.style.setProperty('--dx',Math.cos(a)*d+'px');e.style.setProperty('--dy',Math.sin(a)*d+'px');
+    host.appendChild(e);setTimeout(()=>e.remove(),1500);}}
+
+if(OV){
+  document.documentElement.classList.add('ov');document.body.classList.add('ov');
+  const host=document.getElementById('ovStage');host.style.display='block';
+  let S=null;
+  let ws;function send(o){try{ws&&ws.readyState===1&&ws.send(JSON.stringify(o));}catch(e){}}
+  const pong=()=>send({swPong:{ph:S?S.ph:'idle',t:Date.now()}});
+  function connect(){ws=new WebSocket(SERVER);ws.onopen=()=>{ws.send(JSON.stringify({join:sid,in:6,out:5}));setTimeout(pong,300);};
+    ws.onmessage=e=>{let m;try{m=JSON.parse(e.data);}catch(x){return;}const d=m.overlayNinja||m;
+      if(d.swState){const prev=S;S=d.swState;const ch=!prev||prev.ph!==S.ph||prev.code!==S.code;
+        if(!ch&&S.ph==='run'&&prev.n===S.n){/* 只是同步時間 */}
+        render(host,S,true);pong();}
+      if(d.swPing)pong();};
+    ws.onclose=()=>setTimeout(connect,3000);}
+  connect();setInterval(pong,20000);
+}else{
+  const $=id=>document.getElementById(id);
+  let cfg=Object.assign({},DEFCFG,LS('cfg',{})),S={ph:'idle'},who=new Set(),names=[],endAt=0,tick=0,hideT=0,seen=0,phPh='';
+  let hist=LS('hist',[]);
+  let ws;function send(o){if(ws&&ws.readyState===1){try{ws.send(JSON.stringify(o));return true;}catch(e){}}return false;}
+  function connect(){ws=new WebSocket(SERVER);ws.onopen=()=>{ws.send(JSON.stringify({join:sid,in:5,out:6}));setTimeout(()=>send({swPing:1}),300);};
+    ws.onmessage=e=>{let m;try{m=JSON.parse(e.data);}catch(x){return;}const d=m.overlayNinja||m;if(d.swPong){seen=Date.now();phPh=d.swPong.ph;paintSt();}};
+    ws.onclose=()=>setTimeout(connect,3000);}
+  function push(){const out=Object.assign({},S,{cfg,left:S.ph==='run'?Math.max(0,(endAt-Date.now())/1000):0,tot:cfg.sec});
+    send({swState:out});render($('stage'),out,true);paint();}
+  /* 讀留言 */
+  const kws=()=>cfg.kw.split(/[,，、]/).map(s=>s.trim()).filter(Boolean);
+  function listen(){const c=new WebSocket(SERVER);c.onopen=()=>c.send(JSON.stringify({join:sid,in:4,out:99}));
+    c.onmessage=e=>{if(S.ph!=='run')return;let m;try{m=JSON.parse(e.data);}catch(x){return;}const d=m.overlayNinja||m;if(!d||!d.chatmessage)return;
+      const t=String(d.chatmessage).replace(/<img[^>]*alt="([^"]*)"[^>]*>/gi,'$1').replace(/<[^>]*>/g,'');
+      if(!kws().some(k=>t.includes(k)))return;
+      const id=String(d.userid||d.chatname||'').trim();if(!id||who.has(id))return;
+      who.add(id);names.push(String(d.chatname||'').trim());S.n=who.size;S.last=String(d.chatname||'').trim();
+      if(S.n>=S.goal)unlock();else push();};
+    c.onclose=()=>setTimeout(listen,3000);}
+  function curCode(){return $('code').value.trim();}
+  function start(){const code=curCode();clearTimeout(hideT);clearInterval(tick);who=new Set();names=[];
+    S={ph:'run',code,n:0,goal:cfg.goal,last:''};endAt=Date.now()+cfg.sec*1000;
+    tick=setInterval(()=>{if(S.ph!=='run'){clearInterval(tick);return;}if(Date.now()>=endAt){clearInterval(tick);fail();}else paint();},250);push();
+    // 每 5 秒同步一次時間（手機重新整理也能接上）
+    clearInterval(start.sync);start.sync=setInterval(()=>{if(S.ph==='run')send({swState:Object.assign({},S,{cfg,left:Math.max(0,(endAt-Date.now())/1000),tot:cfg.sec})});else clearInterval(start.sync);},5000);}
+  function unlock(){clearInterval(tick);S.ph='unlock';log('解鎖');push();$('p1').focus();}
+  function fail(){S.ph='fail';log('沒解鎖');push();clearTimeout(hideT);hideT=setTimeout(hide,5000);}
+  function hide(){clearInterval(tick);clearTimeout(hideT);S={ph:'idle'};push();}
+  function log(r){hist.unshift({t:new Date().toTimeString().slice(0,5),code:S.code,n:S.n||0,goal:S.goal,r,names:names.slice(0,30)});hist=hist.slice(0,60);SV('hist',hist);}
+  $('go').onclick=()=>{if(S.ph==='run'&&!confirm('現在正在集氣，要重新開始嗎？'))return;start();};
+  $('force').onclick=()=>{if(S.ph==='idle'||S.ph==='fail'){S={ph:'run',code:curCode(),n:who.size,goal:cfg.goal};}unlock();};
+  $('stop').onclick=()=>{if(S.ph==='run'){clearInterval(tick);fail();}};
+  $('hide').onclick=hide;
+  $('pub').onclick=()=>{const p1=$('p1').value.trim();if(!p1){$('p1').focus();return;}
+    if(S.ph!=='unlock'&&S.ph!=='price'&&!confirm('這一標還沒解鎖，確定要直接公布發瘋價嗎？'))return;
+    S=Object.assign({},S,{ph:'price',p1,p2:$('p2').value.trim(),code:S.code||curCode()});
+    if(hist[0]&&hist[0].code===S.code&&hist[0].r==='解鎖'){hist[0].price=`$${p1}${S.p2?' / 直播價 $'+S.p2:''}`;SV('hist',hist);}
+    push();clearTimeout(hideT);hideT=setTimeout(hide,cfg.show*1000);};
+  ['p1','p2'].forEach(id=>$(id).addEventListener('keydown',e=>{if(e.key==='Enter')$('pub').click();}));
+  $('clrHist').onclick=()=>{if(confirm('清除這一場的甜甜價紀錄？')){hist=[];SV('hist',hist);paint();}};
+  /* 標號：跟著置頂框 */
+  let manual=false;$('code').addEventListener('input',()=>{manual=!!$('code').value.trim();});
+  function syncPin(){const lv=LS('live',null,'pn_');if(lv&&lv.code){$('codeTip').textContent=`置頂框現在是 ${lv.code}標`;if(!manual||S.ph==='idle'){if(S.ph!=='run'&&S.ph!=='unlock'){$('code').value=lv.code;manual=false;}}}
+    else $('codeTip').textContent='（置頂框沒有置頂時，請自己打標號；也可以空白）';}
+  window.addEventListener('storage',e=>{if(e.key==='pn_live')syncPin();});setInterval(syncPin,3000);
+  function paint(){const left=Math.max(0,Math.ceil((endAt-Date.now())/1000));
+    $('big').innerHTML=S.ph==='run'?`💗 集氣中：<span style="color:var(--pink)">${S.n||0} / ${S.goal}</span> 人　剩 ${left} 秒`
+      :S.ph==='unlock'?'🎉 解鎖了！打上價錢後按「公布價錢」':S.ph==='price'?`📣 已公布：$${esc(S.p1)}${S.p2?' / 直播價 $'+esc(S.p2):''}`:S.ph==='fail'?`沒有解鎖（${S.n||0} / ${S.goal} 人）`:'還沒開始';
+    $('names').innerHTML=names.slice(-40).map(n=>`<span>${esc(n)}</span>`).join('');
+    $('go').disabled=false;$('pub').disabled=!(S.ph==='unlock'||S.ph==='price'||S.ph==='idle'||S.ph==='fail');
+    $('hist').innerHTML=hist.length?hist.map(h=>`<div>${h.t}　${esc(h.code||'（沒填標號）')}${h.code?'標':''}　${h.n}/${h.goal} 人　${h.r==='解鎖'?'<b style="color:var(--pink)">解鎖</b>':'沒解鎖'}${h.price?'　'+esc(h.price):''}</div>`).join(''):'還沒有';paintSt();}
+  function paintSt(){const ok=Date.now()-seen<45000;$('st').innerHTML=ok?'<b style="color:#8fe39a">✅ 手機已連上</b>':'<span style="color:#ffb070">⚠️ 手機還沒連上（手機 PRISM 的總台圖層要重新整理過一次）</span>';}
+  setInterval(()=>send({swPing:1}),10000);
+  /* 設定 */
+  function paintCfg(){$('cGoal').value=cfg.goal;$('cSec').value=cfg.sec;$('cShow').value=cfg.show;$('cKw').value=cfg.kw;$('cSide').value=cfg.side;$('cY').value=cfg.y;$('cS').value=cfg.s;$('vY').textContent=cfg.y+'%';$('vS').textContent=cfg.s+'%';}
+  function cfgChanged(){cfg={goal:Math.max(1,+$('cGoal').value||5),sec:Math.max(10,+$('cSec').value||40),show:Math.max(5,+$('cShow').value||30),kw:$('cKw').value||DEFCFG.kw,side:$('cSide').value,y:+$('cY').value,s:+$('cS').value};
+    SV('cfg',cfg);$('vY').textContent=cfg.y+'%';$('vS').textContent=cfg.s+'%';if(S.ph==='idle')demo();else{if(S.ph==='run')S.goal=S.goal||cfg.goal;push();}}
+  ['cGoal','cSec','cShow','cKw','cSide','cY','cS'].forEach(id=>$(id).addEventListener('input',cfgChanged));
+  function demo(){render($('stage'),{ph:'run',code:'2096',n:3,goal:cfg.goal,last:'Amy',left:cfg.sec*.6,tot:cfg.sec,cfg},false);}
+  paintCfg();syncPin();connect();listen();paint();demo();
+}
+</script>
+</body>
+</html>
