@@ -28,6 +28,14 @@ input[type=range]{width:100%}
 #ctlBar{position:sticky;top:-16px;z-index:3;background:var(--panel);padding:8px 0 10px;border-bottom:1px solid var(--line);margin-bottom:6px}
 #ctlBar .btn{font-size:19px;padding:12px 18px}
 #list{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px}
+#q{font-size:16px;padding:6px 12px}
+#strip{display:grid;grid-template-columns:repeat(auto-fill,minmax(118px,1fr));gap:8px;max-height:52vh;overflow-y:auto;padding:8px 2px 4px}
+#strip .sp{cursor:pointer;border-radius:10px;border:2px solid transparent;background:#232832;padding:4px;text-align:center}
+#strip .sp.live{border-color:var(--gold);background:#2e2a20}
+#strip .sp.hit{border-color:#8fb7ff}
+#strip .sp .th{aspect-ratio:3/4;height:auto;border-radius:7px;background:#151820 center/cover no-repeat;display:flex;align-items:center;justify-content:center;color:#777;font-size:12px}
+#strip .sp b{display:block;font-size:16px;color:var(--gold);line-height:1.3}
+#strip .sp small{display:block;font-size:12px;color:#aab;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .it{display:flex;gap:10px;background:#232832;border:2px solid transparent;border-radius:14px;padding:8px;cursor:pointer;align-items:center}
 .it.sel{border-color:#6a7488}
 .it.live{border-color:var(--gold);background:#2e2a20}
@@ -69,7 +77,10 @@ body.ov #wrap{display:none}
         <button class="btn ghost" id="next">下一標 ▶</button>
         <button class="btn red" id="hide">🙈 收起來</button>
       </div>
-      <div class="tip" style="margin-top:4px">快捷鍵：← → 換標（會直接置頂）、Enter 置頂、Esc 收起來。選好一標後按 Ctrl+V 可以直接貼圖。</div>
+
+      <div id="strip"></div>
+      <div class="row" style="margin-top:6px"><input type="text" id="q" placeholder="🔍（可不用）打標號或品名篩選" autocomplete="off" style="flex:1 1 300px"></div>
+      <div class="tip" style="margin-top:2px">👆 <b>看歐膩拿哪件，點那張照片就直接置頂</b>（金框＝直播上正在置頂的）。快捷鍵：← → 換標、Enter 置頂、Esc 收起來；選好一標後按 Ctrl+V 可以貼圖。</div>
     </div>
 
     <h3>① 貼上記事本</h3>
@@ -203,7 +214,22 @@ if(OV){
     $('list').querySelectorAll('.it').forEach(el=>{const i=+el.dataset.i;el.onclick=()=>{selI=i;SV('sel',selI);paintList();paintEdit();};
       el.ondblclick=()=>{selI=i;showCur();};
       el.ondragover=ev=>ev.preventDefault();el.ondrop=async ev=>{ev.preventDefault();const f=ev.dataTransfer.files[0];if(f){items[i].img=await shrink(f);save();paintList();paintEdit();if(i===selI)resendIfLive();}};});
-    preview();}
+    preview();paintStrip();}
+  const norm=t=>String(t||'').toLowerCase().replace(/\s+/g,'');
+  function hits(){const q=norm($('q').value);if(!q)return items.map((x,i)=>i);
+    const num=/^[a-z]*\d+$/.test(q);
+    const exact=[],start=[],other=[];
+    items.forEach((x,i)=>{const c=norm(x.code);if(c===q)exact.push(i);else if(num?c.startsWith(q)||c.endsWith(q):false)start.push(i);
+      else if(!num&&norm(x.code+x.name+(x.lines||[]).join('')).includes(q))other.push(i);});
+    return exact.concat(start,other);}
+  function paintStrip(){const h=hits(),q=$('q').value.trim();
+    $('strip').innerHTML=h.length?h.map(i=>{const x=items[i];return `<div class="sp${liveCode===x.code?' live':''}${q&&i===h[0]?' hit':''}" data-i="${i}" title="${esc(x.name||'')}"><div class="th" style="${x.img?`background-image:url('${x.img}')`:''}">${x.img?'':'沒照片'}</div><b>${esc(x.code)}</b><small>${esc(x.name||'')}</small></div>`;}).join('')
+      :`<div class="tip">${items.length?'找不到「'+esc(q)+'」':'先在下面 ① 貼上記事本'}</div>`;
+    $('strip').querySelectorAll('.sp').forEach(el=>el.onclick=()=>{selI=+el.dataset.i;showCur();paintEdit();$('q').value='';paintStrip();});
+    const lv=$('strip').querySelector('.sp.live');if(lv&&!q)lv.scrollIntoView({block:'nearest',inline:'center'});}
+  $('q').addEventListener('input',paintStrip);
+  $('q').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();const h=hits();if(h.length&&$('q').value.trim()){selI=h[0];showCur();paintEdit();$('q').value='';paintStrip();$('q').blur();}}
+    else if(e.key==='Escape'){$('q').value='';paintStrip();$('q').blur();}});
   function paintEdit(){const x=cur();['eCode','eName','ePrice','eLines'].forEach(id=>$(id).disabled=!x);
     $('eCode').value=x?x.code:'';$('eName').value=x?x.name||'':'';$('ePrice').value=x?x.price||'':'';$('eLines').value=x?(x.lines||[]).join('\n'):'';preview();}
   let edT=0;['eCode','eName','ePrice','eLines'].forEach(id=>$(id).addEventListener('input',()=>{const x=cur();if(!x)return;
@@ -220,6 +246,7 @@ if(OV){
   $('prev').onclick=()=>{if(selI>0){selI--;showCur();paintEdit();}};
   $('next').onclick=()=>{if(selI<items.length-1){selI++;showCur();paintEdit();}};
   document.addEventListener('keydown',e=>{if(/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName))return;
+    if(/^[0-9A-Za-z]$/.test(e.key)&&!e.ctrlKey&&!e.metaKey&&!e.altKey){$('q').focus();return;}
     if(e.key==='ArrowRight'){e.preventDefault();$('next').click();}else if(e.key==='ArrowLeft'){e.preventDefault();$('prev').click();}
     else if(e.key==='Enter'){e.preventDefault();showCur();}else if(e.key==='Escape'){$('hide').click();}});
   /* 樣子 */
